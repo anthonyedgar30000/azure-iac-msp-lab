@@ -1,0 +1,37 @@
+# Terraform working directory and state
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Terraform plans
+*.tfplan
+*.plan
+
+# Variable files may contain secrets or environment-specific values
+*.tfvars
+*.tfvars.json
+!terraform.tfvars.example
+
+# Override files
+_override.tf
+_override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Provider lock file is intentionally committed after terraform init
+
+# Azure and local credentials
+.azure/
+.env
+.env.*
+*.pem
+*.pfx
+*.key
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
