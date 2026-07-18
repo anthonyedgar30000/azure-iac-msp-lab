@@ -52,27 +52,27 @@ resource "azurerm_network_security_group" "servers" {
   resource_group_name = azurerm_resource_group.lab.name
 
   security_rule {
-    name                        = "AllowManagementSSH"
-    priority                    = 100
-    direction                   = "Inbound"
-    access                      = "Allow"
-    protocol                    = "Tcp"
-    source_port_range           = "*"
-    destination_port_range      = "22"
-    source_address_prefixes     = var.management_subnet_prefixes
-    destination_address_prefix  = "*"
+    name                       = "AllowManagementSSH"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefixes    = var.management_subnet_prefixes
+    destination_address_prefix = "*"
   }
 
   security_rule {
-    name                        = "AllowManagementRDP"
-    priority                    = 110
-    direction                   = "Inbound"
-    access                      = "Allow"
-    protocol                    = "Tcp"
-    source_port_range           = "*"
-    destination_port_range      = "3389"
-    source_address_prefixes     = var.management_subnet_prefixes
-    destination_address_prefix  = "*"
+    name                       = "AllowManagementRDP"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "3389"
+    source_address_prefixes    = var.management_subnet_prefixes
+    destination_address_prefix = "*"
   }
 
   security_rule {
