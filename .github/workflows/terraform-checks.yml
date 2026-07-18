@@ -29,26 +29,8 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Generate formatting patch
-        id: format
-        shell: bash
-        run: |
-          terraform fmt -recursive
-          git diff -- . > terraform-fmt.patch
-          if [[ -s terraform-fmt.patch ]]; then
-            echo "Terraform formatting changes are required."
-            cat terraform-fmt.patch
-            exit 1
-          fi
-
-      - name: Upload formatting patch
-        if: failure() && steps.format.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-format-patch
-          path: terraform-fmt.patch
-          if-no-files-found: error
-          retention-days: 1
+      - name: Check formatting
+        run: terraform fmt -check -recursive -diff
 
       - name: Initialize providers without backend
         run: terraform init -backend=false -input=false
