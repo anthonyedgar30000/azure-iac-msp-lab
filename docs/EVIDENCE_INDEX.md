@@ -1,14 +1,14 @@
 # Evidence Index
 
-No deployment evidence exists yet.
+No Azure deployment evidence exists yet. Static validation evidence is available through GitHub Actions.
 
 Use this index to prevent screenshots from being mistaken for verified capability.
 
 | ID | Evidence | Status | Source | What it proves | What it does not prove |
 |---|---|---|---|---|---|
 | E-001 | Repository and branch structure | Available | GitHub | Work is version controlled and isolated from `main` | Terraform validity or Azure deployment |
-| E-002 | Terraform formatting output | Pending | Local or CI run | Files satisfy Terraform formatting rules | Provider initialization or deployability |
-| E-003 | Terraform validation output | Pending | Local or CI run | Terraform accepts the configuration syntax and references | Azure permissions or runtime behaviour |
+| E-002 | Terraform formatting output | Passed | GitHub Actions run 5, commit `7907a78ea3e28ec9342d3425c3ac1b656ff40f5f` | Files satisfy Terraform formatting rules | Provider initialization or deployability |
+| E-003 | Terraform initialization and validation output | Passed | GitHub Actions run 5, commit `7907a78ea3e28ec9342d3425c3ac1b656ff40f5f` | Providers initialized without a backend and Terraform accepted the configuration syntax and references | Azure permissions, plan correctness, or runtime behaviour |
 | E-004 | Saved plan review | Pending | Terraform CLI | Intended resource changes before apply | Successful deployment |
 | E-005 | Apply summary | Pending | Terraform CLI | Azure accepted the planned resource creation | Security-path behaviour |
 | E-006 | Azure resource verification | Pending | PowerShell and Azure CLI | Expected resource group, VNet, subnets, and NSG associations exist | End-to-end connectivity policy behaviour |
