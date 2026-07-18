@@ -1,0 +1,11 @@
+# Copy this file to terraform.tfvars for local use.
+# terraform.tfvars is ignored by Git. Never commit real subscription IDs or secrets.
+
+subscription_id = "00000000-0000-0000-0000-000000000000"
+location        = "canadacentral"
+environment     = "demo"
+owner_tag       = "portfolio-owner"
+
+vnet_address_space          = ["10.20.0.0/16"]
+management_subnet_prefixes  = ["10.20.10.0/24"]
+server_subnet_prefixes      = ["10.20.20.0/24"]
