@@ -1,0 +1,22 @@
+{
+  "load_balancer_id": "LB-REMOTE-01",
+  "selection_mode": "five_tuple",
+  "probe": {
+    "name": "tcp-443-shallow",
+    "protocol": "tcp",
+    "port": 443,
+    "scope": "listener_only"
+  },
+  "backends": [
+    {
+      "backend_id": "VPN-01",
+      "probe_status": "healthy",
+      "administrative_state": "active"
+    },
+    {
+      "backend_id": "VPN-02",
+      "probe_status": "healthy",
+      "administrative_state": "active"
+    }
+  ]
+}

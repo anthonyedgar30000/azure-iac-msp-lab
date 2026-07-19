@@ -24,6 +24,11 @@ param remoteUserVirtualNetworkAddressPrefix string = '10.30.0.0/16'
 @description('Address pool planned for VPN clients after tunnel establishment.')
 param vpnClientAddressPrefix string = '10.90.0.0/24'
 
+@description('Public listener port used by the remote-access demo.')
+@minValue(1)
+@maxValue(65535)
+param remoteAccessListenerPort int = 443
+
 var commonTags = {
   workload: 'azure-iac-msp-lab'
   environment: environment
@@ -44,6 +49,17 @@ module network './modules/network.bicep' = {
   }
 }
 
+module edgeLoadBalancer './modules/edge_load_balancer.bicep' = {
+  name: 'edge-load-balancer-${environment}'
+  params: {
+    prefix: prefix
+    environment: environment
+    location: location
+    listenerPort: remoteAccessListenerPort
+    tags: commonTags
+  }
+}
+
 module observability './modules/observability.bicep' = {
   name: 'observability-${environment}'
   params: {
@@ -57,4 +73,7 @@ module observability './modules/observability.bicep' = {
 output onPremVirtualNetworkId string = network.outputs.onPremVirtualNetworkId
 output remoteUserVirtualNetworkId string = network.outputs.remoteUserVirtualNetworkId
 output subnetIds object = network.outputs.subnetIds
+output loadBalancerId string = edgeLoadBalancer.outputs.loadBalancerId
+output loadBalancerBackendPoolId string = edgeLoadBalancer.outputs.backendPoolId
+output loadBalancerHealthProbe object = edgeLoadBalancer.outputs.healthProbe
 output logAnalyticsWorkspaceId string = observability.outputs.logAnalyticsWorkspaceId
