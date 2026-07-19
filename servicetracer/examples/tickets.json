@@ -1,0 +1,20 @@
+[
+  {
+    "ticket_id": "CHG-1042",
+    "record_type": "change",
+    "changed_at": "2026-07-17T13:30:00Z",
+    "assets": ["VPN-02"],
+    "service_stages": ["radius_request", "radius_response"],
+    "summary": "Adjusted VPN-02 RADIUS configuration during remote-access authentication maintenance.",
+    "verification": "One interactive connection test completed; no peer comparison was recorded."
+  },
+  {
+    "ticket_id": "INC-0988",
+    "record_type": "incident",
+    "changed_at": "2026-07-10T09:00:00Z",
+    "assets": ["RDS-01"],
+    "service_stages": ["rdp_session"],
+    "summary": "Investigated a user-profile load delay on RDS-01.",
+    "verification": "Profile load returned to the expected range."
+  }
+]
