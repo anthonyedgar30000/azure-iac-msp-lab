@@ -1,0 +1,72 @@
+{
+  "service_path_id": "windows-remote-access-v1",
+  "description": "Ordered remote-access transaction from public lookup through usable RDP session.",
+  "stages": [
+    {
+      "stage_id": "public_dns",
+      "label": "Public DNS resolution",
+      "osi_layers": [7],
+      "expected_timeout_ms": 2000
+    },
+    {
+      "stage_id": "load_balancer_selection",
+      "label": "Load balancer backend selection",
+      "osi_layers": [3, 4],
+      "expected_timeout_ms": 1000
+    },
+    {
+      "stage_id": "tcp_connect",
+      "label": "TCP connection to VPN gateway",
+      "osi_layers": [1, 2, 3, 4],
+      "expected_timeout_ms": 3000
+    },
+    {
+      "stage_id": "tls_handshake",
+      "label": "TLS negotiation and certificate validation",
+      "osi_layers": [5, 6],
+      "expected_timeout_ms": 5000
+    },
+    {
+      "stage_id": "radius_request",
+      "label": "VPN gateway sends RADIUS Access-Request",
+      "osi_layers": [4, 7],
+      "expected_timeout_ms": 1000
+    },
+    {
+      "stage_id": "radius_response",
+      "label": "VPN gateway receives RADIUS response",
+      "osi_layers": [4, 7],
+      "expected_timeout_ms": 15000
+    },
+    {
+      "stage_id": "vpn_address_assignment",
+      "label": "VPN address, DNS and routes assigned",
+      "osi_layers": [3, 5, 7],
+      "expected_timeout_ms": 3000
+    },
+    {
+      "stage_id": "tunnel_established",
+      "label": "VPN tunnel activated",
+      "osi_layers": [3, 5],
+      "expected_timeout_ms": 3000
+    },
+    {
+      "stage_id": "internal_dns",
+      "label": "Internal DNS resolution",
+      "osi_layers": [7],
+      "expected_timeout_ms": 2000
+    },
+    {
+      "stage_id": "kerberos_ticket",
+      "label": "Kerberos service ticket issued",
+      "osi_layers": [5, 7],
+      "expected_timeout_ms": 5000
+    },
+    {
+      "stage_id": "rdp_session",
+      "label": "RDP session becomes usable",
+      "osi_layers": [5, 6, 7],
+      "expected_timeout_ms": 10000
+    }
+  ]
+}
