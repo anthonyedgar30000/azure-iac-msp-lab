@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+servicetracer-report.json
+infra/*.json
+!servicetracer/examples/*.json
