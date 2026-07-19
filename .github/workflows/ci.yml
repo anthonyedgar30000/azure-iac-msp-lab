@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  servicetracer-tests:
+    name: ServiceTracer tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run unit tests
+        env:
+          PYTHONPATH: servicetracer/src
+        run: python -m unittest discover -s servicetracer/tests -v
+
+      - name: Generate deterministic demo data
+        env:
+          PYTHONPATH: servicetracer/src
+        run: python -m servicetracer.demo_data --output /tmp/remote_access_attempts.jsonl
+
+      - name: Run CLI smoke test
+        env:
+          PYTHONPATH: servicetracer/src
+        run: |
+          python -m servicetracer.cli \
+            --attempts /tmp/remote_access_attempts.jsonl \
+            --service-path servicetracer/examples/remote_access_service_path.json \
+            --tickets servicetracer/examples/tickets.json \
+            --output /tmp/servicetracer-report.json
+          python -m json.tool /tmp/servicetracer-report.json > /dev/null
+
+  bicep-validation:
+    name: Bicep lint and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Lint and build Bicep
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az bicep install
+            az bicep version
+            az bicep lint --file infra/main.bicep
+            az bicep build --file infra/main.bicep --outfile /tmp/main.json
+            az bicep build-params --file infra/main.dev.bicepparam --outfile /tmp/main.parameters.json
