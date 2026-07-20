@@ -66,12 +66,21 @@ jobs:
             --adapter-config servicetracer/examples/evidence_adapters.json \
             --service-path servicetracer/examples/remote_access_service_path.json \
             --output /tmp/servicetracer-report.json
+          python -m servicetracer.cli \
+            --evidence-records /tmp/incident-evidence.jsonl \
+            --containment-evidence-records /tmp/containment-evidence.jsonl \
+            --adapter-config servicetracer/examples/evidence_adapters.json \
+            --service-path servicetracer/examples/remote_access_service_path.json \
+            --report-view technician-handoff \
+            --output /tmp/technician-handoff-report.json
           python -m json.tool /tmp/servicetracer-report.json > /dev/null
+          python -m json.tool /tmp/technician-handoff-report.json > /dev/null
           python - <<'PY'
           import json
           from pathlib import Path
 
           report = json.loads(Path('/tmp/servicetracer-report.json').read_text())
+          handoff = json.loads(Path('/tmp/technician-handoff-report.json').read_text())
           status = json.loads(Path('/tmp/collector-status.json').read_text())
           assert status['records'] > 0
           assert status['records'] == status['unique_evidence_identities']
@@ -82,6 +91,14 @@ jobs:
           assert report['containment']['status'] == 'stabilized_under_containment'
           assert report['containment']['verification']['success_rate'] == 1.0
           assert report['containment']['evidence_ingestion']['summary']['assembled_attempts'] == 2
+          assert handoff['status'] == 'technician_investigation_required'
+          assert handoff['load_balancer']['status'] == 'healthy_under_configured_probe'
+          assert handoff['localization']['suspect_backend'] == 'VPN-02'
+          assert handoff['localization']['healthy_comparison_backend'] == 'VPN-01'
+          assert handoff['investigation_boundary']['service_tracer_stops_at'] == 'VPN-02'
+          assert handoff['root_cause']['status'] == 'not_determined_by_servicetracer'
+          assert 'first_failed_stage' not in handoff
+          assert 'radius_response' not in json.dumps(handoff)
           PY
 
       - name: Verify preassembled replay compatibility
