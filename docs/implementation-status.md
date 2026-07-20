@@ -12,6 +12,12 @@
 - Separately managed Standard SSD evidence disk configured to detach rather than be deleted with the VM.
 - Cloud-init that preserves an existing evidence filesystem, mounts the managed disk, installs a configured ServiceTracer source ref, generates a local bearer token and TLS certificate, starts the systemd service, and verifies its health endpoint.
 - Committed development parameters that keep collector compute disabled by default.
+- Manual GitHub Actions Azure lifecycle workflow using workload identity federation.
+- Guarded `what-if`, `deploy`, `verify`, and `teardown` operations with a protected environment boundary.
+- Deployment requires a tested 40-character source commit and an environment-provided SSH public key.
+- Teardown requires an approved ServiceTracer resource-group name and exact typed confirmation.
+- Azure and guest verification through VM Run Command covering private networking, managed identity, evidence-disk policy, cloud-init, mount state, systemd health, authenticated durable receipt, and restart persistence.
+- Non-secret Azure lifecycle evidence artifacts for validation, What-If, deployment, verification, inventory, and teardown results.
 - ServiceTracer deterministic incident analyzer.
 - Durable JSONL evidence spool with restart-safe identity indexing.
 - JSON, JSON-array, and JSONL import for monitoring and ticket exports.
@@ -29,8 +35,8 @@
 - Load-balancer probe-gap assessment.
 - Structured drain plan, evidence-preservation guidance, containment verification, and return-to-service gates.
 - Preassembled attempts and the deterministic generator retained only for replay and regression compatibility.
-- Unit tests for collector persistence, authentication, identity reuse, batch atomicity, structured syslog extraction, ingestion, evidence gaps, localization, probe gaps, containment, recovery gating, collector VM security, disk retention, bootstrap behavior, and safe default parameters.
-- GitHub Actions validation of collector-to-spool-to-analysis flow, source-evidence analysis, replay compatibility, collector VM contracts, and Bicep builds.
+- Unit tests for collector persistence, authentication, identity reuse, batch atomicity, structured syslog extraction, ingestion, evidence gaps, localization, probe gaps, containment, recovery gating, collector VM security, disk retention, bootstrap behavior, lifecycle guardrails, and safe default parameters.
+- GitHub Actions validation of collector-to-spool-to-analysis flow, source-evidence analysis, replay compatibility, collector VM and lifecycle contracts, and Bicep builds.
 
 ## Not deployed
 
@@ -46,7 +52,8 @@
 
 ## Not verified
 
-- End-to-end Azure deployment.
+- GitHub workload identity authentication against the target Azure tenant and subscription.
+- End-to-end Azure validation, What-If, deployment, guest verification, and teardown workflow runs.
 - Availability of the selected Ubuntu image and VM size in the target subscription and region.
 - Cloud-init execution on a real Azure VM.
 - Evidence-disk formatting, remounting, detachment, reattachment, backup, and recovery behavior.
@@ -59,11 +66,12 @@
 
 ## Next bounded increments
 
-1. Deploy and verify the network, load balancer, Log Analytics workspace, and collector VM using a pinned source commit.
-2. Record collector VM, NIC, identity, disk, cloud-init, systemd, TLS, authenticated receipt, restart, and teardown evidence.
-3. Add Windows VM definitions and domain bootstrap automation.
-4. Add two VPN appliance nodes and associate their NICs with the load-balancer backend pool.
-5. Add source-specific Windows, Azure, VPN, SNMP, and synthetic-check exporters that emit the implemented contract.
-6. Replace the bootstrap self-signed certificate and locally generated token with governed certificate and secret delivery.
-7. Add the live ticketing-system adapter.
-8. Add governed configuration comparison for drift repair, direct-node validation, and gradual return to service.
+1. Configure the protected `azure-lab` GitHub environment, Azure federated identity, narrowly scoped Azure role, and SSH public-key secret.
+2. Run the manual `what-if` operation using a pinned ServiceTracer commit and review the artifact.
+3. Run `deploy`, record the generated deployment and verification evidence, then test a separate `verify` run.
+4. Back up any retained evidence and run guarded teardown to verify resource removal.
+5. Add Windows VM definitions and domain bootstrap automation.
+6. Add two VPN appliance nodes and associate their NICs with the load-balancer backend pool.
+7. Add source-specific Windows, Azure, VPN, SNMP, and synthetic-check exporters that emit the implemented contract.
+8. Replace the bootstrap self-signed certificate and locally generated token with governed certificate and secret delivery.
+9. Add the live ticketing-system adapter and governed configuration comparison for drift repair and return to service.
