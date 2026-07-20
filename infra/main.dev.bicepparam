@@ -6,3 +6,13 @@ param location = 'canadacentral'
 param virtualNetworkAddressPrefix = '10.20.0.0/16'
 param remoteUserVirtualNetworkAddressPrefix = '10.30.0.0/16'
 param vpnClientAddressPrefix = '10.90.0.0/24'
+
+// Keep compute disabled in the committed development parameter file. Enable it in a
+// local secure parameter override and provide collectorAdminSshPublicKey explicitly.
+param deployOperationsCollector = false
+param collectorPrivateIpAddress = '10.20.40.10'
+param collectorVmSize = 'Standard_B1ms'
+param collectorDataDiskSizeGb = 32
+param collectorPort = 8080
+param collectorSourceRepository = 'https://github.com/anthonyedgar30000/azure-iac-msp-lab.git'
+param collectorSourceRef = 'main'
