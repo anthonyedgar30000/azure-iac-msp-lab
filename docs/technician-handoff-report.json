@@ -1,0 +1,80 @@
+{
+  "scenario": "intermittent_remote_access",
+  "status": "technician_investigation_required",
+  "incident": {
+    "classification": "intermittent_failure",
+    "attempts": 2,
+    "successful_attempts": 1,
+    "failed_attempts": 1
+  },
+  "load_balancer": {
+    "status": "healthy_under_configured_probe",
+    "probe_name": "tcp-443-shallow",
+    "probe_scope": "listener-only",
+    "backend_states": {
+      "VPN-01": {
+        "administrative_state": "active",
+        "probe_status": "healthy"
+      },
+      "VPN-02": {
+        "administrative_state": "active",
+        "probe_status": "healthy"
+      }
+    },
+    "probe_gap_detected": true
+  },
+  "localization": {
+    "suspect_backend": "VPN-02",
+    "healthy_comparison_backend": "VPN-01",
+    "suspect_probe_status": "healthy",
+    "backend_failure_rates": {
+      "VPN-01": 0.0,
+      "VPN-02": 1.0
+    }
+  },
+  "service_tracer_finding": "The configured load-balancer probe is healthy, but failed remote-access sessions are concentrated on VPN-02. Continue the investigation on VPN-02; VPN-01 is the comparison and temporary service path.",
+  "investigation_boundary": {
+    "service_tracer_stops_at": "VPN-02",
+    "exact_root_cause_claimed": false,
+    "statement": "ServiceTracer localizes the incident to the backend investigation boundary. The technician performs device-specific diagnosis, repair, and validation."
+  },
+  "root_cause": {
+    "status": "not_determined_by_servicetracer",
+    "owner": "technician"
+  },
+  "temporary_service_status": "stabilized_under_containment",
+  "technician_workflow": [
+    {
+      "step_id": "temporary-user-reroute",
+      "owner": "technician",
+      "status": "pending",
+      "action": "Temporarily route the affected user through VPN-01.",
+      "purpose": "Restore access and determine whether the failure follows the user or remains associated with VPN-02.",
+      "success_criteria": "The affected user completes the remote-access transaction through VPN-01."
+    },
+    {
+      "step_id": "manual-backend-troubleshooting",
+      "owner": "technician",
+      "status": "pending",
+      "action": "Review VPN-02 manually and correct the suspect VPN profile or configuration.",
+      "purpose": "Perform device-specific troubleshooting outside ServiceTracer's bounded localization role.",
+      "success_criteria": "A specific configuration difference is identified, corrected, and recorded."
+    },
+    {
+      "step_id": "controlled-test-user-validation",
+      "owner": "technician",
+      "status": "pending",
+      "action": "Test VPN-02 directly with a dedicated test user before normal routing resumes.",
+      "purpose": "Validate the repair without exposing the original user to an unverified backend.",
+      "success_criteria": "The test user completes the full remote-access transaction through VPN-02."
+    },
+    {
+      "step_id": "original-user-return",
+      "owner": "technician",
+      "status": "pending",
+      "action": "Return the original user to VPN-02 and repeat the connection test.",
+      "purpose": "Confirm production service for the originally affected user after controlled validation.",
+      "success_criteria": "The original user connects successfully through VPN-02."
+    }
+  ]
+}
