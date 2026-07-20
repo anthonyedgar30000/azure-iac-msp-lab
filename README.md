@@ -8,6 +8,25 @@ The lab uses Azure infrastructure to host an on-premises-style Windows services 
 
 `ServiceTracer` is the deterministic incident-localization component. It traces remote-access transactions assembled from operational evidence, reports the last successful stage and first failed transition, identifies node-specific failure concentration, correlates relevant operational history, and recommends a bounded containment or comparison step.
 
+## Visual portfolio demo
+
+The static operator console in [`docs/`](docs/) presents the bounded VPN incident in a browser-friendly format:
+
+- both VPN backends remain healthy under the configured listener-only load-balancer probe;
+- observed failures are concentrated on `VPN-02` while `VPN-01` remains the healthy comparison;
+- ServiceTracer stops at the `VPN-02` investigation boundary and does not claim the exact root cause;
+- the technician then moves the affected user to `VPN-01`, repairs `VPN-02`, validates it with a test user, and returns the original user.
+
+Run it locally:
+
+```bash
+python3 -m http.server 8000 --directory docs
+```
+
+Then open `http://localhost:8000`. For GitHub Pages, select **Deploy from a branch** and publish `main` from the `/docs` folder after the visual-demo pull request is merged.
+
+The committed JSON is a bounded presentation fixture matching the verified ServiceTracer report contract. It contains no Azure secrets or live private endpoints.
+
 ## Implemented
 
 - Bicep definitions for the segmented virtual network, Log Analytics workspace, Standard public load balancer, and optional private operations collector VM.
@@ -22,7 +41,8 @@ The lab uses Azure infrastructure to host an on-premises-style Windows services 
 - Idempotent duplicate handling and rejection of reused evidence identity with divergent content at both the collector and analysis boundaries.
 - Incomplete transactions reported as evidence gaps rather than filled with invented success states.
 - Load-balancer probe-gap analysis, post-drain containment verification, evidence-preservation guidance, and return-to-service gates.
-- CI that validates collector-to-spool-to-analysis flow, collector VM and bootstrap contracts, source-evidence analysis, replay compatibility, Python tests, and Bicep builds.
+- A responsive static operator console for the bounded `VPN-02` technician-handoff demo.
+- CI that validates collector-to-spool-to-analysis flow, collector VM and bootstrap contracts, source-evidence analysis, replay compatibility, visual-demo boundaries, Python tests, and Bicep builds.
 
 ## Operational input path
 
@@ -71,4 +91,4 @@ Post-containment records complete through `VPN-01`, so ServiceTracer records ser
 - `main` is the trusted baseline.
 - Changes are developed in bounded feature branches.
 - Pull requests distinguish proposed, implemented, deployed, verified, and unresolved work.
-- The collector, analyzer, and collector-VM IaC are implemented and statically tested; no Azure infrastructure or live collector service has been deployed or operationally verified yet.
+- The collector VM has been deployed and manually verified in Azure. Its Python 3.11 and certificate-CN runtime repairs remain documented manual drift pending permanent IaC/bootstrap alignment.
