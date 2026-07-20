@@ -33,7 +33,7 @@ The remote-user VNet is deliberately separate and unpeered so the synthetic clie
 
 ## Load-balancer boundary
 
-The IaC now defines a Standard public Azure Load Balancer with:
+The IaC defines a Standard public Azure Load Balancer with:
 
 - a TCP 443 frontend listener;
 - an empty backend pool reserved for `VPN-01` and `VPN-02`;
@@ -50,20 +50,55 @@ complete remote-access transaction succeeds
 
 ServiceTracer records a **probe gap** when a backend remains probe-healthy while end-to-end transactions through that backend fail downstream.
 
-## Evidence sources
+## Operational evidence boundary
+
+ServiceTracer no longer requires the synthetic attempt generator as its primary input. Source-specific collectors or exports emit structured records that are normalized through versioned adapters.
 
 ```text
-Synthetic user transactions
+Azure load-balancer telemetry
 VPN syslog
-VPN SNMP counters and traps
-Windows event logs
-PowerShell health checks
-Azure platform and network telemetry
-Load-balancer probe and backend state
-Ticket and change history
-Git and IaC state
-          -> ServiceTracer
+NPS and Windows events
+SNMP counters and traps
+Synthetic end-user checks
+Ticket and change records
+        -> source adapters
+        -> canonical evidence records
+        -> correlation and transaction assembly
+        -> deterministic incident analysis
 ```
+
+The source adapter specifies:
+
+- where the event identity, timestamp, source, asset, backend, correlation identity, and event type are found;
+- whether the record represents a service stage, contextual evidence, or operational history;
+- which service stage and outcome a transaction event represents;
+- which timeout, retry, elapsed-time, probe-state, or health fields are retained.
+
+The current contract expects structured records. A deployed collector may parse vendor-specific raw syslog, Windows exports, SNMP output, or Azure telemetry before forwarding the normalized fields. That parsing boundary can change without changing the deterministic analyzer.
+
+## Evidence integrity and assembly
+
+```text
+source event identity
+  -> canonical content fingerprint
+  -> exact duplicate: accept idempotently once
+  -> same identity with different content: reject
+```
+
+Stage evidence is grouped by correlation identity and backend identity. A transaction is analyzable only when ServiceTracer has a contiguous observed path through its success or terminal-failure stage.
+
+```text
+missing stage before terminal outcome
+  -> incomplete transaction
+  -> preserve the evidence gap
+  -> do not invent a successful stage
+```
+
+After an observed terminal failure, later service stages are marked `not_reached`. This is distinct from missing evidence before the failure.
+
+Context observations remain separate from transaction stages. SNMP device health, load-balancer probe state, and similar observations can narrow the investigation without pretending they are proof that a user transaction completed.
+
+Ticket and change records enter through the same adapter boundary but remain operational-history evidence. A related record is an investigation lead, not a blame mechanism and not proof of causation.
 
 ## Incident localization contract
 
@@ -74,34 +109,35 @@ ServiceTracer reports:
 - failure mode, elapsed time, retries, and timeout;
 - node or backend handling the attempt;
 - downstream stages not reached;
+- incomplete transactions and missing evidence;
 - healthy stages that reduce the active search space;
+- contextual device and probe observations;
 - whether load-balancer health evidence is shallower than the failed transaction;
 - relevant prior work on the same asset or service stage;
 - safest high-information next action;
 - remaining uncertainty.
 
-A related ticket is an investigation lead, not a blame mechanism and not proof of causation.
+## Controlled incident fixture
 
-## Controlled demo incident
-
-The load balancer sends attempts to both VPN gateways. `VPN-02` contains a small configuration drift affecting its RADIUS path. Its TCP and TLS stages remain healthy, so the listener-only probe continues to mark it available.
+Mixed source records contain one successful transaction through `VPN-01` and one transaction through `VPN-02` that reaches the RADIUS-request stage before timing out after three retries while waiting for a response.
 
 Expected ServiceTracer output:
 
 ```text
-Remote access is intermittently failing. Nine of twenty attempts stopped
-at the RADIUS response transition after successful TCP and TLS negotiation.
-Failures were concentrated on VPN-02. Address assignment, tunnel creation,
-internal DNS, Kerberos, and RDP were not reached during those attempts.
+Remote access is intermittently failing.
+The failed transaction completed public DNS, backend selection, TCP, TLS,
+and RADIUS request transmission. The first failed stage was RADIUS response.
+Address assignment, tunnel creation, internal DNS, Kerberos, and RDP were not reached.
 
-VPN-02 remained healthy under the listener-only TCP 443 probe while
-end-to-end attempts through that backend failed. The probe does not represent
-the full remote-access transaction.
+VPN-02 remained healthy under the listener-only TCP 443 probe while the
+end-to-end transaction failed. The probe does not represent the full service.
 
 Immediate containment: stop assigning new sessions to VPN-02 while preserving
 its configuration, logs, counters, and active-state evidence. Compare VPN-02
 with VPN-01 and the approved configuration baseline.
 ```
+
+The committed records are regression fixtures for the operational input contract. They are not required by ServiceTracer once live collectors emit the same structured evidence.
 
 ## Containment contract
 
@@ -111,13 +147,13 @@ Containment restores reliable service without destroying useful evidence:
 Stop new sessions to VPN-02
   -> keep new traffic on VPN-01
   -> preserve VPN-02 state
-  -> repeat synthetic transactions
+  -> repeat end-to-end transactions
   -> confirm whether service stabilizes
 ```
 
 Stateful sessions are not assumed to move invisibly between gateways. Existing healthy sessions may remain until they end unless the node presents a security or stability risk. New sessions avoid the suspected node.
 
-The deterministic containment dataset contains twelve successful new-session attempts through `VPN-01` after `VPN-02` is drained. This supports the operational statement that service stabilized under containment. It does not establish the exact defect on `VPN-02`, and it does not establish that `VPN-02` is ready to return.
+Post-containment source records complete through `VPN-01`. This supports the operational statement that service stabilized under containment. It does not establish the exact defect on `VPN-02`, and it does not establish that `VPN-02` is ready to return.
 
 ## Return-to-service gates
 
