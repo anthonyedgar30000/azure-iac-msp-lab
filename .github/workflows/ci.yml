@@ -27,27 +27,15 @@ jobs:
           PYTHONPATH: servicetracer/src
         run: python -m unittest discover -s servicetracer/tests -v
 
-      - name: Generate deterministic demo data
-        env:
-          PYTHONPATH: servicetracer/src
-        run: |
-          python -m servicetracer.demo_data \
-            --scenario incident \
-            --output /tmp/remote_access_attempts.jsonl
-          python -m servicetracer.demo_data \
-            --scenario containment \
-            --output /tmp/containment_attempts.jsonl
-
-      - name: Run CLI smoke test
+      - name: Run source-evidence CLI smoke test
         env:
           PYTHONPATH: servicetracer/src
         run: |
           python -m servicetracer.cli \
-            --attempts /tmp/remote_access_attempts.jsonl \
-            --containment-attempts /tmp/containment_attempts.jsonl \
+            --evidence-records servicetracer/examples/source_records.jsonl \
+            --containment-evidence-records servicetracer/examples/containment_source_records.jsonl \
+            --adapter-config servicetracer/examples/evidence_adapters.json \
             --service-path servicetracer/examples/remote_access_service_path.json \
-            --tickets servicetracer/examples/tickets.json \
-            --load-balancer-state servicetracer/examples/load_balancer_state.json \
             --output /tmp/servicetracer-report.json
           python -m json.tool /tmp/servicetracer-report.json > /dev/null
           python - <<'PY'
@@ -55,10 +43,27 @@ jobs:
           from pathlib import Path
 
           report = json.loads(Path('/tmp/servicetracer-report.json').read_text())
+          assert report['input_mode'] == 'source_evidence'
+          assert report['evidence_ingestion']['summary']['assembled_attempts'] == 2
+          assert report['evidence_ingestion']['summary']['operational_history_records'] == 1
           assert report['load_balancer_assessment']['shallow_probe_gap_detected'] is True
           assert report['containment']['status'] == 'stabilized_under_containment'
           assert report['containment']['verification']['success_rate'] == 1.0
+          assert report['containment']['evidence_ingestion']['summary']['assembled_attempts'] == 2
           PY
+
+      - name: Verify preassembled replay compatibility
+        env:
+          PYTHONPATH: servicetracer/src
+        run: |
+          python -m servicetracer.demo_data \
+            --scenario incident \
+            --output /tmp/remote_access_attempts.jsonl
+          python -m servicetracer.cli \
+            --attempts /tmp/remote_access_attempts.jsonl \
+            --service-path servicetracer/examples/remote_access_service_path.json \
+            --output /tmp/replay-report.json
+          python -m json.tool /tmp/replay-report.json > /dev/null
 
   bicep-validation:
     name: Bicep lint and build
