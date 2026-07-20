@@ -52,7 +52,7 @@ ServiceTracer records a **probe gap** when a backend remains probe-healthy while
 
 ## Operational evidence boundary
 
-ServiceTracer no longer requires the synthetic attempt generator as its primary input. Source-specific collectors or exports emit structured records that are normalized through versioned adapters.
+ServiceTracer does not require the synthetic attempt generator as its primary input. Source systems emit structured records through exporters, parsers, or collectors. Versioned adapters then map those records into stable ServiceTracer contracts.
 
 ```text
 Azure load-balancer telemetry
@@ -61,8 +61,10 @@ NPS and Windows events
 SNMP counters and traps
 Synthetic end-user checks
 Ticket and change records
-        -> source adapters
-        -> canonical evidence records
+        -> source-specific parser or exporter
+        -> operational collector
+        -> durable JSONL evidence spool
+        -> versioned source adapters
         -> correlation and transaction assembly
         -> deterministic incident analysis
 ```
@@ -74,7 +76,36 @@ The source adapter specifies:
 - which service stage and outcome a transaction event represents;
 - which timeout, retry, elapsed-time, probe-state, or health fields are retained.
 
-The current contract expects structured records. A deployed collector may parse vendor-specific raw syslog, Windows exports, SNMP output, or Azure telemetry before forwarding the normalized fields. That parsing boundary can change without changing the deterministic analyzer.
+Vendor-specific parsing remains outside the deterministic analyzer. A parser may change from one VPN vendor or monitoring platform to another while still emitting the same stable evidence contract.
+
+## Collector boundary
+
+The operational collector is intentionally narrow. It validates transport-level record shape and durability but does not decide what the record means.
+
+```text
+received source record
+  -> validate JSON object, source type, event discriminator, and size
+  -> establish event identity and canonical fingerprint
+  -> preflight the whole batch
+  -> exact duplicate: acknowledge idempotently
+  -> reused identity with different content: reject
+  -> append original record to spool
+  -> flush to durable storage
+  -> return receipt
+```
+
+Supported collection paths:
+
+- JSON, JSON-array, and JSONL import for existing exports and scheduled jobs;
+- bearer-authenticated HTTP or HTTPS `POST /v1/records`;
+- local structured-syslog TCP or UDP messages containing `@servicetracer ` followed by a JSON record;
+- a PowerShell sender for Windows-side exporters.
+
+The HTTP collector exposes an unauthenticated `/healthz` endpoint containing no evidence and an authenticated `/v1/status` endpoint. The collector is intended for the isolated operations subnet and must not be exposed directly to the public Internet.
+
+The structured-syslog listener binds to localhost by default because it has no application-layer authentication. A local vendor parser or forwarding sidecar converts raw device logs into the structured evidence contract. Remote sources should use authenticated HTTPS or another protected transport.
+
+One process owns one spool. Multiple collectors use separate spools, all of which can be passed to ServiceTracer as repeated `--evidence-records` inputs.
 
 ## Evidence integrity and assembly
 
@@ -84,6 +115,8 @@ source event identity
   -> exact duplicate: accept idempotently once
   -> same identity with different content: reject
 ```
+
+The collector protects identity before durable write. The evidence-normalization layer independently repeats identity validation before analysis. These are separate boundaries: collector acceptance means the record was durably received; analysis acceptance means the record mapped cleanly into the configured evidence contract.
 
 Stage evidence is grouped by correlation identity and backend identity. A transaction is analyzable only when ServiceTracer has a contiguous observed path through its success or terminal-failure stage.
 
@@ -137,7 +170,7 @@ its configuration, logs, counters, and active-state evidence. Compare VPN-02
 with VPN-01 and the approved configuration baseline.
 ```
 
-The committed records are regression fixtures for the operational input contract. They are not required by ServiceTracer once live collectors emit the same structured evidence.
+The committed records are regression fixtures for the operational input contract. They are not required once live collectors emit the same structured evidence.
 
 ## Containment contract
 
