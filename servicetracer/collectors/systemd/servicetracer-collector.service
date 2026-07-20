@@ -1,0 +1,21 @@
+[Unit]
+Description=ServiceTracer operational evidence collector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=servicetracer
+Group=servicetracer
+EnvironmentFile=/etc/servicetracer/collector.env
+ExecStart=/opt/servicetracer/bin/servicetracer-collector http --listen 0.0.0.0 --port 8080 --spool /var/lib/servicetracer/evidence.jsonl --tls-cert /etc/servicetracer/tls/collector.crt --tls-key /etc/servicetracer/tls/collector.key
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/servicetracer
+
+[Install]
+WantedBy=multi-user.target

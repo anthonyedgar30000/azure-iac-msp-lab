@@ -27,7 +27,7 @@ jobs:
           PYTHONPATH: servicetracer/src
         run: |
           python -m unittest discover -s servicetracer/tests -v > /tmp/tests.log 2>&1
-          tail -n 40 /tmp/tests.log
+          tail -n 50 /tmp/tests.log
 
       - name: Upload unit test log
         if: always()
@@ -37,13 +37,32 @@ jobs:
           path: /tmp/tests.log
           if-no-files-found: error
 
-      - name: Run source-evidence CLI smoke test
+      - name: Collect operational evidence into durable spools
+        env:
+          PYTHONPATH: servicetracer/src
+        run: |
+          python -m servicetracer.collector_cli ingest \
+            --spool /tmp/incident-evidence.jsonl \
+            --input servicetracer/examples/source_records.jsonl \
+            > /tmp/incident-collector-receipt.json
+          python -m servicetracer.collector_cli ingest \
+            --spool /tmp/containment-evidence.jsonl \
+            --input servicetracer/examples/containment_source_records.jsonl \
+            > /tmp/containment-collector-receipt.json
+          python -m servicetracer.collector_cli status \
+            --spool /tmp/incident-evidence.jsonl \
+            > /tmp/collector-status.json
+          python -m json.tool /tmp/incident-collector-receipt.json > /dev/null
+          python -m json.tool /tmp/containment-collector-receipt.json > /dev/null
+          python -m json.tool /tmp/collector-status.json > /dev/null
+
+      - name: Run collected source-evidence CLI smoke test
         env:
           PYTHONPATH: servicetracer/src
         run: |
           python -m servicetracer.cli \
-            --evidence-records servicetracer/examples/source_records.jsonl \
-            --containment-evidence-records servicetracer/examples/containment_source_records.jsonl \
+            --evidence-records /tmp/incident-evidence.jsonl \
+            --containment-evidence-records /tmp/containment-evidence.jsonl \
             --adapter-config servicetracer/examples/evidence_adapters.json \
             --service-path servicetracer/examples/remote_access_service_path.json \
             --output /tmp/servicetracer-report.json
@@ -53,6 +72,9 @@ jobs:
           from pathlib import Path
 
           report = json.loads(Path('/tmp/servicetracer-report.json').read_text())
+          status = json.loads(Path('/tmp/collector-status.json').read_text())
+          assert status['records'] > 0
+          assert status['records'] == status['unique_evidence_identities']
           assert report['input_mode'] == 'source_evidence'
           assert report['evidence_ingestion']['summary']['assembled_attempts'] == 2
           assert report['evidence_ingestion']['summary']['operational_history_records'] == 1

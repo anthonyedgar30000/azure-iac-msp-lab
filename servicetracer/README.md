@@ -2,20 +2,49 @@
 
 ServiceTracer analyzes ordered service transactions assembled from operational evidence. It does not infer an unobserved root cause. It identifies the last successful stage, first failed transition, node-specific failure concentration, later stages not reached, relevant operational history, load-balancer probe gaps, and a bounded containment or comparison action.
 
-## Primary run path
+## Collector-first run path
 
 ```bash
 python -m pip install -e servicetracer
 
+servicetracer-collector ingest \
+  --spool /tmp/incident-evidence.jsonl \
+  --input servicetracer/examples/source_records.jsonl
+
+servicetracer-collector ingest \
+  --spool /tmp/containment-evidence.jsonl \
+  --input servicetracer/examples/containment_source_records.jsonl
+
 servicetracer \
-  --evidence-records servicetracer/examples/source_records.jsonl \
-  --containment-evidence-records servicetracer/examples/containment_source_records.jsonl \
+  --evidence-records /tmp/incident-evidence.jsonl \
+  --containment-evidence-records /tmp/containment-evidence.jsonl \
   --adapter-config servicetracer/examples/evidence_adapters.json \
   --service-path servicetracer/examples/remote_access_service_path.json \
   --output servicetracer-report.json
 ```
 
-`--evidence-records` may be repeated for separate collector exports. The current adapters accept structured records representing:
+The `ingest` command represents exports and batch jobs. The same spool can receive authenticated HTTP or HTTPS submissions and local structured-syslog messages. See `collectors/README.md`.
+
+## Live collector
+
+```bash
+export SERVICETRACER_COLLECTOR_TOKEN='replace-with-a-secret'
+
+servicetracer-collector http \
+  --listen 0.0.0.0 \
+  --port 8080 \
+  --spool /var/lib/servicetracer/evidence.jsonl \
+  --tls-cert /etc/servicetracer/tls/collector.crt \
+  --tls-key /etc/servicetracer/tls/collector.key
+```
+
+The collector accepts one record object or an array at `POST /v1/records`. Exact duplicate evidence is accepted idempotently. Reusing an `event_id` with different content is rejected before the batch is written. Accepted records are flushed to disk before success is returned.
+
+The collector preserves the original structured record. It does not decide which service stage the record represents. That interpretation remains in the versioned adapter configuration.
+
+## Current evidence adapters
+
+The current adapters accept structured records representing:
 
 - Azure load-balancer selection and backend probe state;
 - VPN syslog transaction stages and timeout/retry evidence;
@@ -24,12 +53,13 @@ servicetracer \
 - synthetic end-user transaction stages;
 - ticket and change-history records.
 
-The adapter configuration maps source fields and event types into ServiceTracer's stable stage, context, and operational-history contracts. Real collectors can emit the same structured records without changing the analyzer.
+The adapter configuration maps source fields and event types into ServiceTracer's stable stage, context, and operational-history contracts. Vendor-specific raw-log parsing can change without changing the analyzer.
 
 ## Evidence rules
 
 - Event identity is idempotent: an exact duplicate is counted and ignored.
 - Reusing an event ID with different content is rejected.
+- Collector batches are preflighted so an identity conflict prevents partial writes.
 - Events are grouped by correlation identity and backend identity.
 - A transaction must have contiguous observable evidence through its terminal stage.
 - Missing evidence is reported as an incomplete transaction; ServiceTracer does not invent successful stages.
@@ -57,4 +87,4 @@ The adapter configuration maps source fields and event types into ServiceTracer'
 
 ## Replay and regression mode
 
-The older preassembled-attempt format and deterministic data generator remain available for regression testing and incident replay. They are not required by the primary operational input path.
+The older preassembled-attempt format and deterministic data generator remain available for regression testing and incident replay. They are not required by the operational collector or primary analysis path.
