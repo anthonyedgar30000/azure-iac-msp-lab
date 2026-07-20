@@ -58,6 +58,21 @@ class AzureLifecycleWorkflowTests(unittest.TestCase):
         ):
             self.assertIn(expected, VERIFY)
 
+    def test_verification_failure_writes_actionable_evidence(self) -> None:
+        for expected in (
+            "write_result 'failed'",
+            "failure_reason",
+            "SERVICETRACER_VERIFY_FAILED",
+            "VERIFY_PHASE='cloud-init-wait'",
+            "cloud-init status --long",
+            "lsblk -f",
+            "findmnt",
+            "systemctl status servicetracer-collector.service",
+            "journalctl -u servicetracer-collector.service",
+            "/var/log/cloud-init-output.log",
+        ):
+            self.assertIn(expected, VERIFY)
+
     def test_verification_does_not_print_collector_token(self) -> None:
         self.assertIn("source \"\\${TOKEN_FILE}\"", VERIFY)
         self.assertNotIn("echo \"\\${SERVICETRACER_COLLECTOR_TOKEN}", VERIFY)
