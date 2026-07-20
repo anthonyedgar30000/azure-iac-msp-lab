@@ -12,6 +12,7 @@ from .containment import (
     build_containment_plan,
     load_json_object,
 )
+from .demo_report import build_technician_handoff
 from .evidence import derive_load_balancer_state, load_evidence_bundle
 
 
@@ -55,6 +56,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--containment-evidence-records",
         action="append",
         help="Optional structured source records captured after containment",
+    )
+    parser.add_argument(
+        "--report-view",
+        choices=("full", "technician-handoff"),
+        default="full",
+        help=(
+            "Report shape. The technician-handoff view deliberately stops at the "
+            "affected VPN backend and leaves device-specific diagnosis to the technician."
+        ),
     )
     parser.add_argument("--output", help="Optional report JSON path")
     return parser
@@ -133,7 +143,26 @@ def main() -> int:
     if containment_bundle:
         report["containment"]["evidence_ingestion"] = containment_bundle.report()
 
-    rendered = json.dumps(report, indent=2, sort_keys=True)
+    output_report = report
+    if args.report_view == "technician-handoff":
+        load_balancer_assessment = report.get("load_balancer_assessment")
+        if not load_balancer_assessment:
+            parser.error(
+                "--report-view technician-handoff requires load-balancer state or "
+                "matching load-balancer context evidence"
+            )
+        output_report = build_technician_handoff(
+            report,
+            load_balancer_assessment,
+            report.get("containment"),
+        )
+        output_report["input_mode"] = input_mode
+        if incident_bundle:
+            output_report["evidence_ingestion_summary"] = (
+                incident_bundle.ingestion_summary
+            )
+
+    rendered = json.dumps(output_report, indent=2, sort_keys=True)
 
     if args.output:
         Path(args.output).write_text(rendered + "\n", encoding="utf-8")
