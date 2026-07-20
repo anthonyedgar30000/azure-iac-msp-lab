@@ -99,4 +99,4 @@ One collector process should own a spool file. Multiple collectors should use se
 
 ## Service installation
 
-A hardened example unit is provided at `systemd/servicetracer-collector.service`. The paths and service account must be created as part of deployment. No collector service or certificate has been deployed to Azure yet.
+A hardened example unit is provided at `systemd/servicetracer-collector.service`. The Azure IaC now also contains an optional private collector VM, separately managed evidence disk, and cloud-init bootstrap. Deployment and verification requirements are documented in [`../../docs/collector-vm.md`](../../docs/collector-vm.md). No collector VM or service has been deployed to Azure yet.
