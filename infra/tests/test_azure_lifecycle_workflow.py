@@ -31,6 +31,12 @@ class AzureLifecycleWorkflowTests(unittest.TestCase):
         self.assertIn("deployOperationsCollector=true", WORKFLOW)
         self.assertIn("if: inputs.operation == 'deploy'", WORKFLOW)
 
+    def test_collector_vm_size_is_explicit_and_forwarded(self) -> None:
+        self.assertIn("collector_vm_size:", WORKFLOW)
+        self.assertIn("COLLECTOR_VM_SIZE", WORKFLOW)
+        self.assertIn('collectorVmSize="$COLLECTOR_VM_SIZE"', WORKFLOW)
+        self.assertIn("collector_vm_size:$collectorVmSize", WORKFLOW)
+
     def test_teardown_has_exact_confirmation_and_narrow_group_name(self) -> None:
         self.assertIn("CONFIRM_TEARDOWN", WORKFLOW)
         self.assertIn('[[ "$CONFIRM_TEARDOWN" == "$RESOURCE_GROUP" ]]', WORKFLOW)
