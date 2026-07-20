@@ -1,6 +1,8 @@
 # ServiceTracer
 
-ServiceTracer analyzes ordered service transactions assembled from operational evidence. It does not infer an unobserved root cause. It identifies the last successful stage, first failed transition, node-specific failure concentration, later stages not reached, relevant operational history, load-balancer probe gaps, and a bounded containment or comparison action.
+ServiceTracer analyzes ordered service transactions assembled from operational evidence. It does not infer an unobserved root cause. Its full report identifies the last successful stage, first failed transition, node-specific failure concentration, later stages not reached, relevant operational history, load-balancer probe gaps, and a bounded containment or comparison action.
+
+The portfolio demo uses a deliberately narrower technician-handoff view. It verifies that the configured load-balancer probe is healthy, identifies `VPN-02` as the backend associated with failed sessions, and stops there. Device-specific diagnosis, repair, and return-to-service validation remain the technician's responsibility.
 
 ## Collector-first run path
 
@@ -24,6 +26,28 @@ servicetracer \
 ```
 
 The `ingest` command represents exports and batch jobs. The same spool can receive authenticated HTTP or HTTPS submissions and local structured-syslog messages. See `collectors/README.md`.
+
+## Technician-handoff demo
+
+```bash
+servicetracer \
+  --evidence-records /tmp/incident-evidence.jsonl \
+  --containment-evidence-records /tmp/containment-evidence.jsonl \
+  --adapter-config servicetracer/examples/evidence_adapters.json \
+  --service-path servicetracer/examples/remote_access_service_path.json \
+  --report-view technician-handoff \
+  --output technician-handoff-report.json
+```
+
+The bounded demo report says only what the evidence supports at the intended operational boundary:
+
+- the configured load-balancer probe is healthy;
+- failed remote-access sessions are concentrated on `VPN-02`;
+- `VPN-01` is the healthy comparison and temporary service path;
+- ServiceTracer stops at `VPN-02` and does not claim the exact configuration defect;
+- the technician temporarily moves the affected user to `VPN-01`, repairs `VPN-02`, validates it with a test user, and then returns the original user to `VPN-02`.
+
+The report intentionally omits deeper analyzer-stage conclusions such as the RADIUS-response stage from the user-facing demo view.
 
 ## Live collector
 
@@ -75,6 +99,8 @@ The adapter configuration maps source fields and event types into ServiceTracer'
 - `CHG-1042` returned from the ingested ticket record as related operational history;
 - `VPN-02` still marked healthy by the ingested listener-only TCP 443 probe state;
 - shallow-probe gap detected because the full transaction is failing downstream.
+
+These details remain available in the full report for engineering and regression purposes. The technician-handoff view exposes only the bounded load-balancer and backend localization needed for the demo.
 
 ## Expected containment result
 
