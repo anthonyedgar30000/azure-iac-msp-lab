@@ -25,7 +25,12 @@ jobs:
       - name: Run unit tests
         env:
           PYTHONPATH: servicetracer/src
-        run: python -m unittest discover -s servicetracer/tests -v
+        run: |
+          if ! python -m unittest discover -s servicetracer/tests -v > /tmp/tests.log 2>&1; then
+            tail -n 120 /tmp/tests.log
+            exit 1
+          fi
+          tail -n 40 /tmp/tests.log
 
       - name: Run source-evidence CLI smoke test
         env:
