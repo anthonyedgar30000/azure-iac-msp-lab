@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ServiceTracer visual demo for an intermittent remote-access incident.">
+  <title>ServiceTracer — Remote Access Incident</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div>
+        <p class="eyebrow">ServiceTracer operator console</p>
+        <h1>Intermittent remote-access failures</h1>
+        <p class="subtitle">A bounded incident-localization demo. ServiceTracer narrows the investigation; the technician verifies and repairs the cause.</p>
+      </div>
+      <div id="incident-chip" class="status-chip status-neutral" aria-live="polite">Awaiting analysis</div>
+    </header>
+
+    <section class="control-bar" aria-label="Demo controls">
+      <div>
+        <span class="control-label">Incident</span>
+        <strong>Users intermittently fail to connect through the VPN service</strong>
+      </div>
+      <div class="button-row">
+        <button id="run-analysis" class="button button-primary" type="button">Run incident analysis</button>
+        <button id="reset-demo" class="button button-secondary" type="button">Reset</button>
+      </div>
+    </section>
+
+    <section class="panel topology-panel" aria-labelledby="topology-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Observed service boundary</p>
+          <h2 id="topology-title">Remote-access path</h2>
+        </div>
+        <p id="evidence-summary" class="quiet">No evidence analyzed yet.</p>
+      </div>
+
+      <div class="topology" aria-label="Remote user, load balancer, VPN-01 and VPN-02 topology">
+        <article class="node node-user">
+          <span class="node-kicker">Client</span>
+          <strong>Remote user</strong>
+          <span class="node-detail">Connection attempts</span>
+        </article>
+
+        <div class="connector connector-down" aria-hidden="true"></div>
+
+        <article id="load-balancer-node" class="node node-load-balancer node-pending">
+          <span class="node-kicker">Traffic distribution</span>
+          <strong>Azure Load Balancer</strong>
+          <span id="load-balancer-state" class="node-detail">Not evaluated</span>
+          <span id="load-balancer-badge" class="node-badge badge-neutral">TCP 443 probe</span>
+        </article>
+
+        <div class="branch" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div class="gateway-grid">
+          <article id="vpn01-node" class="node node-gateway node-pending">
+            <span class="node-kicker">Backend</span>
+            <strong>VPN-01</strong>
+            <span id="vpn01-rate" class="metric">—</span>
+            <span class="node-detail">Observed failure rate</span>
+            <span id="vpn01-badge" class="node-badge badge-neutral">Probe unknown</span>
+          </article>
+
+          <article id="vpn02-node" class="node node-gateway node-pending">
+            <span class="node-kicker">Backend</span>
+            <strong>VPN-02</strong>
+            <span id="vpn02-rate" class="metric">—</span>
+            <span class="node-detail">Observed failure rate</span>
+            <span id="vpn02-badge" class="node-badge badge-neutral">Probe unknown</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="analysis-result" class="result-grid is-hidden" aria-live="polite">
+      <article class="panel finding-panel">
+        <p class="eyebrow">ServiceTracer finding</p>
+        <h2>Continue the investigation on VPN-02</h2>
+        <p id="finding-text" class="finding-text"></p>
+        <dl class="fact-grid">
+          <div>
+            <dt>Load balancer</dt>
+            <dd id="fact-load-balancer">—</dd>
+          </div>
+          <div>
+            <dt>Affected backend</dt>
+            <dd id="fact-suspect">—</dd>
+          </div>
+          <div>
+            <dt>Healthy comparison</dt>
+            <dd id="fact-healthy">—</dd>
+          </div>
+          <div>
+            <dt>Root cause</dt>
+            <dd id="fact-root-cause">—</dd>
+          </div>
+        </dl>
+      </article>
+
+      <article class="panel boundary-panel">
+        <p class="eyebrow">Investigation boundary</p>
+        <h2>ServiceTracer stops here</h2>
+        <div class="boundary-marker">
+          <span>Localized to</span>
+          <strong id="boundary-backend">VPN-02</strong>
+        </div>
+        <p id="boundary-statement"></p>
+        <div class="callout">
+          A healthy listener probe confirms only the configured probe scope. It does not prove that the complete user transaction succeeds.
+        </div>
+      </article>
+    </section>
+
+    <section id="workflow-panel" class="panel workflow-panel is-hidden" aria-labelledby="workflow-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Technician-owned work</p>
+          <h2 id="workflow-title">Manual verification and recovery</h2>
+        </div>
+        <p class="quiet">Click each step during the live demo to show progress.</p>
+      </div>
+      <ol id="workflow-list" class="workflow-list"></ol>
+      <div id="completion-message" class="completion-message is-hidden">
+        Controlled validation complete. The original user has been returned to VPN-02 and service is verified.
+      </div>
+    </section>
+
+    <footer>
+      <span>ServiceTracer v0.4 visual demo</span>
+      <span>Static presentation layer — no Azure secrets or live endpoints exposed</span>
+    </footer>
+  </main>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
