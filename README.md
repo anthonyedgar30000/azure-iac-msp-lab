@@ -10,18 +10,19 @@ The lab uses Azure infrastructure to host an on-premises-style Windows services 
 
 ## Implemented
 
-- Bicep definitions for the segmented virtual network, Log Analytics workspace, and Standard public load balancer.
+- Bicep definitions for the segmented virtual network, Log Analytics workspace, Standard public load balancer, and optional private operations collector VM.
 - Separate edge, identity, server, operations, and remote-user subnets with NSG boundaries.
 - A listener-only TCP 443 load-balancer health probe and empty VPN backend pool.
+- An optional Ubuntu collector VM with no public IP, a system-assigned identity, Trusted Launch, static private addressing, and a separately managed evidence disk that detaches rather than being deleted with the VM.
+- Cloud-init that mounts the evidence disk without overwriting an existing filesystem, installs a pinned ServiceTracer source ref, generates a local bearer token and TLS certificate, starts the collector, and verifies its health endpoint.
 - A durable ServiceTracer collector with JSON/JSONL import, authenticated HTTP or HTTPS ingestion, local structured-syslog ingestion, spool health reporting, size limits, and restart-safe identity indexing.
 - A Windows PowerShell sender with bearer authentication and bounded retries.
-- A hardened example systemd unit for the collector.
 - Deterministic source adapters for load-balancer telemetry, VPN syslog, NPS/Windows events, SNMP collectors, synthetic checks, and ticket/change systems.
 - Transaction assembly by correlation identity, ordered service stage, backend identity, timestamp, timeout, and retry evidence.
 - Idempotent duplicate handling and rejection of reused evidence identity with divergent content at both the collector and analysis boundaries.
 - Incomplete transactions reported as evidence gaps rather than filled with invented success states.
 - Load-balancer probe-gap analysis, post-drain containment verification, evidence-preservation guidance, and return-to-service gates.
-- CI that validates collector-to-spool-to-analysis flow, source-evidence analysis, replay compatibility, Python tests, and Bicep builds.
+- CI that validates collector-to-spool-to-analysis flow, collector VM and bootstrap contracts, source-evidence analysis, replay compatibility, Python tests, and Bicep builds.
 
 ## Operational input path
 
@@ -55,6 +56,10 @@ servicetracer \
 
 The committed source-record files are regression fixtures. The collector and analyzer accept the same contract from actual monitoring, Windows, network-appliance, synthetic-check, and ticketing integrations.
 
+## Azure collector deployment boundary
+
+The committed development parameters keep `deployOperationsCollector=false` to avoid accidental compute cost. A real deployment must provide an SSH public key, pin a tested source commit, and complete the verification gates documented in [`docs/collector-vm.md`](docs/collector-vm.md).
+
 ## Current controlled incident
 
 Mixed source records show one successful attempt through `VPN-01` and one attempt through `VPN-02` that completes public DNS, load-balancer selection, TCP, TLS, and RADIUS request transmission before timing out waiting for a RADIUS response. Load-balancer context still marks `VPN-02` healthy under a listener-only TCP 443 probe. ServiceTracer recommends draining new sessions from the suspected node, preserving evidence, comparing it with `VPN-01` and the approved configuration, and reviewing the overlapping change record.
@@ -66,4 +71,4 @@ Post-containment records complete through `VPN-01`, so ServiceTracer records ser
 - `main` is the trusted baseline.
 - Changes are developed in bounded feature branches.
 - Pull requests distinguish proposed, implemented, deployed, verified, and unresolved work.
-- The collector and analysis code are implemented and tested; no Azure infrastructure or live collector service has been deployed or operationally verified yet.
+- The collector, analyzer, and collector-VM IaC are implemented and statically tested; no Azure infrastructure or live collector service has been deployed or operationally verified yet.
