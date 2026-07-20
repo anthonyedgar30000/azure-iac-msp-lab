@@ -4,13 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "servicetracer"
-version = "0.2.0"
+version = "0.3.0"
 description = "Deterministic service-path incident localization from operational evidence"
 requires-python = ">=3.11"
 dependencies = []
 
 [project.scripts]
 servicetracer = "servicetracer.cli:main"
+servicetracer-collector = "servicetracer.collector_cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
