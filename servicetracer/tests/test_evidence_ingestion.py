@@ -106,7 +106,7 @@ class ServiceTracerEvidenceIngestionTests(unittest.TestCase):
             record
             for record in records
             if not (
-                record.get("transaction_id") == "ATT-001"
+                record.get("session_id") == "ATT-001"
                 and record.get("event") == "tls_completed"
             )
         ]
