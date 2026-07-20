@@ -1,0 +1,187 @@
+{
+  "schema_version": "1.0",
+  "adapters": {
+    "synthetic_probe": {
+      "fields": {
+        "event_id": "event_id",
+        "observed_at": "timestamp",
+        "source_id": "probe_id",
+        "asset_id": "target",
+        "gateway": "gateway",
+        "correlation_id": "transaction_id",
+        "event_type": "event"
+      },
+      "events": {
+        "public_dns_resolved": {
+          "kind": "stage",
+          "stage_id": "public_dns",
+          "status": "success",
+          "elapsed_ms_field": "elapsed_ms"
+        },
+        "internal_dns_resolved": {
+          "kind": "stage",
+          "stage_id": "internal_dns",
+          "status": "success",
+          "elapsed_ms_field": "elapsed_ms"
+        },
+        "rdp_session_usable": {
+          "kind": "stage",
+          "stage_id": "rdp_session",
+          "status": "success",
+          "elapsed_ms_field": "elapsed_ms"
+        }
+      }
+    },
+    "azure_load_balancer": {
+      "fields": {
+        "event_id": "event_id",
+        "observed_at": "timestamp",
+        "source_id": "load_balancer_id",
+        "asset_id": "backend_id",
+        "gateway": "backend_id",
+        "correlation_id": "transaction_id",
+        "event_type": "event"
+      },
+      "events": {
+        "backend_selected": {
+          "kind": "stage",
+          "stage_id": "load_balancer_selection",
+          "status": "success",
+          "elapsed_ms_field": "elapsed_ms"
+        },
+        "backend_probe_state": {
+          "kind": "context",
+          "context_type": "load_balancer_backend_state",
+          "attributes": {
+            "load_balancer_id": "load_balancer_id",
+            "selection_mode": "selection_mode",
+            "backend_id": "backend_id",
+            "probe_name": "probe.name",
+            "probe_protocol": "probe.protocol",
+            "probe_port": "probe.port",
+            "probe_scope": "probe.scope",
+            "probe_status": "probe_status",
+            "administrative_state": "administrative_state"
+          }
+        }
+      }
+    },
+    "vpn_syslog": {
+      "fields": {
+        "event_id": "event_id",
+        "observed_at": "timestamp",
+        "source_id": "device",
+        "asset_id": "device",
+        "gateway": "device",
+        "correlation_id": "session_id",
+        "event_type": "event"
+      },
+      "events": {
+        "tcp_established": {
+          "kind": "stage",
+          "stage_id": "tcp_connect",
+          "status": "success",
+          "elapsed_ms_field": "elapsed_ms"
+        },
+        "tls_completed": {
+          "kind": "stage",
+          "stage_id": "tls_handshake",
+          "status": "success",
+          "elapsed_ms_field": "elapsed_ms"
+        },
+        "radius_request_sent": {
+          "kind": "stage",
+          "stage_id": "radius_request",
+          "status": "success",
+          "elapsed_ms_field": "elapsed_ms"
+        },
+        "radius_response_timeout": {
+          "kind": "stage",
+          "stage_id": "radius_response",
+          "status": "timeout",
+          "elapsed_ms_field": "elapsed_ms",
+          "retries_field": "retries",
+          "timeout_ms_field": "timeout_ms"
+        },
+        "vpn_address_assigned": {
+          "kind": "stage",
+          "stage_id": "vpn_address_assignment",
+          "status": "success",
+          "elapsed_ms_field": "elapsed_ms"
+        },
+        "tunnel_established": {
+          "kind": "stage",
+          "stage_id": "tunnel_established",
+          "status": "success",
+          "elapsed_ms_field": "elapsed_ms"
+        }
+      }
+    },
+    "nps_windows": {
+      "fields": {
+        "event_id": "event_id",
+        "observed_at": "timestamp",
+        "source_id": "computer",
+        "asset_id": "computer",
+        "gateway": "gateway",
+        "correlation_id": "transaction_id",
+        "event_type": "event"
+      },
+      "events": {
+        "radius_access_accept": {
+          "kind": "stage",
+          "stage_id": "radius_response",
+          "status": "success",
+          "elapsed_ms_field": "elapsed_ms"
+        },
+        "kerberos_ticket_issued": {
+          "kind": "stage",
+          "stage_id": "kerberos_ticket",
+          "status": "success",
+          "elapsed_ms_field": "elapsed_ms"
+        }
+      }
+    },
+    "snmp_collector": {
+      "fields": {
+        "event_id": "event_id",
+        "observed_at": "timestamp",
+        "source_id": "collector",
+        "asset_id": "device",
+        "gateway": "device",
+        "event_type": "event"
+      },
+      "events": {
+        "device_health_sample": {
+          "kind": "context",
+          "context_type": "network_device_health",
+          "attributes": {
+            "interface_state": "interface_state",
+            "cpu_percent": "cpu_percent",
+            "memory_percent": "memory_percent",
+            "packet_discards": "packet_discards",
+            "active_vpn_sessions": "active_vpn_sessions"
+          }
+        }
+      }
+    },
+    "ticketing": {
+      "fields": {
+        "event_id": "event_id",
+        "event_type": "record_type"
+      },
+      "events": {
+        "change_record": {
+          "kind": "ticket",
+          "ticket": {
+            "ticket_id_field": "ticket_id",
+            "summary_field": "summary",
+            "changed_at_field": "changed_at",
+            "assets_field": "assets",
+            "service_stages_field": "service_stages"
+          }
+        }
+      }
+    }
+  }
+}
