@@ -72,6 +72,16 @@ mkdir -p "$ARTIFACT_DIR"
 [[ "$REQUESTED_BACKEND_SIZE" == auto || "$REQUESTED_BACKEND_SIZE" =~ ^Standard_[A-Za-z0-9_]+$ ]]
 [[ "$REQUESTED_COLLECTOR_SIZE" == auto || "$REQUESTED_COLLECTOR_SIZE" =~ ^Standard_[A-Za-z0-9_]+$ ]]
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+bash "$script_dir/check_collector_image_drift.sh" \
+  --mode guard \
+  --resource-group "$RESOURCE_GROUP" \
+  --prefix "$PREFIX" \
+  --environment "$LAB_ENVIRONMENT" \
+  --desired-image-file "$script_dir/../config/collector-image.json" \
+  --artifact-dir "$ARTIFACT_DIR" \
+  --github-output "$GITHUB_OUTPUT_PATH"
+
 collector_vm_name="vm-stcollector-${PREFIX}-${LAB_ENVIRONMENT}"
 current_collector_size="$(az vm show \
   --resource-group "$RESOURCE_GROUP" \
