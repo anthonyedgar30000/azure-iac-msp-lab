@@ -3,8 +3,10 @@
   "project": "ServiceTracer — Governed Azure Operations Lab",
   "updated_on": "2026-07-21",
   "workspace_authority": {
-    "canonical_conversation_workspace": "The ChatGPT project preserves working context, decisions under discussion, and navigation across the six streams.",
-    "implementation_authority": "GitHub, pull requests, CI, and repository .project state determine implemented and coordinated work.",
+    "umbrella_conversation_workspace": "HELIX — Governed Agent Engineering",
+    "bounded_repository_workstream": "ServiceTracer — Governed Azure Operations Lab",
+    "canonical_conversation_workspace": "HELIX — Governed Agent Engineering is the umbrella ChatGPT project for governed agent architecture and coordination. ServiceTracer — Governed Azure Operations Lab is the bounded repository workstream for this implementation. Conversation context supports reasoning; it does not override repository or runtime evidence.",
+    "implementation_authority": "GitHub, pull requests, CI, and repository .project state determine implemented and coordinated ServiceTracer work.",
     "azure_authority": "Current Azure control-plane, guest, workflow-artifact, cost, health, configuration, and operational evidence determine environment state.",
     "conflict_rule": "Surface conflicts explicitly. Newer or higher-authority evidence does not silently erase historical evidence."
   },
