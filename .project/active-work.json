@@ -48,17 +48,7 @@
       "merge_commit": "f40ef0fab0ae920c23f4b6556c25dc4f3b99b68b"
     }
   ],
-  "workstreams": [
-    {
-      "workstream_id": "post-pr25-state-and-workspace-reconciliation",
-      "branch": "docs/reconcile-pr25-helix-workspace",
-      "pull_request": null,
-      "write_owner": "ChatGPT project: HELIX — Governed Agent Engineering",
-      "scope": "Reconcile PR #25 as merged and CI-verified, release its implementation branch ownership, and clarify HELIX as the umbrella conversational workspace with ServiceTracer as the bounded repository workstream. Permitted paths: .project/active-work.json, .project/workstream-catalog.json, .project/README.md, .project/environment-state.json, .project/handoffs/current-state.md, .helix/repository-context.json, .helix/CHATGPT-PROJECT-BOUNDARY.md, docs/implementation-status.md, and README.md.",
-      "status": "implementation_in_progress",
-      "next_gate": "Open a pull request and pass repository CI for structural state validation, existing ServiceTracer tests, replacement-design tests, and Bicep build. No Azure workflow dispatch, workflow promotion, replacement execution, or billing mutation is authorized."
-    }
-  ],
+  "workstreams": [],
   "known_open_pull_requests": [
     {
       "pull_request": 1,
@@ -97,6 +87,6 @@
       "temporary-resource cost estimate, owner, and cleanup deadline are reviewed",
       "promotion occurs through a separate authority-changing pull request"
     ],
-    "next_gate": "After this reconciliation merges, perform the four scoped reviews and resolve rollback in separate bounded repository work. Do not move the candidate into .github/workflows, dispatch it, or add Azure mutation commands."
+    "next_gate": "After the state-only reconciliation merges, perform the four scoped reviews and resolve rollback in separate bounded repository work. Do not move the candidate into .github/workflows, dispatch it, or add Azure mutation commands."
   }
 }
