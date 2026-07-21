@@ -59,8 +59,8 @@
       "branch": "design/collector-rollback-snapshot-recreation",
       "write_owner": "ChatGPT conversation: ServiceTracer — Governed Azure Operations Lab",
       "scope": "Select and formalize the OS-disk snapshot-and-recreation rollback strategy and canonical OS-disk naming in repository contracts, validation, tests, review documentation, and project coordination state only. Permitted paths: infra/replacement/collector-replacement-contract.json, infra/replacement/validate_execution_design.py, infra/tests/test_collector_replacement_execution_design.py, docs/designs/collector-replacement-execution.md, docs/reviews/collector-replacement-rollback-decision-2026-07-21.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/modules/**, application source, credentials, and Azure mutation scripts.",
-      "status": "implementation_in_progress",
-      "pull_request": null,
+      "status": "ci_pending",
+      "pull_request": 27,
       "next_gate": "CI must prove the selected rollback contract remains fail-closed, preserves the canonical OS-disk name, requires independently verified OS and evidence-disk recovery points before old compute removal, and keeps workflow promotion and Azure mutations unauthorized. Then obtain independent operations-and-recovery review."
     }
   ],
@@ -70,6 +70,12 @@
       "title": "feat: scaffold Azure network foundation",
       "status": "legacy_draft",
       "action": "Do not treat as current implementation work. Review for unique durable evidence, then close as superseded through a separate explicit action."
+    },
+    {
+      "pull_request": 27,
+      "title": "Select snapshot-based collector rollback strategy",
+      "status": "draft_ci_pending",
+      "action": "Keep draft until CI passes and an independent operations-and-recovery review evaluates the selected snapshot/recreation strategy."
     }
   ],
   "latest_promoted_evidence": {
