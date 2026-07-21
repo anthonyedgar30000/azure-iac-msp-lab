@@ -1,0 +1,115 @@
+name: Collector replacement execution (DESIGN ONLY)
+
+# This file is intentionally outside .github/workflows and cannot be dispatched.
+# Promotion requires a separate reviewed pull request after every blocker in
+# infra/replacement/collector-replacement-contract.json is resolved.
+
+on:
+  workflow_dispatch:
+    inputs:
+      resource_group:
+        description: 'Existing bounded ServiceTracer resource group'
+        required: true
+        default: rg-servicetracer-dev-westus2
+        type: string
+      location:
+        description: 'Expected Azure region'
+        required: true
+        default: westus2
+        type: string
+      prefix:
+        description: 'Bicep resource-name prefix'
+        required: true
+        default: mst
+        type: string
+      environment:
+        description: 'Lab environment'
+        required: true
+        default: dev
+        type: choice
+        options: [dev, test]
+      reviewed_commit:
+        description: 'Exact reviewed commit containing the promoted execution implementation'
+        required: true
+        type: string
+      planner_run_id:
+        description: 'Promoted read-only planner run ID'
+        required: true
+        default: '29856203054'
+        type: string
+      planner_artifact_sha256:
+        description: 'Promoted planner artifact digest'
+        required: true
+        default: 76f3b44e6e97e906dac6d62eeb212a6bc55265e77271a030b9c45b0cacf55637
+        type: string
+      cleanup_owner:
+        description: 'Named owner responsible for temporary-resource cleanup'
+        required: true
+        type: string
+      cleanup_deadline:
+        description: 'RFC3339 deadline no more than 24 hours after execution'
+        required: true
+        type: string
+      maximum_temporary_cost_cad:
+        description: 'Reviewed temporary-resource cost ceiling in CAD; maximum 10'
+        required: true
+        default: '10.00'
+        type: string
+      confirmation:
+        description: 'Future gate: REPLACE:<resource-group>:vm-stcollector-<prefix>-<environment>'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: collector-replacement-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  design-only-blocker:
+    name: Refuse collector replacement from an unpromoted design
+    runs-on: ubuntu-latest
+    env:
+      DESIGN_ONLY_BLOCKER: 'true'
+    steps:
+      - name: Fail closed before Azure authentication or mutation
+        run: |
+          set -euo pipefail
+          echo 'This workflow is a non-executable design artifact.' >&2
+          echo 'Promote a separately reviewed implementation into .github/workflows only after all recovery, identity, cost, and authorization blockers are resolved.' >&2
+          exit 64
+
+  candidate-phase-contract:
+    name: Candidate replacement phase contract
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate authority and promoted planner evidence
+        run: echo validate_authority
+      - name: Verify guest service, health, mount, filesystem, and recent evidence
+        run: echo guest_and_control_plane_preflight
+      - name: Preserve NIC and evidence-disk delete options
+        run: echo preserve_delete_options
+      - name: Create bounded recovery points
+        run: echo create_recovery_points
+      - name: Independently verify recovery points
+        run: echo verify_recovery_points
+      - name: Remove only old collector compute
+        run: echo remove_old_compute
+      - name: Verify NIC, static address, subnet, and evidence disk survived
+        run: echo verify_preservation_boundary
+      - name: Deploy Ubuntu 24.04 replacement compute
+        run: echo deploy_replacement_compute
+      - name: Harden replacement OS-disk network access
+        run: echo harden_replacement_os_disk
+      - name: Restore and verify managed-identity RBAC
+        run: echo restore_identity_and_rbac
+      - name: Verify cloud-init, evidence UUID, service, durable write, and restart
+        run: echo post_change_verification
+      - name: Require independent human recovery acceptance
+        run: echo human_recovery_acceptance
+      - name: Clean up temporary recovery resources after acceptance
+        run: echo cleanup_temporary_recovery_resources
