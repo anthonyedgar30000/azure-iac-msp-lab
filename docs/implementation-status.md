@@ -4,7 +4,7 @@
 
 - Repository governance baseline.
 - Repository-native workflow observability in `.project/`, including active work, environment facts, deployment history, decisions, handoffs, and CI validation.
-- Canonical **ServiceTracer — Governed Azure Operations Lab** workspace identity with an exact six-stream machine-readable catalog and validator enforcement.
+- The bounded **ServiceTracer — Governed Azure Operations Lab** repository workstream inside the umbrella **HELIX — Governed Agent Engineering** conversational workspace, with an exact six-stream machine-readable catalog and validator enforcement.
 - HELIX retrieval and archive governance in `.helix/`, including authority precedence, retrieval classes, candidate promotion, scoped review lenses, and explicit-only historical lookup.
 - Azure network and monitoring Bicep definitions.
 - Standard public load balancer with a TCP 443 listener probe and empty VPN backend pool.
@@ -77,9 +77,9 @@
 - The current disposable OS disk allows public network access and should be hardened in the replacement design.
 - The sanitized four-lens review is recorded in `docs/reviews/collector-replacement-plan-2026-07-21.md`.
 
-## Designed and CI-testable but deliberately inactive
+## Designed and CI-verified but deliberately inactive
 
-- The collector replacement authority, evidence, phase, cost, cleanup, and review contract.
+- PR #25 merged the collector replacement authority, evidence, phase, cost, cleanup, and review contract into `main`.
 - The future workflow input surface and ordered state-machine candidate.
 - The policy ceilings of CAD 10 temporary cost, at most two snapshots and 96 GiB total snapshot capacity, zero compute overlap, and 24-hour recovery-resource retention.
 - The explicit rule that Azure budgets, billing alerts, action groups, and billing configuration are out of scope.
@@ -94,10 +94,10 @@
 - Managed-identity upload from the collector to `$web/reports/technician-handoff-report.json`.
 - Browser loading of the Azure-hosted report, provenance display, expiry warning, and outage fallback.
 - A recurring or event-triggered report-generation schedule.
+
+## Not yet implemented as live infrastructure or active execution
+
 - An active mutation-capable collector replacement workflow, tested Azure mutation executor, and dispatch authority.
-
-## Not yet implemented as live infrastructure
-
 - Windows Server virtual machines.
 - Active Directory Domain Services, DNS, Kerberos, NPS, or RDS.
 - VPN appliance virtual machines or backend-pool associations.
@@ -129,7 +129,7 @@
 
 ## Next bounded increments
 
-1. Review and merge the fail-closed execution design and tests without dispatching anything.
+1. Perform independent evidence-quality, operations/recovery, security/identity, and Azure-cost reviews of the merged fail-closed design.
 2. Resolve rollback by selecting and testing either temporary old-OS-disk preservation or verified OS-disk snapshot recreation.
 3. Define the fresh pre-maintenance guest and control-plane evidence schema.
 4. Implement recovery-point creation and independent verification behind fake-Azure-CLI tests.
@@ -137,7 +137,7 @@
 6. Implement approved managed-identity/RBAC restoration from an explicit allowlist.
 7. Implement replacement OS-disk public-network hardening and verification.
 8. Add current cost estimation, cleanup owner, cleanup deadline, and deletion evidence.
-9. Obtain independent evidence, operations/recovery, security/identity, and Azure-cost reviews.
+9. Record the four separate review decisions and unresolved conditions in repository evidence.
 10. Use a separate authority-changing PR to promote an implementation into `.github/workflows` only after every blocker is resolved.
 11. Obtain separate explicit human authorization before dispatching any snapshot, detach, delete, create, update, or replacement operation.
 12. Replace and verify the collector only through that governed execution path, then prove Ubuntu 24.04 bootstrap, ServiceTracer `0.5.0`, evidence-disk reattachment, service health, durable ingestion, and permission restoration.

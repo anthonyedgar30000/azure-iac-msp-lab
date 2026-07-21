@@ -1,6 +1,6 @@
 # ChatGPT project context boundary
 
-This repository is the durable source boundary for the ServiceTracer and HELIX work. ChatGPT projects and conversations are reasoning workspaces, not automatic repository authority.
+This repository is the durable source boundary for the ServiceTracer implementation work and its HELIX governance artifacts. ChatGPT projects and conversations are reasoning workspaces, not automatic repository authority.
 
 ## Recommended project layout
 
@@ -8,11 +8,17 @@ Use two project-only-memory workspaces where available:
 
 ```text
 HELIX — Governed Agent Engineering
-  -> active architecture, implementation, reviews, and unresolved work
+  -> umbrella active workspace for governed-agent architecture, review routing,
+     evidence policy, and bounded implementation workstreams
+  -> ServiceTracer — Governed Azure Operations Lab is the bounded workstream
+     represented by this repository
 
 HELIX — Historical Archive
-  -> superseded discussions, completed investigations, abandoned approaches, and old handoffs
+  -> superseded discussions, completed investigations, abandoned approaches,
+     and old handoffs
 ```
+
+The ServiceTracer workstream may span multiple conversations inside the HELIX umbrella project, but it has one repository state, one branch owner per bounded increment, and one authoritative Git/CI/Azure evidence chain.
 
 Moving a conversation to the historical project creates a stronger reasoning boundary than merely hiding it in the interface. The active project should contain only context that may still affect current decisions.
 
@@ -100,5 +106,7 @@ conversation output
   -> pull request and repository promotion
   -> current retrieval class
 ```
+
+Moving a conversation into **HELIX — Governed Agent Engineering** establishes conversational placement only. It does not transfer branch ownership, approve a pull request, activate a workflow, authorize a confirmation phrase, or permit Azure mutation.
 
 Destructive, externally consequential, or production-affecting actions require separate explicit authorization. A conversation handoff, project move, or agent progress message never provides that authority.

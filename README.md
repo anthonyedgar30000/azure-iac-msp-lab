@@ -2,13 +2,13 @@
 
 A version-controlled Azure operations and infrastructure-as-code portfolio lab demonstrating deterministic service-path localization, governed evidence, bounded AI-assisted reasoning, explicit human authority, cloud infrastructure, security, cost awareness, and service-reliability troubleshooting.
 
-The GitHub repository retains the historical name `azure-iac-msp-lab`; this project title is the canonical portfolio and workspace identity.
+The GitHub repository retains the historical name `azure-iac-msp-lab`. **ServiceTracer — Governed Azure Operations Lab** is the canonical portfolio and bounded repository-workstream identity inside the broader **HELIX — Governed Agent Engineering** conversational workspace.
 
 ## Canonical workspace
 
-The ChatGPT project is the canonical conversational workspace. GitHub, pull requests, CI, workflow artifacts, Azure evidence, and [`.project/`](.project/) remain authoritative for implementation, coordination, deployment, and operational state.
+**HELIX — Governed Agent Engineering** is the umbrella ChatGPT project for governed-agent architecture, cross-workstream reasoning, and review routing. This repository represents the bounded **ServiceTracer — Governed Azure Operations Lab** workstream. Chat context supports continuity; GitHub, pull requests, CI, workflow artifacts, Azure evidence, and [`.project/`](.project/) remain authoritative for implementation, coordination, deployment, and operational state.
 
-Work is organized into six governed streams:
+ServiceTracer work is organized into six governed streams:
 
 1. **Architecture and design decisions**
 2. **Azure resource plan and IaC**
