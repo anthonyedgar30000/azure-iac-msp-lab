@@ -45,7 +45,18 @@ class ResolveVmPlanRuntimeTests(unittest.TestCase):
                     set -euo pipefail
 
                     if [[ "$1 $2" == "vm show" ]]; then
-                      printf 'Standard_B1s\\n'
+                      if [[ "$*" == *"--query hardwareProfile.vmSize"* ]]; then
+                        printf 'Standard_B1s\\n'
+                      else
+                        cat <<'JSON'
+                    {
+                      "hardwareProfile":{"vmSize":"Standard_B1s"},
+                      "storageProfile":{"imageReference":{"publisher":"Canonical","offer":"ubuntu-24_04-lts","sku":"server","version":"24.04.202607010"}},
+                      "identity":{"principalId":"principal-current"},
+                      "networkProfile":{"networkInterfaces":[]}
+                    }
+                    JSON
+                      fi
                       exit 0
                     fi
 
@@ -127,6 +138,12 @@ class ResolveVmPlanRuntimeTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertNotIn("circular name reference", result.stderr)
 
+            drift = json.loads(
+                (artifacts / "collector-image-drift.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(drift["status"], "compatible")
+            self.assertFalse(drift["immutable_image_drift"])
+
             backend_candidates = (
                 artifacts / "backend-candidates.txt"
             ).read_text(encoding="utf-8").splitlines()
@@ -149,6 +166,7 @@ class ResolveVmPlanRuntimeTests(unittest.TestCase):
             self.assertEqual(attempts[0]["demo_backend_vm_size"], "Standard_B1s")
 
             outputs = github_output.read_text(encoding="utf-8")
+            self.assertIn("collector_image_status=compatible", outputs)
             self.assertIn("demo_backend_vm_size=Standard_B1s", outputs)
             self.assertIn("collector_vm_size=Standard_B1s", outputs)
 

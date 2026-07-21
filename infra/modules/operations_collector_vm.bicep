@@ -37,6 +37,7 @@ param collectorSourceRef string
 var resourceSuffix = '${prefix}-${environment}'
 var collectorName = 'vm-stcollector-${resourceSuffix}'
 var collectorComputerName = 'stcollector-${environment}'
+var collectorImage = loadJsonContent('../config/collector-image.json')
 var bootstrapTemplate = loadTextContent('../bootstrap/collector-cloud-init.yaml')
 var bootstrapWithRepository = replace(bootstrapTemplate, '__COLLECTOR_SOURCE_REPOSITORY__', collectorSourceRepository)
 var bootstrapWithRef = replace(bootstrapWithRepository, '__COLLECTOR_SOURCE_REF__', collectorSourceRef)
@@ -99,10 +100,10 @@ resource collectorVm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
     }
     storageProfile: {
       imageReference: {
-        publisher: 'Canonical'
-        offer: 'ubuntu-24_04-lts'
-        sku: 'server'
-        version: 'latest'
+        publisher: collectorImage.publisher
+        offer: collectorImage.offer
+        sku: collectorImage.sku
+        version: collectorImage.version
       }
       osDisk: {
         name: 'disk-stcollector-os-${resourceSuffix}'
@@ -180,3 +181,4 @@ output collectorSource object = {
   repository: collectorSourceRepository
   reference: collectorSourceRef
 }
+output collectorDesiredImage object = collectorImage

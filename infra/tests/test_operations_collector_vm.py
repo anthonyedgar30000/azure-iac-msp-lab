@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import unittest
 
@@ -9,6 +10,9 @@ MODULE = (INFRA / "modules" / "operations_collector_vm.bicep").read_text(encodin
 BOOTSTRAP = (INFRA / "bootstrap" / "collector-cloud-init.yaml").read_text(encoding="utf-8")
 MAIN = (INFRA / "main.bicep").read_text(encoding="utf-8")
 DEV = (INFRA / "main.dev.bicepparam").read_text(encoding="utf-8")
+IMAGE_CONFIG = json.loads(
+    (INFRA / "config" / "collector-image.json").read_text(encoding="utf-8")
+)
 
 
 class OperationsCollectorVmTests(unittest.TestCase):
@@ -34,14 +38,19 @@ class OperationsCollectorVmTests(unittest.TestCase):
 
     def test_bootstrap_installs_and_verifies_collector(self) -> None:
         self.assertIn("fetch --depth 1 origin", BOOTSTRAP)
-        self.assertIn("pip install \"${SOURCE_ROOT}/servicetracer\"", BOOTSTRAP)
+        self.assertIn('pip install "${SOURCE_ROOT}/servicetracer"', BOOTSTRAP)
         self.assertIn("--tls-cert", BOOTSTRAP)
         self.assertIn("systemctl enable --now servicetracer-collector.service", BOOTSTRAP)
         self.assertIn("/healthz", BOOTSTRAP)
 
     def test_bootstrap_has_supported_python_and_stable_certificate_identity(self) -> None:
-        self.assertIn("offer: 'ubuntu-24_04-lts'", MODULE)
-        self.assertIn("sku: 'server'", MODULE)
+        self.assertIn("loadJsonContent('../config/collector-image.json')", MODULE)
+        for field in ("publisher", "offer", "sku", "version"):
+            self.assertIn(f"{field}: collectorImage.{field}", MODULE)
+        self.assertEqual(IMAGE_CONFIG["publisher"], "Canonical")
+        self.assertEqual(IMAGE_CONFIG["offer"], "ubuntu-24_04-lts")
+        self.assertEqual(IMAGE_CONFIG["sku"], "server")
+        self.assertEqual(IMAGE_CONFIG["version"], "latest")
         self.assertIn("sys.version_info < (3, 11)", BOOTSTRAP)
         self.assertIn("COLLECTOR_CERTIFICATE_NAME", BOOTSTRAP)
         self.assertIn("/CN=${COLLECTOR_CERTIFICATE_NAME}", BOOTSTRAP)

@@ -1,0 +1,154 @@
+name: Collector replacement plan
+
+on:
+  workflow_dispatch:
+    inputs:
+      resource_group:
+        description: 'Existing ServiceTracer resource group'
+        required: true
+        default: rg-servicetracer-dev-westus2
+        type: string
+      location:
+        description: 'Expected Azure region'
+        required: true
+        default: westus2
+        type: string
+      prefix:
+        description: 'Bicep resource-name prefix'
+        required: true
+        default: mst
+        type: string
+      environment:
+        description: 'Lab environment'
+        required: true
+        default: dev
+        type: choice
+        options: [dev, test]
+      confirmation:
+        description: 'Enter PLAN:<resource-group>:vm-stcollector-<prefix>-<environment>'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: collector-replacement-plan-${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+  ARTIFACT_DIR: collector-replacement-plan-evidence
+
+jobs:
+  plan:
+    name: Plan collector replacement without Azure mutations
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 30
+    steps:
+      - name: Check out governed repository state
+        uses: actions/checkout@v4
+
+      - name: Validate exact planning authority
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          [[ "$RESOURCE_GROUP" =~ ^rg-servicetracer-(dev|test)(-[a-z0-9-]+)?$ ]]
+          [[ "$LOCATION" =~ ^[a-z0-9]+$ ]]
+          [[ "$PREFIX" =~ ^[a-z0-9]{2,12}$ ]]
+          [[ "$LAB_ENVIRONMENT" =~ ^(dev|test)$ ]]
+          vm_name="vm-stcollector-${PREFIX}-${LAB_ENVIRONMENT}"
+          expected="PLAN:${RESOURCE_GROUP}:${vm_name}"
+          [[ "$CONFIRMATION" == "$expected" ]] || {
+            echo "Confirmation must exactly equal: $expected" >&2
+            exit 1
+          }
+          jq -n \
+            --arg operation plan_only \
+            --arg resourceGroup "$RESOURCE_GROUP" \
+            --arg location "$LOCATION" \
+            --arg vmName "$vm_name" \
+            '{operation:$operation,resource_group:$resourceGroup,location:$location,collector_vm:$vmName,azure_mutations_authorized:false}' \
+            > "$ARTIFACT_DIR/request.json"
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify existing bounded resource group
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+        run: |
+          set -euo pipefail
+          az group show --name "$RESOURCE_GROUP" --output json > "$ARTIFACT_DIR/resource-group.json"
+          [[ "$(jq -r '.location' "$ARTIFACT_DIR/resource-group.json")" == "$LOCATION" ]]
+          [[ "$(jq -r '.tags.workload // empty' "$ARTIFACT_DIR/resource-group.json")" == 'azure-iac-msp-lab' ]]
+          [[ "$(jq -r '.tags.purpose // empty' "$ARTIFACT_DIR/resource-group.json")" == 'servicetracer-demo' ]]
+
+      - name: Capture immutable-image drift and replacement plan
+        id: plan
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          chmod +x infra/scripts/check_collector_image_drift.sh
+          infra/scripts/check_collector_image_drift.sh \
+            --mode plan \
+            --resource-group "$RESOURCE_GROUP" \
+            --prefix "$PREFIX" \
+            --environment "$LAB_ENVIRONMENT" \
+            --desired-image-file infra/config/collector-image.json \
+            --artifact-dir "$ARTIFACT_DIR" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Prove this workflow contains no Azure mutation commands
+        run: |
+          set -euo pipefail
+          workflow='.github/workflows/collector-replacement-plan.yml'
+          script='infra/scripts/check_collector_image_drift.sh'
+          forbidden='az (vm|disk|snapshot|network nic|resource|group) (create|delete|update|deallocate|detach|attach|restart|start|stop)'
+          if grep -E "$forbidden" "$workflow" "$script"; then
+            echo 'A mutation command was found in the read-only replacement planner.' >&2
+            exit 1
+          fi
+
+      - name: Write replacement-plan summary
+        if: always()
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          IMAGE_STATUS: ${{ steps.plan.outputs.collector_image_status }}
+          IMAGE_DRIFT: ${{ steps.plan.outputs.collector_image_drift }}
+        run: |
+          {
+            echo '## Collector replacement plan'
+            echo
+            echo "- Resource group: \`$RESOURCE_GROUP\`"
+            echo "- Image status: \`${IMAGE_STATUS:-unavailable}\`"
+            echo "- Immutable image drift: \`${IMAGE_DRIFT:-unavailable}\`"
+            echo '- Azure mutations authorized: `false`'
+            echo '- Azure mutations performed: `false`'
+            echo '- Evidence, preservation boundaries, identity dependencies, and the future exact confirmation phrase are attached as an artifact.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload non-secret planning evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: collector-replacement-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
