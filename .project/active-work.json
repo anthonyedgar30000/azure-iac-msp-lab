@@ -59,9 +59,9 @@
       "branch": "design/collector-rollback-snapshot-recreation",
       "write_owner": "ChatGPT conversation: ServiceTracer — Governed Azure Operations Lab",
       "scope": "Select and formalize the OS-disk snapshot-and-recreation rollback strategy and canonical OS-disk naming in repository contracts, validation, tests, review documentation, and project coordination state only. Permitted paths: infra/replacement/collector-replacement-contract.json, infra/replacement/validate_execution_design.py, infra/tests/test_collector_replacement_execution_design.py, docs/designs/collector-replacement-execution.md, docs/reviews/collector-replacement-rollback-decision-2026-07-21.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/modules/**, application source, credentials, and Azure mutation scripts.",
-      "status": "ci_pending",
+      "status": "ci_verified",
       "pull_request": 27,
-      "next_gate": "CI must prove the selected rollback contract remains fail-closed, preserves the canonical OS-disk name, requires independently verified OS and evidence-disk recovery points before old compute removal, and keeps workflow promotion and Azure mutations unauthorized. Then obtain independent operations-and-recovery review."
+      "next_gate": "Obtain an independent operations-and-recovery review of the selected snapshot/recreation strategy while PR #27 remains draft. Do not claim operational rollback verification or promote the workflow."
     }
   ],
   "known_open_pull_requests": [
@@ -74,8 +74,8 @@
     {
       "pull_request": 27,
       "title": "Select snapshot-based collector rollback strategy",
-      "status": "draft_ci_pending",
-      "action": "Keep draft until CI passes and an independent operations-and-recovery review evaluates the selected snapshot/recreation strategy."
+      "status": "draft_ci_verified_review_pending",
+      "action": "Keep draft until an independent operations-and-recovery review evaluates the selected snapshot/recreation strategy."
     }
   ],
   "latest_promoted_evidence": {
@@ -90,21 +90,21 @@
     "azure_mutations_performed": false
   },
   "next_bounded_operation": {
-    "operation": "collector_rollback_snapshot_recreation_design",
-    "authority": "repository_review_design_and_tests_only",
+    "operation": "collector_rollback_snapshot_recreation_design_review",
+    "authority": "independent_repository_review_only",
     "candidate_workflow": "infra/workflow-designs/collector-replacement-execution.yml",
     "active_workflow_present": false,
     "dispatch_authorized": false,
     "azure_mutations_authorized": false,
     "required_gates": [
-      "select OS-disk snapshot and deterministic recreation as the rollback strategy",
-      "retain the canonical OS-disk name disk-stcollector-os-mst-dev",
-      "prove contract validation rejects missing or weakened rollback fields",
-      "require fresh preflight capture of OS-disk source identity, size, generation, security type, encryption, and access policy",
-      "require independent verification of both evidence-disk and OS-disk recovery points before old compute removal",
-      "retain NIC and evidence-disk preservation, identity/RBAC, cost, cleanup, and four-lens review blockers",
+      "independent operations-and-recovery review of OS-disk snapshot recreation",
+      "fresh preflight must prove the current OS disk is no larger than 64 GiB",
+      "future recovery verification must prove both evidence-disk and OS-disk snapshots",
+      "future implementation must be fake-Azure-CLI tested before promotion",
+      "NIC and evidence disk remain preserved",
+      "identity/RBAC, cost, cleanup, and remaining review blockers remain unresolved",
       "promotion occurs only through a separate authority-changing pull request"
     ],
-    "next_gate": "Complete repository-only rollback design and CI. Do not move the candidate into .github/workflows, authenticate to Azure, create snapshots, change delete options, delete or create resources, or claim operational rollback verification."
+    "next_gate": "Review PR #27 independently. Do not move the candidate into .github/workflows, authenticate to Azure, create snapshots, change delete options, delete or create resources, or claim operational rollback verification."
   }
 }
