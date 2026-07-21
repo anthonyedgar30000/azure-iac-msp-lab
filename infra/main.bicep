@@ -29,6 +29,12 @@ param vpnClientAddressPrefix string = '10.90.0.0/24'
 @maxValue(65535)
 param remoteAccessListenerPort int = 443
 
+@description('Deploy the two private simulated VPN backends and attach them to the public load balancer. Disabled by default to prevent accidental compute cost.')
+param deployDemoBackends bool = false
+
+@description('Azure VM size used by each simulated VPN backend.')
+param demoBackendVmSize string = 'Standard_B1s'
+
 @description('Deploy the private ServiceTracer operations collector VM. Disabled by default to prevent accidental cost.')
 param deployOperationsCollector bool = false
 
@@ -39,7 +45,7 @@ param collectorPrivateIpAddress string = '10.20.40.10'
 param collectorAdminUsername string = 'azureadmin'
 
 @secure()
-@description('SSH public key used only when deployOperationsCollector is true.')
+@description('SSH public key used only when compute is deployed.')
 param collectorAdminSshPublicKey string = ''
 
 @description('Azure VM size for the operations collector.')
@@ -101,6 +107,22 @@ module edgeLoadBalancer './modules/edge_load_balancer.bicep' = {
   }
 }
 
+module remoteAccessBackends './modules/remote_access_backends.bicep' = if (deployDemoBackends) {
+  name: 'remote-access-backends-${environment}'
+  params: {
+    prefix: prefix
+    environment: environment
+    location: location
+    edgeSubnetId: network.outputs.subnetIds.edge
+    loadBalancerBackendPoolId: edgeLoadBalancer.outputs.backendPoolId
+    tags: commonTags
+    adminUsername: collectorAdminUsername
+    adminSshPublicKey: collectorAdminSshPublicKey
+    vmSize: demoBackendVmSize
+    listenerPort: remoteAccessListenerPort
+  }
+}
+
 module observability './modules/observability.bicep' = {
   name: 'observability-${environment}'
   params: {
@@ -146,8 +168,12 @@ output onPremVirtualNetworkId string = network.outputs.onPremVirtualNetworkId
 output remoteUserVirtualNetworkId string = network.outputs.remoteUserVirtualNetworkId
 output subnetIds object = network.outputs.subnetIds
 output loadBalancerId string = edgeLoadBalancer.outputs.loadBalancerId
+output loadBalancerPublicIpAddressId string = edgeLoadBalancer.outputs.publicIpAddressId
 output loadBalancerBackendPoolId string = edgeLoadBalancer.outputs.backendPoolId
 output loadBalancerHealthProbe object = edgeLoadBalancer.outputs.healthProbe
+output demoBackendsDeploymentEnabled bool = deployDemoBackends
+output demoBackendVms array = deployDemoBackends ? remoteAccessBackends.outputs.backendVmIds : []
+output demoBackendPrivateIpAddresses object = deployDemoBackends ? remoteAccessBackends.outputs.backendPrivateIpAddresses : {}
 output logAnalyticsWorkspaceId string = observability.outputs.logAnalyticsWorkspaceId
 output operationsCollectorDeploymentEnabled bool = deployOperationsCollector
 output operationsCollectorVmId string = deployOperationsCollector ? operationsCollector.outputs.collectorVmId : ''
