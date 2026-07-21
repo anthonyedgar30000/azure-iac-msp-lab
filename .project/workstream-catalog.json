@@ -1,0 +1,84 @@
+{
+  "schema_version": "project.workstream-catalog.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "updated_on": "2026-07-21",
+  "workspace_authority": {
+    "canonical_conversation_workspace": "The ChatGPT project preserves working context, decisions under discussion, and navigation across the six streams.",
+    "implementation_authority": "GitHub, pull requests, CI, and repository .project state determine implemented and coordinated work.",
+    "azure_authority": "Current Azure control-plane, guest, workflow-artifact, cost, health, configuration, and operational evidence determine environment state.",
+    "conflict_rule": "Surface conflicts explicitly. Newer or higher-authority evidence does not silently erase historical evidence."
+  },
+  "workstreams": [
+    {
+      "workstream_id": "architecture-and-design-decisions",
+      "title": "Architecture and design decisions",
+      "purpose": "Define component responsibilities, trust boundaries, protocols, authority, evidence models, state transitions, and accepted tradeoffs.",
+      "primary_paths": [
+        ".project/decisions.md",
+        "docs/architecture.md",
+        "HELIX-RETRIEVAL-POLICY.md",
+        ".helix/**"
+      ],
+      "claim_boundary": "Architecture and ADR material establishes approved or proposed intent; source, tests, CI, and runtime evidence are required to prove implementation or operation."
+    },
+    {
+      "workstream_id": "azure-resource-plan-and-iac",
+      "title": "Azure resource plan and IaC",
+      "purpose": "Maintain the target Azure topology, Bicep definitions, parameters, lifecycle workflows, validation, deployment sequencing, and rollback design.",
+      "primary_paths": [
+        "infra/**",
+        ".github/workflows/**",
+        "docs/azure-lifecycle.md",
+        "docs/collector-vm.md"
+      ],
+      "claim_boundary": "Committed IaC and workflows prove versioned intent and implementation only. A reviewed What-If, successful deployment, and environment verification are separate evidence states."
+    },
+    {
+      "workstream_id": "deployment-evidence-and-screenshots",
+      "title": "Deployment evidence and screenshots",
+      "purpose": "Preserve sanitized deployment records, portal or CLI screenshots, workflow identities, timestamps, hashes, versions, manual repairs, and post-deployment verification.",
+      "primary_paths": [
+        ".project/deployment-history.jsonl",
+        ".project/handoffs/**",
+        "docs/reviews/**",
+        "protected GitHub Actions artifacts"
+      ],
+      "claim_boundary": "Screenshots and summaries support a bounded claim only when their source, timestamp, target, and completeness are known. Sensitive raw artifacts remain protected and are not committed."
+    },
+    {
+      "workstream_id": "cost-health-and-configuration-telemetry",
+      "title": "Cost, health, and configuration telemetry",
+      "purpose": "Track Azure cost, budgets, resource health, service health, metrics, configuration snapshots, drift, and observation freshness without conflating control-plane state with guest health.",
+      "primary_paths": [
+        ".project/environment-state.json",
+        "docs/reviews/**",
+        "protected GitHub Actions artifacts"
+      ],
+      "claim_boundary": "Telemetry is time-bound evidence. Cost estimates are not invoices; control-plane observations do not prove guest or application health; stale observations must be invalidated or superseded."
+    },
+    {
+      "workstream_id": "servicetracer-findings-and-reports",
+      "title": "ServiceTracer findings and reports",
+      "purpose": "Maintain deterministic service paths, evidence ingestion, localization findings, confidence limits, contradictions, bounded technician handoffs, and sanitized public reports.",
+      "primary_paths": [
+        "servicetracer/**",
+        "docs/report-source.json",
+        "docs/index.html",
+        "docs/app.js"
+      ],
+      "claim_boundary": "ServiceTracer localizes the last successful stage, first failed transition, and suspect fault domain from supplied evidence. It does not claim an exact device root cause without additional verified evidence."
+    },
+    {
+      "workstream_id": "portfolio-and-demo-narrative",
+      "title": "Portfolio/demo narrative",
+      "purpose": "Explain the problem, governed architecture, controlled incident, verification workflow, evidence chain, limitations, and demonstrated engineering outcomes.",
+      "primary_paths": [
+        "README.md",
+        "docs/implementation-status.md",
+        "docs/index.html",
+        "docs/**"
+      ],
+      "claim_boundary": "Narrative material must preserve the repository state vocabulary and may not present proposed, CI-verified, deployed, manually repaired, or operationally verified states as equivalent."
+    }
+  ]
+}
