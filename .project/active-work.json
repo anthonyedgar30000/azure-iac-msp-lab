@@ -4,11 +4,11 @@
   "updated_on": "2026-07-21",
   "trusted_baseline": {
     "branch": "main",
-    "commit": "e50f2498d57cbf853d3fd493fc0eec35ca8bdd6b",
-    "commit_semantics": "verified live main head before the canonical-workspace-governance branch was created; live Git determines the current head",
+    "commit": "50a4789e87cdadd7d537179882427b3b2cb4b96f",
+    "commit_semantics": "verified live main head after PR #24 merged and before PR #25 was refreshed; live Git determines the current head",
     "last_completed_increment": {
-      "pull_request": 23,
-      "title": "Promote collector replacement planning evidence"
+      "pull_request": 24,
+      "title": "Govern canonical ServiceTracer workspace streams"
     }
   },
   "completed_increments": [
@@ -36,17 +36,22 @@
       "pull_request": 23,
       "title": "Promote collector replacement planning evidence",
       "merge_commit": "e50f2498d57cbf853d3fd493fc0eec35ca8bdd6b"
+    },
+    {
+      "pull_request": 24,
+      "title": "Govern canonical ServiceTracer workspace streams",
+      "merge_commit": "50a4789e87cdadd7d537179882427b3b2cb4b96f"
     }
   ],
   "workstreams": [
     {
-      "workstream_id": "canonical-workspace-governance",
-      "branch": "feature/canonical-workspace-governance",
-      "write_owner": "ChatGPT project: ServiceTracer — Governed Azure Operations Lab",
-      "scope": "Encode and validate the six canonical workspace streams in .project metadata and repository orientation only. Permitted paths: .project/active-work.json, .project/workstream-catalog.json, .project/README.md, .project/validate.py, and README.md.",
-      "status": "ci_verified",
-      "pull_request": 24,
-      "next_gate": "Review PR #24 catalog wording and claim boundaries while it remains draft. Merge requires explicit user approval. No Azure workflow dispatch or resource mutation is authorized."
+      "workstream_id": "collector-replacement-execution-design",
+      "branch": "feature/collector-replacement-execution-design",
+      "pull_request": 25,
+      "write_owner": "ChatGPT GitHub connector",
+      "scope": "Fail-closed collector replacement execution contract, inactive workflow candidate, deterministic validator, tests, design documentation, and governance state only; no active workflow or Azure mutation.",
+      "status": "ci_pending",
+      "next_gate": "CI must validate the refreshed fail-closed contract, canonical workspace state, inactive workflow location, replacement phase ordering, cost ceilings, and existing infrastructure tests before four-lens review and merge."
     }
   ],
   "known_open_pull_requests": [
@@ -55,6 +60,12 @@
       "title": "feat: scaffold Azure network foundation",
       "status": "legacy_draft",
       "action": "Do not treat as current implementation work. Review for unique durable evidence, then close as superseded through a separate explicit action."
+    },
+    {
+      "pull_request": 25,
+      "title": "Add fail-closed collector replacement execution design",
+      "status": "ci_pending",
+      "action": "Review as design and tests only. Do not infer active workflow, dispatch authority, Azure mutation authority, rollback readiness, or deployment."
     }
   ],
   "latest_promoted_evidence": {
@@ -71,16 +82,20 @@
   "next_bounded_operation": {
     "operation": "collector_replacement_execution_design",
     "authority": "repository_design_and_tests_only",
+    "candidate_workflow": "infra/workflow-designs/collector-replacement-execution.yml",
+    "active_workflow_present": false,
+    "dispatch_authorized": false,
     "azure_mutations_authorized": false,
     "required_gates": [
-      "pre-maintenance guest service and evidence-mount verification",
-      "verified evidence-disk recovery point before destructive action",
-      "explicit NIC preservation or deterministic recreation contract",
-      "new managed-identity and RBAC restoration contract",
-      "replacement OS-disk network-access hardening",
-      "temporary-resource cost ceiling and cleanup deadline",
-      "rollback and post-change evidence requirements"
+      "CI verifies the fail-closed contract and inactive workflow location",
+      "rollback strategy and canonical OS-disk naming are resolved",
+      "pre-maintenance guest and control-plane evidence schema is defined",
+      "recovery-point verification is independently testable",
+      "NIC preservation and identity/RBAC restoration are bounded",
+      "temporary-resource cost estimate, owner, and cleanup deadline are reviewed",
+      "four separate review decisions are recorded",
+      "promotion occurs through a separate authority-changing pull request"
     ],
-    "next_gate": "After the canonical workspace increment is merged and ownership is released, design and test a separate replacement-execution branch without dispatching it. Execution remains prohibited until independent review and explicit human authorization."
+    "next_gate": "Review and merge PR #25 only if refreshed CI passes. Do not move the candidate into .github/workflows or add Azure mutation commands in this workstream."
   }
 }
