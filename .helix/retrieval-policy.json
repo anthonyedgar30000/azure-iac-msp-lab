@@ -1,0 +1,100 @@
+{
+  "schema_version": "helix.repository-retrieval-policy.v1",
+  "policy_document": "HELIX-RETRIEVAL-POLICY.md",
+  "default_rule": "unclassified material is supporting candidate context and cannot prove implementation, deployment, verification, or approval",
+  "authority_precedence": [
+    "live_repository_and_environment_evidence",
+    "source_code_iac_workflows_and_tests",
+    "current_state_and_approved_decisions",
+    "current_architecture_and_runbooks",
+    "candidate_proposals",
+    "archived_or_superseded_material",
+    "conversation_recollection_or_unclassified_notes"
+  ],
+  "retrieval_classes": {
+    "authoritative-current": {
+      "default_retrieval": true,
+      "may_support_current_claims": true,
+      "requires_cross_check_for_deployment_claims": true
+    },
+    "supporting-current": {
+      "default_retrieval": true,
+      "may_support_current_claims": true,
+      "requires_source_verification_for_consequential_action": true
+    },
+    "candidate": {
+      "default_retrieval": false,
+      "allowed_when": [
+        "explicitly requested",
+        "comparing options",
+        "investigating an open question"
+      ],
+      "may_be_described_as_implemented": false
+    },
+    "explicit-only": {
+      "default_retrieval": false,
+      "allowed_when": [
+        "explicit historical request",
+        "supersession investigation",
+        "closed incident review"
+      ],
+      "may_override_current_material": false
+    },
+    "excluded-sensitive": {
+      "default_retrieval": false,
+      "allowed_in_repository": false
+    }
+  },
+  "state_vocabulary": [
+    "proposed",
+    "implemented",
+    "ci_verified",
+    "deployed",
+    "operationally_verified",
+    "manual_drift",
+    "superseded",
+    "historical"
+  ],
+  "lookup_requirements": [
+    "confirm current main commit, branches, pull requests, and CI state",
+    "consult .helix/repository-context.json",
+    "inspect directly relevant source and tests",
+    "verify deployment claims with environment evidence",
+    "check freshness and supersession metadata",
+    "surface conflicts and unresolved evidence",
+    "state the review lens and what was not reviewed",
+    "exclude .helix/archive from default retrieval"
+  ],
+  "conflict_rules": [
+    "current source and tests outrank descriptive implementation claims",
+    "environment evidence is required for deployment and operational claims",
+    "approved current decisions outrank superseded decisions",
+    "archived material never overrides current material",
+    "conflicting reliable claims must both be retained until resolved"
+  ],
+  "archive": {
+    "path": ".helix/archive/",
+    "retrieval_class": "explicit-only",
+    "required_metadata": [
+      "helix_status",
+      "retrieval",
+      "archived_on_or_superseded_on",
+      "reason_retained"
+    ],
+    "conditional_metadata": [
+      "superseded_by"
+    ]
+  },
+  "excluded_content": [
+    "credentials",
+    "private_keys",
+    "bearer_tokens",
+    "sas_tokens",
+    "customer_evidence",
+    "regulated_personal_data",
+    "unsanitized_production_logs",
+    "private_chain_of_thought"
+  ],
+  "promotion_authority": "Anthony",
+  "destructive_action_authority": "explicit_human_authorization_required"
+}
