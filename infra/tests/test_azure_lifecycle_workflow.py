@@ -23,19 +23,41 @@ class AzureLifecycleWorkflowTests(unittest.TestCase):
 
     def test_deployment_is_gated_by_what_if_and_pinned_source(self) -> None:
         self.assertLess(
-            WORKFLOW.index("Run Bicep validation and what-if"),
+            WORKFLOW.index("Select VM sizes and run Bicep what-if"),
             WORKFLOW.index("Deploy ServiceTracer infrastructure"),
         )
         self.assertIn("^[0-9a-fA-F]{40}$", WORKFLOW)
+        self.assertIn('source_ref="${REQUESTED_SOURCE_REF:-$GITHUB_SHA}"', WORKFLOW)
         self.assertIn("collectorAdminSshPublicKey", WORKFLOW)
         self.assertIn("deployOperationsCollector=true", WORKFLOW)
         self.assertIn("if: inputs.operation == 'deploy'", WORKFLOW)
 
-    def test_collector_vm_size_is_explicit_and_forwarded(self) -> None:
-        self.assertIn("collector_vm_size:", WORKFLOW)
-        self.assertIn("COLLECTOR_VM_SIZE", WORKFLOW)
-        self.assertIn('collectorVmSize="$COLLECTOR_VM_SIZE"', WORKFLOW)
-        self.assertIn("collector_vm_size:$collectorVmSize", WORKFLOW)
+    def test_capacity_aware_vm_size_selection_is_bounded(self) -> None:
+        for expected in (
+            "default: auto",
+            "az vm list-skus",
+            "Standard_B1ms",
+            "Standard_B2ms",
+            "Standard_D2as_v5",
+            "Standard_D2s_v5",
+            "sku-validation-attempts.jsonl",
+            "SkuNotAvailable",
+            "capacity restriction",
+            "refusing to hide the error behind SKU fallback",
+            "resolved-deployment-plan.json",
+        ):
+            self.assertIn(expected, WORKFLOW)
+
+    def test_resolved_vm_sizes_are_forwarded_to_deployment(self) -> None:
+        for expected in (
+            "id: plan",
+            "steps.plan.outputs.demo_backend_vm_size",
+            "steps.plan.outputs.collector_vm_size",
+            "steps.plan.outputs.collector_source_ref",
+            'demoBackendVmSize="$DEMO_BACKEND_VM_SIZE"',
+            'collectorVmSize="$COLLECTOR_VM_SIZE"',
+        ):
+            self.assertIn(expected, WORKFLOW)
 
     def test_demo_compute_and_publication_are_explicit_inputs(self) -> None:
         for expected in (
@@ -43,7 +65,6 @@ class AzureLifecycleWorkflowTests(unittest.TestCase):
             "demo_backend_vm_size:",
             "deploy_public_report_endpoint:",
             'deployDemoBackends="$DEPLOY_DEMO_BACKENDS"',
-            'demoBackendVmSize="$DEMO_BACKEND_VM_SIZE"',
             'deployPublicReportEndpoint="$DEPLOY_PUBLIC_REPORT_ENDPOINT"',
             "Verify demo backend inventory",
         ):
