@@ -2,24 +2,39 @@
   "schema_version": "helix.repository-context.v1",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "classified_on": "2026-07-21",
-  "classification_scope": "governed retrieval boundary with promoted collector planning evidence; not an exhaustive file inventory",
+  "classification_scope": "governed retrieval boundary with canonical workspace governance, promoted collector planning evidence, and fail-closed replacement execution design; not an exhaustive file inventory",
   "baseline_observation": {
     "branch": "main",
-    "commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a",
-    "commit_semantics": "verified main observation anchor before this evidence-reconciliation pull request; live Git determines the current head",
+    "commit": "50a4789e87cdadd7d537179882427b3b2cb4b96f",
+    "commit_semantics": "verified main observation anchor after PR #24 merged and before PR #25 was refreshed; live Git determines the current head",
     "latest_merged_increment": {
-      "pull_request": 22,
-      "title": "Refresh project state after governance merges"
+      "pull_request": 24,
+      "title": "Govern canonical ServiceTracer workspace streams"
     },
     "observed_on": "2026-07-21"
   },
   "entries": [
     {
+      "path": "infra/workflow-designs/**",
+      "content_role": "inactive_workflow_candidate",
+      "retrieval_class": "candidate",
+      "default_retrieval": false,
+      "allowed_when": "reviewing future workflow design, promotion gates, or non-executable authority boundaries",
+      "claim_boundary": "files outside .github/workflows cannot prove an active or dispatchable GitHub Actions workflow; the collector replacement candidate is fail-closed and Azure mutations remain unauthorized"
+    },
+    {
+      "path": "infra/replacement/**",
+      "content_role": "replacement_execution_contract_and_validation",
+      "retrieval_class": "supporting-current",
+      "default_retrieval": true,
+      "claim_boundary": "proves committed design invariants and deterministic validation only; it does not prove workflow activation, authorization, Azure execution, or recoverability"
+    },
+    {
       "path": "infra/**",
       "content_role": "infrastructure_source",
       "retrieval_class": "authoritative-current",
       "default_retrieval": true,
-      "claim_boundary": "proves committed infrastructure intent and implementation, not deployment success"
+      "claim_boundary": "proves committed infrastructure intent and implementation, not deployment success; narrower candidate classifications override this broad path"
     },
     {
       "path": "servicetracer/**",
@@ -33,7 +48,7 @@
       "content_role": "workflow_source",
       "retrieval_class": "authoritative-current",
       "default_retrieval": true,
-      "claim_boundary": "proves workflow definitions; workflow-run evidence is required to prove execution outcome"
+      "claim_boundary": "proves active workflow definitions; workflow-run evidence is required to prove execution outcome"
     },
     {
       "path": "README.md",
@@ -41,6 +56,13 @@
       "retrieval_class": "supporting-current",
       "default_retrieval": true,
       "claim_boundary": "orientation only; verify implementation and runtime claims against narrower evidence"
+    },
+    {
+      "path": ".project/workstream-catalog.json",
+      "content_role": "canonical_workspace_stream_catalog",
+      "retrieval_class": "authoritative-current",
+      "default_retrieval": true,
+      "claim_boundary": "defines the six canonical organizational streams and their claim boundaries; it does not prove implementation or runtime state"
     },
     {
       "path": "docs/implementation-status.md",
@@ -57,6 +79,13 @@
       "retrieval_class": "supporting-current",
       "default_retrieval": true,
       "claim_boundary": "records bounded reviewed findings and unresolved gates; raw workflow artifacts and runtime evidence remain authoritative for underlying environment details"
+    },
+    {
+      "path": "docs/designs/**",
+      "content_role": "governed_future_design",
+      "retrieval_class": "supporting-current",
+      "default_retrieval": true,
+      "claim_boundary": "records reviewed design intent and blockers; it cannot prove active workflow authority, implementation promotion, deployment, or operational verification"
     },
     {
       "path": "docs/architecture.md",
@@ -114,7 +143,7 @@
       "default_retrieval": true,
       "freshness_status": "refreshed",
       "refreshed_on": "2026-07-21",
-      "claim_boundary": "records promoted active work, handoffs, environment facts, and deployment history; live Git, CI, workflow artifacts, and runtime evidence still determine current external state"
+      "claim_boundary": "records promoted active work, canonical workspace streams, handoffs, environment facts, and deployment history; live Git, CI, workflow artifacts, and runtime evidence still determine current external state"
     },
     {
       "path": ".helix/**",
@@ -167,6 +196,22 @@
       "state": "merged",
       "merge_commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a",
       "scope": "post-governance project state and freshness reconciliation"
+    },
+    {
+      "pull_request": 23,
+      "branch": "docs/reconcile-collector-plan-evidence",
+      "state": "merged",
+      "merge_commit": "e50f2498d57cbf853d3fd493fc0eec35ca8bdd6b",
+      "scope": "promoted read-only collector replacement evidence and four-lens review",
+      "authority_boundary": "supports design work only; no replacement execution is authorized"
+    },
+    {
+      "pull_request": 24,
+      "branch": "feature/canonical-workspace-governance",
+      "state": "merged",
+      "merge_commit": "50a4789e87cdadd7d537179882427b3b2cb4b96f",
+      "scope": "canonical ServiceTracer workspace identity, exact six-stream catalog, and validator enforcement",
+      "authority_boundary": "organizes conversational and repository context; Git, CI, workflow artifacts, and Azure evidence remain authoritative for implementation and runtime state"
     }
   ],
   "promoted_runtime_evidence": [
@@ -179,6 +224,15 @@
       "sanitized_review": "docs/reviews/collector-replacement-plan-2026-07-21.md",
       "state": "reviewed_read_only_no_mutation",
       "authority_boundary": "supports current control-plane inventory and replacement planning; does not authorize or prove replacement execution"
+    }
+  ],
+  "active_coordination_boundaries": [
+    {
+      "workstream_id": "collector-replacement-execution-design",
+      "branch": "feature/collector-replacement-execution-design",
+      "pull_request": 25,
+      "scope": "fail-closed contract, inactive workflow candidate, validator, tests, and design documentation",
+      "retrieval_rule": "treat as implemented design only; never infer active workflow, dispatch authority, Azure mutation authority, rollback readiness, or deployment"
     }
   ],
   "known_open_legacy_items": [
