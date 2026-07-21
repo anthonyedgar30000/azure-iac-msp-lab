@@ -17,12 +17,12 @@ on:
       resource_group:
         description: 'Dedicated ServiceTracer resource group'
         required: true
-        default: rg-servicetracer-dev
+        default: servicetracer-dev-westus2
         type: string
       location:
         description: 'Azure region'
         required: true
-        default: canadacentral
+        default: westus2
         type: string
       prefix:
         description: 'Bicep resource-name prefix'
@@ -111,7 +111,7 @@ jobs:
           mkdir -p "$ARTIFACT_DIR"
           [[ "$LAB_ENVIRONMENT" =~ ^(dev|test)$ ]]
           [[ "$PREFIX" =~ ^[a-z0-9]{2,12}$ ]]
-          [[ "$RESOURCE_GROUP" =~ ^rg-servicetracer-(dev|test)(-[a-z0-9-]+)?$ ]]
+          [[ "$RESOURCE_GROUP" =~ ^(rg-)?servicetracer-(dev|test)(-[a-z0-9-]+)?$ ]]
           [[ "$LOCATION" =~ ^[a-z0-9]+$ ]]
           [[ "$DEPLOY_DEMO_BACKENDS" =~ ^(true|false)$ ]]
           [[ "$DEPLOY_PUBLIC_REPORT_ENDPOINT" =~ ^(true|false)$ ]]
