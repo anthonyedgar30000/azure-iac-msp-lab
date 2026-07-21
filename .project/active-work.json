@@ -4,11 +4,11 @@
   "updated_on": "2026-07-21",
   "trusted_baseline": {
     "branch": "main",
-    "commit": "f40ef0fab0ae920c23f4b6556c25dc4f3b99b68b",
-    "commit_semantics": "verified live main head after PR #25 merged and before this state-only reconciliation branch was created; live Git determines the current head",
+    "commit": "00ebc068f4aec4eda8cda723d8dc4d974a4cb7c6",
+    "commit_semantics": "verified live main head after PR #26 merged and before the collector rollback snapshot-recreation branch was created; live Git determines the current head",
     "last_completed_increment": {
-      "pull_request": 25,
-      "title": "Add fail-closed collector replacement execution design"
+      "pull_request": 26,
+      "title": "Reconcile PR25 state and HELIX workspace hierarchy"
     }
   },
   "completed_increments": [
@@ -46,9 +46,24 @@
       "pull_request": 25,
       "title": "Add fail-closed collector replacement execution design",
       "merge_commit": "f40ef0fab0ae920c23f4b6556c25dc4f3b99b68b"
+    },
+    {
+      "pull_request": 26,
+      "title": "Reconcile PR25 state and HELIX workspace hierarchy",
+      "merge_commit": "00ebc068f4aec4eda8cda723d8dc4d974a4cb7c6"
     }
   ],
-  "workstreams": [],
+  "workstreams": [
+    {
+      "workstream_id": "collector-rollback-snapshot-recreation",
+      "branch": "design/collector-rollback-snapshot-recreation",
+      "write_owner": "ChatGPT conversation: ServiceTracer — Governed Azure Operations Lab",
+      "scope": "Select and formalize the OS-disk snapshot-and-recreation rollback strategy and canonical OS-disk naming in repository contracts, validation, tests, review documentation, and project coordination state only. Permitted paths: infra/replacement/collector-replacement-contract.json, infra/replacement/validate_execution_design.py, infra/tests/test_collector_replacement_execution_design.py, docs/designs/collector-replacement-execution.md, docs/reviews/collector-replacement-rollback-decision-2026-07-21.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/modules/**, application source, credentials, and Azure mutation scripts.",
+      "status": "implementation_in_progress",
+      "pull_request": null,
+      "next_gate": "CI must prove the selected rollback contract remains fail-closed, preserves the canonical OS-disk name, requires independently verified OS and evidence-disk recovery points before old compute removal, and keeps workflow promotion and Azure mutations unauthorized. Then obtain independent operations-and-recovery review."
+    }
+  ],
   "known_open_pull_requests": [
     {
       "pull_request": 1,
@@ -69,24 +84,21 @@
     "azure_mutations_performed": false
   },
   "next_bounded_operation": {
-    "operation": "collector_replacement_design_review_and_rollback_decision",
-    "authority": "repository_review_and_design_only",
+    "operation": "collector_rollback_snapshot_recreation_design",
+    "authority": "repository_review_design_and_tests_only",
     "candidate_workflow": "infra/workflow-designs/collector-replacement-execution.yml",
     "active_workflow_present": false,
     "dispatch_authorized": false,
     "azure_mutations_authorized": false,
     "required_gates": [
-      "independent evidence-quality review of the merged fail-closed design",
-      "independent operations-and-recovery review",
-      "independent security-and-identity review",
-      "independent Azure-cost review",
-      "rollback strategy and canonical OS-disk naming are selected and tested",
-      "pre-maintenance guest and control-plane evidence schema is defined",
-      "recovery-point verification is independently testable",
-      "NIC preservation and identity/RBAC restoration are bounded",
-      "temporary-resource cost estimate, owner, and cleanup deadline are reviewed",
-      "promotion occurs through a separate authority-changing pull request"
+      "select OS-disk snapshot and deterministic recreation as the rollback strategy",
+      "retain the canonical OS-disk name disk-stcollector-os-mst-dev",
+      "prove contract validation rejects missing or weakened rollback fields",
+      "require fresh preflight capture of OS-disk source identity, size, generation, security type, encryption, and access policy",
+      "require independent verification of both evidence-disk and OS-disk recovery points before old compute removal",
+      "retain NIC and evidence-disk preservation, identity/RBAC, cost, cleanup, and four-lens review blockers",
+      "promotion occurs only through a separate authority-changing pull request"
     ],
-    "next_gate": "After the state-only reconciliation merges, perform the four scoped reviews and resolve rollback in separate bounded repository work. Do not move the candidate into .github/workflows, dispatch it, or add Azure mutation commands."
+    "next_gate": "Complete repository-only rollback design and CI. Do not move the candidate into .github/workflows, authenticate to Azure, create snapshots, change delete options, delete or create resources, or claim operational rollback verification."
   }
 }
