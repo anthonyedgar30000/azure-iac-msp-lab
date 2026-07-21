@@ -2,13 +2,14 @@
   "schema_version": "helix.repository-context.v1",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "classified_on": "2026-07-21",
-  "classification_scope": "initial retrieval boundary; not an exhaustive file inventory",
+  "classification_scope": "governed retrieval boundary with post-PR-21 state refresh; not an exhaustive file inventory",
   "baseline_observation": {
     "branch": "main",
-    "commit": "7f1bc961c9edfc29c1636518b0e4cf1d4ca949eb",
+    "commit": "d9b952e324b7128300e1c888d5834536fb35fc30",
+    "commit_semantics": "verified main observation anchor before this state-refresh pull request; live Git determines the current head",
     "latest_merged_increment": {
-      "pull_request": 20,
-      "title": "Add collector image drift guard and read-only migration plan"
+      "pull_request": 21,
+      "title": "Add HELIX retrieval and archive governance"
     },
     "observed_on": "2026-07-21"
   },
@@ -46,8 +47,8 @@
       "content_role": "current_state_record",
       "retrieval_class": "supporting-current",
       "default_retrieval": true,
-      "freshness_status": "needs_refresh",
-      "freshness_reason": "the next-increment section still describes already-merged live-report work as pending",
+      "freshness_status": "refreshed",
+      "refreshed_on": "2026-07-21",
       "claim_boundary": "use state sections as a starting point and verify every consequential claim against Git, PR, CI, and Azure evidence"
     },
     {
@@ -102,11 +103,11 @@
     {
       "path": ".project/**",
       "content_role": "workflow_observability",
-      "retrieval_class": "supporting-current",
+      "retrieval_class": "authoritative-current",
       "default_retrieval": true,
-      "freshness_status": "needs_refresh",
-      "freshness_reason": "active-work and current handoff still record pull request 19 as open and pull request 18 as the latest completed increment after pull requests 19 and 20 merged",
-      "claim_boundary": "use for state vocabulary and structure, but verify workstream ownership, baseline commits, gates, and environment claims against live Git, CI, and runtime evidence"
+      "freshness_status": "refreshed",
+      "refreshed_on": "2026-07-21",
+      "claim_boundary": "records observed active work, handoffs, and environment facts; live Git, CI, workflow artifacts, and runtime evidence still determine current external state"
     },
     {
       "path": ".helix/**",
@@ -136,8 +137,7 @@
       "branch": "feature/workflow-observability",
       "state": "merged",
       "merge_commit": "058ee6ec7a8a26adebb2742659b9e483b74fd4ae",
-      "scope": ".project workflow observability and active-work metadata",
-      "remaining_freshness_work": "refresh active-work and current handoff after the merge sequence"
+      "scope": ".project workflow observability and active-work metadata"
     },
     {
       "pull_request": 20,
@@ -146,23 +146,22 @@
       "merge_commit": "7f1bc961c9edfc29c1636518b0e4cf1d4ca949eb",
       "scope": "collector image drift detection and read-only replacement planning",
       "authority_boundary": "detection and planning are implemented; no Azure replacement execution is authorized or evidenced"
-    }
-  ],
-  "known_freshness_defects": [
-    {
-      "paths": [
-        ".project/active-work.json",
-        ".project/handoffs/current-state.md"
-      ],
-      "status": "needs_refresh",
-      "reason": "they describe pull request 19 as open and omit merged pull request 20"
     },
     {
-      "paths": [
-        "docs/implementation-status.md"
-      ],
-      "status": "needs_refresh",
-      "reason": "its next-increment list includes already-merged work"
+      "pull_request": 21,
+      "branch": "docs/helix-retrieval-archive-governance",
+      "state": "merged",
+      "merge_commit": "d9b952e324b7128300e1c888d5834536fb35fc30",
+      "scope": "HELIX retrieval, promotion, and archive governance"
     }
-  ]
+  ],
+  "known_open_legacy_items": [
+    {
+      "pull_request": 1,
+      "state": "legacy_draft",
+      "retrieval_class": "explicit-only",
+      "rule": "do not treat as current implementation; review for unique durable evidence before separate closure"
+    }
+  ],
+  "known_freshness_defects": []
 }
