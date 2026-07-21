@@ -31,6 +31,7 @@
     "collector_vm": "vm-stcollector-mst-dev",
     "collector_nic": "nic-stcollector-mst-dev",
     "collector_evidence_disk": "disk-stcollector-evidence-mst-dev",
+    "collector_os_disk": "disk-stcollector-os-mst-dev",
     "evidence_mount": "/var/lib/servicetracer",
     "exact_future_confirmation": "REPLACE:rg-servicetracer-dev-westus2:vm-stcollector-mst-dev"
   },
@@ -55,6 +56,7 @@
     "recent evidence readable",
     "NIC subnet and static address recorded",
     "current identity and visible role assignments recorded",
+    "current OS-disk identity, size, OS type, Hyper-V generation, security type, encryption, and access policy recorded",
     "recovery owner, cost ceiling, and cleanup deadline approved"
   ],
   "phases": [
@@ -68,43 +70,43 @@
       "phase_id": "guest_and_control_plane_preflight",
       "mutation": false,
       "requires_explicit_authorization": false,
-      "evidence_required": "service, health, mount, filesystem, evidence readability, VM, NIC, disks, identity, RBAC"
+      "evidence_required": "service, health, mount, filesystem, evidence readability, VM, NIC, disks, identity, RBAC, and OS-disk recreation metadata"
     },
     {
       "phase_id": "preserve_delete_options",
       "mutation": true,
       "requires_explicit_authorization": true,
-      "evidence_required": "NIC and evidence disk verified Detach before VM deletion"
+      "evidence_required": "NIC and evidence disk verified Detach before VM deletion; OS disk remains disposable only after its snapshot is independently verified"
     },
     {
       "phase_id": "create_recovery_points",
       "mutation": true,
       "requires_explicit_authorization": true,
-      "evidence_required": "evidence-disk recovery point and approved OS rollback mechanism"
+      "evidence_required": "evidence-disk snapshot and OS-disk snapshot for canonical-name recreation"
     },
     {
       "phase_id": "verify_recovery_points",
       "mutation": false,
       "requires_explicit_authorization": true,
-      "evidence_required": "provisioning state, source identity, size, access policy, expiry tags"
+      "evidence_required": "provisioning state, source identity, size, generation, access policy, expiry tags, and deterministic canonical-name OS-disk recreation contract"
     },
     {
       "phase_id": "remove_old_compute",
       "mutation": true,
       "requires_explicit_authorization": true,
-      "evidence_required": "VM-only deletion with NIC and evidence disk preserved"
+      "evidence_required": "VM-only deletion after both snapshots are verified, with NIC and evidence disk preserved and canonical OS-disk name expected to become reusable"
     },
     {
       "phase_id": "verify_preservation_boundary",
       "mutation": false,
       "requires_explicit_authorization": true,
-      "evidence_required": "NIC, static address, subnet, evidence disk, and recovery points still exist"
+      "evidence_required": "NIC, static address, subnet, evidence disk, both recovery snapshots, and canonical OS-disk name availability"
     },
     {
       "phase_id": "deploy_replacement_compute",
       "mutation": true,
       "requires_explicit_authorization": true,
-      "evidence_required": "Ubuntu 24.04 VM using preserved NIC and evidence disk"
+      "evidence_required": "Ubuntu 24.04 VM using preserved NIC and evidence disk with canonical OS-disk name"
     },
     {
       "phase_id": "harden_replacement_os_disk",
@@ -138,18 +140,64 @@
     }
   ],
   "rollback": {
-    "status": "unresolved_blocker",
+    "status": "strategy_selected_design_only",
     "promotion_blocked": true,
-    "decision_required": "Choose and test either temporary preservation of the old OS disk with a non-conflicting replacement OS-disk name, or a verified OS-disk snapshot and deterministic VM recreation path.",
-    "before_old_vm_deletion": "Abort without infrastructure change beyond any separately approved recovery resources.",
-    "after_old_vm_deletion": "Do not proceed until the approved rollback mechanism can recreate the prior bootable collector while preserving the NIC and evidence disk.",
-    "evidence_disk_rule": "Never discard, format, or replace the evidence disk during rollback."
+    "strategy_id": "os_disk_snapshot_recreate_canonical_name",
+    "decision": "Create and independently verify an OS-disk snapshot, allow the disposable old OS disk to be deleted with the old VM, retain the canonical OS-disk name for the replacement, and recreate the prior bootable VM from the verified snapshot if rollback is required.",
+    "canonical_os_disk_name": "disk-stcollector-os-mst-dev",
+    "snapshot_name_prefix": "snap-stcollector-os-rollback-mst-dev-",
+    "preserve_old_os_disk_directly": false,
+    "maximum_os_disk_snapshot_gib": 64,
+    "block_if_os_disk_exceeds_snapshot_gib": 64,
+    "source_preflight_required": [
+      "source OS-disk resource ID",
+      "disk size GiB",
+      "OS type",
+      "Hyper-V generation",
+      "security type and Trusted Launch compatibility",
+      "encryption configuration",
+      "network access policy",
+      "public network access state"
+    ],
+    "snapshot_verification_required": [
+      "provisioning state succeeded",
+      "source OS-disk resource ID matches",
+      "snapshot size matches source disk",
+      "Hyper-V generation and OS type are preserved",
+      "network access policy is DenyAll",
+      "public network access is Disabled",
+      "execution, owner, and cleanup-deadline tags are present",
+      "cleanup deadline is no more than 24 hours after creation"
+    ],
+    "recreation_contract": {
+      "os_disk_create_option": "Copy",
+      "os_disk_source": "verified OS-disk snapshot",
+      "recreated_os_disk_name": "disk-stcollector-os-mst-dev",
+      "recreated_vm_name": "vm-stcollector-mst-dev",
+      "attach_preserved_nic": "nic-stcollector-mst-dev",
+      "attach_preserved_evidence_disk": "disk-stcollector-evidence-mst-dev",
+      "identity_rule": "record the new system-assigned principal and restore only the approved RBAC allowlist",
+      "acceptance_required": [
+        "prior OS boots under the reviewed security profile",
+        "same evidence filesystem UUID is mounted at /var/lib/servicetracer",
+        "recent pre-change evidence is readable",
+        "collector service and local health endpoint succeed",
+        "durable write and restart persistence succeed",
+        "NIC, static address, identity, RBAC, and disk access policies match the rollback contract"
+      ]
+    },
+    "operationally_tested": false,
+    "independent_review_status": "pending",
+    "before_old_vm_deletion": "Abort without deleting old compute unless both evidence-disk and OS-disk recovery snapshots are independently verified.",
+    "after_old_vm_deletion": "If replacement verification fails, remove only the failed replacement compute boundary, recreate the canonical OS disk from the verified OS snapshot, recreate the prior VM with the preserved NIC and evidence disk, restore approved RBAC, and verify the rollback acceptance checks.",
+    "evidence_disk_rule": "Never discard, format, replace, or restore over the evidence disk during rollback."
   },
   "unresolved_blockers": [
-    "rollback mechanism and canonical OS-disk naming",
+    "operational proof of the selected OS-disk snapshot recreation rollback",
     "guest preflight evidence schema",
     "independent recovery-point verification method",
     "managed-identity and RBAC restoration allowlist",
-    "reviewed temporary-cost estimate and cleanup owner"
+    "reviewed temporary-cost estimate and cleanup owner",
+    "independent operations-and-recovery approval of this rollback decision"
   ]
 }
