@@ -37,3 +37,11 @@ Before a workstream changes conversations or owners, update its handoff with:
 ## Safety boundary
 
 Workflow observability contains metadata only. It must never contain Azure credentials, SSH private keys, bearer tokens, SAS tokens, raw customer evidence, or other secrets.
+
+## Replacement execution promotion
+
+A collector replacement workflow must not become active merely because its design and tests exist. The candidate remains outside `.github/workflows`, fails closed, and records Azure mutations as unauthorized.
+
+Promotion requires a separate pull request after rollback, preflight evidence, recovery verification, NIC preservation, identity/RBAC restoration, cost controls, cleanup, and independent review are resolved. Moving the candidate into `.github/workflows`, adding Azure authentication, or adding mutation commands are separate authority-changing acts.
+
+The generated `REPLACE:` phrase is reference data only. It does not authorize dispatch or execution.
