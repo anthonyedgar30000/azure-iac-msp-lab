@@ -4,6 +4,7 @@
 
 - Repository governance baseline.
 - Repository-native workflow observability in `.project/`, including active work, environment facts, deployment history, decisions, handoffs, and CI validation.
+- Canonical **ServiceTracer — Governed Azure Operations Lab** workspace identity with an exact six-stream machine-readable catalog and validator enforcement.
 - HELIX retrieval and archive governance in `.helix/`, including authority precedence, retrieval classes, candidate promotion, scoped review lenses, and explicit-only historical lookup.
 - Azure network and monitoring Bicep definitions.
 - Standard public load balancer with a TCP 443 listener probe and empty VPN backend pool.
@@ -24,6 +25,10 @@
 - Pre-planning detection of immutable collector image-line drift that blocks ordinary What-If or Deploy when replacement is required.
 - A separate manually dispatched, read-only collector replacement planner with exact confirmation, inventory collection, preservation boundaries, and explicit proof that Azure mutations are not authorized or performed.
 - Runtime and static tests for the image-drift guard, replacement-planning workflow, desired-image contract, and pre-ARM execution order.
+- A fail-closed collector replacement execution contract pinned to the promoted planner run and artifact digest.
+- A deterministic replacement-design validator covering target identity, phase order, mutation classification, review lenses, cost ceilings, cleanup boundaries, and unresolved rollback state.
+- An inactive candidate replacement workflow stored under `infra/workflow-designs/`, outside `.github/workflows`, with an unconditional design-only blocker before Azure authentication.
+- CI tests proving the candidate is non-dispatchable, contains no Azure mutation commands, rejects authorization in the design state, and remains `promotion_ready: false`.
 - ServiceTracer deterministic incident analyzer.
 - Durable JSONL evidence spool with restart-safe identity indexing.
 - JSON, JSON-array, and JSONL import for monitoring and ticket exports.
@@ -47,8 +52,8 @@
 - Optional dedicated Azure Storage static-website module with restricted CORS, disabled shared-key authorization, Blob versioning, delete retention, and a narrowly scoped collector data role.
 - Operator console support for live public envelopes, stale-report warning, provenance display, query-string test override, and controlled fixture fallback.
 - Preassembled attempts and the deterministic generator retained only for replay and regression compatibility.
-- Unit tests for collector persistence, authentication, identity reuse, batch atomicity, structured syslog extraction, ingestion, evidence gaps, localization, probe gaps, containment, recovery gating, report sanitization, managed-identity upload, visual fallback, collector VM security, disk retention, bootstrap behavior, publication infrastructure, lifecycle guardrails, image-drift planning, and safe default parameters.
-- GitHub Actions validation of collector-to-spool-to-analysis-to-publication flow, source-evidence analysis, replay compatibility, collector VM and lifecycle contracts, workflow-observability state, and Bicep builds.
+- Unit tests for collector persistence, authentication, identity reuse, batch atomicity, structured syslog extraction, ingestion, evidence gaps, localization, probe gaps, containment, recovery gating, report sanitization, managed-identity upload, visual fallback, collector VM security, disk retention, bootstrap behavior, publication infrastructure, lifecycle guardrails, image-drift planning, replacement execution design, and safe default parameters.
+- GitHub Actions validation of collector-to-spool-to-analysis-to-publication flow, source-evidence analysis, replay compatibility, collector VM and lifecycle contracts, workflow-observability state, canonical workstream catalog, replacement execution design, and Bicep builds.
 
 ## Deployed and manually verified
 
@@ -72,6 +77,15 @@
 - The current disposable OS disk allows public network access and should be hardened in the replacement design.
 - The sanitized four-lens review is recorded in `docs/reviews/collector-replacement-plan-2026-07-21.md`.
 
+## Designed and CI-testable but deliberately inactive
+
+- The collector replacement authority, evidence, phase, cost, cleanup, and review contract.
+- The future workflow input surface and ordered state-machine candidate.
+- The policy ceilings of CAD 10 temporary cost, at most two snapshots and 96 GiB total snapshot capacity, zero compute overlap, and 24-hour recovery-resource retention.
+- The explicit rule that Azure budgets, billing alerts, action groups, and billing configuration are out of scope.
+- The candidate workflow is not under `.github/workflows`, cannot be dispatched, does not authenticate to Azure, and contains no mutation commands.
+- Rollback remains an explicit blocker; the design is not ready for promotion or execution.
+
 ## Implemented but not yet deployed or operationally verified
 
 - Replacement collector deployment using the Ubuntu 24.04 image and corrected first-boot Python/certificate path.
@@ -80,7 +94,7 @@
 - Managed-identity upload from the collector to `$web/reports/technician-handoff-report.json`.
 - Browser loading of the Azure-hosted report, provenance display, expiry warning, and outage fallback.
 - A recurring or event-triggered report-generation schedule.
-- A mutation-capable collector replacement workflow and its execution gates.
+- An active mutation-capable collector replacement workflow, tested Azure mutation executor, and dispatch authority.
 
 ## Not yet implemented as live infrastructure
 
@@ -104,6 +118,7 @@
 - Recreation and verification of managed-identity-dependent report permissions after a replacement VM receives a new principal identity.
 - Replacement OS-disk public-network hardening.
 - Temporary replacement-resource cost, maximum overlap period, cleanup ownership, and cleanup evidence.
+- A tested rollback mechanism that resolves canonical OS-disk naming and can restore the prior bootable collector after VM deletion.
 - Real collector traffic from Windows, VPN appliances, Azure telemetry, or SNMP tooling.
 - Real VPN transactions and RADIUS timeout behavior.
 - Real load-balancer backend draining and probe behavior.
@@ -114,23 +129,24 @@
 
 ## Next bounded increments
 
-1. Design a separate collector replacement-execution branch and tests without dispatching it.
-2. Add pre-maintenance guest service, health, mount-source, filesystem-identity, and evidence-readability gates.
-3. Require creation and independent verification of an evidence-disk recovery point before destructive action.
-4. Preserve the NIC or deterministically recreate and verify its subnet, static addressing, and security relationships.
-5. Recreate and verify required managed-identity and RBAC permissions for the replacement principal.
-6. Disable public network access on the replacement OS disk unless an approved exception is documented.
-7. Declare temporary snapshot, disk, and compute costs; set a maximum overlap period, cleanup owner, and cleanup deadline.
-8. Add exact human confirmation, protected-environment approval, rollback criteria, and post-change evidence requirements.
+1. Review and merge the fail-closed execution design and tests without dispatching anything.
+2. Resolve rollback by selecting and testing either temporary old-OS-disk preservation or verified OS-disk snapshot recreation.
+3. Define the fresh pre-maintenance guest and control-plane evidence schema.
+4. Implement recovery-point creation and independent verification behind fake-Azure-CLI tests.
+5. Implement and test NIC delete-option preservation and post-delete resource verification.
+6. Implement approved managed-identity/RBAC restoration from an explicit allowlist.
+7. Implement replacement OS-disk public-network hardening and verification.
+8. Add current cost estimation, cleanup owner, cleanup deadline, and deletion evidence.
 9. Obtain independent evidence, operations/recovery, security/identity, and Azure-cost reviews.
-10. Obtain separate explicit human authorization before dispatching any snapshot, detach, delete, create, update, or replacement operation.
-11. Replace and verify the collector only through that governed execution path, then prove Ubuntu 24.04 bootstrap, ServiceTracer `0.5.0`, evidence-disk reattachment, service health, durable ingestion, and permission restoration.
-12. Generate the technician-handoff report on the verified collector and publish it with managed identity.
-13. Verify the public envelope contains no raw evidence, credentials, private endpoints, customer identifiers, or exact-root-cause claim.
-14. Test the report URL through the console query-string override, then commit the verified URL to `docs/report-source.json`.
-15. Confirm stale-report behavior and deliberate fallback by temporarily making the endpoint unavailable.
-16. Add Windows VM definitions and domain bootstrap automation.
-17. Add two VPN appliance nodes and associate their NICs with the load-balancer backend pool.
-18. Add source-specific Windows, Azure, VPN, SNMP, and synthetic-check exporters that emit the implemented contract.
-19. Replace the bootstrap self-signed certificate and locally generated token with governed certificate and secret delivery.
-20. Add the live ticketing-system adapter and governed configuration comparison for drift repair and return to service.
+10. Use a separate authority-changing PR to promote an implementation into `.github/workflows` only after every blocker is resolved.
+11. Obtain separate explicit human authorization before dispatching any snapshot, detach, delete, create, update, or replacement operation.
+12. Replace and verify the collector only through that governed execution path, then prove Ubuntu 24.04 bootstrap, ServiceTracer `0.5.0`, evidence-disk reattachment, service health, durable ingestion, and permission restoration.
+13. Generate the technician-handoff report on the verified collector and publish it with managed identity.
+14. Verify the public envelope contains no raw evidence, credentials, private endpoints, customer identifiers, or exact-root-cause claim.
+15. Test the report URL through the console query-string override, then commit the verified URL to `docs/report-source.json`.
+16. Confirm stale-report behavior and deliberate fallback by temporarily making the endpoint unavailable.
+17. Add Windows VM definitions and domain bootstrap automation.
+18. Add two VPN appliance nodes and associate their NICs with the load-balancer backend pool.
+19. Add source-specific Windows, Azure, VPN, SNMP, and synthetic-check exporters that emit the implemented contract.
+20. Replace the bootstrap self-signed certificate and locally generated token with governed certificate and secret delivery.
+21. Add the live ticketing-system adapter and governed configuration comparison for drift repair and return to service.

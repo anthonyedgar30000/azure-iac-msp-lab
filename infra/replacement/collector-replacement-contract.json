@@ -1,0 +1,155 @@
+{
+  "schema_version": "servicetracer.collector-replacement-execution-design.v1",
+  "state": "design_only",
+  "activation": {
+    "candidate_workflow": "infra/workflow-designs/collector-replacement-execution.yml",
+    "active_workflow": ".github/workflows/collector-replacement-execution.yml",
+    "active_workflow_present": false,
+    "dispatch_authorized": false,
+    "azure_mutations_authorized": false,
+    "promotion_requires_separate_pull_request": true,
+    "promotion_requires_independent_reviews": [
+      "evidence-quality",
+      "operations-and-recovery",
+      "security-and-identity",
+      "azure-cost"
+    ]
+  },
+  "evidence_anchor": {
+    "planner_run_id": 29856203054,
+    "planner_repository_commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a",
+    "planner_artifact": "collector-replacement-plan-29856203054-1",
+    "planner_artifact_sha256": "76f3b44e6e97e906dac6d62eeb212a6bc55265e77271a030b9c45b0cacf55637",
+    "planner_azure_mutations_authorized": false,
+    "planner_azure_mutations_performed": false
+  },
+  "target": {
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "prefix": "mst",
+    "environment": "dev",
+    "collector_vm": "vm-stcollector-mst-dev",
+    "collector_nic": "nic-stcollector-mst-dev",
+    "collector_evidence_disk": "disk-stcollector-evidence-mst-dev",
+    "evidence_mount": "/var/lib/servicetracer",
+    "exact_future_confirmation": "REPLACE:rg-servicetracer-dev-westus2:vm-stcollector-mst-dev"
+  },
+  "cost_controls": {
+    "currency": "CAD",
+    "maximum_declared_temporary_cost": 10.0,
+    "maximum_snapshots": 2,
+    "maximum_total_snapshot_gib": 96,
+    "maximum_compute_overlap_minutes": 0,
+    "maximum_recovery_resource_retention_hours": 24,
+    "cleanup_owner_required": true,
+    "cleanup_deadline_required": true,
+    "azure_budget_or_alert_mutation_allowed": false,
+    "note": "These are policy ceilings, not a price quotation. Promotion requires a reviewed cost estimate and cleanup evidence."
+  },
+  "required_preflight_gates": [
+    "exact target and planner evidence identity match",
+    "current collector service active",
+    "local health endpoint successful",
+    "evidence mount resolves to the managed evidence disk",
+    "filesystem UUID recorded",
+    "recent evidence readable",
+    "NIC subnet and static address recorded",
+    "current identity and visible role assignments recorded",
+    "recovery owner, cost ceiling, and cleanup deadline approved"
+  ],
+  "phases": [
+    {
+      "phase_id": "validate_authority",
+      "mutation": false,
+      "requires_explicit_authorization": false,
+      "evidence_required": "authorization package, reviewed commit, exact target, unexpired approval"
+    },
+    {
+      "phase_id": "guest_and_control_plane_preflight",
+      "mutation": false,
+      "requires_explicit_authorization": false,
+      "evidence_required": "service, health, mount, filesystem, evidence readability, VM, NIC, disks, identity, RBAC"
+    },
+    {
+      "phase_id": "preserve_delete_options",
+      "mutation": true,
+      "requires_explicit_authorization": true,
+      "evidence_required": "NIC and evidence disk verified Detach before VM deletion"
+    },
+    {
+      "phase_id": "create_recovery_points",
+      "mutation": true,
+      "requires_explicit_authorization": true,
+      "evidence_required": "evidence-disk recovery point and approved OS rollback mechanism"
+    },
+    {
+      "phase_id": "verify_recovery_points",
+      "mutation": false,
+      "requires_explicit_authorization": true,
+      "evidence_required": "provisioning state, source identity, size, access policy, expiry tags"
+    },
+    {
+      "phase_id": "remove_old_compute",
+      "mutation": true,
+      "requires_explicit_authorization": true,
+      "evidence_required": "VM-only deletion with NIC and evidence disk preserved"
+    },
+    {
+      "phase_id": "verify_preservation_boundary",
+      "mutation": false,
+      "requires_explicit_authorization": true,
+      "evidence_required": "NIC, static address, subnet, evidence disk, and recovery points still exist"
+    },
+    {
+      "phase_id": "deploy_replacement_compute",
+      "mutation": true,
+      "requires_explicit_authorization": true,
+      "evidence_required": "Ubuntu 24.04 VM using preserved NIC and evidence disk"
+    },
+    {
+      "phase_id": "harden_replacement_os_disk",
+      "mutation": true,
+      "requires_explicit_authorization": true,
+      "evidence_required": "public network access Disabled and network access policy DenyAll"
+    },
+    {
+      "phase_id": "restore_identity_and_rbac",
+      "mutation": true,
+      "requires_explicit_authorization": true,
+      "evidence_required": "new principal recorded and approved role assignments recreated"
+    },
+    {
+      "phase_id": "post_change_verification",
+      "mutation": false,
+      "requires_explicit_authorization": true,
+      "evidence_required": "cloud-init, mount UUID, service, health, durable write, restart persistence, identity and RBAC"
+    },
+    {
+      "phase_id": "human_recovery_acceptance",
+      "mutation": false,
+      "requires_explicit_authorization": true,
+      "evidence_required": "independent evidence, operations, security, and cost decisions"
+    },
+    {
+      "phase_id": "cleanup_temporary_recovery_resources",
+      "mutation": true,
+      "requires_explicit_authorization": true,
+      "evidence_required": "acceptance decision, exact cleanup confirmation, deletion proof before deadline"
+    }
+  ],
+  "rollback": {
+    "status": "unresolved_blocker",
+    "promotion_blocked": true,
+    "decision_required": "Choose and test either temporary preservation of the old OS disk with a non-conflicting replacement OS-disk name, or a verified OS-disk snapshot and deterministic VM recreation path.",
+    "before_old_vm_deletion": "Abort without infrastructure change beyond any separately approved recovery resources.",
+    "after_old_vm_deletion": "Do not proceed until the approved rollback mechanism can recreate the prior bootable collector while preserving the NIC and evidence disk.",
+    "evidence_disk_rule": "Never discard, format, or replace the evidence disk during rollback."
+  },
+  "unresolved_blockers": [
+    "rollback mechanism and canonical OS-disk naming",
+    "guest preflight evidence schema",
+    "independent recovery-point verification method",
+    "managed-identity and RBAC restoration allowlist",
+    "reviewed temporary-cost estimate and cleanup owner"
+  ]
+}

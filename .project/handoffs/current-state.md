@@ -3,9 +3,9 @@
 ## Trusted baseline observation
 
 - Branch: `main`
-- Verified main commit when this reconciliation began: `93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a`
-- Latest completed increment at that observation: PR #22, project-state refresh after governance merges
-- The recorded SHA is an observation anchor. Live GitHub state determines the current `main` head after this reconciliation is merged.
+- Verified main commit when this refresh began: `50a4789e87cdadd7d537179882427b3b2cb4b96f`
+- Latest completed increment at that observation: PR #24, canonical ServiceTracer workspace streams
+- The recorded SHA is an observation anchor. Live GitHub state determines the current `main` head after this design is merged.
 
 ## Recently completed
 
@@ -13,6 +13,8 @@
 - PR #20: desired collector image contract, immutable-image drift guard, and read-only replacement planning.
 - PR #21: HELIX retrieval classes, promotion rules, and explicit-only archive boundary in `.helix/`.
 - PR #22: project state, handoff, implementation status, and retrieval freshness reconciliation.
+- PR #23: promoted planner evidence, four-lens review, corrected live VM size, preservation blockers, identity requirements, and cost boundaries.
+- PR #24: canonical **ServiceTracer — Governed Azure Operations Lab** identity, exact six-stream catalog, and validator enforcement.
 - Collector replacement plan run `29856203054`: successful read-only Azure inventory and replacement assessment with no Azure mutations authorized or performed.
 
 ## Runtime and deployment state
@@ -24,7 +26,7 @@
 - The evidence disk is attached, uses detach-on-delete semantics, and has restrictive public/network access settings. It must be preserved and protected by a verified recovery point.
 - The NIC has static private addressing but is configured to be deleted with the VM. NIC preservation or deterministic recreation is an execution blocker.
 - The VM uses a system-assigned identity. No visible role assignments were returned, and any required publication access must be recreated for the replacement identity.
-- The current OS disk allows public network access; the replacement design should harden this setting.
+- The current OS disk allows public network access; the replacement design must harden this setting.
 - No collector replacement execution is authorized or evidenced.
 
 ## Evidence record
@@ -35,31 +37,43 @@
 - Artifact SHA-256: `76f3b44e6e97e906dac6d62eeb212a6bc55265e77271a030b9c45b0cacf55637`
 - Raw artifact remains in protected GitHub Actions storage and is not committed because it contains sensitive environment identifiers.
 
-## Repository governance state
-
-- `.project/` records active work, environment facts, handoffs, and deployment history.
-- `.helix/` governs retrieval authority, candidate promotion, and archive exclusion.
-- Git and CI establish implementation and automated-test evidence.
-- Azure workflow artifacts and runtime verification establish deployment and operational evidence.
-- Legacy draft PR #1 remains non-current and requires a separate evidence review before closure.
-
 ## Current bounded work
 
-This branch reconciles evidence and documentation only. It does not change infrastructure, application behavior, workflows, tests, budgets, alerts, or Azure resources.
+- Branch: `feature/collector-replacement-execution-design`
+- Pull request: `#25`
+- Purpose: design and test a fail-closed replacement execution contract.
+- Candidate workflow: `infra/workflow-designs/collector-replacement-execution.yml`
+- Active workflow path: absent.
+- Dispatch authorized: `false`.
+- Azure mutations authorized: `false`.
+- The candidate exits before Azure authentication and contains no Azure mutation commands.
+- CI validates the machine-readable phase, authority, evidence, cost, cleanup, rollback, and canonical workspace boundaries.
 
-## Next bounded operation
+## Design decisions
 
-Design and test a separate collector replacement-execution branch **without dispatching it**. The design must include:
+- Workflow design is intentionally stored outside `.github/workflows` so GitHub cannot dispatch it.
+- Promotion into an active workflow is a separate authority-changing pull request.
+- Temporary policy ceilings are CAD 10, at most two snapshots and 96 GiB total snapshot capacity, zero minutes of overlapping compute, and 24 hours of recovery-resource retention.
+- Azure budgets, billing alerts, action groups, and billing configuration remain outside the execution scope.
+- The `REPLACE:` phrase remains reference data only.
 
-- guest service and evidence-mount preflight;
-- a verified evidence-disk recovery point before destructive action;
-- explicit NIC preservation or deterministic recreation;
-- replacement managed-identity and RBAC restoration;
-- replacement OS-disk public-access hardening;
-- temporary-resource cost ceiling, owner, and cleanup deadline;
-- rollback and post-change verification evidence;
-- exact human confirmation and protected-environment approval.
+## Unresolved blocker
+
+Rollback must be chosen and tested before workflow promotion:
+
+1. temporarily preserve the old OS disk and use a non-conflicting replacement OS-disk name; or
+2. create and verify an OS-disk snapshot, reuse the canonical OS-disk name, and prove deterministic prior-VM recreation.
+
+This decision affects naming convergence, recovery, temporary cost, and cleanup. The design remains `promotion_ready: false` until it is resolved.
+
+## Next bounded gate
+
+1. Pass refreshed CI for the canonical workspace validator, contract validator, inactive workflow location, phase ordering, cost ceilings, and fail-closed behavior.
+2. Review the design separately under evidence, operations/recovery, security/identity, and Azure-cost lenses.
+3. Merge only the design contract and tests if accepted.
+4. Resolve rollback and the remaining blockers in later bounded work.
+5. Use a separate PR for any move into `.github/workflows`, Azure authentication, or mutation implementation.
 
 ## Prohibited next step
 
-Do not use the generated `REPLACE:` confirmation phrase, rerun ordinary Deploy, delete the VM, detach disks, create snapshots, or create replacement resources merely because the planning run succeeded. Execution requires a separately reviewed implementation, verified preconditions, and explicit human authorization.
+Do not move the candidate workflow into `.github/workflows`, add Azure login or mutation commands, use the generated `REPLACE:` phrase, create snapshots, change delete options, delete the VM, detach disks, or deploy replacement resources in this workstream.
