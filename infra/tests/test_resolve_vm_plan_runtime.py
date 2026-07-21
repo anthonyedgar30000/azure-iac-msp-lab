@@ -12,6 +12,22 @@ ROOT = Path(__file__).resolve().parents[2]
 RESOLVER = ROOT / "infra" / "scripts" / "resolve_vm_plan.sh"
 
 
+def decode_json_stream(text: str) -> list[dict[str, object]]:
+    decoder = json.JSONDecoder()
+    documents: list[dict[str, object]] = []
+    cursor = 0
+    while cursor < len(text):
+        while cursor < len(text) and text[cursor].isspace():
+            cursor += 1
+        if cursor >= len(text):
+            break
+        document, cursor = decoder.raw_decode(text, cursor)
+        if not isinstance(document, dict):
+            raise AssertionError("planner evidence document must be a JSON object")
+        documents.append(document)
+    return documents
+
+
 class ResolveVmPlanRuntimeTests(unittest.TestCase):
     def test_candidate_arrays_reach_arm_validation_without_nameref_warnings(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -112,10 +128,8 @@ class ResolveVmPlanRuntimeTests(unittest.TestCase):
             self.assertNotIn("circular name reference", result.stderr)
 
             backend_candidates = (
-                artifacts.read_text(encoding="utf-8")
-                if artifacts.is_file()
-                else (artifacts / "backend-candidates.txt").read_text(encoding="utf-8")
-            ).splitlines()
+                artifacts / "backend-candidates.txt"
+            ).read_text(encoding="utf-8").splitlines()
             collector_candidates = (
                 artifacts / "collector-candidates.txt"
             ).read_text(encoding="utf-8").splitlines()
@@ -125,12 +139,11 @@ class ResolveVmPlanRuntimeTests(unittest.TestCase):
             self.assertEqual(len(backend_candidates), len(set(backend_candidates)))
             self.assertEqual(len(collector_candidates), len(set(collector_candidates)))
 
-            attempts = [
-                json.loads(line)
-                for line in (artifacts / "sku-validation-attempts.jsonl")
-                .read_text(encoding="utf-8")
-                .splitlines()
-            ]
+            attempts = decode_json_stream(
+                (artifacts / "sku-validation-attempts.jsonl").read_text(
+                    encoding="utf-8"
+                )
+            )
             self.assertEqual(attempts[0]["status"], "succeeded")
             self.assertEqual(attempts[0]["collector_vm_size"], "Standard_B1s")
             self.assertEqual(attempts[0]["demo_backend_vm_size"], "Standard_B1s")
