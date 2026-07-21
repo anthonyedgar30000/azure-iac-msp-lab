@@ -24,7 +24,7 @@ class AzureLifecycleWorkflowTests(unittest.TestCase):
     def test_deployment_is_gated_by_what_if_and_pinned_source(self) -> None:
         self.assertLess(
             WORKFLOW.index("Run Bicep validation and what-if"),
-            WORKFLOW.index("Deploy collector infrastructure"),
+            WORKFLOW.index("Deploy ServiceTracer infrastructure"),
         )
         self.assertIn("^[0-9a-fA-F]{40}$", WORKFLOW)
         self.assertIn("collectorAdminSshPublicKey", WORKFLOW)
@@ -37,10 +37,26 @@ class AzureLifecycleWorkflowTests(unittest.TestCase):
         self.assertIn('collectorVmSize="$COLLECTOR_VM_SIZE"', WORKFLOW)
         self.assertIn("collector_vm_size:$collectorVmSize", WORKFLOW)
 
+    def test_demo_compute_and_publication_are_explicit_inputs(self) -> None:
+        for expected in (
+            "deploy_demo_backends:",
+            "demo_backend_vm_size:",
+            "deploy_public_report_endpoint:",
+            'deployDemoBackends="$DEPLOY_DEMO_BACKENDS"',
+            'demoBackendVmSize="$DEMO_BACKEND_VM_SIZE"',
+            'deployPublicReportEndpoint="$DEPLOY_PUBLIC_REPORT_ENDPOINT"',
+            "Verify demo backend inventory",
+        ):
+            self.assertIn(expected, WORKFLOW)
+
+    def test_existing_resource_group_is_the_guarded_default(self) -> None:
+        self.assertIn("default: servicetracer-dev-westus2", WORKFLOW)
+        self.assertIn("default: westus2", WORKFLOW)
+        self.assertIn("^(rg-)?servicetracer-(dev|test)", WORKFLOW)
+
     def test_teardown_has_exact_confirmation_and_narrow_group_name(self) -> None:
         self.assertIn("CONFIRM_TEARDOWN", WORKFLOW)
         self.assertIn('[[ "$CONFIRM_TEARDOWN" == "$RESOURCE_GROUP" ]]', WORKFLOW)
-        self.assertIn("^rg-servicetracer-(dev|test)", WORKFLOW)
         self.assertIn("az group delete --name \"$RESOURCE_GROUP\" --yes", WORKFLOW)
 
     def test_verification_checks_azure_and_guest_state(self) -> None:
