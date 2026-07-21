@@ -9,7 +9,7 @@
       "status": "operationally_verified",
       "last_observed_on": "2026-07-20",
       "source": "Manual Azure deployment verification and committed development parameters",
-      "notes": "This is the collector VM size known to have worked."
+      "notes": "This is the collector VM size known to have worked. Later planner candidate selection does not replace this operational fact without deployment evidence."
     },
     {
       "fact_id": "running-servicetracer-version",
@@ -17,14 +17,14 @@
       "status": "deployed_with_manual_repairs",
       "last_observed_on": "2026-07-20",
       "source": "Manual collector verification recorded in repository documentation",
-      "notes": "The running collector received manual Python and certificate repairs."
+      "notes": "The running collector received manual Python and certificate repairs. No repository evidence proves that the Azure collector has since been replaced."
     },
     {
       "fact_id": "replacement-collector-definition",
-      "value": "Ubuntu 24.04 with Python 3.11+ gate and deterministic certificate identity",
+      "value": "Ubuntu 24.04 with Python 3.11+ gate, deterministic certificate identity, and a shared desired-image contract",
       "status": "implemented_and_ci_verified_not_redeployed",
       "last_observed_on": "2026-07-21",
-      "source": "Merged pull request 12",
+      "source": "Merged pull requests 12 and 20",
       "notes": "The corrected image and bootstrap path still require governed Azure replacement verification."
     },
     {
@@ -45,11 +45,27 @@
     },
     {
       "fact_id": "azure-planning-workflow",
-      "value": "Read-only What-If with bounded VM candidate planning and ARM validation",
-      "status": "implemented_and_ci_verified_live_rerun_pending",
+      "value": "Read-only What-If with bounded VM candidate planning, ARM validation, and pre-planning collector image-drift detection",
+      "status": "implemented_and_ci_verified",
       "last_observed_on": "2026-07-21",
-      "source": "Merged pull requests 15 through 18",
-      "notes": "The latest planner runtime defects were repaired; a new read-only run is still required to verify the fixes against Azure."
+      "source": "Merged pull requests 15 through 20",
+      "notes": "Workflow source and tests prove the planning controls. Azure execution outcomes require separately promoted workflow or environment evidence."
+    },
+    {
+      "fact_id": "collector-immutable-image-blocker",
+      "value": "The existing collector cannot accept the desired Ubuntu image-line change as an ordinary in-place VM update",
+      "status": "operator_observed_evidence_reference_pending",
+      "last_observed_on": "2026-07-21",
+      "source": "Observed Azure PropertyChangeNotAllowed deployment result that motivated merged pull request 20",
+      "notes": "The repository records the resulting guard and migration planner. The exact Azure workflow artifact has not yet been promoted into this state layer, so live evidence must be consulted before consequential action."
+    },
+    {
+      "fact_id": "collector-replacement-planner",
+      "value": "Read-only inventory and replacement assessment with evidence-disk, identity, RBAC, and recovery boundaries",
+      "status": "implemented_and_ci_verified_not_run",
+      "last_observed_on": "2026-07-21",
+      "source": "Merged pull request 20 and its passing CI run",
+      "notes": "No Azure mutation is authorized or evidenced. The planning workflow must be manually dispatched and reviewed before any execution path is designed."
     }
   ]
 }

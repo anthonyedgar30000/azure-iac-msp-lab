@@ -4,30 +4,51 @@
   "updated_on": "2026-07-21",
   "trusted_baseline": {
     "branch": "main",
-    "commit": "09d0b2eaccb95a29185a8dd6cef57c7fef281b8d",
+    "commit": "d9b952e324b7128300e1c888d5834536fb35fc30",
+    "commit_semantics": "verified main observation anchor before this state-refresh pull request; live Git determines the current head",
     "last_completed_increment": {
-      "pull_request": 18,
-      "title": "Fix circular nameref in VM plan resolver"
+      "pull_request": 21,
+      "title": "Add HELIX retrieval and archive governance"
     }
   },
-  "workstreams": [
+  "completed_increments": [
     {
-      "workstream_id": "workflow-observability",
-      "branch": "feature/workflow-observability",
       "pull_request": 19,
-      "write_owner": "workflow-observability-workstream",
-      "status": "ci_verified",
-      "scope": "Add shared branch ownership, environment facts, deployment history, handoffs, and CI validation for multi-conversation work.",
-      "review_mode_for_other_conversations": "review_only",
-      "next_gate": "Human review and merge decision for pull request 19."
+      "title": "Add shared workflow observability state",
+      "merge_commit": "058ee6ec7a8a26adebb2742659b9e483b74fd4ae"
+    },
+    {
+      "pull_request": 20,
+      "title": "Add collector image drift guard and read-only migration plan",
+      "merge_commit": "7f1bc961c9edfc29c1636518b0e4cf1d4ca949eb"
+    },
+    {
+      "pull_request": 21,
+      "title": "Add HELIX retrieval and archive governance",
+      "merge_commit": "d9b952e324b7128300e1c888d5834536fb35fc30"
     }
   ],
+  "workstreams": [],
   "known_open_pull_requests": [
     {
       "pull_request": 1,
       "title": "feat: scaffold Azure network foundation",
       "status": "legacy_draft",
-      "action": "Do not treat as current implementation work without explicit reactivation."
+      "action": "Do not treat as current implementation work. Review for unique durable evidence, then close as superseded through a separate explicit action."
     }
-  ]
+  ],
+  "next_bounded_operation": {
+    "operation": "collector_replacement_plan",
+    "workflow": ".github/workflows/collector-replacement-plan.yml",
+    "authority": "read_only_planning_only",
+    "confirmation": "PLAN:rg-servicetracer-dev-westus2:vm-stcollector-mst-dev",
+    "azure_mutations_authorized": false,
+    "required_review_lenses": [
+      "evidence-quality",
+      "operations-and-recovery",
+      "security",
+      "azure-cost"
+    ],
+    "next_gate": "Manually dispatch the read-only plan, review the resulting evidence, and promote bounded findings before designing any replacement-execution branch."
+  }
 }

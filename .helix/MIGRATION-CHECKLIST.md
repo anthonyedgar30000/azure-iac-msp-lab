@@ -70,13 +70,15 @@ For each query verify:
 
 These are review candidates, not automatic moves:
 
-- [ ] Refresh `docs/implementation-status.md`; its next-increment section references already-merged work as pending.
+- [x] Refresh `docs/implementation-status.md` so merged live-report, workflow-observability, image-drift planning, and HELIX governance work are no longer described as pending.
 - [ ] Add explicit implemented/planned labels to mixed sections of `docs/architecture.md`.
 - [ ] Review closed debugging narratives and promote durable lessons rather than copying transcripts.
-- [ ] Refresh `.project/active-work.json` and `.project/handoffs/current-state.md`; they still record PR #19 as open, use the PR #18 baseline, and omit merged PR #20.
+- [x] Refresh `.project/active-work.json`, `.project/environment-state.json`, and `.project/handoffs/current-state.md` after PRs #19 through #21.
 - [x] Classify PR #19 as merged workflow-observability work.
 - [x] Classify PR #20 as merged image-drift detection and read-only planning work.
+- [x] Classify PR #21 as merged HELIX retrieval and archive governance work.
 - [ ] Run the collector replacement planning workflow and review its evidence before designing any mutation-capable execution path.
-- [ ] Preserve the boundary that PR #20 proves detection and planning only; it does not prove that a replacement occurred.
+- [x] Preserve the boundary that PR #20 proves detection and planning only; it does not prove that a replacement occurred.
+- [ ] Review legacy draft PR #1 for unique durable evidence, then close it as superseded through a separate explicit action.
 
-This branch establishes policy only. It deliberately does not mass-move existing files into the archive or modify Azure resources.
+This checklist governs incremental cleanup. It does not authorize mass archival, Azure mutation, or destructive repository changes.
