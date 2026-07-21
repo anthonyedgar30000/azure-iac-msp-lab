@@ -1,0 +1,298 @@
+name: Azure probe-scope demo
+
+on:
+  workflow_dispatch:
+    inputs:
+      resource_group:
+        description: 'Resource group containing the deployed ServiceTracer demo'
+        required: true
+        default: servicetracer-dev-westus2
+        type: string
+      environment:
+        description: 'Deployed lab environment'
+        required: true
+        default: dev
+        type: choice
+        options: [dev, test]
+      prefix:
+        description: 'Bicep resource-name prefix'
+        required: true
+        default: mst
+        type: string
+      attempts:
+        description: 'Maximum distinct frontend flows used to observe both backends'
+        required: true
+        default: '30'
+        type: string
+      publish_report:
+        description: 'Publish the bounded live report through the collector managed identity'
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: azure-probe-demo-${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  ARTIFACT_DIR: azure-probe-demo-evidence
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+
+jobs:
+  prove-probe-scope:
+    name: Prove listener health is narrower than transaction health
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 45
+    steps:
+      - name: Check out the governed implementation
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate bounded inputs
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          PREFIX: ${{ inputs.prefix }}
+          ATTEMPTS: ${{ inputs.attempts }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          [[ "$RESOURCE_GROUP" =~ ^(rg-)?servicetracer-(dev|test)(-[a-z0-9-]+)?$ ]]
+          [[ "$LAB_ENVIRONMENT" =~ ^(dev|test)$ ]]
+          [[ "$PREFIX" =~ ^[a-z0-9]{2,12}$ ]]
+          [[ "$ATTEMPTS" =~ ^[0-9]+$ ]]
+          ((ATTEMPTS >= 2 && ATTEMPTS <= 100))
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Resolve the deployed Azure service boundary
+        id: azure
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          PREFIX: ${{ inputs.prefix }}
+        run: |
+          set -euo pipefail
+          lb_name="lb-remote-access-${PREFIX}-${LAB_ENVIRONMENT}"
+          pip_name="pip-remote-access-${PREFIX}-${LAB_ENVIRONMENT}"
+          collector_vm="vm-stcollector-${PREFIX}-${LAB_ENVIRONMENT}"
+
+          lb_id="$(az network lb show --resource-group "$RESOURCE_GROUP" --name "$lb_name" --query id --output tsv)"
+          public_ip="$(az network public-ip show --resource-group "$RESOURCE_GROUP" --name "$pip_name" --query ipAddress --output tsv)"
+          storage_account="$(az storage account list --resource-group "$RESOURCE_GROUP" --query "[?tags.component=='servicetracer-public-report'].name | [0]" --output tsv)"
+
+          [[ -n "$lb_id" && -n "$public_ip" ]]
+          if [[ "${{ inputs.publish_report }}" == 'true' ]]; then
+            [[ -n "$storage_account" ]] || {
+              echo 'No ServiceTracer public-report storage account is deployed.' >&2
+              exit 1
+            }
+            az vm show --resource-group "$RESOURCE_GROUP" --name "$collector_vm" --query id --output tsv >/dev/null
+          fi
+
+          printf 'lb_id=%s\n' "$lb_id" >> "$GITHUB_OUTPUT"
+          printf 'lb_name=%s\n' "$lb_name" >> "$GITHUB_OUTPUT"
+          printf 'public_ip=%s\n' "$public_ip" >> "$GITHUB_OUTPUT"
+          printf 'collector_vm=%s\n' "$collector_vm" >> "$GITHUB_OUTPUT"
+          printf 'storage_account=%s\n' "$storage_account" >> "$GITHUB_OUTPUT"
+
+          jq -n \
+            --arg resourceGroup "$RESOURCE_GROUP" \
+            --arg loadBalancerId "$lb_id" \
+            --arg loadBalancerName "$lb_name" \
+            --arg publicIp "$public_ip" \
+            --arg collectorVm "$collector_vm" \
+            --arg storageAccount "$storage_account" \
+            '{resource_group:$resourceGroup,load_balancer_id:$loadBalancerId,load_balancer_name:$loadBalancerName,public_ip:$publicIp,collector_vm:$collectorVm,storage_account:(if $storageAccount=="" then null else $storageAccount end)}' \
+            > "$ARTIFACT_DIR/azure-boundary.json"
+
+      - name: Wait for both Azure TCP probes to report healthy
+        env:
+          LB_ID: ${{ steps.azure.outputs.lb_id }}
+        run: |
+          set -euo pipefail
+          healthy=false
+          for attempt in $(seq 1 30); do
+            az monitor metrics list \
+              --resource "$LB_ID" \
+              --metric DipAvailability \
+              --aggregation Average \
+              --interval PT1M \
+              --filter "BackendIPAddress eq '*' and BackendPort eq '*'" \
+              --output json > "$ARTIFACT_DIR/load-balancer-probe-metrics.json"
+
+            python - "$ARTIFACT_DIR/load-balancer-probe-metrics.json" "$ARTIFACT_DIR/probe-status.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          metrics_path = Path(sys.argv[1])
+          output_path = Path(sys.argv[2])
+          payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+          ip_to_backend = {"10.20.10.11": "VPN-01", "10.20.10.12": "VPN-02"}
+          status = {backend: "unknown" for backend in ip_to_backend.values()}
+
+          values = payload.get("value") or []
+          if values:
+              for series in values[0].get("timeseries") or []:
+                  dimensions = {
+                      item.get("name", {}).get("value"): item.get("value")
+                      for item in series.get("metadatavalues") or []
+                  }
+                  backend = ip_to_backend.get(dimensions.get("BackendIPAddress"))
+                  if not backend:
+                      continue
+                  averages = [
+                      point.get("average")
+                      for point in series.get("data") or []
+                      if point.get("average") is not None
+                  ]
+                  if averages:
+                      status[backend] = "healthy" if averages[-1] >= 1 else "unhealthy"
+
+          output_path.write_text(json.dumps(status, indent=2) + "\n", encoding="utf-8")
+          PY
+
+            if jq -e '.["VPN-01"] == "healthy" and .["VPN-02"] == "healthy"' "$ARTIFACT_DIR/probe-status.json" >/dev/null; then
+              healthy=true
+              break
+            fi
+            sleep 20
+          done
+
+          [[ "$healthy" == true ]] || {
+            echo 'Both Azure backend probes did not become healthy within the bounded wait.' >&2
+            cat "$ARTIFACT_DIR/probe-status.json" >&2
+            exit 1
+          }
+
+      - name: Collect real frontend transactions from both Azure VMs
+        env:
+          PUBLIC_IP: ${{ steps.azure.outputs.public_ip }}
+          ATTEMPTS: ${{ inputs.attempts }}
+          LB_NAME: ${{ steps.azure.outputs.lb_name }}
+        run: |
+          set -euo pipefail
+          PYTHONPATH=servicetracer/src python -m servicetracer.azure_demo \
+            --frontend-url "https://${PUBLIC_IP}" \
+            --probe-status "$ARTIFACT_DIR/probe-status.json" \
+            --attempts "$ATTEMPTS" \
+            --load-balancer-id "$LB_NAME" \
+            --output "$ARTIFACT_DIR/live-source-records.jsonl" \
+            --raw-output "$ARTIFACT_DIR/live-transactions.json"
+
+      - name: Run the deterministic ServiceTracer analysis
+        env:
+          PYTHONPATH: servicetracer/src
+        run: |
+          set -euo pipefail
+          python -m servicetracer.collector_cli ingest \
+            --spool "$ARTIFACT_DIR/live-evidence-spool.jsonl" \
+            --input "$ARTIFACT_DIR/live-source-records.jsonl" \
+            > "$ARTIFACT_DIR/collector-receipt.json"
+
+          python -m servicetracer.cli \
+            --evidence-records "$ARTIFACT_DIR/live-evidence-spool.jsonl" \
+            --adapter-config servicetracer/examples/evidence_adapters.json \
+            --service-path servicetracer/examples/remote_access_service_path.json \
+            --report-view technician-handoff \
+            --output "$ARTIFACT_DIR/technician-handoff-report.json"
+
+          python -m servicetracer.publish_cli \
+            --input "$ARTIFACT_DIR/technician-handoff-report.json" \
+            --output "$ARTIFACT_DIR/public-technician-handoff-report.json" \
+            --source-id azure-probe-demo \
+            --servicetracer-version 0.5.0
+
+          jq -e '
+            .load_balancer.status == "healthy_under_configured_probe" and
+            .localization.suspect_backend == "VPN-02" and
+            .localization.healthy_comparison_backend == "VPN-01" and
+            .investigation_boundary.exact_root_cause_claimed == false
+          ' "$ARTIFACT_DIR/technician-handoff-report.json" >/dev/null
+
+      - name: Publish the bounded report through the collector identity
+        if: inputs.publish_report
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          COLLECTOR_VM: ${{ steps.azure.outputs.collector_vm }}
+          STORAGE_ACCOUNT: ${{ steps.azure.outputs.storage_account }}
+        run: |
+          set -euo pipefail
+          report_b64="$(base64 -w 0 "$ARTIFACT_DIR/technician-handoff-report.json")"
+          cat > /tmp/publish-live-report.sh <<EOF
+          set -euo pipefail
+          umask 0077
+          echo '${report_b64}' | base64 -d > /tmp/servicetracer-live-handoff.json
+          for attempt in \$(seq 1 12); do
+            if /opt/servicetracer/bin/servicetracer-publish-report \
+              --input /tmp/servicetracer-live-handoff.json \
+              --storage-account '${STORAGE_ACCOUNT}' \
+              --source-id '${COLLECTOR_VM}' \
+              --ttl-seconds 3600; then
+              rm -f /tmp/servicetracer-live-handoff.json
+              exit 0
+            fi
+            sleep 10
+          done
+          rm -f /tmp/servicetracer-live-handoff.json
+          exit 1
+          EOF
+
+          az vm run-command invoke \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$COLLECTOR_VM" \
+            --command-id RunShellScript \
+            --scripts "$(cat /tmp/publish-live-report.sh)" \
+            --output json > "$ARTIFACT_DIR/publish-run-command.json"
+
+          jq -e '.value[0].message | contains("Enable succeeded")' "$ARTIFACT_DIR/publish-run-command.json" >/dev/null
+
+      - name: Write proof summary
+        if: always()
+        env:
+          PUBLIC_IP: ${{ steps.azure.outputs.public_ip }}
+          STORAGE_ACCOUNT: ${{ steps.azure.outputs.storage_account }}
+        run: |
+          {
+            echo '## Azure probe-scope proof'
+            echo
+            echo "- Load-balancer frontend: \`$PUBLIC_IP:443\`"
+            if [[ -f "$ARTIFACT_DIR/probe-status.json" ]]; then
+              echo "- Azure TCP probe state: \`$(jq -c '.' "$ARTIFACT_DIR/probe-status.json")\`"
+            fi
+            if [[ -f "$ARTIFACT_DIR/technician-handoff-report.json" ]]; then
+              echo "- Localized backend: \`$(jq -r '.localization.suspect_backend' "$ARTIFACT_DIR/technician-handoff-report.json")\`"
+              echo "- Healthy comparison: \`$(jq -r '.localization.healthy_comparison_backend' "$ARTIFACT_DIR/technician-handoff-report.json")\`"
+              echo "- Root cause claimed: \`$(jq -r '.investigation_boundary.exact_root_cause_claimed' "$ARTIFACT_DIR/technician-handoff-report.json")\`"
+            fi
+            if [[ -n "$STORAGE_ACCOUNT" ]]; then
+              endpoint="$(az storage account show --name "$STORAGE_ACCOUNT" --query primaryEndpoints.web --output tsv 2>/dev/null || true)"
+              if [[ -n "$endpoint" ]]; then
+                echo "- Live report URL: \`${endpoint}reports/technician-handoff-report.json\`"
+              fi
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload non-secret proof evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-probe-demo-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
