@@ -239,15 +239,7 @@
       "authority_boundary": "supports current control-plane inventory and replacement planning; does not authorize or prove replacement execution"
     }
   ],
-  "active_coordination_boundaries": [
-    {
-      "workstream_id": "post-pr25-state-and-workspace-reconciliation",
-      "branch": "docs/reconcile-pr25-helix-workspace",
-      "pull_request": null,
-      "scope": "state-only reconciliation of PR #25 completion and HELIX-to-ServiceTracer workspace hierarchy",
-      "retrieval_rule": "treat as metadata and orientation work only; never infer workflow activation, dispatch authority, Azure mutation, deployment, billing change, or operational verification"
-    }
-  ],
+  "active_coordination_boundaries": [],
   "known_open_legacy_items": [
     {
       "pull_request": 1,
