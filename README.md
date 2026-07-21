@@ -1,6 +1,23 @@
-# Azure IaC MSP Lab
+# ServiceTracer — Governed Azure Operations Lab
 
-A version-controlled Azure infrastructure-as-code portfolio lab for demonstrating practical MSP, systems administration, cloud infrastructure, security, and service-reliability troubleshooting skills.
+A version-controlled Azure operations and infrastructure-as-code portfolio lab demonstrating deterministic service-path localization, governed evidence, bounded AI-assisted reasoning, explicit human authority, cloud infrastructure, security, cost awareness, and service-reliability troubleshooting.
+
+The GitHub repository retains the historical name `azure-iac-msp-lab`; this project title is the canonical portfolio and workspace identity.
+
+## Canonical workspace
+
+The ChatGPT project is the canonical conversational workspace. GitHub, pull requests, CI, workflow artifacts, Azure evidence, and [`.project/`](.project/) remain authoritative for implementation, coordination, deployment, and operational state.
+
+Work is organized into six governed streams:
+
+1. **Architecture and design decisions**
+2. **Azure resource plan and IaC**
+3. **Deployment evidence and screenshots**
+4. **Cost, health, and configuration telemetry**
+5. **ServiceTracer findings and reports**
+6. **Portfolio/demo narrative**
+
+The machine-readable catalog in [`.project/workstream-catalog.json`](.project/workstream-catalog.json) defines each stream's purpose, repository paths, and claim boundary.
 
 ## Current direction
 
@@ -110,9 +127,9 @@ Post-containment records complete through `VPN-01`, so ServiceTracer records ser
 
 ## Workflow observability
 
-Shared project state lives in [`.project/`](.project/). It records active branch ownership, trusted baseline, verified environment facts, deployment history, decisions, and the current handoff so separate conversations do not reconstruct conflicting versions of reality.
+Shared project state lives in [`.project/`](.project/). It records active branch ownership, trusted baseline, verified environment facts, deployment history, decisions, workstream boundaries, and the current handoff so separate conversations do not reconstruct conflicting versions of reality.
 
-Before changing the project, read `.project/active-work.json`, `.project/environment-state.json`, and the current handoff, then confirm the live GitHub and CI state. Validate the metadata locally with:
+Before changing the project, read `.project/active-work.json`, `.project/workstream-catalog.json`, `.project/environment-state.json`, and the current handoff, then confirm the live GitHub and CI state. Validate the metadata locally with:
 
 ```bash
 python .project/validate.py

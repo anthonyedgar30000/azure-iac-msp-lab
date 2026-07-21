@@ -9,6 +9,7 @@ from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 ACTIVE_WORK_PATH = PROJECT_ROOT / "active-work.json"
+WORKSTREAM_CATALOG_PATH = PROJECT_ROOT / "workstream-catalog.json"
 ENVIRONMENT_STATE_PATH = PROJECT_ROOT / "environment-state.json"
 DEPLOYMENT_HISTORY_PATH = PROJECT_ROOT / "deployment-history.jsonl"
 REQUIRED_DOCS = (
@@ -24,6 +25,14 @@ ACTIVE_STATUSES = {
     "ci_verified",
     "deployment_pending",
     "operational_verification_pending",
+}
+CANONICAL_WORKSTREAM_IDS = {
+    "architecture-and-design-decisions",
+    "azure-resource-plan-and-iac",
+    "deployment-evidence-and-screenshots",
+    "cost-health-and-configuration-telemetry",
+    "servicetracer-findings-and-reports",
+    "portfolio-and-demo-narrative",
 }
 COMMIT_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 
@@ -98,6 +107,55 @@ def validate_active_work(document: dict[str, Any]) -> int:
     return len(workstreams)
 
 
+def validate_workstream_catalog(document: dict[str, Any]) -> int:
+    if document.get("schema_version") != "project.workstream-catalog.v1":
+        raise ValidationError("workstream-catalog.json has an unsupported schema_version")
+    require_text(document.get("project"), "workstream-catalog.project")
+
+    authority = document.get("workspace_authority")
+    if not isinstance(authority, dict):
+        raise ValidationError("workstream-catalog.workspace_authority must be an object")
+    for field in (
+        "canonical_conversation_workspace",
+        "implementation_authority",
+        "azure_authority",
+        "conflict_rule",
+    ):
+        require_text(authority.get(field), f"workstream-catalog.workspace_authority.{field}")
+
+    workstreams = document.get("workstreams")
+    if not isinstance(workstreams, list):
+        raise ValidationError("workstream-catalog.workstreams must be a list")
+
+    observed_ids: set[str] = set()
+    for index, workstream in enumerate(workstreams):
+        prefix = f"workstream-catalog.workstreams[{index}]"
+        if not isinstance(workstream, dict):
+            raise ValidationError(f"{prefix} must be an object")
+        workstream_id = require_text(workstream.get("workstream_id"), f"{prefix}.workstream_id")
+        require_text(workstream.get("title"), f"{prefix}.title")
+        require_text(workstream.get("purpose"), f"{prefix}.purpose")
+        require_text(workstream.get("claim_boundary"), f"{prefix}.claim_boundary")
+        primary_paths = workstream.get("primary_paths")
+        if not isinstance(primary_paths, list) or not primary_paths:
+            raise ValidationError(f"{prefix}.primary_paths must be a non-empty list")
+        for path_index, path in enumerate(primary_paths):
+            require_text(path, f"{prefix}.primary_paths[{path_index}]")
+        if workstream_id in observed_ids:
+            raise ValidationError(f"Duplicate canonical workstream_id: {workstream_id}")
+        observed_ids.add(workstream_id)
+
+    if observed_ids != CANONICAL_WORKSTREAM_IDS:
+        missing = sorted(CANONICAL_WORKSTREAM_IDS - observed_ids)
+        unexpected = sorted(observed_ids - CANONICAL_WORKSTREAM_IDS)
+        raise ValidationError(
+            "workstream-catalog must contain exactly the six canonical workstreams; "
+            f"missing={missing}, unexpected={unexpected}"
+        )
+
+    return len(workstreams)
+
+
 def validate_environment_state(document: dict[str, Any]) -> int:
     if document.get("schema_version") != "project.environment-state.v1":
         raise ValidationError("environment-state.json has an unsupported schema_version")
@@ -165,6 +223,7 @@ def validate_required_docs() -> None:
 def main() -> int:
     try:
         active_count = validate_active_work(load_json(ACTIVE_WORK_PATH))
+        catalog_count = validate_workstream_catalog(load_json(WORKSTREAM_CATALOG_PATH))
         fact_count = validate_environment_state(load_json(ENVIRONMENT_STATE_PATH))
         event_count = validate_deployment_history(DEPLOYMENT_HISTORY_PATH)
         validate_required_docs()
@@ -174,8 +233,8 @@ def main() -> int:
 
     print(
         "workflow-observability validation passed: "
-        f"{active_count} active workstream(s), {fact_count} environment fact(s), "
-        f"{event_count} deployment event(s)"
+        f"{active_count} active workstream(s), {catalog_count} canonical workstream(s), "
+        f"{fact_count} environment fact(s), {event_count} deployment event(s)"
     )
     return 0
 
