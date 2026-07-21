@@ -1,0 +1,5 @@
+{
+  "schema_version": "servicetracer.report-source.v1",
+  "live_report_url": "",
+  "fallback_report_url": "technician-handoff-report.json"
+}
