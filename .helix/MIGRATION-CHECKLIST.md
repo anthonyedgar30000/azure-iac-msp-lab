@@ -77,8 +77,10 @@ These are review candidates, not automatic moves:
 - [x] Classify PR #19 as merged workflow-observability work.
 - [x] Classify PR #20 as merged image-drift detection and read-only planning work.
 - [x] Classify PR #21 as merged HELIX retrieval and archive governance work.
-- [ ] Run the collector replacement planning workflow and review its evidence before designing any mutation-capable execution path.
-- [x] Preserve the boundary that PR #20 proves detection and planning only; it does not prove that a replacement occurred.
+- [x] Run the collector replacement planning workflow and review its evidence before designing any mutation-capable execution path.
+- [x] Promote a sanitized, bounded review of collector replacement run `29856203054` while keeping the raw artifact in protected Actions storage.
+- [x] Preserve the boundary that the planning run proves control-plane inventory and replacement requirements only; it does not authorize or prove replacement execution.
+- [ ] Design and test a replacement-execution branch without dispatching it, including guest preflight, verified recovery point, NIC handling, identity restoration, OS-disk hardening, cost controls, rollback, and exact authorization.
 - [ ] Review legacy draft PR #1 for unique durable evidence, then close it as superseded through a separate explicit action.
 
 This checklist governs incremental cleanup. It does not authorize mass archival, Azure mutation, or destructive repository changes.

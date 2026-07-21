@@ -2,14 +2,14 @@
   "schema_version": "helix.repository-context.v1",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "classified_on": "2026-07-21",
-  "classification_scope": "governed retrieval boundary with post-PR-21 state refresh; not an exhaustive file inventory",
+  "classification_scope": "governed retrieval boundary with promoted collector planning evidence; not an exhaustive file inventory",
   "baseline_observation": {
     "branch": "main",
-    "commit": "d9b952e324b7128300e1c888d5834536fb35fc30",
-    "commit_semantics": "verified main observation anchor before this state-refresh pull request; live Git determines the current head",
+    "commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a",
+    "commit_semantics": "verified main observation anchor before this evidence-reconciliation pull request; live Git determines the current head",
     "latest_merged_increment": {
-      "pull_request": 21,
-      "title": "Add HELIX retrieval and archive governance"
+      "pull_request": 22,
+      "title": "Refresh project state after governance merges"
     },
     "observed_on": "2026-07-21"
   },
@@ -52,6 +52,13 @@
       "claim_boundary": "use state sections as a starting point and verify every consequential claim against Git, PR, CI, and Azure evidence"
     },
     {
+      "path": "docs/reviews/**",
+      "content_role": "sanitized_scoped_evidence_review",
+      "retrieval_class": "supporting-current",
+      "default_retrieval": true,
+      "claim_boundary": "records bounded reviewed findings and unresolved gates; raw workflow artifacts and runtime evidence remain authoritative for underlying environment details"
+    },
+    {
       "path": "docs/architecture.md",
       "content_role": "mixed_current_and_planned_architecture",
       "retrieval_class": "supporting-current",
@@ -70,7 +77,7 @@
       "content_role": "collector_runbook",
       "retrieval_class": "supporting-current",
       "default_retrieval": true,
-      "claim_boundary": "verify image, disk, identity, networking, and bootstrap details against current Bicep and cloud-init"
+      "claim_boundary": "verify image, disk, identity, networking, and bootstrap details against current Bicep, cloud-init, and promoted Azure evidence"
     },
     {
       "path": "docs/index.html",
@@ -107,7 +114,7 @@
       "default_retrieval": true,
       "freshness_status": "refreshed",
       "refreshed_on": "2026-07-21",
-      "claim_boundary": "records observed active work, handoffs, and environment facts; live Git, CI, workflow artifacts, and runtime evidence still determine current external state"
+      "claim_boundary": "records promoted active work, handoffs, environment facts, and deployment history; live Git, CI, workflow artifacts, and runtime evidence still determine current external state"
     },
     {
       "path": ".helix/**",
@@ -153,6 +160,25 @@
       "state": "merged",
       "merge_commit": "d9b952e324b7128300e1c888d5834536fb35fc30",
       "scope": "HELIX retrieval, promotion, and archive governance"
+    },
+    {
+      "pull_request": 22,
+      "branch": "docs/refresh-project-state-after-pr21",
+      "state": "merged",
+      "merge_commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a",
+      "scope": "post-governance project state and freshness reconciliation"
+    }
+  ],
+  "promoted_runtime_evidence": [
+    {
+      "event_id": "collector-replacement-plan-29856203054",
+      "workflow_run_id": 29856203054,
+      "repository_commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a",
+      "artifact": "collector-replacement-plan-29856203054-1",
+      "artifact_sha256": "76f3b44e6e97e906dac6d62eeb212a6bc55265e77271a030b9c45b0cacf55637",
+      "sanitized_review": "docs/reviews/collector-replacement-plan-2026-07-21.md",
+      "state": "reviewed_read_only_no_mutation",
+      "authority_boundary": "supports current control-plane inventory and replacement planning; does not authorize or prove replacement execution"
     }
   ],
   "known_open_legacy_items": [

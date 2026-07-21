@@ -4,11 +4,11 @@
   "updated_on": "2026-07-21",
   "trusted_baseline": {
     "branch": "main",
-    "commit": "d9b952e324b7128300e1c888d5834536fb35fc30",
-    "commit_semantics": "verified main observation anchor before this state-refresh pull request; live Git determines the current head",
+    "commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a",
+    "commit_semantics": "verified main observation anchor before this evidence-reconciliation pull request; live Git determines the current head",
     "last_completed_increment": {
-      "pull_request": 21,
-      "title": "Add HELIX retrieval and archive governance"
+      "pull_request": 22,
+      "title": "Refresh project state after governance merges"
     }
   },
   "completed_increments": [
@@ -26,6 +26,11 @@
       "pull_request": 21,
       "title": "Add HELIX retrieval and archive governance",
       "merge_commit": "d9b952e324b7128300e1c888d5834536fb35fc30"
+    },
+    {
+      "pull_request": 22,
+      "title": "Refresh project state after governance merges",
+      "merge_commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a"
     }
   ],
   "workstreams": [],
@@ -37,18 +42,30 @@
       "action": "Do not treat as current implementation work. Review for unique durable evidence, then close as superseded through a separate explicit action."
     }
   ],
-  "next_bounded_operation": {
-    "operation": "collector_replacement_plan",
-    "workflow": ".github/workflows/collector-replacement-plan.yml",
-    "authority": "read_only_planning_only",
-    "confirmation": "PLAN:rg-servicetracer-dev-westus2:vm-stcollector-mst-dev",
+  "latest_promoted_evidence": {
+    "event_id": "collector-replacement-plan-29856203054",
+    "workflow": "Collector replacement plan",
+    "run_id": 29856203054,
+    "commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a",
+    "artifact": "collector-replacement-plan-29856203054-1",
+    "artifact_sha256": "76f3b44e6e97e906dac6d62eeb212a6bc55265e77271a030b9c45b0cacf55637",
+    "status": "completed_read_only",
     "azure_mutations_authorized": false,
-    "required_review_lenses": [
-      "evidence-quality",
-      "operations-and-recovery",
-      "security",
-      "azure-cost"
+    "azure_mutations_performed": false
+  },
+  "next_bounded_operation": {
+    "operation": "collector_replacement_execution_design",
+    "authority": "repository_design_and_tests_only",
+    "azure_mutations_authorized": false,
+    "required_gates": [
+      "pre-maintenance guest service and evidence-mount verification",
+      "verified evidence-disk recovery point before destructive action",
+      "explicit NIC preservation or deterministic recreation contract",
+      "new managed-identity and RBAC restoration contract",
+      "replacement OS-disk network-access hardening",
+      "temporary-resource cost ceiling and cleanup deadline",
+      "rollback and post-change evidence requirements"
     ],
-    "next_gate": "Manually dispatch the read-only plan, review the resulting evidence, and promote bounded findings before designing any replacement-execution branch."
+    "next_gate": "Design and test a separate replacement-execution branch without dispatching it. Execution remains prohibited until independent review and explicit human authorization."
   }
 }
