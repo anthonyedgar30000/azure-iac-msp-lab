@@ -49,6 +49,63 @@ The bounded demo report says only what the evidence supports at the intended ope
 
 The report intentionally omits deeper analyzer-stage conclusions such as the RADIUS-response stage from the user-facing demo view.
 
+## Public report envelope
+
+ServiceTracer `0.5.0` adds a separate publication boundary. The publisher never uploads the full analyzer report. It accepts only the technician-handoff status, reconstructs the output from a strict allowlist, rejects an exact-root-cause claim, and wraps the result with provenance and freshness metadata.
+
+Write a public envelope locally:
+
+```bash
+servicetracer-publish-report \
+  --input technician-handoff-report.json \
+  --output public-technician-handoff-report.json \
+  --source-id stcollector-dev
+```
+
+The envelope uses the schema:
+
+```text
+servicetracer.public-report.v1
+```
+
+Its top-level metadata includes:
+
+- `generated_at`;
+- `expires_at`;
+- a non-secret source identifier;
+- the ServiceTracer version;
+- the sanitized technician-handoff report.
+
+Fields not explicitly included in the public contract are dropped. This prevents raw evidence, private addresses, subscription identifiers, collector tokens, ticket internals, or deeper analyzer state from passing through merely because a future internal report adds them.
+
+## Azure managed-identity publication
+
+On an Azure VM with a narrowly scoped Blob data role:
+
+```bash
+servicetracer-publish-report \
+  --input technician-handoff-report.json \
+  --storage-account '<public-report-storage-account>' \
+  --source-id stcollector-dev
+```
+
+The publisher obtains an OAuth token from the Azure Instance Metadata Service and writes:
+
+```text
+$web/reports/technician-handoff-report.json
+```
+
+Default publication behavior:
+
+- Azure Storage data-plane OAuth rather than a storage key or SAS token;
+- `application/json` content type;
+- `no-store` cache control;
+- a 15-minute report lifetime unless overridden;
+- atomic local-file output when using `--output`;
+- no automatic scheduling or claim that the uploaded report is live until an operator has verified the deployment.
+
+The GitHub Pages console can load this envelope from the URL configured in `docs/report-source.json`. If the endpoint is absent or unavailable, the console falls back to the committed bounded fixture. The browser validates schema, provenance, expiry, and the no-root-cause boundary but does not rerun ServiceTracer analysis.
+
 ## Live collector
 
 ```bash
@@ -57,9 +114,9 @@ export SERVICETRACER_COLLECTOR_TOKEN='replace-with-a-secret'
 servicetracer-collector http \
   --listen 0.0.0.0 \
   --port 8080 \
-  --spool /var/lib/servicetracer/evidence.jsonl \
-  --tls-cert /etc/servicetracer/tls/collector.crt \
-  --tls-key /etc/servicetracer/tls/collector.key
+  --spool /var/lib/servicetracer/evidence/evidence.jsonl \
+  --tls-cert /var/lib/servicetracer/tls/collector.crt \
+  --tls-key /var/lib/servicetracer/tls/collector.key
 ```
 
 The collector accepts one record object or an array at `POST /v1/records`. Exact duplicate evidence is accepted idempotently. Reusing an `event_id` with different content is rejected before the batch is written. Accepted records are flushed to disk before success is returned.
@@ -100,7 +157,7 @@ The adapter configuration maps source fields and event types into ServiceTracer'
 - `VPN-02` still marked healthy by the ingested listener-only TCP 443 probe state;
 - shallow-probe gap detected because the full transaction is failing downstream.
 
-These details remain available in the full report for engineering and regression purposes. The technician-handoff view exposes only the bounded load-balancer and backend localization needed for the demo.
+These details remain available in the full report for engineering and regression purposes. The technician-handoff and public views expose only the bounded load-balancer and backend localization needed for the demo.
 
 ## Expected containment result
 
