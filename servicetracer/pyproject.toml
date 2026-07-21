@@ -13,6 +13,7 @@ dependencies = []
 servicetracer = "servicetracer.cli:main"
 servicetracer-collector = "servicetracer.collector_cli:main"
 servicetracer-publish-report = "servicetracer.publish_cli:main"
+servicetracer-azure-demo = "servicetracer.azure_demo:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
