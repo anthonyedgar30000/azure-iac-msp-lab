@@ -1,5 +1,6 @@
 const state = {
   report: null,
+  reportMetadata: null,
   completedSteps: new Set(),
 };
 
@@ -7,6 +8,8 @@ const elements = {
   runButton: document.querySelector('#run-analysis'),
   resetButton: document.querySelector('#reset-demo'),
   incidentChip: document.querySelector('#incident-chip'),
+  reportSourceName: document.querySelector('#report-source-name'),
+  reportSourceDetail: document.querySelector('#report-source-detail'),
   evidenceSummary: document.querySelector('#evidence-summary'),
   loadBalancerNode: document.querySelector('#load-balancer-node'),
   loadBalancerState: document.querySelector('#load-balancer-state'),
@@ -52,6 +55,112 @@ function setBadge(badge, text, healthy) {
   badge.classList.add(healthy ? 'badge-healthy' : 'badge-failed');
 }
 
+function setIncidentState(text, warning = false) {
+  elements.incidentChip.textContent = text;
+  elements.incidentChip.classList.toggle('status-warning', warning);
+  elements.incidentChip.classList.toggle('status-neutral', !warning);
+}
+
+function formatTimestamp(value) {
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) {
+    return 'Unknown generation time';
+  }
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'medium',
+  }).format(new Date(timestamp));
+}
+
+function validateHandoffReport(report) {
+  if (!report || report.status !== 'technician_investigation_required') {
+    throw new Error('Unsupported ServiceTracer report status');
+  }
+  if (
+    !report.investigation_boundary
+    || report.investigation_boundary.exact_root_cause_claimed !== false
+  ) {
+    throw new Error('Report violates the bounded investigation contract');
+  }
+  if (!Array.isArray(report.technician_workflow) || report.technician_workflow.length === 0) {
+    throw new Error('Report does not contain a technician workflow');
+  }
+  return report;
+}
+
+function validatePublicEnvelope(envelope) {
+  if (!envelope || envelope.schema_version !== 'servicetracer.public-report.v1') {
+    throw new Error('Unsupported public report schema');
+  }
+  if (!envelope.source || !envelope.generated_at || !envelope.expires_at) {
+    throw new Error('Public report is missing provenance or freshness metadata');
+  }
+  validateHandoffReport(envelope.report);
+  return envelope;
+}
+
+async function fetchJson(url) {
+  const response = await fetch(url, { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error(`${url} returned HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+async function loadSourceConfiguration() {
+  try {
+    const config = await fetchJson('report-source.json');
+    if (config.schema_version !== 'servicetracer.report-source.v1') {
+      throw new Error('Unsupported report source configuration');
+    }
+    return config;
+  } catch (error) {
+    console.warn('Could not load report-source.json; using local fallback.', error);
+    return {
+      live_report_url: '',
+      fallback_report_url: 'technician-handoff-report.json',
+    };
+  }
+}
+
+function setLiveReport(envelope, sourceUrl) {
+  state.report = envelope.report;
+  const expiresAt = Date.parse(envelope.expires_at);
+  const stale = !Number.isFinite(expiresAt) || expiresAt <= Date.now();
+  state.reportMetadata = {
+    mode: 'live',
+    stale,
+    sourceUrl,
+    generatedAt: envelope.generated_at,
+    expiresAt: envelope.expires_at,
+    source: envelope.source,
+  };
+
+  elements.reportSourceName.textContent = stale
+    ? 'Azure collector report — stale'
+    : 'Azure collector report — live';
+  const sourceId = envelope.source.id || 'unnamed collector';
+  const version = envelope.source.servicetracer_version || 'unknown version';
+  elements.reportSourceDetail.textContent = (
+    `${sourceId} · ServiceTracer ${version} · generated ${formatTimestamp(envelope.generated_at)}`
+  );
+  setIncidentState(stale ? 'Live report is stale' : 'Awaiting analysis', stale);
+}
+
+function setFallbackReport(report, fallbackUrl, liveError = null) {
+  state.report = validateHandoffReport(report);
+  state.reportMetadata = {
+    mode: 'fixture',
+    stale: false,
+    sourceUrl: fallbackUrl,
+  };
+  elements.reportSourceName.textContent = 'Controlled demo fixture';
+  elements.reportSourceDetail.textContent = liveError
+    ? 'The live Azure report was unavailable; using the committed bounded fixture.'
+    : 'No live endpoint is configured; using the committed bounded fixture.';
+  setIncidentState('Awaiting analysis');
+}
+
 function renderWorkflow() {
   elements.workflowList.replaceChildren();
 
@@ -90,9 +199,7 @@ function completeWorkflowStep(item, button, stepId) {
 
   if (state.completedSteps.size === state.report.technician_workflow.length) {
     elements.completionMessage.classList.remove('is-hidden');
-    elements.incidentChip.textContent = 'Service verified';
-    elements.incidentChip.classList.remove('status-warning');
-    elements.incidentChip.classList.add('status-neutral');
+    setIncidentState('Service verified');
   }
 }
 
@@ -102,9 +209,7 @@ function populateReport() {
   const backendStates = report.load_balancer.backend_states;
   const incident = report.incident;
 
-  elements.incidentChip.textContent = 'Technician investigation required';
-  elements.incidentChip.classList.remove('status-neutral');
-  elements.incidentChip.classList.add('status-warning');
+  setIncidentState('Technician investigation required', true);
 
   elements.evidenceSummary.textContent = `${incident.attempts} correlated transactions: ${incident.successful_attempts} successful, ${incident.failed_attempts} failed.`;
   elements.loadBalancerState.textContent = 'Healthy under configured probe';
@@ -133,9 +238,7 @@ function populateReport() {
 async function runAnalysis() {
   elements.runButton.disabled = true;
   elements.runButton.textContent = 'Analyzing evidence…';
-  elements.incidentChip.textContent = 'Analysis running';
-  elements.incidentChip.classList.remove('status-warning');
-  elements.incidentChip.classList.add('status-neutral');
+  setIncidentState('Analysis running');
 
   setNodeState(elements.loadBalancerNode, 'analyzing');
   await delay(550);
@@ -159,11 +262,13 @@ async function runAnalysis() {
 
 function resetDemo() {
   state.completedSteps.clear();
-  elements.runButton.disabled = false;
-  elements.runButton.textContent = 'Run incident analysis';
-  elements.incidentChip.textContent = 'Awaiting analysis';
-  elements.incidentChip.classList.remove('status-warning');
-  elements.incidentChip.classList.add('status-neutral');
+  elements.runButton.disabled = state.report === null;
+  elements.runButton.textContent = state.report ? 'Run incident analysis' : 'Loading report…';
+  if (state.reportMetadata?.stale) {
+    setIncidentState('Live report is stale', true);
+  } else {
+    setIncidentState('Awaiting analysis');
+  }
   elements.evidenceSummary.textContent = 'No evidence analyzed yet.';
 
   setNodeState(elements.loadBalancerNode, 'pending');
@@ -187,18 +292,36 @@ function resetDemo() {
 }
 
 async function loadReport() {
-  try {
-    const response = await fetch('technician-handoff-report.json', { cache: 'no-store' });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+  const config = await loadSourceConfiguration();
+  const queryReportUrl = new URLSearchParams(window.location.search).get('report');
+  const liveReportUrl = queryReportUrl || config.live_report_url;
+  let liveError = null;
+
+  if (liveReportUrl) {
+    try {
+      const envelope = validatePublicEnvelope(await fetchJson(liveReportUrl));
+      setLiveReport(envelope, liveReportUrl);
+      resetDemo();
+      return;
+    } catch (error) {
+      liveError = error;
+      console.error('Could not load live Azure report:', error);
     }
-    state.report = await response.json();
-    elements.runButton.disabled = false;
+  }
+
+  try {
+    const fallbackUrl = config.fallback_report_url || 'technician-handoff-report.json';
+    const report = await fetchJson(fallbackUrl);
+    setFallbackReport(report, fallbackUrl, liveError);
+    resetDemo();
   } catch (error) {
-    console.error('Could not load demo report:', error);
+    console.error('Could not load fallback report:', error);
+    state.report = null;
     elements.runButton.disabled = true;
     elements.runButton.textContent = 'Report unavailable';
-    elements.incidentChip.textContent = 'Demo data unavailable';
+    elements.reportSourceName.textContent = 'Report unavailable';
+    elements.reportSourceDetail.textContent = 'Neither the live report nor the committed fallback could be loaded.';
+    setIncidentState('Report unavailable', true);
     elements.evidenceSummary.textContent = 'Serve this folder over HTTP, such as through GitHub Pages.';
   }
 }
