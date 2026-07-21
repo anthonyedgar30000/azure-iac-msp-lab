@@ -95,32 +95,34 @@ bounded_defaults=(
 )
 
 append_unique() {
-  local -n destination="$1"
+  local destination_name="$1"
   local value="$2"
+  local -n destination_ref="$destination_name"
   local existing
+
   [[ -n "$value" ]] || return 0
-  for existing in "${destination[@]:-}"; do
+  for existing in "${destination_ref[@]:-}"; do
     [[ "$existing" == "$value" ]] && return 0
   done
-  destination+=("$value")
+  destination_ref+=("$value")
 }
 
 build_candidates() {
   local requested="$1"
   local include_current="$2"
-  local -n destination="$3"
+  local destination_name="$3"
   local sku
 
   if [[ "$requested" != auto ]]; then
-    append_unique destination "$requested"
+    append_unique "$destination_name" "$requested"
     return
   fi
 
   if [[ "$include_current" == true ]]; then
-    append_unique destination "$current_collector_size"
+    append_unique "$destination_name" "$current_collector_size"
   fi
   for sku in "${bounded_defaults[@]}"; do
-    append_unique destination "$sku"
+    append_unique "$destination_name" "$sku"
   done
 }
 
@@ -128,6 +130,15 @@ backend_candidates=()
 collector_candidates=()
 build_candidates "$REQUESTED_BACKEND_SIZE" true backend_candidates
 build_candidates "$REQUESTED_COLLECTOR_SIZE" true collector_candidates
+
+((${#backend_candidates[@]} > 0)) || {
+  echo 'VM candidate planner produced no backend candidates before ARM validation.' >&2
+  exit 1
+}
+((${#collector_candidates[@]} > 0)) || {
+  echo 'VM candidate planner produced no collector candidates before ARM validation.' >&2
+  exit 1
+}
 
 printf '%s\n' "${backend_candidates[@]}" > "$ARTIFACT_DIR/backend-candidates.txt"
 printf '%s\n' "${collector_candidates[@]}" > "$ARTIFACT_DIR/collector-candidates.txt"
