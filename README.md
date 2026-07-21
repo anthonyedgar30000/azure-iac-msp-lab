@@ -120,11 +120,21 @@ python .project/validate.py
 
 One bounded workstream owns writes to one branch. Other conversations may review that branch, but parallel implementation requires a separate branch and workstream entry.
 
+## Repository context governance
+
+Repository lookup follows [`HELIX-RETRIEVAL-POLICY.md`](HELIX-RETRIEVAL-POLICY.md). [`.helix/`](.helix/) classifies current, supporting, candidate, explicit-only archive, and excluded-sensitive context.
+
+Keyword matches and conversation recollections are candidates until authority, state, freshness, and retrieval class are verified. `.helix/archive/` is excluded from ordinary lookup and never overrides current source, tests, decisions, CI, or runtime evidence.
+
+Structured metadata can itself become stale. When `.project/`, implementation-status documents, or runbooks conflict with live Git, pull-request, CI, or Azure evidence, surface the conflict and refresh the record rather than silently trusting the older description.
+
 ## Governance
 
 - `main` is the trusted baseline.
 - Changes are developed in bounded feature branches.
 - Pull requests distinguish proposed, implemented, deployed, verified, and unresolved work.
+- Conversations and agent progress summaries are reasoning context, not repository authority; durable insights are promoted as decisions, schemas, tests, runbooks, current-state records, or bounded evidence summaries.
 - The collector VM has been deployed and manually verified in Azure.
 - Python and certificate bootstrap drift found during that deployment is corrected in the IaC/bootstrap source, but the corrected image path has not yet been verified by replacing or redeploying the existing VM.
+- Collector image-drift detection and a read-only replacement plan are implemented; no collector replacement execution is authorized or operationally verified.
 - The live public-report endpoint and browser integration are implemented and statically tested but are not yet deployed or operationally verified in Azure.
