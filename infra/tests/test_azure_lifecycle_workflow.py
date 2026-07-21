@@ -12,6 +12,12 @@ VERIFY = (ROOT / "infra" / "scripts" / "verify_collector_deployment.sh").read_te
 )
 
 
+def workflow_step(start_name: str, end_name: str) -> str:
+    start = WORKFLOW.index(f"      - name: {start_name}")
+    end = WORKFLOW.index(f"      - name: {end_name}", start)
+    return WORKFLOW[start:end]
+
+
 class AzureLifecycleWorkflowTests(unittest.TestCase):
     def test_workflow_is_manual_and_uses_oidc(self) -> None:
         self.assertIn("workflow_dispatch:", WORKFLOW)
@@ -70,10 +76,35 @@ class AzureLifecycleWorkflowTests(unittest.TestCase):
         ):
             self.assertIn(expected, WORKFLOW)
 
-    def test_existing_resource_group_is_the_guarded_default(self) -> None:
-        self.assertIn("default: servicetracer-dev-westus2", WORKFLOW)
+    def test_populated_resource_group_is_the_guarded_default(self) -> None:
+        self.assertIn("default: rg-servicetracer-dev-westus2", WORKFLOW)
         self.assertIn("default: westus2", WORKFLOW)
-        self.assertIn("^(rg-)?servicetracer-(dev|test)", WORKFLOW)
+        self.assertIn("^rg-servicetracer-(dev|test)", WORKFLOW)
+        self.assertNotIn("^(rg-)?servicetracer-(dev|test)", WORKFLOW)
+
+    def test_what_if_requires_existing_group_and_never_creates_it(self) -> None:
+        what_if_step = workflow_step(
+            "Require existing resource group for what-if",
+            "Resolve resource group for deploy",
+        )
+        self.assertIn("if: inputs.operation == 'what-if'", what_if_step)
+        self.assertIn('az group show --name "$RESOURCE_GROUP"', what_if_step)
+        self.assertNotIn("az group create", what_if_step)
+        self.assertIn("actual_location", what_if_step)
+        self.assertIn(".tags.workload", what_if_step)
+        self.assertIn(".tags.purpose", what_if_step)
+
+    def test_only_deploy_may_create_a_missing_group(self) -> None:
+        deploy_group_step = workflow_step(
+            "Resolve resource group for deploy",
+            "Select VM sizes and run Bicep what-if",
+        )
+        self.assertIn("if: inputs.operation == 'deploy'", deploy_group_step)
+        self.assertIn('az group exists --name "$RESOURCE_GROUP"', deploy_group_step)
+        self.assertIn("az group create", deploy_group_step)
+        self.assertIn("actual_location", deploy_group_step)
+        self.assertIn(".tags.workload", deploy_group_step)
+        self.assertIn(".tags.purpose", deploy_group_step)
 
     def test_teardown_has_exact_confirmation_and_narrow_group_name(self) -> None:
         self.assertIn("CONFIRM_TEARDOWN", WORKFLOW)
