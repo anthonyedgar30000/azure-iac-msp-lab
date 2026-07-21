@@ -1,0 +1,168 @@
+{
+  "schema_version": "helix.repository-context.v1",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "classified_on": "2026-07-21",
+  "classification_scope": "initial retrieval boundary; not an exhaustive file inventory",
+  "baseline_observation": {
+    "branch": "main",
+    "commit": "7f1bc961c9edfc29c1636518b0e4cf1d4ca949eb",
+    "latest_merged_increment": {
+      "pull_request": 20,
+      "title": "Add collector image drift guard and read-only migration plan"
+    },
+    "observed_on": "2026-07-21"
+  },
+  "entries": [
+    {
+      "path": "infra/**",
+      "content_role": "infrastructure_source",
+      "retrieval_class": "authoritative-current",
+      "default_retrieval": true,
+      "claim_boundary": "proves committed infrastructure intent and implementation, not deployment success"
+    },
+    {
+      "path": "servicetracer/**",
+      "content_role": "application_source_and_tests",
+      "retrieval_class": "authoritative-current",
+      "default_retrieval": true,
+      "claim_boundary": "proves committed deterministic behavior and tested contracts, not live operational state"
+    },
+    {
+      "path": ".github/workflows/**",
+      "content_role": "workflow_source",
+      "retrieval_class": "authoritative-current",
+      "default_retrieval": true,
+      "claim_boundary": "proves workflow definitions; workflow-run evidence is required to prove execution outcome"
+    },
+    {
+      "path": "README.md",
+      "content_role": "repository_overview",
+      "retrieval_class": "supporting-current",
+      "default_retrieval": true,
+      "claim_boundary": "orientation only; verify implementation and runtime claims against narrower evidence"
+    },
+    {
+      "path": "docs/implementation-status.md",
+      "content_role": "current_state_record",
+      "retrieval_class": "supporting-current",
+      "default_retrieval": true,
+      "freshness_status": "needs_refresh",
+      "freshness_reason": "the next-increment section still describes already-merged live-report work as pending",
+      "claim_boundary": "use state sections as a starting point and verify every consequential claim against Git, PR, CI, and Azure evidence"
+    },
+    {
+      "path": "docs/architecture.md",
+      "content_role": "mixed_current_and_planned_architecture",
+      "retrieval_class": "supporting-current",
+      "default_retrieval": true,
+      "claim_boundary": "planned service-path sections are not proof of implementation; source and implementation status decide current state"
+    },
+    {
+      "path": "docs/azure-lifecycle.md",
+      "content_role": "operational_runbook",
+      "retrieval_class": "supporting-current",
+      "default_retrieval": true,
+      "claim_boundary": "verify commands and gates against the current lifecycle workflow before execution"
+    },
+    {
+      "path": "docs/collector-vm.md",
+      "content_role": "collector_runbook",
+      "retrieval_class": "supporting-current",
+      "default_retrieval": true,
+      "claim_boundary": "verify image, disk, identity, networking, and bootstrap details against current Bicep and cloud-init"
+    },
+    {
+      "path": "docs/index.html",
+      "content_role": "published_operator_console",
+      "retrieval_class": "authoritative-current",
+      "default_retrieval": false,
+      "allowed_when": "reviewing the browser implementation or published presentation boundary"
+    },
+    {
+      "path": "docs/app.js",
+      "content_role": "published_operator_console_logic",
+      "retrieval_class": "authoritative-current",
+      "default_retrieval": false,
+      "allowed_when": "reviewing browser behavior, report validation, or fallback logic"
+    },
+    {
+      "path": "docs/report-source.json",
+      "content_role": "publication_configuration",
+      "retrieval_class": "authoritative-current",
+      "default_retrieval": false,
+      "allowed_when": "determining configured live-report source or fixture fallback"
+    },
+    {
+      "path": "docs/*proposal*",
+      "content_role": "proposal",
+      "retrieval_class": "candidate",
+      "default_retrieval": false,
+      "claim_boundary": "cannot prove implementation or approval"
+    },
+    {
+      "path": ".project/**",
+      "content_role": "workflow_observability",
+      "retrieval_class": "supporting-current",
+      "default_retrieval": true,
+      "freshness_status": "needs_refresh",
+      "freshness_reason": "active-work and current handoff still record pull request 19 as open and pull request 18 as the latest completed increment after pull requests 19 and 20 merged",
+      "claim_boundary": "use for state vocabulary and structure, but verify workstream ownership, baseline commits, gates, and environment claims against live Git, CI, and runtime evidence"
+    },
+    {
+      "path": ".helix/**",
+      "content_role": "repository_context_governance",
+      "retrieval_class": "authoritative-current",
+      "default_retrieval": true,
+      "claim_boundary": "governs retrieval, promotion, and archival behavior; it does not prove implementation or runtime state"
+    },
+    {
+      "path": ".helix/archive/**",
+      "content_role": "historical_archive",
+      "retrieval_class": "explicit-only",
+      "default_retrieval": false,
+      "claim_boundary": "historical context only; never overrides current material"
+    },
+    {
+      "path": "unclassified",
+      "content_role": "unknown",
+      "retrieval_class": "candidate",
+      "default_retrieval": false,
+      "claim_boundary": "must be classified and verified before supporting a current-state claim"
+    }
+  ],
+  "resolved_coordination_boundaries": [
+    {
+      "pull_request": 19,
+      "branch": "feature/workflow-observability",
+      "state": "merged",
+      "merge_commit": "058ee6ec7a8a26adebb2742659b9e483b74fd4ae",
+      "scope": ".project workflow observability and active-work metadata",
+      "remaining_freshness_work": "refresh active-work and current handoff after the merge sequence"
+    },
+    {
+      "pull_request": 20,
+      "branch": "fix/collector-image-drift-guard",
+      "state": "merged",
+      "merge_commit": "7f1bc961c9edfc29c1636518b0e4cf1d4ca949eb",
+      "scope": "collector image drift detection and read-only replacement planning",
+      "authority_boundary": "detection and planning are implemented; no Azure replacement execution is authorized or evidenced"
+    }
+  ],
+  "known_freshness_defects": [
+    {
+      "paths": [
+        ".project/active-work.json",
+        ".project/handoffs/current-state.md"
+      ],
+      "status": "needs_refresh",
+      "reason": "they describe pull request 19 as open and omit merged pull request 20"
+    },
+    {
+      "paths": [
+        "docs/implementation-status.md"
+      ],
+      "status": "needs_refresh",
+      "reason": "its next-increment list includes already-merged work"
+    }
+  ]
+}
