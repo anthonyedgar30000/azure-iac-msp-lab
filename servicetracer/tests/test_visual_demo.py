@@ -19,12 +19,16 @@ class ServiceTracerVisualDemoTests(unittest.TestCase):
             encoding="utf-8"
         )
         cls.report = json.loads(cls.report_text)
+        cls.source_config = json.loads(
+            (DEMO_ROOT / "report-source.json").read_text(encoding="utf-8")
+        )
 
     def test_static_demo_files_exist(self) -> None:
         for filename in (
             "index.html",
             "styles.css",
             "app.js",
+            "report-source.json",
             "technician-handoff-report.json",
         ):
             self.assertTrue((DEMO_ROOT / filename).is_file(), filename)
@@ -72,11 +76,13 @@ class ServiceTracerVisualDemoTests(unittest.TestCase):
             ],
         )
 
-    def test_page_has_operator_controls_and_accessible_status(self) -> None:
+    def test_page_has_operator_controls_and_report_provenance(self) -> None:
         for expected in (
             'id="run-analysis"',
             'id="reset-demo"',
             'id="incident-chip"',
+            'id="report-source-name"',
+            'id="report-source-detail"',
             'aria-live="polite"',
             'id="workflow-list"',
             'src="app.js"',
@@ -84,8 +90,26 @@ class ServiceTracerVisualDemoTests(unittest.TestCase):
         ):
             self.assertIn(expected, self.index)
 
-    def test_javascript_loads_versioned_report_fixture(self) -> None:
-        self.assertIn("fetch('technician-handoff-report.json'", self.javascript)
+    def test_javascript_supports_live_report_and_bounded_fallback(self) -> None:
+        self.assertEqual(
+            self.source_config["schema_version"],
+            "servicetracer.report-source.v1",
+        )
+        self.assertEqual(self.source_config["live_report_url"], "")
+        self.assertEqual(
+            self.source_config["fallback_report_url"],
+            "technician-handoff-report.json",
+        )
+        for expected in (
+            "servicetracer.public-report.v1",
+            "report-source.json",
+            "live_report_url",
+            "fallback_report_url",
+            "exact_root_cause_claimed !== false",
+            "Live report is stale",
+            "new URLSearchParams(window.location.search).get('report')",
+        ):
+            self.assertIn(expected, self.javascript)
         self.assertIn("ServiceTracer", self.index)
         self.assertIn("prefers-reduced-motion", self.styles)
 

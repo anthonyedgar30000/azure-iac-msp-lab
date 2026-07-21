@@ -39,6 +39,14 @@ class OperationsCollectorVmTests(unittest.TestCase):
         self.assertIn("systemctl enable --now servicetracer-collector.service", BOOTSTRAP)
         self.assertIn("/healthz", BOOTSTRAP)
 
+    def test_bootstrap_has_supported_python_and_stable_certificate_identity(self) -> None:
+        self.assertIn("offer: 'ubuntu-24_04-lts'", MODULE)
+        self.assertIn("sku: 'server'", MODULE)
+        self.assertIn("sys.version_info < (3, 11)", BOOTSTRAP)
+        self.assertIn("COLLECTOR_CERTIFICATE_NAME", BOOTSTRAP)
+        self.assertIn("/CN=${COLLECTOR_CERTIFICATE_NAME}", BOOTSTRAP)
+        self.assertNotIn("hostname_fqdn", BOOTSTRAP)
+
     def test_committed_parameters_avoid_accidental_compute(self) -> None:
         self.assertIn("param deployOperationsCollector = false", DEV)
         self.assertNotIn("collectorAdminSshPublicKey =", DEV)
@@ -50,6 +58,7 @@ class OperationsCollectorVmTests(unittest.TestCase):
             "__COLLECTOR_SOURCE_REF__",
             "__COLLECTOR_PORT__",
             "__COLLECTOR_PRIVATE_IP__",
+            "__COLLECTOR_CERTIFICATE_NAME__",
         ):
             self.assertIn(placeholder, BOOTSTRAP)
             self.assertIn(placeholder, MODULE)

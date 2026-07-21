@@ -15,13 +15,18 @@
         <h1>Intermittent remote-access failures</h1>
         <p class="subtitle">A bounded incident-localization demo. ServiceTracer narrows the investigation; the technician verifies and repairs the cause.</p>
       </div>
-      <div id="incident-chip" class="status-chip status-neutral" aria-live="polite">Awaiting analysis</div>
+      <div id="incident-chip" class="status-chip status-neutral" aria-live="polite">Loading report</div>
     </header>
 
-    <section class="control-bar" aria-label="Demo controls">
+    <section class="control-bar" aria-label="Demo controls and report provenance">
       <div>
         <span class="control-label">Incident</span>
         <strong>Users intermittently fail to connect through the VPN service</strong>
+      </div>
+      <div>
+        <span class="control-label">Report source</span>
+        <strong id="report-source-name">Loading report source…</strong>
+        <span id="report-source-detail" class="node-detail" aria-live="polite">Checking for a live Azure report.</span>
       </div>
       <div class="button-row">
         <button id="run-analysis" class="button button-primary" type="button">Run incident analysis</button>
@@ -134,8 +139,8 @@
     </section>
 
     <footer>
-      <span>ServiceTracer v0.4 visual demo</span>
-      <span>Static presentation layer — no Azure secrets or live endpoints exposed</span>
+      <span>ServiceTracer v0.5 visual demo</span>
+      <span>Presentation layer with live Azure report support and a bounded local fallback</span>
     </footer>
   </main>
 

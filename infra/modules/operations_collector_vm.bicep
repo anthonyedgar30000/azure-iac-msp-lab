@@ -36,11 +36,13 @@ param collectorSourceRef string
 
 var resourceSuffix = '${prefix}-${environment}'
 var collectorName = 'vm-stcollector-${resourceSuffix}'
+var collectorComputerName = 'stcollector-${environment}'
 var bootstrapTemplate = loadTextContent('../bootstrap/collector-cloud-init.yaml')
 var bootstrapWithRepository = replace(bootstrapTemplate, '__COLLECTOR_SOURCE_REPOSITORY__', collectorSourceRepository)
 var bootstrapWithRef = replace(bootstrapWithRepository, '__COLLECTOR_SOURCE_REF__', collectorSourceRef)
 var bootstrapWithPort = replace(bootstrapWithRef, '__COLLECTOR_PORT__', string(collectorPort))
-var renderedBootstrap = replace(bootstrapWithPort, '__COLLECTOR_PRIVATE_IP__', privateIpAddress)
+var bootstrapWithPrivateIp = replace(bootstrapWithPort, '__COLLECTOR_PRIVATE_IP__', privateIpAddress)
+var renderedBootstrap = replace(bootstrapWithPrivateIp, '__COLLECTOR_CERTIFICATE_NAME__', collectorComputerName)
 
 resource collectorNic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
   name: 'nic-stcollector-${resourceSuffix}'
@@ -98,8 +100,8 @@ resource collectorVm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
     storageProfile: {
       imageReference: {
         publisher: 'Canonical'
-        offer: '0001-com-ubuntu-server-jammy'
-        sku: '22_04-lts-gen2'
+        offer: 'ubuntu-24_04-lts'
+        sku: 'server'
         version: 'latest'
       }
       osDisk: {
@@ -126,7 +128,7 @@ resource collectorVm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
       ]
     }
     osProfile: {
-      computerName: 'stcollector-${environment}'
+      computerName: collectorComputerName
       adminUsername: adminUsername
       customData: base64(renderedBootstrap)
       linuxConfiguration: {

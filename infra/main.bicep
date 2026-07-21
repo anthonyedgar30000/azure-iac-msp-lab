@@ -60,12 +60,22 @@ param collectorSourceRepository string = 'https://github.com/anthonyedgar30000/a
 @description('Branch, tag, or commit installed by collector cloud-init. Pin a commit for a repeatable deployment.')
 param collectorSourceRef string = 'main'
 
+@description('Deploy the dedicated public report endpoint and grant the collector managed identity write access. Requires deployOperationsCollector=true.')
+param deployPublicReportEndpoint bool = false
+
+@description('Browser origins allowed to fetch the sanitized public report.')
+@minLength(1)
+param publicReportAllowedOrigins array = [
+  'https://anthonyedgar30000.github.io'
+]
+
 var commonTags = {
   workload: 'azure-iac-msp-lab'
   environment: environment
   managedBy: 'bicep'
   purpose: 'servicetracer-demo'
 }
+var deployReportPublicationResources = deployPublicReportEndpoint && deployOperationsCollector
 
 module network './modules/network.bicep' = {
   name: 'network-${environment}'
@@ -120,6 +130,18 @@ module operationsCollector './modules/operations_collector_vm.bicep' = if (deplo
   }
 }
 
+module reportPublication './modules/report_publication.bicep' = if (deployReportPublicationResources) {
+  name: 'report-publication-${environment}'
+  params: {
+    prefix: prefix
+    environment: environment
+    location: location
+    tags: commonTags
+    collectorPrincipalId: operationsCollector.outputs.collectorPrincipalId
+    allowedOrigins: publicReportAllowedOrigins
+  }
+}
+
 output onPremVirtualNetworkId string = network.outputs.onPremVirtualNetworkId
 output remoteUserVirtualNetworkId string = network.outputs.remoteUserVirtualNetworkId
 output subnetIds object = network.outputs.subnetIds
@@ -132,3 +154,6 @@ output operationsCollectorVmId string = deployOperationsCollector ? operationsCo
 output operationsCollectorPrincipalId string = deployOperationsCollector ? operationsCollector.outputs.collectorPrincipalId : ''
 output operationsCollectorEndpoint string = deployOperationsCollector ? operationsCollector.outputs.collectorEndpoint : ''
 output operationsCollectorEvidenceDiskId string = deployOperationsCollector ? operationsCollector.outputs.evidenceDiskId : ''
+output publicReportEndpointDeploymentEnabled bool = deployReportPublicationResources
+output publicReportStorageAccountName string = deployReportPublicationResources ? reportPublication.outputs.storageAccountName : ''
+output publicReportUrl string = deployReportPublicationResources ? reportPublication.outputs.publicReportUrl : ''
