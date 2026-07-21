@@ -2,18 +2,18 @@
 
 This directory is the shared operational state for humans and AI-assisted work on the repository. Git, pull requests, CI, and deployment evidence remain authoritative; these files make their meaning easy to reconstruct across conversations.
 
-The ChatGPT project **ServiceTracer — Governed Azure Operations Lab** is the canonical conversational workspace. It organizes context across sessions, while GitHub and `.project/` remain the canonical implementation and coordination state.
+The ChatGPT project **HELIX — Governed Agent Engineering** is the umbrella conversational workspace. Within it, **ServiceTracer — Governed Azure Operations Lab** is the bounded repository workstream represented by this repository. Chat context organizes reasoning and handoffs; GitHub and `.project/` remain the canonical implementation and coordination state, while current Azure evidence determines deployed and operational state.
 
 ## Read order before changing the project
 
 1. Read `active-work.json` to see branch ownership, scope, and gates.
-2. Read `workstream-catalog.json` to place the work in one of the six canonical streams and preserve its claim boundary.
+2. Read `workstream-catalog.json` to place the work in one of the six canonical ServiceTracer streams and preserve its claim boundary.
 3. Read `environment-state.json` to distinguish implemented, deployed, and verified facts.
 4. Read the latest entry in `deployment-history.jsonl`.
 5. Read the relevant file in `handoffs/`.
 6. Confirm the live GitHub branch, pull-request, and CI state before writing.
 
-## Canonical workstreams
+## Canonical ServiceTracer workstreams
 
 1. Architecture and design decisions
 2. Azure resource plan and IaC
@@ -40,6 +40,7 @@ A pull request that refreshes this directory cannot predict the future merge com
 - `implemented`, `ci_verified`, `deployed`, and `operationally_verified` are different states.
 - A workstream is released when its pull request is merged, closed, or explicitly handed off.
 - A state-only reconciliation may publish an empty `workstreams` list when no implementation branch retains write ownership after merge.
+- Moving a conversation between ChatGPT projects changes conversational context only; it never changes Git, CI, Azure, or execution authority.
 - Never store secrets, bearer tokens, private keys, SAS tokens, or customer evidence here.
 
 Run the structural check locally with:
