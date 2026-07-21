@@ -1,0 +1,33 @@
+{
+  "schema_version": "project.active-work.v1",
+  "project": "ServiceTracer Azure MSP Lab",
+  "updated_on": "2026-07-21",
+  "trusted_baseline": {
+    "branch": "main",
+    "commit": "09d0b2eaccb95a29185a8dd6cef57c7fef281b8d",
+    "last_completed_increment": {
+      "pull_request": 18,
+      "title": "Fix circular nameref in VM plan resolver"
+    }
+  },
+  "workstreams": [
+    {
+      "workstream_id": "workflow-observability",
+      "branch": "feature/workflow-observability",
+      "pull_request": 19,
+      "write_owner": "workflow-observability-workstream",
+      "status": "ci_verified",
+      "scope": "Add shared branch ownership, environment facts, deployment history, handoffs, and CI validation for multi-conversation work.",
+      "review_mode_for_other_conversations": "review_only",
+      "next_gate": "Human review and merge decision for pull request 19."
+    }
+  ],
+  "known_open_pull_requests": [
+    {
+      "pull_request": 1,
+      "title": "feat: scaffold Azure network foundation",
+      "status": "legacy_draft",
+      "action": "Do not treat as current implementation work without explicit reactivation."
+    }
+  ]
+}

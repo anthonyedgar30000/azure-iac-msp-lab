@@ -50,7 +50,7 @@ For a one-time test without committing the endpoint URL, append a URL-encoded `r
 - A strict public-report sanitizer that drops fields outside the technician-handoff allowlist and refuses reports that claim an exact root cause.
 - Managed-identity publication of sanitized reports to an optional, dedicated Azure Storage static-website endpoint.
 - A responsive operator console with live-report provenance, expiry warnings, and bounded fixture fallback.
-- CI that validates collector-to-spool-to-analysis-to-publication flow, collector VM and bootstrap contracts, source-evidence analysis, replay compatibility, visual-demo boundaries, Python tests, and Bicep builds.
+- CI that validates collector-to-spool-to-analysis-to-publication flow, collector VM and bootstrap contracts, source-evidence analysis, replay compatibility, visual-demo boundaries, Python tests, Bicep builds, and shared workflow state.
 
 ## Operational input and publication path
 
@@ -107,6 +107,18 @@ The public endpoint is deployed only when both the collector and `deployPublicRe
 Mixed source records show one successful attempt through `VPN-01` and one attempt through `VPN-02` that completes public DNS, load-balancer selection, TCP, TLS, and RADIUS request transmission before timing out waiting for a RADIUS response. Load-balancer context still marks `VPN-02` healthy under a listener-only TCP 443 probe. ServiceTracer recommends draining new sessions from the suspected node, preserving evidence, comparing it with `VPN-01` and the approved configuration, and reviewing the overlapping change record.
 
 Post-containment records complete through `VPN-01`, so ServiceTracer records service stabilization under containment while retaining the uncertainty that `VPN-02` has not yet been repaired or independently validated.
+
+## Workflow observability
+
+Shared project state lives in [`.project/`](.project/). It records active branch ownership, trusted baseline, verified environment facts, deployment history, decisions, and the current handoff so separate conversations do not reconstruct conflicting versions of reality.
+
+Before changing the project, read `.project/active-work.json`, `.project/environment-state.json`, and the current handoff, then confirm the live GitHub and CI state. Validate the metadata locally with:
+
+```bash
+python .project/validate.py
+```
+
+One bounded workstream owns writes to one branch. Other conversations may review that branch, but parallel implementation requires a separate branch and workstream entry.
 
 ## Governance
 

@@ -1,0 +1,55 @@
+{
+  "schema_version": "project.environment-state.v1",
+  "project": "ServiceTracer Azure MSP Lab",
+  "updated_on": "2026-07-21",
+  "facts": [
+    {
+      "fact_id": "operations-collector-vm-size",
+      "value": "Standard_B1ms",
+      "status": "operationally_verified",
+      "last_observed_on": "2026-07-20",
+      "source": "Manual Azure deployment verification and committed development parameters",
+      "notes": "This is the collector VM size known to have worked."
+    },
+    {
+      "fact_id": "running-servicetracer-version",
+      "value": "0.4.0",
+      "status": "deployed_with_manual_repairs",
+      "last_observed_on": "2026-07-20",
+      "source": "Manual collector verification recorded in repository documentation",
+      "notes": "The running collector received manual Python and certificate repairs."
+    },
+    {
+      "fact_id": "replacement-collector-definition",
+      "value": "Ubuntu 24.04 with Python 3.11+ gate and deterministic certificate identity",
+      "status": "implemented_and_ci_verified_not_redeployed",
+      "last_observed_on": "2026-07-21",
+      "source": "Merged pull request 12",
+      "notes": "The corrected image and bootstrap path still require governed Azure replacement verification."
+    },
+    {
+      "fact_id": "public-report-publishing",
+      "value": "Managed-identity publication to a dedicated Azure Storage static website endpoint",
+      "status": "implemented_and_ci_verified_not_deployed",
+      "last_observed_on": "2026-07-21",
+      "source": "Merged pull request 12",
+      "notes": "The browser continues to use the bounded fixture until a live endpoint is deployed and configured."
+    },
+    {
+      "fact_id": "azure-probe-scope-backends",
+      "value": "Two private Ubuntu backend VMs behind the Standard Public Load Balancer",
+      "status": "implemented_and_ci_verified_deployment_not_confirmed",
+      "last_observed_on": "2026-07-21",
+      "source": "Merged pull request 14",
+      "notes": "Live Azure proof remains a governed lifecycle operation."
+    },
+    {
+      "fact_id": "azure-planning-workflow",
+      "value": "Read-only What-If with bounded VM candidate planning and ARM validation",
+      "status": "implemented_and_ci_verified_live_rerun_pending",
+      "last_observed_on": "2026-07-21",
+      "source": "Merged pull requests 15 through 18",
+      "notes": "The latest planner runtime defects were repaired; a new read-only run is still required to verify the fixes against Azure."
+    }
+  ]
+}
