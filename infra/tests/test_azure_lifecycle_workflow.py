@@ -49,10 +49,14 @@ class AzureLifecycleWorkflowTests(unittest.TestCase):
         ):
             self.assertIn(expected, WORKFLOW)
 
+    def test_existing_resource_group_is_the_guarded_default(self) -> None:
+        self.assertIn("default: servicetracer-dev-westus2", WORKFLOW)
+        self.assertIn("default: westus2", WORKFLOW)
+        self.assertIn("^(rg-)?servicetracer-(dev|test)", WORKFLOW)
+
     def test_teardown_has_exact_confirmation_and_narrow_group_name(self) -> None:
         self.assertIn("CONFIRM_TEARDOWN", WORKFLOW)
         self.assertIn('[[ "$CONFIRM_TEARDOWN" == "$RESOURCE_GROUP" ]]', WORKFLOW)
-        self.assertIn("^rg-servicetracer-(dev|test)", WORKFLOW)
         self.assertIn("az group delete --name \"$RESOURCE_GROUP\" --yes", WORKFLOW)
 
     def test_verification_checks_azure_and_guest_state(self) -> None:
