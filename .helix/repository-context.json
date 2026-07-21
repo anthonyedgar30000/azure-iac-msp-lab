@@ -2,14 +2,19 @@
   "schema_version": "helix.repository-context.v1",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "classified_on": "2026-07-21",
-  "classification_scope": "governed retrieval boundary with canonical workspace governance, promoted collector planning evidence, and fail-closed replacement execution design; not an exhaustive file inventory",
+  "classification_scope": "governed retrieval boundary for the ServiceTracer bounded workstream within the HELIX umbrella workspace, including canonical workstream governance, promoted collector planning evidence, and the merged fail-closed replacement execution design; not an exhaustive file inventory",
+  "workspace_hierarchy": {
+    "umbrella_conversation_workspace": "HELIX — Governed Agent Engineering",
+    "bounded_repository_workstream": "ServiceTracer — Governed Azure Operations Lab",
+    "authority_boundary": "ChatGPT project placement supports context and review routing only. GitHub, pull requests, CI, .project state, workflow artifacts, and Azure evidence determine implementation and runtime state."
+  },
   "baseline_observation": {
     "branch": "main",
-    "commit": "50a4789e87cdadd7d537179882427b3b2cb4b96f",
-    "commit_semantics": "verified main observation anchor after PR #24 merged and before PR #25 was refreshed; live Git determines the current head",
+    "commit": "f40ef0fab0ae920c23f4b6556c25dc4f3b99b68b",
+    "commit_semantics": "verified main observation anchor after PR #25 merged and before this state-only reconciliation branch was created; live Git determines the current head",
     "latest_merged_increment": {
-      "pull_request": 24,
-      "title": "Govern canonical ServiceTracer workspace streams"
+      "pull_request": 25,
+      "title": "Add fail-closed collector replacement execution design"
     },
     "observed_on": "2026-07-21"
   },
@@ -27,7 +32,7 @@
       "content_role": "replacement_execution_contract_and_validation",
       "retrieval_class": "supporting-current",
       "default_retrieval": true,
-      "claim_boundary": "proves committed design invariants and deterministic validation only; it does not prove workflow activation, authorization, Azure execution, or recoverability"
+      "claim_boundary": "proves committed and CI-verified design invariants and deterministic validation only; it does not prove workflow activation, authorization, Azure execution, rollback readiness, or recoverability"
     },
     {
       "path": "infra/**",
@@ -62,7 +67,7 @@
       "content_role": "canonical_workspace_stream_catalog",
       "retrieval_class": "authoritative-current",
       "default_retrieval": true,
-      "claim_boundary": "defines the six canonical organizational streams and their claim boundaries; it does not prove implementation or runtime state"
+      "claim_boundary": "defines the six canonical ServiceTracer organizational streams, the HELIX umbrella relationship, and their claim boundaries; it does not prove implementation or runtime state"
     },
     {
       "path": "docs/implementation-status.md",
@@ -143,14 +148,14 @@
       "default_retrieval": true,
       "freshness_status": "refreshed",
       "refreshed_on": "2026-07-21",
-      "claim_boundary": "records promoted active work, canonical workspace streams, handoffs, environment facts, and deployment history; live Git, CI, workflow artifacts, and runtime evidence still determine current external state"
+      "claim_boundary": "records promoted active work, workspace hierarchy, canonical ServiceTracer streams, handoffs, environment facts, and deployment history; live Git, CI, workflow artifacts, and runtime evidence still determine current external state"
     },
     {
       "path": ".helix/**",
       "content_role": "repository_context_governance",
       "retrieval_class": "authoritative-current",
       "default_retrieval": true,
-      "claim_boundary": "governs retrieval, promotion, and archival behavior; it does not prove implementation or runtime state"
+      "claim_boundary": "governs retrieval, promotion, conversational boundaries, and archival behavior; it does not prove implementation or runtime state"
     },
     {
       "path": ".helix/archive/**",
@@ -212,6 +217,14 @@
       "merge_commit": "50a4789e87cdadd7d537179882427b3b2cb4b96f",
       "scope": "canonical ServiceTracer workspace identity, exact six-stream catalog, and validator enforcement",
       "authority_boundary": "organizes conversational and repository context; Git, CI, workflow artifacts, and Azure evidence remain authoritative for implementation and runtime state"
+    },
+    {
+      "pull_request": 25,
+      "branch": "feature/collector-replacement-execution-design",
+      "state": "merged",
+      "merge_commit": "f40ef0fab0ae920c23f4b6556c25dc4f3b99b68b",
+      "scope": "fail-closed collector replacement execution contract, inactive candidate, validator, tests, and design documentation",
+      "authority_boundary": "design and CI validation are implemented; active workflow, dispatch authority, Azure mutation authority, rollback readiness, deployment, and operational verification remain absent"
     }
   ],
   "promoted_runtime_evidence": [
@@ -228,11 +241,11 @@
   ],
   "active_coordination_boundaries": [
     {
-      "workstream_id": "collector-replacement-execution-design",
-      "branch": "feature/collector-replacement-execution-design",
-      "pull_request": 25,
-      "scope": "fail-closed contract, inactive workflow candidate, validator, tests, and design documentation",
-      "retrieval_rule": "treat as implemented design only; never infer active workflow, dispatch authority, Azure mutation authority, rollback readiness, or deployment"
+      "workstream_id": "post-pr25-state-and-workspace-reconciliation",
+      "branch": "docs/reconcile-pr25-helix-workspace",
+      "pull_request": null,
+      "scope": "state-only reconciliation of PR #25 completion and HELIX-to-ServiceTracer workspace hierarchy",
+      "retrieval_rule": "treat as metadata and orientation work only; never infer workflow activation, dispatch authority, Azure mutation, deployment, billing change, or operational verification"
     }
   ],
   "known_open_legacy_items": [
