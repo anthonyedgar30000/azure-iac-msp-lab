@@ -7,9 +7,14 @@ param virtualNetworkAddressPrefix = '10.20.0.0/16'
 param remoteUserVirtualNetworkAddressPrefix = '10.30.0.0/16'
 param vpnClientAddressPrefix = '10.90.0.0/24'
 
-// Keep compute disabled in the committed development parameter file. Enable it in a
-// local secure parameter override and provide collectorAdminSshPublicKey explicitly.
+// Keep compute and the public report endpoint disabled in the committed development
+// parameter file. Enable them in a local secure parameter override and provide
+// collectorAdminSshPublicKey explicitly.
 param deployOperationsCollector = false
+param deployPublicReportEndpoint = false
+param publicReportAllowedOrigins = [
+  'https://anthonyedgar30000.github.io'
+]
 param collectorPrivateIpAddress = '10.20.40.10'
 param collectorVmSize = 'Standard_B1ms'
 param collectorDataDiskSizeGb = 32
