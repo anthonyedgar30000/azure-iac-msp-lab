@@ -59,12 +59,12 @@
 - The candidate is outside `.github/workflows`, exits before Azure authentication, and contains no Azure mutation commands.
 - CI verifies authority, evidence anchoring, phase ordering, cost ceilings, cleanup limits, independent review lenses, inactive workflow location, and unresolved rollback state.
 
-## Current bounded work
+## Intended post-merge coordination state
 
-- Branch: `docs/reconcile-pr25-helix-workspace`
-- Purpose: state-only reconciliation after PR #25 and workspace-hierarchy clarification.
-- Permitted changes: `.project/`, `.helix/`, `docs/implementation-status.md`, and repository orientation text only.
-- No implementation source, active workflow, Azure resource, budget, billing alert, action group, or runtime behavior is changed.
+- No implementation branch retains write ownership.
+- Legacy draft PR #1 remains explicit-only and non-current.
+- The next implementation or design increment must create a new bounded branch, declare its permitted paths and verification criteria, and add a new active-work entry.
+- This reconciliation changes metadata and orientation only; it does not change implementation source, active workflows, Azure resources, budgets, billing alerts, action groups, or runtime behavior.
 
 ## Unresolved blocker
 
@@ -77,7 +77,7 @@ This decision affects naming convergence, recovery, temporary cost, and cleanup.
 
 ## Next bounded gate
 
-1. Merge this state-only reconciliation only after CI validates repository state, existing tests, replacement-design tests, and Bicep build.
+1. Merge the state-only reconciliation only after CI validates repository state, existing tests, replacement-design tests, and Bicep build.
 2. Perform separate evidence-quality, operations/recovery, security/identity, and Azure-cost reviews of the merged design.
 3. Resolve rollback and canonical OS-disk naming in a separate bounded branch with tests.
 4. Define pre-maintenance guest/control-plane evidence and independently testable recovery verification.
