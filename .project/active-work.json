@@ -44,9 +44,9 @@
       "branch": "feature/canonical-workspace-governance",
       "write_owner": "ChatGPT project: ServiceTracer — Governed Azure Operations Lab",
       "scope": "Encode and validate the six canonical workspace streams in .project metadata and repository orientation only. Permitted paths: .project/active-work.json, .project/workstream-catalog.json, .project/README.md, .project/validate.py, and README.md.",
-      "status": "implementation_in_progress",
-      "pull_request": null,
-      "next_gate": "Create the bounded branch changes, run python .project/validate.py, open a draft pull request, and require CI success before review. No Azure workflow dispatch or resource mutation is authorized."
+      "status": "ci_pending",
+      "pull_request": 24,
+      "next_gate": "Require PR #24 CI success, review the catalog wording and claim boundaries, and keep the pull request in draft until those checks are complete. No Azure workflow dispatch or resource mutation is authorized."
     }
   ],
   "known_open_pull_requests": [
