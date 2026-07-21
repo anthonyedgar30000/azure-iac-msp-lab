@@ -35,9 +35,9 @@ on:
         default: false
         type: boolean
       demo_backend_vm_size:
-        description: 'Azure VM size for each simulated VPN backend'
+        description: 'VM size for each simulated VPN backend, or auto for bounded Azure validation'
         required: true
-        default: Standard_B1s
+        default: auto
         type: string
       deploy_public_report_endpoint:
         description: 'Deploy the sanitized Azure Storage report endpoint'
@@ -45,13 +45,13 @@ on:
         default: false
         type: boolean
       collector_source_ref:
-        description: 'Tested 40-character commit SHA; required for what-if and deploy'
+        description: 'Optional tested commit SHA; blank uses the workflow commit'
         required: false
         type: string
       collector_vm_size:
-        description: 'Azure VM size for the private collector; select a SKU available in the chosen region'
+        description: 'Collector VM size, or auto for bounded Azure validation'
         required: true
-        default: Standard_B2s
+        default: auto
         type: string
       expected_private_ip:
         description: 'Expected private collector address'
@@ -115,17 +115,19 @@ jobs:
           [[ "$LOCATION" =~ ^[a-z0-9]+$ ]]
           [[ "$DEPLOY_DEMO_BACKENDS" =~ ^(true|false)$ ]]
           [[ "$DEPLOY_PUBLIC_REPORT_ENDPOINT" =~ ^(true|false)$ ]]
-          [[ "$DEMO_BACKEND_VM_SIZE" =~ ^Standard_[A-Za-z0-9_]+$ ]]
-          [[ "$COLLECTOR_VM_SIZE" =~ ^Standard_[A-Za-z0-9_]+$ ]]
+          [[ "$DEMO_BACKEND_VM_SIZE" == 'auto' || "$DEMO_BACKEND_VM_SIZE" =~ ^Standard_[A-Za-z0-9_]+$ ]]
+          [[ "$COLLECTOR_VM_SIZE" == 'auto' || "$COLLECTOR_VM_SIZE" =~ ^Standard_[A-Za-z0-9_]+$ ]]
           [[ "$EXPECTED_PRIVATE_IP" =~ ^10\.20\.40\.[0-9]{1,3}$ ]]
           [[ "$COLLECTOR_PORT" =~ ^[0-9]+$ ]]
           ((COLLECTOR_PORT >= 1 && COLLECTOR_PORT <= 65535))
 
           if [[ "$OPERATION" == 'what-if' || "$OPERATION" == 'deploy' ]]; then
-            [[ "$SOURCE_REF" =~ ^[0-9a-fA-F]{40}$ ]] || {
-              echo 'what-if and deploy require a tested 40-character collector_source_ref.' >&2
-              exit 1
-            }
+            if [[ -n "$SOURCE_REF" ]]; then
+              [[ "$SOURCE_REF" =~ ^[0-9a-fA-F]{40}$ ]] || {
+                echo 'collector_source_ref must be a 40-character commit SHA when supplied.' >&2
+                exit 1
+              }
+            fi
             [[ "$COLLECTOR_ADMIN_SSH_PUBLIC_KEY" == ssh-* ]] || {
               echo 'The azure-lab environment must provide COLLECTOR_ADMIN_SSH_PUBLIC_KEY.' >&2
               exit 1
@@ -146,15 +148,15 @@ jobs:
             --arg location "$LOCATION" \
             --arg prefix "$PREFIX" \
             --argjson deployDemoBackends "$DEPLOY_DEMO_BACKENDS" \
-            --arg demoBackendVmSize "$DEMO_BACKEND_VM_SIZE" \
+            --arg requestedDemoBackendVmSize "$DEMO_BACKEND_VM_SIZE" \
             --argjson deployPublicReportEndpoint "$DEPLOY_PUBLIC_REPORT_ENDPOINT" \
-            --arg sourceRef "$SOURCE_REF" \
-            --arg collectorVmSize "$COLLECTOR_VM_SIZE" \
+            --arg requestedSourceRef "$SOURCE_REF" \
+            --arg requestedCollectorVmSize "$COLLECTOR_VM_SIZE" \
             --arg expectedPrivateIp "$EXPECTED_PRIVATE_IP" \
             --arg collectorPort "$COLLECTOR_PORT" \
             --arg runId "$GITHUB_RUN_ID" \
             --arg runAttempt "$GITHUB_RUN_ATTEMPT" \
-            '{requested_operation:$operation,environment:$environment,resource_group:$resourceGroup,location:$location,prefix:$prefix,deploy_demo_backends:$deployDemoBackends,demo_backend_vm_size:$demoBackendVmSize,deploy_public_report_endpoint:$deployPublicReportEndpoint,collector_source_ref:(if $sourceRef=="" then null else $sourceRef end),collector_vm_size:$collectorVmSize,expected_private_ip:$expectedPrivateIp,collector_port:($collectorPort|tonumber),github_run_id:$runId,github_run_attempt:$runAttempt}' \
+            '{requested_operation:$operation,environment:$environment,resource_group:$resourceGroup,location:$location,prefix:$prefix,deploy_demo_backends:$deployDemoBackends,requested_demo_backend_vm_size:$requestedDemoBackendVmSize,deploy_public_report_endpoint:$deployPublicReportEndpoint,requested_collector_source_ref:(if $requestedSourceRef=="" then null else $requestedSourceRef end),requested_collector_vm_size:$requestedCollectorVmSize,expected_private_ip:$expectedPrivateIp,collector_port:($collectorPort|tonumber),github_run_id:$runId,github_run_attempt:$runAttempt}' \
             > "$ARTIFACT_DIR/request.json"
 
       - name: Log in to Azure with workload identity federation
@@ -178,7 +180,8 @@ jobs:
           set -euo pipefail
           az group create --name "$RESOURCE_GROUP" --location "$LOCATION" --tags workload=azure-iac-msp-lab purpose=servicetracer-demo managedBy=github-actions --output json > "$ARTIFACT_DIR/resource-group.json"
 
-      - name: Run Bicep validation and what-if
+      - name: Select VM sizes and run Bicep what-if
+        id: plan
         if: inputs.operation == 'what-if' || inputs.operation == 'deploy'
         env:
           RESOURCE_GROUP: ${{ inputs.resource_group }}
@@ -186,18 +189,175 @@ jobs:
           PREFIX: ${{ inputs.prefix }}
           LAB_ENVIRONMENT: ${{ inputs.environment }}
           DEPLOY_DEMO_BACKENDS: ${{ inputs.deploy_demo_backends }}
-          DEMO_BACKEND_VM_SIZE: ${{ inputs.demo_backend_vm_size }}
+          REQUESTED_DEMO_BACKEND_VM_SIZE: ${{ inputs.demo_backend_vm_size }}
           DEPLOY_PUBLIC_REPORT_ENDPOINT: ${{ inputs.deploy_public_report_endpoint }}
-          SOURCE_REF: ${{ inputs.collector_source_ref }}
-          COLLECTOR_VM_SIZE: ${{ inputs.collector_vm_size }}
+          REQUESTED_SOURCE_REF: ${{ inputs.collector_source_ref }}
+          REQUESTED_COLLECTOR_VM_SIZE: ${{ inputs.collector_vm_size }}
           EXPECTED_PRIVATE_IP: ${{ inputs.expected_private_ip }}
           COLLECTOR_PORT: ${{ inputs.collector_port }}
           COLLECTOR_ADMIN_SSH_PUBLIC_KEY: ${{ secrets.COLLECTOR_ADMIN_SSH_PUBLIC_KEY }}
         run: |
           set -euo pipefail
-          common_parameters=(prefix="$PREFIX" environment="$LAB_ENVIRONMENT" location="$LOCATION" deployDemoBackends="$DEPLOY_DEMO_BACKENDS" demoBackendVmSize="$DEMO_BACKEND_VM_SIZE" deployOperationsCollector=true deployPublicReportEndpoint="$DEPLOY_PUBLIC_REPORT_ENDPOINT" collectorVmSize="$COLLECTOR_VM_SIZE" collectorPrivateIpAddress="$EXPECTED_PRIVATE_IP" collectorPort="$COLLECTOR_PORT" collectorAdminSshPublicKey="$COLLECTOR_ADMIN_SSH_PUBLIC_KEY" collectorSourceRef="$SOURCE_REF")
-          az deployment group validate --resource-group "$RESOURCE_GROUP" --template-file infra/main.bicep --parameters "${common_parameters[@]}" --output json > "$ARTIFACT_DIR/deployment-validation.json"
-          az deployment group what-if --resource-group "$RESOURCE_GROUP" --name "servicetracer-${LAB_ENVIRONMENT}" --template-file infra/main.bicep --parameters "${common_parameters[@]}" --no-pretty-print --output json > "$ARTIFACT_DIR/what-if.json"
+
+          source_ref="${REQUESTED_SOURCE_REF:-$GITHUB_SHA}"
+          [[ "$source_ref" =~ ^[0-9a-fA-F]{40}$ ]]
+
+          if [[ "$REQUESTED_DEMO_BACKEND_VM_SIZE" == 'auto' ]]; then
+            backend_pool=(
+              Standard_B1ms
+              Standard_B2ms
+              Standard_D2as_v5
+              Standard_D2s_v5
+            )
+          else
+            backend_pool=("$REQUESTED_DEMO_BACKEND_VM_SIZE")
+          fi
+
+          if [[ "$REQUESTED_COLLECTOR_VM_SIZE" == 'auto' ]]; then
+            collector_pool=(
+              Standard_B1ms
+              Standard_B2ms
+              Standard_D2as_v5
+              Standard_D2s_v5
+            )
+          else
+            collector_pool=("$REQUESTED_COLLECTOR_VM_SIZE")
+          fi
+
+          sku_exists_without_reported_restriction() {
+            local sku="$1"
+            local result
+            result="$(az vm list-skus \
+              --location "$LOCATION" \
+              --resource-type virtualMachines \
+              --all \
+              --query "[?name=='${sku}'] | [0].{name:name,restrictions:restrictions}" \
+              --output json)"
+            [[ "$(jq -r '.name // empty' <<<"$result")" == "$sku" ]] || return 1
+            [[ "$(jq '.restrictions | length' <<<"$result")" -eq 0 ]]
+          }
+
+          filter_candidates() {
+            local -n requested_pool="$1"
+            local -n available_pool="$2"
+            local sku
+            for sku in "${requested_pool[@]}"; do
+              if sku_exists_without_reported_restriction "$sku"; then
+                available_pool+=("$sku")
+              fi
+            done
+          }
+
+          backend_candidates=()
+          collector_candidates=()
+          filter_candidates backend_pool backend_candidates
+          filter_candidates collector_pool collector_candidates
+
+          ((${#backend_candidates[@]} > 0)) || {
+            echo 'No requested backend VM SKU is listed as unrestricted for this subscription and region.' >&2
+            exit 1
+          }
+          ((${#collector_candidates[@]} > 0)) || {
+            echo 'No requested collector VM SKU is listed as unrestricted for this subscription and region.' >&2
+            exit 1
+          }
+
+          : > "$ARTIFACT_DIR/sku-validation-attempts.jsonl"
+          selected_backend=''
+          selected_collector=''
+
+          for collector_size in "${collector_candidates[@]}"; do
+            for backend_size in "${backend_candidates[@]}"; do
+              validation_output="$ARTIFACT_DIR/deployment-validation-${collector_size}-${backend_size}.json"
+              validation_error="$ARTIFACT_DIR/deployment-validation-${collector_size}-${backend_size}.stderr"
+              common_parameters=(
+                prefix="$PREFIX"
+                environment="$LAB_ENVIRONMENT"
+                location="$LOCATION"
+                deployDemoBackends="$DEPLOY_DEMO_BACKENDS"
+                demoBackendVmSize="$backend_size"
+                deployOperationsCollector=true
+                deployPublicReportEndpoint="$DEPLOY_PUBLIC_REPORT_ENDPOINT"
+                collectorVmSize="$collector_size"
+                collectorPrivateIpAddress="$EXPECTED_PRIVATE_IP"
+                collectorPort="$COLLECTOR_PORT"
+                collectorAdminSshPublicKey="$COLLECTOR_ADMIN_SSH_PUBLIC_KEY"
+                collectorSourceRef="$source_ref"
+              )
+
+              if az deployment group validate \
+                --resource-group "$RESOURCE_GROUP" \
+                --template-file infra/main.bicep \
+                --parameters "${common_parameters[@]}" \
+                --output json > "$validation_output" 2> "$validation_error"; then
+                selected_backend="$backend_size"
+                selected_collector="$collector_size"
+                cp "$validation_output" "$ARTIFACT_DIR/deployment-validation.json"
+                jq -n \
+                  --arg collector "$collector_size" \
+                  --arg backend "$backend_size" \
+                  --arg status succeeded \
+                  '{collector_vm_size:$collector,demo_backend_vm_size:$backend,status:$status}' \
+                  >> "$ARTIFACT_DIR/sku-validation-attempts.jsonl"
+                break 2
+              fi
+
+              error_text="$(cat "$validation_error")"
+              jq -n \
+                --arg collector "$collector_size" \
+                --arg backend "$backend_size" \
+                --arg status rejected \
+                --arg error "$error_text" \
+                '{collector_vm_size:$collector,demo_backend_vm_size:$backend,status:$status,error:$error}' \
+                >> "$ARTIFACT_DIR/sku-validation-attempts.jsonl"
+
+              if ! grep -Eqi 'SkuNotAvailable|AllocationFailed|OverconstrainedAllocationRequest|ZonalAllocationFailed|capacity restriction|currently not available' "$validation_error"; then
+                cat "$validation_error" >&2
+                echo 'Validation failed for a reason other than VM capacity; refusing to hide the error behind SKU fallback.' >&2
+                exit 1
+              fi
+            done
+          done
+
+          [[ -n "$selected_backend" && -n "$selected_collector" ]] || {
+            echo 'Azure rejected every bounded VM-size combination for this subscription and region.' >&2
+            cat "$ARTIFACT_DIR/sku-validation-attempts.jsonl" >&2
+            exit 1
+          }
+
+          selected_parameters=(
+            prefix="$PREFIX"
+            environment="$LAB_ENVIRONMENT"
+            location="$LOCATION"
+            deployDemoBackends="$DEPLOY_DEMO_BACKENDS"
+            demoBackendVmSize="$selected_backend"
+            deployOperationsCollector=true
+            deployPublicReportEndpoint="$DEPLOY_PUBLIC_REPORT_ENDPOINT"
+            collectorVmSize="$selected_collector"
+            collectorPrivateIpAddress="$EXPECTED_PRIVATE_IP"
+            collectorPort="$COLLECTOR_PORT"
+            collectorAdminSshPublicKey="$COLLECTOR_ADMIN_SSH_PUBLIC_KEY"
+            collectorSourceRef="$source_ref"
+          )
+
+          az deployment group what-if \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "servicetracer-${LAB_ENVIRONMENT}" \
+            --template-file infra/main.bicep \
+            --parameters "${selected_parameters[@]}" \
+            --no-pretty-print \
+            --output json > "$ARTIFACT_DIR/what-if.json"
+
+          printf 'demo_backend_vm_size=%s\n' "$selected_backend" >> "$GITHUB_OUTPUT"
+          printf 'collector_vm_size=%s\n' "$selected_collector" >> "$GITHUB_OUTPUT"
+          printf 'collector_source_ref=%s\n' "$source_ref" >> "$GITHUB_OUTPUT"
+
+          jq -n \
+            --arg sourceRef "$source_ref" \
+            --arg collectorVmSize "$selected_collector" \
+            --arg demoBackendVmSize "$selected_backend" \
+            '{collector_source_ref:$sourceRef,collector_vm_size:$collectorVmSize,demo_backend_vm_size:$demoBackendVmSize}' \
+            > "$ARTIFACT_DIR/resolved-deployment-plan.json"
 
       - name: Deploy ServiceTracer infrastructure
         if: inputs.operation == 'deploy'
@@ -207,10 +367,10 @@ jobs:
           PREFIX: ${{ inputs.prefix }}
           LAB_ENVIRONMENT: ${{ inputs.environment }}
           DEPLOY_DEMO_BACKENDS: ${{ inputs.deploy_demo_backends }}
-          DEMO_BACKEND_VM_SIZE: ${{ inputs.demo_backend_vm_size }}
+          DEMO_BACKEND_VM_SIZE: ${{ steps.plan.outputs.demo_backend_vm_size }}
           DEPLOY_PUBLIC_REPORT_ENDPOINT: ${{ inputs.deploy_public_report_endpoint }}
-          SOURCE_REF: ${{ inputs.collector_source_ref }}
-          COLLECTOR_VM_SIZE: ${{ inputs.collector_vm_size }}
+          SOURCE_REF: ${{ steps.plan.outputs.collector_source_ref }}
+          COLLECTOR_VM_SIZE: ${{ steps.plan.outputs.collector_vm_size }}
           EXPECTED_PRIVATE_IP: ${{ inputs.expected_private_ip }}
           COLLECTOR_PORT: ${{ inputs.collector_port }}
           COLLECTOR_ADMIN_SSH_PUBLIC_KEY: ${{ secrets.COLLECTOR_ADMIN_SSH_PUBLIC_KEY }}
@@ -291,6 +451,9 @@ jobs:
           RESOURCE_GROUP: ${{ inputs.resource_group }}
           DEPLOY_DEMO_BACKENDS: ${{ inputs.deploy_demo_backends }}
           DEPLOY_PUBLIC_REPORT_ENDPOINT: ${{ inputs.deploy_public_report_endpoint }}
+          RESOLVED_DEMO_BACKEND_VM_SIZE: ${{ steps.plan.outputs.demo_backend_vm_size }}
+          RESOLVED_COLLECTOR_VM_SIZE: ${{ steps.plan.outputs.collector_vm_size }}
+          RESOLVED_SOURCE_REF: ${{ steps.plan.outputs.collector_source_ref }}
         run: |
           {
             echo '## ServiceTracer Azure lifecycle'
@@ -299,6 +462,11 @@ jobs:
             echo "- Resource group: \`$RESOURCE_GROUP\`"
             echo "- Demo backends requested: \`$DEPLOY_DEMO_BACKENDS\`"
             echo "- Public report endpoint requested: \`$DEPLOY_PUBLIC_REPORT_ENDPOINT\`"
+            if [[ -n "$RESOLVED_DEMO_BACKEND_VM_SIZE" ]]; then
+              echo "- Resolved backend VM size: \`$RESOLVED_DEMO_BACKEND_VM_SIZE\`"
+              echo "- Resolved collector VM size: \`$RESOLVED_COLLECTOR_VM_SIZE\`"
+              echo "- Collector source commit: \`$RESOLVED_SOURCE_REF\`"
+            fi
             echo "- Workflow conclusion: \`${{ job.status }}\`"
             echo '- Detailed non-secret evidence is attached as a workflow artifact.'
           } >> "$GITHUB_STEP_SUMMARY"
