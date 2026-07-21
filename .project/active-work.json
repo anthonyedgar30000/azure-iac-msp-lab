@@ -16,10 +16,10 @@
       "branch": "feature/workflow-observability",
       "pull_request": 19,
       "write_owner": "workflow-observability-workstream",
-      "status": "ci_pending",
+      "status": "ci_verified",
       "scope": "Add shared branch ownership, environment facts, deployment history, handoffs, and CI validation for multi-conversation work.",
       "review_mode_for_other_conversations": "review_only",
-      "next_gate": "Require successful CI and human review before merge."
+      "next_gate": "Human review and merge decision for pull request 19."
     }
   ],
   "known_open_pull_requests": [
