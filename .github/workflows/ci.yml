@@ -73,14 +73,21 @@ jobs:
             --service-path servicetracer/examples/remote_access_service_path.json \
             --report-view technician-handoff \
             --output /tmp/technician-handoff-report.json
+          python -m servicetracer.publish_cli \
+            --input /tmp/technician-handoff-report.json \
+            --output /tmp/public-technician-handoff-report.json \
+            --source-id ci-collector \
+            --servicetracer-version 0.5.0
           python -m json.tool /tmp/servicetracer-report.json > /dev/null
           python -m json.tool /tmp/technician-handoff-report.json > /dev/null
+          python -m json.tool /tmp/public-technician-handoff-report.json > /dev/null
           python - <<'PY'
           import json
           from pathlib import Path
 
           report = json.loads(Path('/tmp/servicetracer-report.json').read_text())
           handoff = json.loads(Path('/tmp/technician-handoff-report.json').read_text())
+          public_report = json.loads(Path('/tmp/public-technician-handoff-report.json').read_text())
           status = json.loads(Path('/tmp/collector-status.json').read_text())
           assert status['records'] > 0
           assert status['records'] == status['unique_evidence_identities']
@@ -99,6 +106,11 @@ jobs:
           assert handoff['root_cause']['status'] == 'not_determined_by_servicetracer'
           assert 'first_failed_stage' not in handoff
           assert 'radius_response' not in json.dumps(handoff)
+          assert public_report['schema_version'] == 'servicetracer.public-report.v1'
+          assert public_report['source']['id'] == 'ci-collector'
+          assert public_report['report']['localization']['suspect_backend'] == 'VPN-02'
+          assert public_report['report']['investigation_boundary']['exact_root_cause_claimed'] is False
+          assert 'radius_response' not in json.dumps(public_report)
           PY
 
       - name: Verify preassembled replay compatibility
