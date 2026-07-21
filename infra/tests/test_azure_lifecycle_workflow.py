@@ -7,6 +7,9 @@ ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = (ROOT / ".github" / "workflows" / "azure-lab-lifecycle.yml").read_text(
     encoding="utf-8"
 )
+RESOLVER = (ROOT / "infra" / "scripts" / "resolve_vm_plan.sh").read_text(
+    encoding="utf-8"
+)
 VERIFY = (ROOT / "infra" / "scripts" / "verify_collector_deployment.sh").read_text(
     encoding="utf-8"
 )
@@ -32,27 +35,67 @@ class AzureLifecycleWorkflowTests(unittest.TestCase):
             WORKFLOW.index("Select VM sizes and run Bicep what-if"),
             WORKFLOW.index("Deploy ServiceTracer infrastructure"),
         )
-        self.assertIn("^[0-9a-fA-F]{40}$", WORKFLOW)
         self.assertIn('source_ref="${REQUESTED_SOURCE_REF:-$GITHUB_SHA}"', WORKFLOW)
         self.assertIn("collectorAdminSshPublicKey", WORKFLOW)
         self.assertIn("deployOperationsCollector=true", WORKFLOW)
         self.assertIn("if: inputs.operation == 'deploy'", WORKFLOW)
 
-    def test_capacity_aware_vm_size_selection_is_bounded(self) -> None:
+    def test_workflow_delegates_bounded_planning_to_reviewable_script(self) -> None:
+        plan_step = workflow_step(
+            "Select VM sizes and run Bicep what-if",
+            "Deploy ServiceTracer infrastructure",
+        )
+        self.assertIn("infra/scripts/resolve_vm_plan.sh", plan_step)
+        self.assertIn('--github-output "$GITHUB_OUTPUT"', plan_step)
+        self.assertNotIn("az vm list-skus", plan_step)
+        self.assertNotIn("az deployment group validate", plan_step)
+
+    def test_sku_metadata_is_advisory_and_arm_validation_is_authoritative(self) -> None:
         for expected in (
-            "default: auto",
+            "current_collector_size",
             "az vm list-skus",
+            "vm-sku-catalog.json",
+            "sku-metadata.jsonl",
+            "az deployment group validate",
+            "ARM deployment validation",
+            'decision_authority:"arm_deployment_validation"',
+            'sku_metadata_role:"advisory"',
+            "Standard_B1s",
             "Standard_B1ms",
+            "Standard_B2s",
             "Standard_B2ms",
             "Standard_D2as_v5",
             "Standard_D2s_v5",
-            "sku-validation-attempts.jsonl",
-            "SkuNotAvailable",
-            "capacity restriction",
-            "refusing to hide the error behind SKU fallback",
-            "resolved-deployment-plan.json",
         ):
-            self.assertIn(expected, WORKFLOW)
+            self.assertIn(expected, RESOLVER)
+
+        self.assertNotIn("sku_exists_without_reported_restriction", RESOLVER)
+        self.assertNotIn("filter_candidates", RESOLVER)
+        self.assertNotIn(
+            "No requested backend VM SKU is listed as unrestricted",
+            RESOLVER,
+        )
+        self.assertNotIn(
+            "No requested collector VM SKU is listed as unrestricted",
+            RESOLVER,
+        )
+
+    def test_every_bounded_candidate_reaches_arm_validation(self) -> None:
+        self.assertIn('for collector_size in "${collector_candidates[@]}"', RESOLVER)
+        self.assertIn('for backend_size in "${backend_candidates[@]}"', RESOLVER)
+        self.assertLess(
+            RESOLVER.index('for collector_size in "${collector_candidates[@]}"'),
+            RESOLVER.index("az deployment group validate"),
+        )
+        self.assertIn("sku-validation-attempts.jsonl", RESOLVER)
+        self.assertIn(
+            "ARM validation rejected every bounded VM-size combination",
+            RESOLVER,
+        )
+        self.assertIn(
+            "refusing to hide it behind VM-size fallback",
+            RESOLVER,
+        )
 
     def test_resolved_vm_sizes_are_forwarded_to_deployment(self) -> None:
         for expected in (
@@ -109,7 +152,7 @@ class AzureLifecycleWorkflowTests(unittest.TestCase):
     def test_teardown_has_exact_confirmation_and_narrow_group_name(self) -> None:
         self.assertIn("CONFIRM_TEARDOWN", WORKFLOW)
         self.assertIn('[[ "$CONFIRM_TEARDOWN" == "$RESOURCE_GROUP" ]]', WORKFLOW)
-        self.assertIn("az group delete --name \"$RESOURCE_GROUP\" --yes", WORKFLOW)
+        self.assertIn('az group delete --name "$RESOURCE_GROUP" --yes', WORKFLOW)
 
     def test_verification_checks_azure_and_guest_state(self) -> None:
         for expected in (
@@ -142,8 +185,8 @@ class AzureLifecycleWorkflowTests(unittest.TestCase):
             self.assertIn(expected, VERIFY)
 
     def test_verification_does_not_print_collector_token(self) -> None:
-        self.assertIn("source \"\\${TOKEN_FILE}\"", VERIFY)
-        self.assertNotIn("echo \"\\${SERVICETRACER_COLLECTOR_TOKEN}", VERIFY)
+        self.assertIn('source "\\${TOKEN_FILE}"', VERIFY)
+        self.assertNotIn('echo "\\${SERVICETRACER_COLLECTOR_TOKEN}', VERIFY)
         self.assertNotIn("set -x", VERIFY)
 
     def test_non_secret_evidence_is_always_uploaded(self) -> None:
