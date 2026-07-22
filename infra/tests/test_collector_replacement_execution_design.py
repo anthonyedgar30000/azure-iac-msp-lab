@@ -69,7 +69,8 @@ class CollectorReplacementExecutionDesignTests(unittest.TestCase):
         self.assertFalse(result["dispatch_authorized"])
         self.assertFalse(result["azure_mutations_authorized"])
         self.assertFalse(result["promotion_ready"])
-        self.assertEqual(result["rollback_status"], "unresolved_blocker")
+        self.assertEqual(result["rollback_status"], "strategy_selected_design_only")
+        self.assertFalse(result["rollback_operationally_tested"])
 
     def test_contract_is_pinned_to_promoted_planner_evidence(self) -> None:
         result = self._validate(self.contract)
@@ -83,24 +84,76 @@ class CollectorReplacementExecutionDesignTests(unittest.TestCase):
             "REPLACE:rg-servicetracer-dev-westus2:vm-stcollector-mst-dev",
         )
 
-    def test_phase_order_places_recovery_before_old_compute_removal(self) -> None:
+    def test_snapshot_rollback_preserves_canonical_os_disk_name(self) -> None:
+        result = self._validate(self.contract)
+        rollback = self.contract["rollback"]
+        recreation = rollback["recreation_contract"]
+        self.assertEqual(
+            result["rollback_strategy"],
+            "os_disk_snapshot_recreate_canonical_name",
+        )
+        self.assertEqual(
+            result["canonical_os_disk_name"], "disk-stcollector-os-mst-dev"
+        )
+        self.assertEqual(
+            recreation["recreated_os_disk_name"], "disk-stcollector-os-mst-dev"
+        )
+        self.assertEqual(recreation["os_disk_create_option"], "Copy")
+        self.assertFalse(rollback["preserve_old_os_disk_directly"])
+
+    def test_selected_rollback_remains_unverified_and_review_pending(self) -> None:
+        rollback = self.contract["rollback"]
+        self.assertFalse(rollback["operationally_tested"])
+        self.assertEqual(rollback["independent_review_status"], "pending")
+        self.assertTrue(rollback["promotion_blocked"])
+        self.assertIn(
+            "operational proof of the selected OS-disk snapshot recreation rollback",
+            self.contract["unresolved_blockers"],
+        )
+
+    def test_phase_order_places_both_recovery_points_before_old_compute_removal(self) -> None:
         result = self._validate(self.contract)
         phases = result["phase_order"]
-        self.assertLess(phases.index("create_recovery_points"), phases.index("remove_old_compute"))
-        self.assertLess(phases.index("verify_recovery_points"), phases.index("remove_old_compute"))
-        self.assertLess(phases.index("verify_preservation_boundary"), phases.index("deploy_replacement_compute"))
-        self.assertLess(phases.index("post_change_verification"), phases.index("human_recovery_acceptance"))
-        self.assertLess(phases.index("human_recovery_acceptance"), phases.index("cleanup_temporary_recovery_resources"))
+        self.assertLess(
+            phases.index("create_recovery_points"), phases.index("remove_old_compute")
+        )
+        self.assertLess(
+            phases.index("verify_recovery_points"), phases.index("remove_old_compute")
+        )
+        self.assertLess(
+            phases.index("verify_preservation_boundary"),
+            phases.index("deploy_replacement_compute"),
+        )
+        self.assertLess(
+            phases.index("post_change_verification"),
+            phases.index("human_recovery_acceptance"),
+        )
+        self.assertLess(
+            phases.index("human_recovery_acceptance"),
+            phases.index("cleanup_temporary_recovery_resources"),
+        )
+        remove_phase = next(
+            phase
+            for phase in self.contract["phases"]
+            if phase["phase_id"] == "remove_old_compute"
+        )
+        self.assertIn("both snapshots", remove_phase["evidence_required"])
 
     def test_every_mutation_phase_requires_explicit_authorization(self) -> None:
         for phase in self.contract["phases"]:
             if phase["mutation"]:
-                self.assertTrue(phase["requires_explicit_authorization"], phase["phase_id"])
+                self.assertTrue(
+                    phase["requires_explicit_authorization"], phase["phase_id"]
+                )
 
-    def test_cost_controls_block_overlap_and_budget_alert_changes(self) -> None:
+    def test_cost_controls_fit_evidence_and_os_disk_snapshot_ceiling(self) -> None:
         cost = self.contract["cost_controls"]
+        rollback = self.contract["rollback"]
         self.assertEqual(cost["currency"], "CAD")
         self.assertLessEqual(cost["maximum_declared_temporary_cost"], 10)
+        self.assertEqual(cost["maximum_snapshots"], 2)
+        self.assertEqual(cost["maximum_total_snapshot_gib"], 96)
+        self.assertEqual(rollback["maximum_os_disk_snapshot_gib"], 64)
         self.assertEqual(cost["maximum_compute_overlap_minutes"], 0)
         self.assertLessEqual(cost["maximum_recovery_resource_retention_hours"], 24)
         self.assertFalse(cost["azure_budget_or_alert_mutation_allowed"])
@@ -127,6 +180,32 @@ class CollectorReplacementExecutionDesignTests(unittest.TestCase):
         with self.assertRaises(Exception):
             self._validate(modified)
 
+    def test_validator_rejects_canonical_os_disk_name_drift(self) -> None:
+        modified = copy.deepcopy(self.contract)
+        modified["rollback"]["canonical_os_disk_name"] = "disk-stcollector-os-temp"
+        with self.assertRaises(Exception):
+            self._validate(modified)
+
+    def test_validator_rejects_direct_old_os_disk_preservation(self) -> None:
+        modified = copy.deepcopy(self.contract)
+        modified["rollback"]["preserve_old_os_disk_directly"] = True
+        with self.assertRaises(Exception):
+            self._validate(modified)
+
+    def test_validator_rejects_false_operational_verification_claim(self) -> None:
+        modified = copy.deepcopy(self.contract)
+        modified["rollback"]["operationally_tested"] = True
+        with self.assertRaises(Exception):
+            self._validate(modified)
+
+    def test_validator_rejects_weakened_snapshot_verification(self) -> None:
+        modified = copy.deepcopy(self.contract)
+        modified["rollback"]["snapshot_verification_required"].remove(
+            "source OS-disk resource ID matches"
+        )
+        with self.assertRaises(Exception):
+            self._validate(modified)
+
     def test_cli_renders_deterministic_non_authorizing_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             output = Path(temporary_directory) / "design-validation.json"
@@ -150,6 +229,11 @@ class CollectorReplacementExecutionDesignTests(unittest.TestCase):
             self.assertFalse(rendered["dispatch_authorized"])
             self.assertFalse(rendered["azure_mutations_authorized"])
             self.assertFalse(rendered["promotion_ready"])
+            self.assertEqual(
+                rendered["rollback_strategy"],
+                "os_disk_snapshot_recreate_canonical_name",
+            )
+            self.assertFalse(rendered["rollback_operationally_tested"])
 
 
 if __name__ == "__main__":

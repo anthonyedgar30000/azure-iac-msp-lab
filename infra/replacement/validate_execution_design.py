@@ -36,9 +36,41 @@ EXPECTED_PLANNER_DIGEST = (
     "76f3b44e6e97e906dac6d62eeb212a6bc55265e77271a030b9c45b0cacf55637"
 )
 EXPECTED_TARGET = "vm-stcollector-mst-dev"
+EXPECTED_OS_DISK = "disk-stcollector-os-mst-dev"
 EXPECTED_CONFIRMATION = (
     "REPLACE:rg-servicetracer-dev-westus2:vm-stcollector-mst-dev"
 )
+EXPECTED_ROLLBACK_STATUS = "strategy_selected_design_only"
+EXPECTED_ROLLBACK_STRATEGY = "os_disk_snapshot_recreate_canonical_name"
+EXPECTED_ROLLBACK_SNAPSHOT_PREFIX = "snap-stcollector-os-rollback-mst-dev-"
+REQUIRED_ROLLBACK_PREFLIGHT = {
+    "source OS-disk resource ID",
+    "disk size GiB",
+    "OS type",
+    "Hyper-V generation",
+    "security type and Trusted Launch compatibility",
+    "encryption configuration",
+    "network access policy",
+    "public network access state",
+}
+REQUIRED_SNAPSHOT_VERIFICATION = {
+    "provisioning state succeeded",
+    "source OS-disk resource ID matches",
+    "snapshot size matches source disk",
+    "Hyper-V generation and OS type are preserved",
+    "network access policy is DenyAll",
+    "public network access is Disabled",
+    "execution, owner, and cleanup-deadline tags are present",
+    "cleanup deadline is no more than 24 hours after creation",
+}
+REQUIRED_ROLLBACK_ACCEPTANCE = {
+    "prior OS boots under the reviewed security profile",
+    "same evidence filesystem UUID is mounted at /var/lib/servicetracer",
+    "recent pre-change evidence is readable",
+    "collector service and local health endpoint succeed",
+    "durable write and restart persistence succeed",
+    "NIC, static address, identity, RBAC, and disk access policies match the rollback contract",
+}
 
 
 class DesignValidationError(RuntimeError):
@@ -61,6 +93,10 @@ def _text(value: Any, field: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise DesignValidationError(f"{field} must be a non-empty string")
     return value.strip()
+
+
+def _text_set(value: Any, field: str) -> set[str]:
+    return {_text(item, f"{field}[]") for item in _list(value, field)}
 
 
 def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
@@ -90,12 +126,9 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
     if activation.get("promotion_requires_separate_pull_request") is not True:
         raise DesignValidationError("promotion must require a separate pull request")
 
-    reviews = set(
-        _text(item, "activation.promotion_requires_independent_reviews[]")
-        for item in _list(
-            activation.get("promotion_requires_independent_reviews"),
-            "activation.promotion_requires_independent_reviews",
-        )
+    reviews = _text_set(
+        activation.get("promotion_requires_independent_reviews"),
+        "activation.promotion_requires_independent_reviews",
     )
     required_reviews = {
         "evidence-quality",
@@ -119,6 +152,8 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
     target = _object(contract.get("target"), "target")
     if target.get("collector_vm") != EXPECTED_TARGET:
         raise DesignValidationError("unexpected collector VM target")
+    if target.get("collector_os_disk") != EXPECTED_OS_DISK:
+        raise DesignValidationError("unexpected canonical collector OS-disk name")
     if target.get("exact_future_confirmation") != EXPECTED_CONFIRMATION:
         raise DesignValidationError("unexpected replacement confirmation phrase")
     if target.get("evidence_mount") != "/var/lib/servicetracer":
@@ -131,16 +166,27 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(max_cost, (int, float)) or isinstance(max_cost, bool):
         raise DesignValidationError("temporary cost ceiling must be numeric")
     if max_cost <= 0 or max_cost > 10:
-        raise DesignValidationError("temporary cost ceiling must be greater than 0 and at most CAD 10")
-    if cost.get("maximum_snapshots") not in (1, 2):
-        raise DesignValidationError("the design may create at most two recovery snapshots")
-    if cost.get("maximum_total_snapshot_gib", 0) > 96:
-        raise DesignValidationError("snapshot capacity ceiling exceeds 96 GiB")
+        raise DesignValidationError(
+            "temporary cost ceiling must be greater than 0 and at most CAD 10"
+        )
+    if cost.get("maximum_snapshots") != 2:
+        raise DesignValidationError(
+            "the selected rollback requires exactly two recovery snapshots"
+        )
+    if cost.get("maximum_total_snapshot_gib") != 96:
+        raise DesignValidationError("snapshot capacity ceiling must remain 96 GiB")
     if cost.get("maximum_compute_overlap_minutes") != 0:
         raise DesignValidationError("overlapping old and replacement compute is prohibited")
     retention = cost.get("maximum_recovery_resource_retention_hours")
-    if not isinstance(retention, int) or isinstance(retention, bool) or retention > 24:
-        raise DesignValidationError("recovery resources may be retained for at most 24 hours")
+    if (
+        not isinstance(retention, int)
+        or isinstance(retention, bool)
+        or retention <= 0
+        or retention > 24
+    ):
+        raise DesignValidationError(
+            "recovery resources must be retained for between 1 and 24 hours"
+        )
     if cost.get("azure_budget_or_alert_mutation_allowed") is not False:
         raise DesignValidationError("the execution path must not modify budgets or alerts")
 
@@ -148,12 +194,15 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
         _text(item, "required_preflight_gates[]")
         for item in _list(contract.get("required_preflight_gates"), "required_preflight_gates")
     ]
-    if len(gates) < 8:
+    if len(gates) < 9:
         raise DesignValidationError("preflight gate set is incomplete")
+    if not any("OS-disk identity" in gate for gate in gates):
+        raise DesignValidationError("OS-disk recreation metadata is missing from preflight")
 
     phases = _list(contract.get("phases"), "phases")
     phase_ids: list[str] = []
     observed_mutation_phases: set[str] = set()
+    phase_evidence: dict[str, str] = {}
     for index, phase_value in enumerate(phases):
         phase = _object(phase_value, f"phases[{index}]")
         phase_id = _text(phase.get("phase_id"), f"phases[{index}].phase_id")
@@ -167,27 +216,101 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
                 raise DesignValidationError(
                     f"mutation phase {phase_id} requires explicit authorization"
                 )
-        _text(phase.get("evidence_required"), f"phases[{index}].evidence_required")
+        phase_evidence[phase_id] = _text(
+            phase.get("evidence_required"), f"phases[{index}].evidence_required"
+        )
 
     if phase_ids != REQUIRED_PHASE_ORDER:
         raise DesignValidationError("replacement phases are missing or out of order")
     if observed_mutation_phases != MUTATION_PHASES:
         raise DesignValidationError("mutation phase classification changed unexpectedly")
+    if "both snapshots" not in phase_evidence["remove_old_compute"]:
+        raise DesignValidationError(
+            "old compute removal must require both recovery snapshots"
+        )
+    if "canonical OS-disk name" not in phase_evidence["deploy_replacement_compute"]:
+        raise DesignValidationError(
+            "replacement deployment must retain the canonical OS-disk name"
+        )
 
     rollback = _object(contract.get("rollback"), "rollback")
     rollback_status = _text(rollback.get("status"), "rollback.status")
-    if rollback_status != "unresolved_blocker":
-        raise DesignValidationError("rollback must remain an explicit unresolved blocker")
+    if rollback_status != EXPECTED_ROLLBACK_STATUS:
+        raise DesignValidationError("rollback must remain selected design-only state")
     if rollback.get("promotion_blocked") is not True:
-        raise DesignValidationError("workflow promotion must be blocked by rollback")
-    _text(rollback.get("decision_required"), "rollback.decision_required")
+        raise DesignValidationError("workflow promotion must remain blocked")
+    if rollback.get("strategy_id") != EXPECTED_ROLLBACK_STRATEGY:
+        raise DesignValidationError("unexpected rollback strategy")
+    if rollback.get("canonical_os_disk_name") != EXPECTED_OS_DISK:
+        raise DesignValidationError("rollback must recreate the canonical OS-disk name")
+    if rollback.get("snapshot_name_prefix") != EXPECTED_ROLLBACK_SNAPSHOT_PREFIX:
+        raise DesignValidationError("unexpected OS-disk rollback snapshot prefix")
+    if rollback.get("preserve_old_os_disk_directly") is not False:
+        raise DesignValidationError(
+            "the selected strategy must use a verified snapshot, not direct disk retention"
+        )
+    max_os_snapshot = rollback.get("maximum_os_disk_snapshot_gib")
+    if (
+        not isinstance(max_os_snapshot, int)
+        or isinstance(max_os_snapshot, bool)
+        or max_os_snapshot <= 0
+        or max_os_snapshot > 64
+    ):
+        raise DesignValidationError("OS-disk snapshot ceiling must be 1 through 64 GiB")
+    if rollback.get("block_if_os_disk_exceeds_snapshot_gib") != max_os_snapshot:
+        raise DesignValidationError("OS-disk size blocker must equal the snapshot ceiling")
+    if _text_set(
+        rollback.get("source_preflight_required"),
+        "rollback.source_preflight_required",
+    ) != REQUIRED_ROLLBACK_PREFLIGHT:
+        raise DesignValidationError("rollback source preflight requirements changed")
+    if _text_set(
+        rollback.get("snapshot_verification_required"),
+        "rollback.snapshot_verification_required",
+    ) != REQUIRED_SNAPSHOT_VERIFICATION:
+        raise DesignValidationError("OS-disk snapshot verification requirements changed")
+
+    recreation = _object(rollback.get("recreation_contract"), "rollback.recreation_contract")
+    if recreation.get("os_disk_create_option") != "Copy":
+        raise DesignValidationError("rollback OS disk must be copied from the snapshot")
+    if recreation.get("os_disk_source") != "verified OS-disk snapshot":
+        raise DesignValidationError("rollback OS-disk source must be the verified snapshot")
+    if recreation.get("recreated_os_disk_name") != EXPECTED_OS_DISK:
+        raise DesignValidationError("recreated OS disk must use the canonical name")
+    if recreation.get("recreated_vm_name") != EXPECTED_TARGET:
+        raise DesignValidationError("rollback must recreate the prior collector VM name")
+    if recreation.get("attach_preserved_nic") != target.get("collector_nic"):
+        raise DesignValidationError("rollback must attach the preserved collector NIC")
+    if recreation.get("attach_preserved_evidence_disk") != target.get(
+        "collector_evidence_disk"
+    ):
+        raise DesignValidationError("rollback must attach the preserved evidence disk")
+    _text(recreation.get("identity_rule"), "rollback.recreation_contract.identity_rule")
+    if _text_set(
+        recreation.get("acceptance_required"),
+        "rollback.recreation_contract.acceptance_required",
+    ) != REQUIRED_ROLLBACK_ACCEPTANCE:
+        raise DesignValidationError("rollback acceptance requirements changed")
+
+    if rollback.get("operationally_tested") is not False:
+        raise DesignValidationError(
+            "repository design tests cannot claim operational rollback verification"
+        )
+    if rollback.get("independent_review_status") != "pending":
+        raise DesignValidationError("independent rollback review must remain pending")
+    _text(rollback.get("decision"), "rollback.decision")
+    _text(rollback.get("before_old_vm_deletion"), "rollback.before_old_vm_deletion")
+    _text(rollback.get("after_old_vm_deletion"), "rollback.after_old_vm_deletion")
+    _text(rollback.get("evidence_disk_rule"), "rollback.evidence_disk_rule")
 
     blockers = [
         _text(item, "unresolved_blockers[]")
         for item in _list(contract.get("unresolved_blockers"), "unresolved_blockers")
     ]
-    if not blockers:
-        raise DesignValidationError("at least one unresolved blocker is required")
+    if "operational proof of the selected OS-disk snapshot recreation rollback" not in blockers:
+        raise DesignValidationError("operational rollback proof must remain unresolved")
+    if "rollback mechanism and canonical OS-disk naming" in blockers:
+        raise DesignValidationError("the selected rollback decision was not reconciled")
 
     return {
         "schema_version": "servicetracer.collector-replacement-design-validation.v1",
@@ -204,6 +327,7 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
         },
         "target": {
             "collector_vm": EXPECTED_TARGET,
+            "collector_os_disk": EXPECTED_OS_DISK,
             "exact_future_confirmation": EXPECTED_CONFIRMATION,
         },
         "phase_order": phase_ids,
@@ -211,6 +335,9 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
         "cost_controls": cost,
         "unresolved_blockers": blockers,
         "rollback_status": rollback_status,
+        "rollback_strategy": EXPECTED_ROLLBACK_STRATEGY,
+        "canonical_os_disk_name": EXPECTED_OS_DISK,
+        "rollback_operationally_tested": False,
     }
 
 
@@ -227,10 +354,13 @@ def main() -> int:
         raise DesignValidationError("contract root must be an object")
     result = validate_contract(contract)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    args.output.write_text(
+        json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     print(
         "collector replacement execution design validated: "
-        "fail-closed, non-dispatchable, Azure mutations unauthorized"
+        "snapshot rollback selected, fail-closed, non-dispatchable, "
+        "Azure mutations unauthorized"
     )
     return 0
 
