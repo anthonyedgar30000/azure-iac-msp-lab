@@ -21,7 +21,7 @@
   "authored_change": {
     "change_id": "existing-collector-report-publication",
     "branch": "feat/existing-collector-report-publication",
-    "pull_request": null,
+    "pull_request": 37,
     "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — repository-only existing-collector publication increment explicitly authorized by Anthony Edgar",
     "scope": "Design and statically verify a report-publication path that consumes the existing collector managed-identity principal ID without redeploying collector compute. Permitted paths are limited to the dedicated Bicep entry point, read-only planner, inactive workflow design, tests, design documentation, and project coordination records. No active workflow, Azure authentication, Azure mutation, frontend endpoint change, collector VM change, or live evidence collection is authorized.",
     "authority": "repository_design_and_read_only_planning_only",
