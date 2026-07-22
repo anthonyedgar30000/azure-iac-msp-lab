@@ -17,8 +17,9 @@
 ## Active repair increment
 
 - Branch: `fix/collector-rollback-review-remediation`
+- Pull request: #28, draft
 - Objective: repair the partial PR #27 merge by carrying the matching validator, focused tests, design documentation, rollback review, active-work state, and handoff onto the merged `main` baseline.
-- Current status: branch created; implementation committed; draft PR and exact-head CI pending.
+- Current status: implementation committed and PR opened; exact-head CI and independent operations-and-recovery re-review are pending.
 - Permitted paths: `infra/replacement/validate_execution_design.py`, `infra/tests/test_collector_replacement_execution_design.py`, `docs/designs/collector-replacement-execution.md`, `docs/reviews/collector-replacement-rollback-decision-2026-07-21.md`, `.project/active-work.json`, and this handoff.
 - Protected paths: the already-merged replacement contract, `.github/workflows/**`, Bicep modules, application source, credentials, and Azure mutation scripts.
 
@@ -33,9 +34,9 @@ The merged contract now requires:
 - complete recreation metadata validation;
 - `deleteOption: Detach` for the production NIC and evidence disk on replacement and rollback VM boundaries.
 
-The validator and tests on `main` still describe the earlier contract. Therefore `declared contract != validated contract` until this repair merges.
+The validator and tests on `main` still describe the earlier contract. Therefore `declared contract != validated contract` until PR #28 merges.
 
-## Remediation carried by this branch
+## Remediation carried by PR #28
 
 ### Validator
 
@@ -66,7 +67,7 @@ Twenty-three focused tests cover the fail-closed design and reject:
 
 ### Design and review records
 
-The design and review documents now describe the complete 15-phase state machine, isolated rehearsal boundary, deterministic restoration operations, attachment preservation, cost boundary, and remaining blockers.
+The design and review documents describe the complete 15-phase state machine, isolated rehearsal boundary, deterministic restoration operations, attachment preservation, cost boundary, and remaining blockers.
 
 ## Runtime and deployment state
 
@@ -92,7 +93,7 @@ The design and review documents now describe the complete 15-phase state machine
 
 ## Remaining blockers
 
-- draft remediation PR and exact-head CI;
+- exact-head CI for draft PR #28;
 - independent operations-and-recovery re-review;
 - guest/control-plane evidence schemas;
 - fake-Azure-CLI-tested recovery and rehearsal implementation;
@@ -103,10 +104,10 @@ The design and review documents now describe the complete 15-phase state machine
 
 ## Next bounded gate
 
-1. Open the repair branch as a draft PR against `main`.
-2. Run project validation, focused replacement tests, complete ServiceTracer tests, and Bicep lint/build.
-3. Record the passing exact head.
-4. Route that exact head for independent operations-and-recovery re-review.
+1. Run project validation, focused replacement tests, complete ServiceTracer tests, and Bicep lint/build on PR #28's exact head.
+2. Record the passing exact head and CI run.
+3. Route that exact head for independent operations-and-recovery re-review.
+4. Keep PR #28 draft.
 5. Keep all Azure authentication and mutations prohibited.
 
 ## Prohibited next step
