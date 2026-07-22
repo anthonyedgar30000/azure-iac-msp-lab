@@ -34,12 +34,20 @@
       "branch": "chore/reconcile-pr34-merge-state",
       "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — post-merge reconciliation explicitly authorized by Anthony Edgar",
       "scope": "Repository-only reconciliation of .project/active-work.json and .project/handoffs/current-state.md after PR #34 merged and PR #33 was closed unmerged as superseded. No infrastructure, workflow, application, credential, live evidence, budget, alert, or Azure resource change is permitted.",
-      "status": "implementation_in_progress",
-      "pull_request": null,
-      "next_gate": "Open a draft pull request, record its number, obtain fresh exact-head CI, inspect every job, and preserve the no-Azure-authority boundary."
+      "status": "ci_pending",
+      "pull_request": 35,
+      "next_gate": "Obtain fresh exact-head CI for the final PR #35 coordination head, inspect every job, confirm the two-file diff, then request explicit merge authorization."
     }
   ],
-  "known_open_pull_requests": [],
+  "known_open_pull_requests": [
+    {
+      "pull_request": 35,
+      "title": "Reconcile PR34 merge and project state",
+      "status": "draft_exact_head_ci_pending",
+      "branch": "chore/reconcile-pr34-merge-state",
+      "action": "Keep draft until exact-head CI passes, every job is inspected, the two-file scope is confirmed, and explicit merge authorization is given."
+    }
+  ],
   "resolved_repository_items": [
     {
       "pull_request": 1,
@@ -101,7 +109,7 @@
       "pull_request_triggered_workflow_run_observed": false
     },
     "current_workstream": {
-      "repository_commit": "resolve live reconciliation branch head after the pull request is opened",
+      "repository_commit": "live PR #35 head after recording the pull request number",
       "workflow": "CI",
       "status": "exact_head_ci_pending",
       "authority": "Live GitHub checks are authoritative. This state-only change must pass fresh exact-head CI before merge."
@@ -139,7 +147,7 @@
   },
   "next_bounded_operation": {
     "operation": "pr34_post_merge_state_reconciliation",
-    "status": "implementation_in_progress",
+    "status": "ci_pending",
     "authority": "repository_coordination_only",
     "active_workflow_present": false,
     "dispatch_authorized": false,
@@ -155,11 +163,11 @@
       "PR #33 is recorded as closed unmerged and superseded",
       "known open pull requests match live GitHub reality",
       "latest promoted Azure evidence remains explicitly stale and read-only",
-      "exact-head CI passes for the reconciliation pull request",
+      "exact-head CI passes for PR #35",
       "final diff remains limited to the two .project files"
     ],
-    "failure_behavior": "Keep the reconciliation pull request draft, inspect the exact failing job, patch only the two permitted .project files, and obtain fresh exact-head CI. Do not alter infrastructure or weaken workflow-observability validation.",
-    "rollback": "Close the reconciliation pull request without merge or revert its repository-only commits. No Azure rollback applies because this operation performs no Azure mutation.",
-    "next_gate": "Open the draft reconciliation pull request, record its number, obtain fresh exact-head CI, inspect every job, and request explicit merge authorization."
+    "failure_behavior": "Keep PR #35 draft, inspect the exact failing job, patch only the two permitted .project files, and obtain fresh exact-head CI. Do not alter infrastructure or weaken workflow-observability validation.",
+    "rollback": "Close PR #35 without merge or revert its repository-only commits. No Azure rollback applies because this operation performs no Azure mutation.",
+    "next_gate": "Wait for the final PR #35 head to pass exact-head CI, inspect every job, confirm the two-file diff, then request explicit merge authorization."
   }
 }
