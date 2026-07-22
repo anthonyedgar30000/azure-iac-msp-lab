@@ -31,7 +31,10 @@ merged_into_main
 - Pull request: #34, draft.
 - Base: `777ec83b8a447f01904d5f891795ebcb6ab7abaf`.
 - Authority: repository design and reconciliation only.
-- Status: exact-head CI pending after final coordination updates.
+- Last exact remediation head: `e09e849d573b765d7f57a48a93585ab720d5b166`.
+- Last exact-head CI: run `29949758121` (run 119), completed successfully.
+- Inspected jobs: **Bicep lint and build** and **ServiceTracer tests**, including all reported steps.
+- Current status: fresh exact-head CI pending for the final coordination head created by recording that evidence.
 
 Permitted files:
 
@@ -68,7 +71,7 @@ PR #34 directly addresses:
 5. acceptance of non-finite JSON numbers;
 6. `superseded` package status without provenance.
 
-These findings remain blockers until the exact final PR #34 head passes CI and receives a fresh evidence-quality review.
+The exact remediation head `e09e849d573b765d7f57a48a93585ab720d5b166` passed CI after all six changes and the supersession-direction correction. A fresh review still must examine the final coordination head after its own CI succeeds.
 
 ## Remediation design
 
@@ -122,19 +125,19 @@ Every package has a `supersession` field:
 
 ## Local verification
 
-Before PR #34 was opened:
+The reconstructed isolated fixture produced:
 
 ```text
 python infra/recovery/validate_recovery_evidence.py
 contract valid; design_only; no Azure authority
 
 python -m unittest discover -s infra/tests -v
-32 recovery-evidence tests passed in the isolated remediation fixture
+32 recovery-evidence tests passed
 ```
 
 Local execution used a reconstructed isolated fixture because the execution container could not resolve GitHub for a repository clone. GitHub remains authoritative for the branch contents and full CI suite.
 
-Local tests are not GitHub CI. The final exact branch head must be verified by GitHub Actions.
+Local tests are not GitHub CI. The final coordination head must pass its own GitHub Actions run.
 
 ## Parallel PR #31 disposition
 
@@ -201,8 +204,8 @@ PR #34 creates no Azure resource and has CAD 0 Azure runtime cost. These values 
 Before merge:
 
 1. preserve exactly the seven declared files in the final diff;
-2. resolve and record the exact final PR head;
-3. obtain exact-head GitHub CI;
+2. resolve the final coordination head from live GitHub;
+3. obtain fresh exact-head GitHub CI for that head;
 4. inspect every CI job and relevant logs;
 5. obtain a fresh evidence-quality review of that exact passing head;
 6. resolve or explicitly retain every review finding as a blocker;
