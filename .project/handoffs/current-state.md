@@ -29,7 +29,7 @@ This removes the self-referential loop where every state-reconciliation merge im
 
 - Change: `eliminate-self-referential-project-state`.
 - Branch: `chore/eliminate-self-referential-project-state`.
-- Pull request: not opened at initial authoring.
+- Pull request: #36, recorded as authored-change metadata only; live status remains external GitHub evidence.
 - Authority: repository coordination model only.
 - Permitted files:
   - `.project/active-work.json`;
