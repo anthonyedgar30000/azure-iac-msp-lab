@@ -135,7 +135,7 @@
     "maximum_approved_cost_cad": 10.0
   },
   "supersession_requirements": {
-    "required_fields": ["supersedes_package_id", "reason", "evidence_sha256"],
+    "required_fields": ["superseded_by_package_id", "reason", "evidence_sha256"],
     "required_only_when_package_status_is_superseded": true,
     "verified_claims_allowed": false
   }
