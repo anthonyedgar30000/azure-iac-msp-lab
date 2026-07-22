@@ -21,7 +21,7 @@
   "authored_change": {
     "change_id": "provider-no-rbac-planner-validation",
     "branch": "fix/provider-no-rbac-planner-validation",
-    "pull_request": null,
+    "pull_request": 40,
     "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — bounded ProviderNoRbac planner repair explicitly authorized by Anthony Edgar with 'Proceed'",
     "scope": "Repair only the read-only report-publication planner's ARM validation and What-If mode after workflow run 29963170574 proved that the Contributor planning identity can inventory Azure and RBAC but cannot pass default Provider validation for a proposed role assignment. Use ProviderNoRbac, preserve no-mutation authority, add regression tests and explicit claim boundaries, and update project handoff records. No Azure permission grant, deployment, role assignment, Storage change, VM command, frontend change, or Azure resource mutation is permitted.",
     "authority": "repository_only_provider_no_rbac_planner_reliability_repair",
