@@ -82,12 +82,13 @@ report endpoint deployment
 1. capture current subscription and tenant context;
 2. verify the existing resource group, region, and tags;
 3. resolve the existing collector and its current system-assigned principal ID;
-4. capture existing report Storage and visible RBAC state;
-5. run ARM validation and exact What-If against the dedicated template;
-6. record that current price evidence remains unresolved;
-7. emit a plan summary proving no deployment authorization and no Azure mutation.
+4. capture report Storage and complete visible RBAC state at resource-group and report-Storage scope;
+5. produce a collector-principal role-assignment subset without discarding the raw evidence;
+6. run ARM validation and exact What-If against the dedicated template;
+7. record that current price evidence remains unresolved;
+8. emit a plan summary proving no deployment authorization and no Azure mutation.
 
-The script must not contain deployment, role-assignment creation, VM Run Command, or deletion commands.
+The script must not contain deployment, role-assignment creation, VM Run Command, or deletion commands. Raw role-assignment inventories are protected evidence and require sanitization before public use.
 
 ## Inactive workflow design
 
@@ -112,12 +113,21 @@ Promotion requires a separate authority-changing pull request after:
 - No browser route to the private collector is introduced.
 - No credential, token, private endpoint, raw evidence, or exact-root-cause claim belongs in the public envelope.
 
+A system-assigned principal changes when the collector VM is replaced. Because the deterministic role-assignment name includes the principal ID, deploying a role for the new identity does not remove the old identity's assignment in incremental ARM mode.
+
+```text
+new collector principal authorized
+!= old collector principal revoked
+```
+
+A promoted workflow must classify current and obsolete publication assignments, require explicit approval for each obsolete-role removal, verify the current collector can publish first, remove only approved obsolete assignments, and then prove no obsolete publication role remains. Unexplained or unapproved stale access is a security blocker.
+
 ```text
 RBAC assignment
 != effective permission verified
 ```
 
-Effective permission is proven only by a successful collector publication and validated browser fetch after a separately authorized deployment.
+Effective permission is proven only by a successful current-identity publication and validated browser fetch after a separately authorized deployment.
 
 ## Latest Azure evidence boundary
 
@@ -166,7 +176,7 @@ Before this repository-only pull request is ready to merge:
 1. confirm PR #37 is recorded as authored-change metadata;
 2. confirm the final diff is limited to the declared paths;
 3. run workflow-observability validation;
-4. run the existing and new report-publication tests;
+4. run the existing and new report-publication tests, including shell syntax validation;
 5. pass Bicep lint and build for the dedicated template;
 6. inspect every exact-head CI job;
 7. obtain a repository-design, security/identity, and cost-boundary review of the exact passing head;
@@ -185,7 +195,7 @@ If validation or CI fails:
 
 Repository rollback is closing the pull request without merge or reverting its commits. No Azure rollback applies because this increment performs no Azure authentication or mutation.
 
-A future deployment rollback must remove only the new Storage-scope role assignment and dedicated report Storage account, preserve required non-secret evidence, and verify the collector VM, NIC, disks, identity, load balancer, backends, and network are unchanged.
+A future deployment rollback must remove only the new current-principal role assignment and dedicated report Storage account, preserve required non-secret evidence, and verify the collector VM, NIC, disks, identity, load balancer, backends, and network are unchanged. An obsolete assignment removed after explicit approval is not silently recreated; reauthorization requires a new security decision.
 
 ## Claim boundary
 
