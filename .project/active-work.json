@@ -13,34 +13,38 @@
   "repository_observation": {
     "observed_on": "2026-07-22",
     "source": "live_github",
-    "main_head": "a115b4cb0f3a3edbefd5171201c07bd144b7bf72",
-    "head_semantics": "PR #35 coordination-only merge commit observed before this change branch was opened",
+    "main_head": "e6dcb9a2cf1ba05620a294137fea5e21f8dba1ed",
+    "head_semantics": "PR #36 coordination-model merge commit observed before the existing-collector publication branch was opened",
     "open_pull_requests": [],
     "claim_boundary": "This is time-bounded external evidence, not a self-updating claim. Resolve current head, pull requests, and CI from live GitHub whenever the file is read."
   },
   "authored_change": {
-    "change_id": "eliminate-self-referential-project-state",
-    "branch": "chore/eliminate-self-referential-project-state",
-    "pull_request": 36,
-    "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — self-referential state-model repair explicitly authorized by Anthony Edgar",
-    "scope": "Repository-only migration of project coordination state from current-state prediction to observation-bound semantics. Permitted paths: .project/active-work.json, .project/validate.py, .project/README.md, and .project/handoffs/current-state.md. No workflow, infrastructure, application, credential, live evidence, budget, alert, or Azure resource change is permitted.",
-    "authority": "repository_coordination_model_only",
+    "change_id": "existing-collector-report-publication",
+    "branch": "feat/existing-collector-report-publication",
+    "pull_request": null,
+    "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — repository-only existing-collector publication increment explicitly authorized by Anthony Edgar",
+    "scope": "Design and statically verify a report-publication path that consumes the existing collector managed-identity principal ID without redeploying collector compute. Permitted paths are limited to the dedicated Bicep entry point, read-only planner, inactive workflow design, tests, design documentation, and project coordination records. No active workflow, Azure authentication, Azure mutation, frontend endpoint change, collector VM change, or live evidence collection is authorized.",
+    "authority": "repository_design_and_read_only_planning_only",
     "state_semantics": "declaration_not_live_status",
     "permitted_paths": [
+      "infra/report-publication-existing-collector.bicep",
+      "infra/scripts/plan_existing_collector_report_publication.sh",
+      "infra/workflow-designs/existing-collector-report-publication.yml",
+      "infra/tests/test_existing_collector_report_publication.py",
+      "docs/designs/existing-collector-public-report.md",
       ".project/active-work.json",
-      ".project/validate.py",
-      ".project/README.md",
       ".project/handoffs/current-state.md"
     ],
     "verification_criteria": [
-      "schema distinguishes last substantive baseline from time-bounded repository observation",
-      "no field requires a pull request to predict its own merge commit or terminal state",
-      "live GitHub remains authoritative for current head, open pull requests, and CI",
-      "workflow-observability validation passes",
-      "final diff remains limited to the four declared .project files"
+      "the dedicated template consumes an externally resolved collector principal ID and contains no collector VM, NIC, disk, image, or network resource",
+      "the planner performs Azure reads, ARM validation, and What-If only and contains no deployment, RBAC creation, VM Run Command, or deletion command",
+      "the inactive workflow design remains outside .github/workflows and fails closed before Azure authentication or mutation",
+      "the design defines identity, network, security, cost, deployment, validation, rollback, cleanup, and evidence boundaries",
+      "workflow-observability validation, unit tests, and Bicep lint/build pass for the exact pull-request head",
+      "the final diff remains limited to the declared paths"
     ],
-    "failure_behavior": "Keep the pull request draft, inspect the exact failing validation or CI job, patch only the four permitted .project files, and obtain fresh exact-head CI. Do not restore self-referential current-state requirements.",
-    "rollback": "Close the pull request without merge or revert its repository-only commits. No Azure rollback applies because no Azure mutation is performed."
+    "failure_behavior": "Keep the pull request draft, inspect the exact failing validation or CI job, patch only the declared paths, and obtain fresh exact-head CI. Do not move the candidate into .github/workflows, add Azure credentials, weaken the read-only planner, or claim deployment or live-data proof.",
+    "rollback": "Close the pull request without merge or revert its repository-only commits. No Azure rollback applies because this increment does not authenticate to Azure or perform Azure mutations."
   },
   "completed_increments": [
     {
@@ -60,6 +64,12 @@
       "title": "Reconcile PR34 merge and project state",
       "merge_commit": "a115b4cb0f3a3edbefd5171201c07bd144b7bf72",
       "qualification": "coordination_only_exact_head_ci_passed_owner_account_review_not_independent"
+    },
+    {
+      "pull_request": 36,
+      "title": "Eliminate self-referential project state",
+      "merge_commit": "e6dcb9a2cf1ba05620a294137fea5e21f8dba1ed",
+      "qualification": "coordination_model_exact_head_ci_passed_owner_account_review_not_independent"
     }
   ],
   "resolved_repository_items": [
@@ -91,7 +101,7 @@
     "status": "completed_read_only",
     "azure_mutations_authorized": false,
     "azure_mutations_performed": false,
-    "freshness_boundary": "This is the latest promoted Azure control-plane evidence, not current Azure reality. This change does not refresh tenant, subscription, resources, RBAC, guest health, pricing, quota, cost, snapshot recoverability, Trusted Launch bootability, rollback, or recovery."
+    "freshness_boundary": "This is the latest promoted Azure control-plane evidence, not current Azure reality. The existing-collector publication design does not refresh tenant, subscription, resources, RBAC, guest health, pricing, quota, cost, report Storage state, public endpoint behavior, or live data."
   },
   "review_state": {
     "pr34_evidence_quality": {
