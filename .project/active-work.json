@@ -82,10 +82,10 @@
       "workstream_id": "collector-recovery-evidence-schema-design",
       "branch": "feature/collector-recovery-evidence-schemas",
       "write_owner": "ChatGPT conversation: HELIX Coordination and Reality Control — bounded implementation authorized by Anthony Edgar",
-      "scope": "Repository-only design of the collector recovery evidence contract, deterministic validator, negative tests, design documentation, and project coordination state. Permitted paths: infra/recovery/collector-recovery-evidence-contract.json, infra/recovery/validate_recovery_evidence.py, infra/tests/test_collector_recovery_evidence.py, docs/designs/collector-recovery-evidence-schemas.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/replacement/**, infra/modules/**, application source, credentials, live evidence, Azure mutation scripts, budgets, alerts, and deployed resources.",
+      "scope": "Repository-only design of the collector recovery evidence contract, reusable validation core, deterministic CLI validator, negative tests, design documentation, and project coordination state. Permitted paths: infra/recovery/collector-recovery-evidence-contract.json, infra/recovery/recovery_evidence_core.py, infra/recovery/validate_recovery_evidence.py, infra/tests/test_collector_recovery_evidence.py, docs/designs/collector-recovery-evidence-schemas.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/replacement/**, infra/modules/**, application source, credentials, live evidence, Azure mutation scripts, budgets, alerts, and deployed resources.",
       "status": "implementation_in_progress",
       "pull_request": null,
-      "next_gate": "Complete the six-file bounded implementation, run deterministic local validation, open a draft pull request, obtain exact-head CI, and route the exact passing head for evidence-quality review. Azure authentication and mutation remain prohibited."
+      "next_gate": "Complete the seven-file bounded implementation, run deterministic local validation, open a draft pull request, obtain exact-head CI, and route the exact passing head for evidence-quality review. Azure authentication and mutation remain prohibited."
     }
   ],
   "known_open_pull_requests": [],
@@ -175,6 +175,7 @@
     "azure_mutations_authorized": false,
     "permitted_paths": [
       "infra/recovery/collector-recovery-evidence-contract.json",
+      "infra/recovery/recovery_evidence_core.py",
       "infra/recovery/validate_recovery_evidence.py",
       "infra/tests/test_collector_recovery_evidence.py",
       "docs/designs/collector-recovery-evidence-schemas.md",
