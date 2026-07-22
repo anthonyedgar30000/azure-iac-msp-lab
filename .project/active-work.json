@@ -21,7 +21,7 @@
   "authored_change": {
     "change_id": "repair-read-only-planner-rbac-query",
     "branch": "fix/read-only-planner-rbac-query",
-    "pull_request": null,
+    "pull_request": 39,
     "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — bounded planner compatibility repair explicitly authorized by Anthony Edgar with 'Proceed'",
     "scope": "Repair only the read-only report-publication planner's scoped RBAC inventory commands and evidence-file handling after workflow run 29957833049 failed because Azure CLI rejects --scope combined with --all. Add regression tests and update project handoff records. No workflow authority expansion, deployment, RBAC mutation, Storage change, guest command, frontend change, or Azure resource mutation is permitted.",
     "authority": "repository_only_read_only_planner_reliability_repair",
