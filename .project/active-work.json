@@ -12,61 +12,25 @@
     }
   },
   "completed_increments": [
-    {
-      "pull_request": 19,
-      "title": "Add shared workflow observability state",
-      "merge_commit": "058ee6ec7a8a26adebb2742659b9e483b74fd4ae"
-    },
-    {
-      "pull_request": 20,
-      "title": "Add collector image drift guard and read-only migration plan",
-      "merge_commit": "7f1bc961c9edfc29c1636518b0e4cf1d4ca949eb"
-    },
-    {
-      "pull_request": 21,
-      "title": "Add HELIX retrieval and archive governance",
-      "merge_commit": "d9b952e324b7128300e1c888d5834536fb35fc30"
-    },
-    {
-      "pull_request": 22,
-      "title": "Refresh project state after governance merges",
-      "merge_commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a"
-    },
-    {
-      "pull_request": 23,
-      "title": "Promote collector replacement planning evidence",
-      "merge_commit": "e50f2498d57cbf853d3fd493fc0eec35ca8bdd6b"
-    },
-    {
-      "pull_request": 24,
-      "title": "Govern canonical ServiceTracer workspace streams",
-      "merge_commit": "50a4789e87cdadd7d537179882427b3b2cb4b96f"
-    },
-    {
-      "pull_request": 25,
-      "title": "Add fail-closed collector replacement execution design",
-      "merge_commit": "f40ef0fab0ae920c23f4b6556c25dc4f3b99b68b"
-    },
-    {
-      "pull_request": 26,
-      "title": "Reconcile PR25 state and HELIX workspace hierarchy",
-      "merge_commit": "00ebc068f4aec4eda8cda723d8dc4d974a4cb7c6"
-    },
-    {
-      "pull_request": 27,
-      "title": "Select snapshot-based collector rollback strategy",
-      "merge_commit": "4b181c644c48fde0c5d33f3cfabc24321977161a"
-    }
+    {"pull_request": 19, "title": "Add shared workflow observability state", "merge_commit": "058ee6ec7a8a26adebb2742659b9e483b74fd4ae"},
+    {"pull_request": 20, "title": "Add collector image drift guard and read-only migration plan", "merge_commit": "7f1bc961c9edfc29c1636518b0e4cf1d4ca949eb"},
+    {"pull_request": 21, "title": "Add HELIX retrieval and archive governance", "merge_commit": "d9b952e324b7128300e1c888d5834536fb35fc30"},
+    {"pull_request": 22, "title": "Refresh project state after governance merges", "merge_commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a"},
+    {"pull_request": 23, "title": "Promote collector replacement planning evidence", "merge_commit": "e50f2498d57cbf853d3fd493fc0eec35ca8bdd6b"},
+    {"pull_request": 24, "title": "Govern canonical ServiceTracer workspace streams", "merge_commit": "50a4789e87cdadd7d537179882427b3b2cb4b96f"},
+    {"pull_request": 25, "title": "Add fail-closed collector replacement execution design", "merge_commit": "f40ef0fab0ae920c23f4b6556c25dc4f3b99b68b"},
+    {"pull_request": 26, "title": "Reconcile PR25 state and HELIX workspace hierarchy", "merge_commit": "00ebc068f4aec4eda8cda723d8dc4d974a4cb7c6"},
+    {"pull_request": 27, "title": "Select snapshot-based collector rollback strategy", "merge_commit": "4b181c644c48fde0c5d33f3cfabc24321977161a"}
   ],
   "workstreams": [
     {
       "workstream_id": "collector-rollback-review-remediation",
       "branch": "fix/collector-rollback-review-remediation",
       "write_owner": "ChatGPT conversation: ServiceTracer — Governed Azure Operations Lab",
-      "scope": "Repair the partial PR #27 merge by aligning the validator, focused tests, design documentation, rollback review, active-work state, and current handoff with the already-merged recovery contract. Permitted paths: infra/replacement/validate_execution_design.py, infra/tests/test_collector_replacement_execution_design.py, docs/designs/collector-replacement-execution.md, docs/reviews/collector-replacement-rollback-decision-2026-07-21.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: infra/replacement/collector-replacement-contract.json, .github/workflows/**, infra/modules/**, application source, credentials, and Azure mutation scripts.",
-      "status": "ci_verified",
+      "scope": "Repair the partial PR #27 merge and address the second operations-and-recovery review within the existing six-file scope. Permitted paths: infra/replacement/validate_execution_design.py, infra/tests/test_collector_replacement_execution_design.py, docs/designs/collector-replacement-execution.md, docs/reviews/collector-replacement-rollback-decision-2026-07-21.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: infra/replacement/collector-replacement-contract.json, .github/workflows/**, infra/modules/**, application source, credentials, and Azure mutation scripts.",
+      "status": "implementation_in_progress",
       "pull_request": 28,
-      "next_gate": "Obtain independent operations-and-recovery re-review of the exact CI-verified remediation head while PR #28 remains draft."
+      "next_gate": "Run fresh CI on the new code-bearing remediation head, then obtain another operations-and-recovery review while PR #28 remains draft."
     }
   ],
   "known_open_pull_requests": [
@@ -79,8 +43,8 @@
     {
       "pull_request": 28,
       "title": "Complete collector rollback review remediation",
-      "status": "draft_ci_verified_re_review_pending",
-      "action": "Keep draft and obtain independent operations-and-recovery re-review. Do not authorize or perform Azure mutations."
+      "status": "draft_changes_requested_second_review_remediation",
+      "action": "Patch the three second-review findings, run fresh exact-head CI, and obtain another independent operations-and-recovery review. Do not authorize or perform Azure mutations."
     }
   ],
   "latest_promoted_evidence": {
@@ -95,11 +59,22 @@
     "azure_mutations_performed": false
   },
   "ci_verification": {
-    "repository_commit": "623647cad4d83083a416f4250ae8688e58a5fc57",
-    "workflow": "CI",
-    "run_id": 29894210458,
-    "run_number": 76,
-    "status": "completed_success",
+    "verification_semantics": "last_code_bearing_head_and_live_final_coordination_head",
+    "last_code_bearing_head": {
+      "repository_commit": "623647cad4d83083a416f4250ae8688e58a5fc57",
+      "workflow": "CI",
+      "run_id": 29894210458,
+      "run_number": 76,
+      "status": "completed_success"
+    },
+    "reviewed_coordination_head": {
+      "repository_commit": "7162506e5abad60f49c191309b85192d6d885a45",
+      "workflow": "CI",
+      "run_id": 29894321483,
+      "run_number": 78,
+      "status": "completed_success",
+      "authority": "live GitHub checks and review evidence; this coordination-only head must not be described by the predecessor run"
+    },
     "verified_gates": [
       "workflow-observability project-state validation",
       "complete Python unit suite including 23 focused recovery-remediation tests",
@@ -108,20 +83,20 @@
       "collector VM contract validation",
       "Bicep lint and build"
     ],
-    "claim_boundary": "CI proves repository contract and test consistency only. It does not prove Azure snapshot recoverability, Trusted Launch bootability, rollback, cost, or execution authority."
+    "claim_boundary": "Both recorded runs prove repository consistency only. They do not prove Azure snapshot recoverability, Trusted Launch bootability, rollback, cost, or execution authority. A new code-bearing remediation head requires fresh CI."
   },
   "review_state": {
     "operations_and_recovery": {
-      "status": "changes_addressed_re_review_pending",
-      "reviewed_head": "bad79ac2a8ba8fa9568737fc3c3635b93f2dbaca",
-      "reviewed_on": "2026-07-21",
-      "merge_reconciliation": "PR #27 merged after only the contract remediation commit. Draft PR #28 carries the matching validator, tests, and records onto the merged main baseline and has passed exact-head CI.",
-      "addressed_findings": [
-        "quiesce, flush, checkpoint, and deallocate the source before snapshots; bind both snapshots to the same maintenance correlation and checkpoint",
-        "prove exact-snapshot Trusted Launch bootability in an isolated rehearsal before old-compute deletion without production attachments",
-        "separate snapshot-to-disk Copy from specialized-disk-to-VM Attach and validate complete recreation metadata",
-        "require and re-read NIC and evidence-disk deleteOption Detach on replacement and rollback VM contracts"
-      ]
+      "status": "changes_requested_second_review",
+      "reviewed_head": "7162506e5abad60f49c191309b85192d6d885a45",
+      "reviewed_ci_run_id": 29894321483,
+      "reviewed_on": "2026-07-22",
+      "required_patch": [
+        "validate the exact ordered quiesce sequence and require stopping the collector service",
+        "require rehearsal VM deallocation and temporary-compute removal before replacement compute while retaining only approved recovery artifacts",
+        "record final-head CI and review authority without presenting predecessor CI as final-head evidence"
+      ],
+      "claim_boundary": "This is a repository review decision. It does not authorize Azure authentication, mutation, replacement, rehearsal, or rollback."
     },
     "azure_cost": {
       "status": "conditionally_approved_planning_estimate",
@@ -142,18 +117,19 @@
     }
   },
   "next_bounded_operation": {
-    "operation": "collector_rollback_independent_re_review",
-    "authority": "independent_repository_review_only",
+    "operation": "collector_rollback_second_review_remediation",
+    "authority": "repository_patch_only",
     "candidate_workflow": "infra/workflow-designs/collector-replacement-execution.yml",
     "active_workflow_present": false,
     "dispatch_authorized": false,
     "azure_mutations_authorized": false,
     "required_gates": [
-      "fresh CI on the final coordination-only exact head",
-      "independent operations-and-recovery re-review of PR #28",
-      "retain CAD 4 reviewed planning estimate and CAD 10 hard ceiling",
-      "promotion or Azure execution only through separate authority-changing work"
+      "exact ordered quiesce actions including collector-service stop",
+      "rehearsal compute deallocation and temporary VM/NIC removal before replacement compute",
+      "negative tests for action reordering, service-stop omission, cleanup omission, and compute overlap",
+      "non-self-referential CI and review state",
+      "fresh exact-head CI and another operations-and-recovery review"
     ],
-    "next_gate": "After final exact-head CI passes, request independent operations-and-recovery re-review of PR #28. Do not merge, authenticate to Azure, or perform mutations based only on CI."
+    "next_gate": "Complete only the six declared remediation files, run fresh CI on the new code-bearing head, and return that exact head for another operations-and-recovery review. Do not merge, authenticate to Azure, or perform mutations."
   }
 }
