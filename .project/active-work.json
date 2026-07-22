@@ -33,23 +33,32 @@
       "branch": "fix/pr32-evidence-review-remediation",
       "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — bounded remediation explicitly authorized by Anthony Edgar",
       "scope": "Repository-only remediation of the six evidence-quality findings recorded against PR #32, plus design documentation and project-state reconciliation. Permitted paths: infra/recovery/collector-recovery-evidence-contract.json, infra/recovery/recovery_evidence_core.py, infra/recovery/validate_recovery_evidence.py, infra/tests/test_collector_recovery_evidence.py, docs/designs/collector-recovery-evidence-schemas.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/replacement/**, infra/modules/**, application source, credentials, live evidence, Azure mutation scripts, budgets, alerts, and deployed resources.",
-      "status": "ci_pending",
+      "status": "final_coordination_ci_pending",
       "pull_request": 34,
       "base_commit": "777ec83b8a447f01904d5f891795ebcb6ab7abaf",
       "local_verification": {
         "contract_only_cli": "passed",
         "isolated_recovery_evidence_tests": "32_passed"
       },
-      "next_gate": "Resolve the exact final PR #34 head from live GitHub, wait for CI, inspect every job, then route that exact passing head for a fresh evidence-quality review. Keep the PR draft and preserve all Azure execution prohibitions."
+      "last_exact_head_ci": {
+        "repository_commit": "e09e849d573b765d7f57a48a93585ab720d5b166",
+        "workflow": "CI",
+        "run_id": 29949758121,
+        "run_number": 119,
+        "status": "completed_success",
+        "jobs_inspected": ["Bicep lint and build", "ServiceTracer tests"],
+        "semantics": "exact remediation head after correcting supersession provenance direction and before this final CI-evidence coordination update"
+      },
+      "next_gate": "Resolve the live PR #34 head after this coordination update, obtain fresh exact-head CI, inspect every job, then route that exact passing head for a fresh evidence-quality review. Keep the PR draft and preserve all Azure execution prohibitions."
     }
   ],
   "known_open_pull_requests": [
     {
       "pull_request": 34,
       "title": "Remediate PR32 evidence-quality findings",
-      "status": "draft_ci_pending",
+      "status": "draft_final_coordination_ci_pending",
       "branch": "fix/pr32-evidence-review-remediation",
-      "action": "Keep draft until exact-head CI passes and a fresh evidence-quality review accepts or explicitly blocks the exact passing head."
+      "action": "Keep draft until the final coordination head passes exact-head CI and a fresh evidence-quality review accepts or explicitly blocks that exact head."
     }
   ],
   "resolved_repository_items": [
@@ -95,11 +104,20 @@
       "jobs_inspected": ["Bicep lint and build", "ServiceTracer tests"],
       "claim_boundary": "CI proved repository consistency only. The evidence-quality review of the same head required changes."
     },
+    "pr34_last_exact_head": {
+      "repository_commit": "e09e849d573b765d7f57a48a93585ab720d5b166",
+      "workflow": "CI",
+      "run_id": 29949758121,
+      "run_number": 119,
+      "status": "completed_success",
+      "jobs_inspected": ["Bicep lint and build", "ServiceTracer tests"],
+      "claim_boundary": "This proves repository consistency for the exact remediation head before the final CI-evidence coordination update."
+    },
     "current_workstream": {
-      "repository_commit": "resolve live PR #34 head after final coordination updates",
+      "repository_commit": "resolve live PR #34 head after this final coordination update",
       "workflow": "CI",
       "status": "exact_head_ci_pending",
-      "authority": "Live GitHub checks are authoritative. Local tests do not substitute for exact-head CI."
+      "authority": "Live GitHub checks are authoritative. Local tests and predecessor heads do not substitute for final exact-head CI."
     },
     "claim_boundary": "CI does not prove Azure snapshot recoverability, Trusted Launch bootability, rollback, guest health, current cost, quota, RBAC restoration, or execution authority."
   },
@@ -115,10 +133,12 @@
       "claim_boundary": "PR #32 merge did not erase or resolve the exact-head review findings."
     },
     "current_remediation": {
-      "status": "review_pending_exact_head_ci",
+      "status": "review_pending_final_coordination_ci",
       "required_lens": "evidence-quality",
       "pull_request": 34,
-      "claim_boundary": "No acceptance decision exists until the exact CI-passing PR #34 head is inspected. The pull-request owner account cannot represent independent organizational approval."
+      "last_ci_passing_head": "e09e849d573b765d7f57a48a93585ab720d5b166",
+      "last_ci_run_id": 29949758121,
+      "claim_boundary": "No acceptance decision exists until the final coordination head passes CI and is inspected. The pull-request owner account cannot represent independent organizational approval."
     },
     "azure_cost": {
       "status": "conditionally_approved_planning_estimate",
@@ -140,7 +160,7 @@
   },
   "next_bounded_operation": {
     "operation": "pr32_evidence_quality_remediation",
-    "status": "ci_pending",
+    "status": "final_coordination_ci_pending",
     "authority": "repository_design_only",
     "active_workflow_present": false,
     "dispatch_authorized": false,
@@ -152,14 +172,14 @@
       "redaction metadata exactly matches recursive marker paths",
       "target resource IDs are distinct and share one subscription",
       "non-finite numeric values are rejected",
-      "supersession provenance is status-bound and cannot retain verified claims",
+      "supersession provenance is status-bound, identifies the replacement package, and cannot retain verified claims",
       "contract-only CLI validation passes",
       "all infrastructure tests pass",
-      "exact-head CI passes",
+      "final exact-head CI passes",
       "fresh evidence-quality review examines the exact passing head"
     ],
     "failure_behavior": "Keep PR #34 draft, inspect the exact failing job or review finding, patch only declared files, run fresh exact-head CI, and repeat review. Do not weaken evidence controls merely to obtain a passing result.",
     "rollback": "Close PR #34 without merge or revert its repository commits. No Azure rollback applies because this increment performs no Azure mutation.",
-    "next_gate": "Wait for PR #34 exact-head CI. Do not add live guest or Azure commands, authenticate to Azure, activate workflows, create snapshots, create rehearsal resources, alter delete options, restore RBAC, modify budgets or alerts, or claim operational recovery."
+    "next_gate": "Wait for the final PR #34 coordination head to pass exact-head CI. Do not add live guest or Azure commands, authenticate to Azure, activate workflows, create snapshots, create rehearsal resources, alter delete options, restore RBAC, modify budgets or alerts, or claim operational recovery."
   }
 }
