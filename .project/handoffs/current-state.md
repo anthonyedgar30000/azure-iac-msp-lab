@@ -4,70 +4,71 @@
 
 - Umbrella conversational workspace: **HELIX — Governed Agent Engineering**.
 - Bounded repository workstream: **ServiceTracer — Governed Azure Operations Lab**.
-- GitHub, pull requests, CI, `.project/`, protected workflow artifacts, and current Azure evidence determine implementation and runtime state.
+- GitHub, pull requests, CI, `.project/`, protected workflow artifacts, and fresh Azure evidence determine implementation and runtime reality.
 - Chat context supports reasoning only and never authorizes deployment or mutation.
 
-## Reality-synchronized repository baseline
+## State-model correction
 
-- Default branch: `main`.
-- Live baseline: `36010582460b393c0667e274144d9700e78721bf`.
-- Latest merge: PR #34, **Remediate PR32 evidence-quality findings**.
-- PR #34 merged exact head `7d586736e842425092f7fc3a3a23f0167466875e`.
-- That exact head passed CI run `29950152689` (run 122); both **Bicep lint and build** and **ServiceTracer tests** passed with all reported steps inspected.
-- An owner-account evidence-quality review accepted the bounded repository-design remediation with no remaining blocking finding.
-- The review is not independent organizational approval.
-- No pull-request-triggered workflow run was observed for the merge commit itself.
+The project no longer requires a coordination pull request to predict its own merge commit or terminal state.
 
 ```text
-pr_34_merged
-= true
-
-repository_design_remediation_accepted
-= true
-
-independent_organizational_approval
-= false
-
-azure_reality_refreshed
-= false
-
-operational_recovery_verified
-= false
+last_substantive_baseline
+!= repository_observation.main_head
+!= current_repository_head
 ```
 
-## Closed parallel branches
+- The last substantive baseline is PR #34 merge commit `36010582460b393c0667e274144d9700e78721bf`.
+- PR #35 was a coordination-only merge at `a115b4cb0f3a3edbefd5171201c07bd144b7bf72`.
+- That PR advanced `main` without changing the substantive collector-recovery evidence design.
+- The repository observation stored in `active-work.json` is explicitly time-bounded external evidence.
+- Current `main`, open pull requests, and CI must be queried from live GitHub at read time.
 
-- PR #31, **Define collector recovery evidence schemas**, is closed unmerged as superseded by PR #34.
-- PR #33, **Repair collector recovery evidence review findings**, is closed unmerged after PR #34 merged the overlapping accepted remediation.
-- PR #33 had passed CI and received a technical pass on its own predecessor-based design, but it diverged from current `main`, became conflict-bound across the same seven files, and was not selected as repository authority.
-- Distinct ideas from the closed branches remain in Git history and require a separate, current-baseline increment before adoption.
+This removes the self-referential loop where every state-reconciliation merge immediately made the embedded “current head” and “open PR” claims stale.
 
-## Active bounded reconciliation
+## Authored change
 
-- Workstream: `pr34-post-merge-state-reconciliation`.
-- Branch: `chore/reconcile-pr34-merge-state`.
-- Pull request: #35, draft.
-- Base: `36010582460b393c0667e274144d9700e78721bf`.
-- Authority: repository coordination only.
+- Change: `eliminate-self-referential-project-state`.
+- Branch: `chore/eliminate-self-referential-project-state`.
+- Pull request: not opened at initial authoring.
+- Authority: repository coordination model only.
 - Permitted files:
   - `.project/active-work.json`;
+  - `.project/validate.py`;
+  - `.project/README.md`;
   - `.project/handoffs/current-state.md`.
 - Protected scope includes workflows, Bicep and Terraform, application source, credentials, live evidence, budgets, alerts, and all Azure resources.
-- Current status: fresh exact-head CI pending after recording PR #35 in both coordination files.
-- Next gate: inspect every CI job, confirm the final two-file diff, and obtain explicit merge authorization.
+- The authored-change declaration is historical governance metadata, not live branch or PR status.
 
-## PR #34 remediation accepted in `main`
+## Validation behavior
 
-The merged validator and contract now address the six findings recorded against PR #32:
+`project.active-work.v2` now requires:
 
-1. authoritative v1 statuses, record types, patterns, redaction rules, phase requirements, claim requirements, record-detail requirements, cleanup bounds, and prohibited failure behavior are pinned against contract drift;
-2. every record type requires minimum evidence-bearing details with bounded type validation;
-3. recursive `[REDACTED]` marker paths must match provenance metadata exactly once;
-4. target IDs must be complete canonical target IDs, distinct, and inside one subscription boundary;
-5. non-finite numeric values fail closed through recursive validation and canonical JSON serialization;
-6. superseded packages require replacement-package provenance, reject self-supersession, and cannot retain verified claims.
+1. a last substantive baseline with a valid `main` commit;
+2. a time-bounded `live_github` repository observation;
+3. an authored-change declaration marked `declaration_not_live_status`;
+4. explicit fail-closed authority defaults;
+5. live-state resolution rules for GitHub, CI, and Azure;
+6. the canonical distinction `last_substantive_baseline != current_repository_head`.
 
-These controls define and validate repository evidence structure. They do not establish that future evidence is truthful, current, independently attested, or operationally collected.
+The validator rejects the retired self-referential fields:
+
+- `trusted_baseline`;
+- `workstreams`;
+- `known_open_pull_requests`;
+- `next_bounded_operation`.
+
+## Accepted substantive baseline
+
+PR #34 resolved the six evidence-quality findings recorded against PR #32 at the repository-contract level:
+
+1. authoritative v1 semantics are pinned against contract drift;
+2. every record type requires typed evidence-bearing details;
+3. recursive redaction markers must match provenance metadata exactly once;
+4. target IDs are canonical, distinct, and share one subscription boundary;
+5. non-finite numbers fail closed;
+6. superseded packages require bounded replacement provenance and cannot retain verified claims.
+
+PR #34 exact head `7d586736e842425092f7fc3a3a23f0167466875e` passed CI run `29950152689` (run 122). The owner-account evidence-quality review accepted the bounded repository-design remediation. It was not independent organizational approval and did not prove operational recovery.
 
 ## Latest Azure evidence boundary
 
@@ -87,9 +88,7 @@ At that observation:
 - visible role assignments in the planner result: none;
 - Azure mutations: not authorized and not performed.
 
-The last repository-recorded guest observation remains ServiceTracer `0.4.0` after manual repairs on July 20, 2026.
-
-This reconciliation does not refresh:
+This change does not refresh:
 
 - tenant or subscription context;
 - resource existence or configuration;
@@ -102,16 +101,14 @@ This reconciliation does not refresh:
 - rollback or recovery state.
 
 ```text
-repository declaration
-!= deployed Azure reality
-
-latest promoted evidence
-!= current-day observation
+repository declaration != deployed Azure reality
+historical evidence != current-day observation
+CI passed != service validated
 ```
 
-## Cost boundary
+## Cost and execution boundary
 
-Existing planning constraints remain:
+Existing planning controls remain historical constraints:
 
 - reviewed estimate: CAD 4;
 - renewed approval required above CAD 4;
@@ -121,30 +118,16 @@ Existing planning constraints remain:
 - maximum temporary-resource retention: 24 hours;
 - maximum running-compute overlap: zero minutes.
 
-PR #35 has CAD 0 Azure runtime cost. These values remain planning controls, not present pricing, spending approval, or execution authority.
-
-## Required gates for PR #35
-
-Before merge:
-
-1. preserve exactly the two declared `.project` files in the final diff;
-2. obtain fresh exact-head GitHub CI for the final coordination head;
-3. inspect every CI job and relevant logs;
-4. preserve the owner-account reviewer-independence limitation inherited from PR #34;
-5. obtain explicit merge authorization.
+This coordination-model change has CAD 0 Azure runtime cost. It grants no authentication, dispatch, mutation, spending, rollback, recovery, or deployment authority.
 
 ## Failure and rollback behavior
 
-If reconciliation CI fails:
+If validation or CI fails:
 
-1. keep PR #35 draft;
+1. keep the pull request draft;
 2. inspect the exact failing job and logs;
-3. patch only the two permitted `.project` files;
-4. run fresh exact-head CI;
-5. do not weaken workflow-observability validation.
+3. patch only the four permitted `.project` files;
+4. obtain fresh exact-head CI;
+5. do not restore self-referential current-state requirements merely to make validation pass.
 
-Repository rollback is closing PR #35 without merge or reverting its repository-only commits. No Azure rollback applies because this operation performs no Azure mutation.
-
-## Prohibited next step
-
-Do not add live guest or Azure collection commands, activate a workflow, authenticate to Azure, deallocate the collector, create snapshots, create rehearsal resources, alter delete options, remove or deploy compute, restore RBAC, modify budgets or alerts, or claim snapshot recoverability, Trusted Launch bootability, rollback, or recovery as operationally verified.
+Repository rollback is closing the pull request without merge or reverting its repository-only commits. No Azure rollback applies.
