@@ -178,7 +178,6 @@
     "sanitized_examples_only_in_repository": true
   },
   "bundle_contract": {
-    "example_path": "infra/recovery-evidence/examples/valid-preflight-bundle.json",
     "guest_records_required": 8,
     "azure_control_plane_records_required": 16,
     "all_required_observation_kinds_exactly_once": true,
