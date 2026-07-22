@@ -23,6 +23,44 @@ from recovery_evidence_core import (
 )
 
 
+def _validate_supersession(
+    package_value: dict[str, Any],
+    *,
+    package_status: str,
+    package_id: str,
+    package_contract: dict[str, Any],
+) -> dict[str, str] | None:
+    value = package_value.get("supersession")
+    if package_status != "superseded":
+        if value is not None:
+            raise EvidenceValidationError("package.supersession must be null unless package_status is superseded")
+        return None
+    supersession = obj(value, "package.supersession")
+    exact_keys(
+        supersession,
+        {"superseded_by_package_id", "reason", "evidence_sha256"},
+        "package.supersession",
+    )
+    superseded_by = patterned(
+        supersession.get("superseded_by_package_id"),
+        "package.supersession.superseded_by_package_id",
+        package_contract["record_id_pattern"],
+    )
+    if superseded_by == package_id:
+        raise EvidenceValidationError("package cannot be superseded by itself")
+    reason = text(supersession.get("reason"), "package.supersession.reason", 1024)
+    digest = patterned(
+        supersession.get("evidence_sha256"),
+        "package.supersession.evidence_sha256",
+        package_contract["sha256_pattern"],
+    )
+    return {
+        "superseded_by_package_id": superseded_by,
+        "reason": reason,
+        "evidence_sha256": digest,
+    }
+
+
 def validate_evidence_package(package_value: dict[str, Any], contract: dict[str, Any]) -> dict[str, Any]:
     validate_contract(contract)
     package_contract = obj(contract["package"], "package")
@@ -52,6 +90,13 @@ def validate_evidence_package(package_value: dict[str, Any], contract: dict[str,
     package_status = text(package_value.get("package_status"), "package.package_status")
     if package_status not in set(package_contract["package_statuses"]):
         raise EvidenceValidationError("unsupported package_status")
+    supersession = _validate_supersession(
+        package_value,
+        package_status=package_status,
+        package_id=package_id,
+        package_contract=package_contract,
+    )
+
     records = items(package_value.get("records"), "package.records")
     if not records or len(records) > package_contract["maximum_records"]:
         raise EvidenceValidationError("record count is outside the bounded range")
@@ -89,7 +134,8 @@ def validate_evidence_package(package_value: dict[str, Any], contract: dict[str,
         raise EvidenceValidationError("complete package contains failed or aborted evidence")
 
     if package_status in {"failed", "aborted"}:
-        if not {"operation_attempt", "decision"}.issubset(record_types):
+        required_types = set(contract["failure_and_abort_requirements"]["required_failed_or_aborted_record_types"])
+        if not required_types.issubset(record_types):
             raise EvidenceValidationError("failed or aborted package lacks operation_attempt and decision evidence")
         terminal = [
             record for record in records
@@ -97,9 +143,6 @@ def validate_evidence_package(package_value: dict[str, Any], contract: dict[str,
         ]
         if not terminal:
             raise EvidenceValidationError("failed or aborted package lacks a terminal decision")
-        required = set(contract["failure_and_abort_requirements"]["decision_details_required"])
-        if any(required - set(record["details"]) for record in terminal):
-            raise EvidenceValidationError("terminal decision lacks required details")
 
     claims = obj(package_value.get("claims"), "package.claims")
     exact_keys(claims, CLAIMS, "package.claims")
@@ -108,6 +151,8 @@ def validate_evidence_package(package_value: dict[str, Any], contract: dict[str,
         claim_status = text(status_value, f"package.claims.{claim}")
         if claim_status not in set(package_contract["claim_statuses"]):
             raise EvidenceValidationError(f"unsupported claim status for {claim}")
+        if package_status == "superseded" and claim_status == "verified":
+            raise EvidenceValidationError("superseded packages cannot retain verified claims")
         if claim_status != "verified":
             continue
         if package_status != "complete":
@@ -140,6 +185,7 @@ def validate_evidence_package(package_value: dict[str, Any], contract: dict[str,
         "package_id": package_id,
         "maintenance_correlation_id": correlation_id,
         "package_status": package_status,
+        "superseded_by_package_id": supersession["superseded_by_package_id"] if supersession else None,
         "complete_for_declared_scope": complete,
         "missing_evidence_by_phase": missing,
         "record_count": len(records),
@@ -158,7 +204,7 @@ def main() -> int:
     result = validate_contract(contract)
     if args.package:
         result = validate_evidence_package(json.loads(args.package.read_text(encoding="utf-8")), contract)
-    print(json.dumps(result, indent=2, sort_keys=True))
+    print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))
     return 0
 
 

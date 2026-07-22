@@ -17,7 +17,8 @@
     "collector_evidence_disk": "disk-stcollector-evidence-mst-dev",
     "collector_os_disk": "disk-stcollector-os-mst-dev",
     "evidence_mount": "/var/lib/servicetracer",
-    "exact_resource_ids_required_at_collection_time": true
+    "exact_resource_ids_required_at_collection_time": true,
+    "single_subscription_boundary_required": true
   },
   "package": {
     "schema_version": "servicetracer.collector-recovery-evidence.v1",
@@ -31,267 +32,111 @@
     "record_id_pattern": "^[a-z0-9][a-z0-9._:-]{7,127}$",
     "command_identity_pattern": "^[a-z0-9][a-z0-9._:-]{2,127}$",
     "sha256_pattern": "^[0-9a-f]{64}$",
-    "package_statuses": [
-      "complete",
-      "incomplete",
-      "failed",
-      "aborted",
-      "superseded"
-    ],
-    "record_statuses": [
-      "passed",
-      "failed",
-      "aborted",
-      "observed",
-      "not_applicable"
-    ],
-    "claim_statuses": [
-      "not_claimed",
-      "unverified",
-      "failed",
-      "verified"
-    ],
+    "package_statuses": ["complete", "incomplete", "failed", "aborted", "superseded"],
+    "record_statuses": ["passed", "failed", "aborted", "observed", "not_applicable"],
+    "claim_statuses": ["not_claimed", "unverified", "failed", "verified"],
     "required_top_level_fields": [
-      "schema_version",
-      "package_id",
-      "generated_at",
-      "maintenance_correlation_id",
-      "target",
-      "declared_phase_ids",
-      "package_status",
-      "records",
-      "claims",
-      "claim_boundary"
+      "schema_version", "package_id", "generated_at", "maintenance_correlation_id",
+      "target", "declared_phase_ids", "package_status", "supersession", "records",
+      "claims", "claim_boundary"
     ],
     "allowed_record_fields": [
-      "record_id",
-      "record_type",
-      "phase_id",
-      "observed_at",
-      "command_identity",
-      "exit_status",
-      "status",
-      "target_resource_id",
-      "before_state",
-      "after_state",
-      "evidence_sha256",
-      "summary",
-      "details",
-      "redactions"
+      "record_id", "record_type", "phase_id", "observed_at", "command_identity",
+      "exit_status", "status", "target_resource_id", "before_state", "after_state",
+      "evidence_sha256", "summary", "details", "redactions"
     ],
     "required_record_fields": [
-      "record_id",
-      "record_type",
-      "phase_id",
-      "observed_at",
-      "command_identity",
-      "exit_status",
-      "status",
-      "target_resource_id",
-      "before_state",
-      "after_state",
-      "evidence_sha256",
-      "summary",
-      "details",
-      "redactions"
+      "record_id", "record_type", "phase_id", "observed_at", "command_identity",
+      "exit_status", "status", "target_resource_id", "before_state", "after_state",
+      "evidence_sha256", "summary", "details", "redactions"
     ],
     "record_types": [
-      "guest_preflight",
-      "azure_control_plane_preflight",
-      "operation_attempt",
-      "state_observation",
-      "consistency_checkpoint",
-      "integrity_verification",
-      "cleanup_commitment",
-      "cleanup_verification",
-      "decision"
+      "guest_preflight", "azure_control_plane_preflight", "operation_attempt",
+      "state_observation", "consistency_checkpoint", "integrity_verification",
+      "cleanup_commitment", "cleanup_verification", "decision"
     ],
     "complete_requires_all_declared_phase_evidence": true,
     "failed_or_aborted_requires_terminal_decision": true,
     "operational_claim_requires_complete_package": true
   },
+  "record_detail_requirements": {
+    "guest_preflight": ["service_state", "health_status", "evidence_mount", "filesystem_uuid", "recent_evidence_readable"],
+    "azure_control_plane_preflight": ["vm_power_state", "nic_delete_option", "evidence_disk_delete_option", "os_disk_public_network_access", "observed_role_assignments"],
+    "operation_attempt": ["operation", "requested_by", "authorization_reference"],
+    "state_observation": ["observed_state", "source"],
+    "consistency_checkpoint": ["checkpoint_name", "consistent", "evidence_references"],
+    "integrity_verification": ["verification_name", "passed", "checks"],
+    "cleanup_commitment": ["owner", "deadline", "maximum_retention_hours", "approved_cost_ceiling_cad"],
+    "cleanup_verification": ["removed_resource_ids", "retained_resource_ids", "verified_at", "verifier_identity", "actual_temporary_cost_cad"],
+    "decision": ["decision", "reason", "authority", "safe_next_step", "rollback_required"]
+  },
   "redaction_policy": {
     "forbidden_field_name_fragments": [
-      "password",
-      "passwd",
-      "secret",
-      "token",
-      "credential",
-      "private_key",
-      "client_secret",
-      "connection_string",
-      "sas_key",
-      "access_key"
+      "password", "passwd", "secret", "token", "credential", "private_key",
+      "client_secret", "connection_string", "sas_key", "access_key"
     ],
     "forbidden_value_prefixes": [
-      "Bearer ",
-      "SharedAccessSignature ",
-      "AccountKey=",
-      "-----BEGIN PRIVATE KEY-----",
-      "-----BEGIN RSA PRIVATE KEY-----",
-      "-----BEGIN OPENSSH PRIVATE KEY-----"
+      "Bearer ", "SharedAccessSignature ", "AccountKey=", "-----BEGIN PRIVATE KEY-----",
+      "-----BEGIN RSA PRIVATE KEY-----", "-----BEGIN OPENSSH PRIVATE KEY-----"
     ],
     "redaction_marker": "[REDACTED]",
     "redacted_value_requires_sha256": true,
     "raw_stdout_stderr_allowed": false,
     "command_identity_must_be_logical_name_not_raw_command_line": true,
-    "resource_ids_must_be_preserved": true
+    "resource_ids_must_be_preserved": true,
+    "redaction_paths_must_exactly_match_markers": true
   },
   "phase_requirements": {
-    "guest_and_control_plane_preflight": [
-      "guest_preflight",
-      "azure_control_plane_preflight",
-      "cleanup_commitment"
-    ],
-    "quiesce_and_deallocate_source": [
-      "operation_attempt",
-      "state_observation",
-      "consistency_checkpoint"
-    ],
-    "create_recovery_points": [
-      "operation_attempt",
-      "state_observation",
-      "consistency_checkpoint"
-    ],
-    "verify_recovery_points": [
-      "state_observation",
-      "integrity_verification"
-    ],
-    "isolated_snapshot_boot_rehearsal": [
-      "operation_attempt",
-      "state_observation",
-      "integrity_verification"
-    ],
-    "teardown_isolated_rehearsal": [
-      "operation_attempt",
-      "state_observation",
-      "cleanup_verification"
-    ],
-    "remove_old_compute": [
-      "operation_attempt",
-      "state_observation",
-      "decision"
-    ],
-    "deploy_replacement_compute": [
-      "operation_attempt",
-      "state_observation"
-    ],
-    "restore_identity_and_rbac": [
-      "operation_attempt",
-      "state_observation"
-    ],
-    "post_change_verification": [
-      "guest_preflight",
-      "azure_control_plane_preflight",
-      "integrity_verification"
-    ],
-    "human_recovery_acceptance": [
-      "decision"
-    ],
-    "cleanup_temporary_recovery_resources": [
-      "cleanup_commitment",
-      "operation_attempt",
-      "cleanup_verification"
-    ],
-    "rollback_recovery": [
-      "operation_attempt",
-      "state_observation",
-      "guest_preflight",
-      "azure_control_plane_preflight",
-      "integrity_verification",
-      "decision"
-    ]
+    "guest_and_control_plane_preflight": ["guest_preflight", "azure_control_plane_preflight", "cleanup_commitment"],
+    "quiesce_and_deallocate_source": ["operation_attempt", "state_observation", "consistency_checkpoint"],
+    "create_recovery_points": ["operation_attempt", "state_observation", "consistency_checkpoint"],
+    "verify_recovery_points": ["state_observation", "integrity_verification"],
+    "isolated_snapshot_boot_rehearsal": ["operation_attempt", "state_observation", "integrity_verification"],
+    "teardown_isolated_rehearsal": ["operation_attempt", "state_observation", "cleanup_verification"],
+    "remove_old_compute": ["operation_attempt", "state_observation", "decision"],
+    "deploy_replacement_compute": ["operation_attempt", "state_observation"],
+    "restore_identity_and_rbac": ["operation_attempt", "state_observation"],
+    "post_change_verification": ["guest_preflight", "azure_control_plane_preflight", "integrity_verification"],
+    "human_recovery_acceptance": ["decision"],
+    "cleanup_temporary_recovery_resources": ["cleanup_commitment", "operation_attempt", "cleanup_verification"],
+    "rollback_recovery": ["operation_attempt", "state_observation", "guest_preflight", "azure_control_plane_preflight", "integrity_verification", "decision"]
   },
   "claim_requirements": {
     "snapshot_recoverability": {
-      "required_phases": [
-        "verify_recovery_points",
-        "human_recovery_acceptance"
-      ],
-      "required_record_types": [
-        "integrity_verification",
-        "decision"
-      ]
+      "required_phases": ["verify_recovery_points", "human_recovery_acceptance"],
+      "required_record_types": ["integrity_verification", "decision"]
     },
     "trusted_launch_bootability": {
-      "required_phases": [
-        "isolated_snapshot_boot_rehearsal",
-        "human_recovery_acceptance"
-      ],
-      "required_record_types": [
-        "state_observation",
-        "integrity_verification",
-        "decision"
-      ]
+      "required_phases": ["isolated_snapshot_boot_rehearsal", "human_recovery_acceptance"],
+      "required_record_types": ["state_observation", "integrity_verification", "decision"]
     },
     "rollback": {
-      "required_phases": [
-        "rollback_recovery",
-        "human_recovery_acceptance"
-      ],
-      "required_record_types": [
-        "operation_attempt",
-        "state_observation",
-        "guest_preflight",
-        "azure_control_plane_preflight",
-        "integrity_verification",
-        "decision"
-      ]
+      "required_phases": ["rollback_recovery", "human_recovery_acceptance"],
+      "required_record_types": ["operation_attempt", "state_observation", "guest_preflight", "azure_control_plane_preflight", "integrity_verification", "decision"]
     },
     "recovery": {
-      "required_phases": [
-        "guest_and_control_plane_preflight",
-        "verify_recovery_points",
-        "isolated_snapshot_boot_rehearsal",
-        "teardown_isolated_rehearsal",
-        "post_change_verification",
-        "human_recovery_acceptance",
-        "cleanup_temporary_recovery_resources"
-      ],
-      "required_record_types": [
-        "guest_preflight",
-        "azure_control_plane_preflight",
-        "integrity_verification",
-        "cleanup_verification",
-        "decision"
-      ]
+      "required_phases": ["guest_and_control_plane_preflight", "verify_recovery_points", "isolated_snapshot_boot_rehearsal", "teardown_isolated_rehearsal", "post_change_verification", "human_recovery_acceptance", "cleanup_temporary_recovery_resources"],
+      "required_record_types": ["guest_preflight", "azure_control_plane_preflight", "integrity_verification", "cleanup_verification", "decision"]
     }
   },
   "failure_and_abort_requirements": {
-    "required_failed_or_aborted_record_types": [
-      "operation_attempt",
-      "decision"
-    ],
-    "decision_details_required": [
-      "decision",
-      "reason",
-      "authority",
-      "safe_next_step",
-      "rollback_required"
-    ],
+    "required_failed_or_aborted_record_types": ["operation_attempt", "decision"],
+    "decision_details_required": ["decision", "reason", "authority", "safe_next_step", "rollback_required"],
     "prohibited_failure_behavior": [
-      "silent retry",
-      "unbounded retry",
-      "automatic authority escalation",
+      "silent retry", "unbounded retry", "automatic authority escalation",
       "claiming recovery without post-change verification",
       "deleting recovery artifacts before an accepted terminal decision"
     ]
   },
   "cleanup_requirements": {
-    "commitment_details_required": [
-      "owner",
-      "deadline",
-      "maximum_retention_hours",
-      "approved_cost_ceiling_cad"
-    ],
-    "verification_details_required": [
-      "removed_resource_ids",
-      "retained_resource_ids",
-      "verified_at",
-      "verifier_identity",
-      "actual_temporary_cost_cad"
-    ],
+    "commitment_details_required": ["owner", "deadline", "maximum_retention_hours", "approved_cost_ceiling_cad"],
+    "verification_details_required": ["removed_resource_ids", "retained_resource_ids", "verified_at", "verifier_identity", "actual_temporary_cost_cad"],
     "maximum_retention_hours": 24,
     "maximum_approved_cost_cad": 10.0
+  },
+  "supersession_requirements": {
+    "required_fields": ["superseded_by_package_id", "reason", "evidence_sha256"],
+    "required_only_when_package_status_is_superseded": true,
+    "verified_claims_allowed": false
   }
 }

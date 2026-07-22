@@ -7,31 +7,34 @@
 - GitHub, pull requests, CI, `.project/`, protected workflow artifacts, and current Azure evidence determine implementation and runtime state.
 - Chat context supports reasoning only and never authorizes deployment or mutation.
 
-## Trusted repository baseline
+## Reality-synchronized repository baseline
 
 - Default branch: `main`.
-- Branch-creation baseline: `bb1351da492548242382a86db5293f44dabfb1f7`.
-- Baseline increment: PR #30, **Reconcile PR29 merge and close legacy PR1 state**.
-- PR #30 exact head `a2b3d7032a1557f9b050b5c282b0e87b70bd2259` passed CI run `29943299617` (run 92).
-- PR #30 was coordination-only. It recorded PR #29 as completed, closed legacy PR #1 as superseded, and released previous write ownership.
-
-Canonical interpretation:
+- Live baseline: `777ec83b8a447f01904d5f891795ebcb6ab7abaf`.
+- Latest merge: PR #32, **Add fail-closed collector recovery evidence schemas**.
+- PR #32 exact head `f640f6664ab72deece24b770fe95cba51b0ac6ea` passed CI run `29946271140` (run 102).
+- The evidence-quality review of that same exact head concluded **CHANGES REQUIRED** with six findings.
+- PR #32 was then merged. The merge is real, but the review findings were not thereby resolved.
 
 ```text
-repository reconciled
-!= Azure state refreshed
-!= recovery executed
-!= rollback operationally verified
+merged_into_main
+!= evidence_quality_accepted
+!= project_state_reconciled
+!= deployed_to_azure
+!= operationally_verified
 ```
 
-## Active bounded increment
+## Active bounded remediation
 
-- Workstream: `collector-recovery-evidence-schema-design`.
-- Branch: `feature/collector-recovery-evidence-schemas`.
-- Write owner: this explicitly authorized bounded implementation conversation.
-- Status: CI pending.
-- Pull request: #32, draft.
-- Authority: repository design only.
+- Workstream: `pr32-evidence-quality-remediation`.
+- Branch: `fix/pr32-evidence-review-remediation`.
+- Pull request: #34, draft.
+- Base: `777ec83b8a447f01904d5f891795ebcb6ab7abaf`.
+- Authority: repository design and reconciliation only.
+- Last exact remediation head: `e09e849d573b765d7f57a48a93585ab720d5b166`.
+- Last exact-head CI: run `29949758121` (run 119), completed successfully.
+- Inspected jobs: **Bicep lint and build** and **ServiceTracer tests**, including all reported steps.
+- Current status: fresh exact-head CI pending for the final coordination head created by recording that evidence.
 
 Permitted files:
 
@@ -55,207 +58,178 @@ Protected boundaries:
 - budgets and alerts;
 - deployed resources.
 
-No other conversation should edit this branch or these seven paths unless ownership is explicitly transferred.
+No other conversation should edit this branch or these seven paths unless write ownership is explicitly transferred.
 
-## Pull request state
+## PR #32 review findings under remediation
 
-- Pull request: #32, **Add fail-closed collector recovery evidence schemas**.
-- State: open draft.
-- Base: `main` at `bb1351da492548242382a86db5293f44dabfb1f7`.
-- Branch: `feature/collector-recovery-evidence-schemas`.
-- Final authoritative head: resolve from live GitHub after this coordination update.
-- CI state: exact-head CI pending.
-- Changed-file boundary: exactly the seven permitted files.
+PR #34 directly addresses:
 
-The branch history contains transient creation-and-deletion commits for an accidental temporary path. The path is absent from the final tree and PR diff. The exact changed-file comparison, not commit-message appearance alone, is the scope authority.
+1. contract self-weakening because semantic values consumed by package validation were not pinned;
+2. record types whose `details` could omit the evidence-bearing fields documented by the contract;
+3. redaction metadata that was not bound one-to-one to the actual redacted location;
+4. target resource IDs that could cross subscriptions;
+5. acceptance of non-finite JSON numbers;
+6. `superseded` package status without provenance.
 
-## Objective
+The exact remediation head `e09e849d573b765d7f57a48a93585ab720d5b166` passed CI after all six changes and the supersession-direction correction. A fresh review still must examine the final coordination head after its own CI succeeds.
 
-Define a fail-closed evidence package for future collector recovery work without implementing collection or execution.
+## Remediation design
 
-The increment covers:
+### Pinned semantics
 
-1. guest preflight evidence;
-2. Azure control-plane preflight evidence;
-3. exact correlation and UTC timestamp requirements;
-4. logical command identity and exit status;
-5. exact target resource IDs;
-6. before/after state;
-7. evidence digests;
-8. recursive secret and redaction controls;
-9. cleanup ownership, deadline, retention, and cost evidence;
-10. failure, abort, rollback, and recovery claim requirements;
-11. deterministic positive and negative validation.
+`validate_contract()` now pins:
 
-## Contract boundary
+- package, record, claim, and record-type enumerations;
+- maintenance, record, command, and SHA-256 patterns;
+- phase and claim requirements;
+- secret-field fragments and credential prefixes;
+- required evidence details per record type;
+- cleanup constraints;
+- prohibited failure behaviour;
+- supersession rules;
+- package bounds.
 
-The authoritative contract is:
+A future contract edit cannot relax one of those values while continuing to pass contract validation.
 
-- `infra/recovery/collector-recovery-evidence-contract.json`.
+### Evidence-bearing record details
 
-It remains `design_only` and explicitly records:
+Each record type now has minimum required detail fields and type-specific checks. Cleanup deadlines and verification times use UTC timestamps. Retention and cost values are bounded. Costs must be finite. Decisions must preserve authority and rollback state.
 
-- active workflow absent;
-- dispatch unauthorized;
-- Azure authentication unauthorized;
-- Azure mutation unauthorized;
-- collection commands not implemented;
-- promotion requiring a separate pull request.
+### Redaction provenance
 
-The validator must never turn a structurally valid package into execution authority.
+The validator recursively derives all `[REDACTED]` marker paths in `before_state`, `after_state`, and `details`.
 
-## Evidence package model
+The redaction metadata must match those paths exactly once. Missing, extra, wrong, or duplicate paths fail closed.
 
-A future package uses:
+### Target boundary
 
-- `servicetracer.collector-recovery-evidence.v1`.
+The collector VM, production NIC, evidence disk, and OS disk IDs must be:
 
-Every material record must preserve:
+- complete Azure resource IDs;
+- canonical names in `rg-servicetracer-dev-westus2`;
+- distinct;
+- inside one subscription boundary.
 
-- record identity;
-- record type and phase;
-- observation timestamp;
-- logical command identity;
-- exit status;
-- target resource ID;
-- before and after state;
-- evidence SHA-256;
-- bounded details;
-- redaction provenance.
+### Canonical JSON
 
-Unknown top-level and record fields are rejected.
+`NaN`, positive infinity, and negative infinity are rejected. Canonical package sizing uses JSON serialization with non-finite values disabled.
 
-## Completeness rule
+### Supersession
 
-Completeness is evaluated against explicitly declared phases.
+Every package has a `supersession` field:
 
-```text
-complete package
-requires
-every required record type for every declared phase
-and
-no failed or aborted record
-```
-
-An incomplete package may remain valid evidence, but its missing record types must be reported. It cannot silently claim completeness.
-
-## Secret and redaction rule
-
-The validator recursively rejects:
-
-- secret-like field names;
-- credential-like value prefixes;
-- excessive nesting;
-- excessive collection sizes;
-- oversized text;
-- raw command lines;
-- unknown output fields.
-
-A `[REDACTED]` value requires a structured field path and SHA-256 digest of the removed value.
-
-Complete Azure resource IDs are preserved as provenance inside the protected internal package. They are not credentials and cannot be replaced by untraceable redaction markers.
-
-## Failure and rollback rule
-
-A failed or aborted package requires:
-
-- a failed or aborted operation attempt;
-- a terminal decision;
-- reason;
-- authority;
-- safest next step;
-- explicit rollback requirement.
-
-A verified rollback or recovery claim requires complete phase evidence and an accepted human recovery decision. Schema validation remains evidence for review, not permission for a new operation.
+- `null` unless status is `superseded`;
+- exact replacement-package ID, reason, and evidence SHA-256 when superseded;
+- self-supersession prohibited;
+- verified claims prohibited on superseded packages.
 
 ## Local verification
 
-The bounded test suite currently contains 19 tests covering:
-
-- valid complete and incomplete packages;
-- false-completeness rejection;
-- recursive secret leakage;
-- credential prefixes;
-- raw command identities;
-- target drift;
-- non-UTC timestamps;
-- redaction digest requirements;
-- bounded nested data;
-- duplicate records;
-- failed-package decision evidence;
-- verified-claim gates;
-- unknown record fields.
-
-Local result:
+The reconstructed isolated fixture produced:
 
 ```text
+python infra/recovery/validate_recovery_evidence.py
+contract valid; design_only; no Azure authority
+
 python -m unittest discover -s infra/tests -v
-19 tests passed in the isolated increment fixture
+32 recovery-evidence tests passed
 ```
 
-This is local deterministic validation only. Exact-head GitHub CI for the final PR #32 coordination head is pending.
+Local execution used a reconstructed isolated fixture because the execution container could not resolve GitHub for a repository clone. GitHub remains authoritative for the branch contents and full CI suite.
+
+Local tests are not GitHub CI. The final coordination head must pass its own GitHub Actions run.
+
+## Parallel PR #31 disposition
+
+- PR #31, **Define collector recovery evidence schemas**, is closed unmerged as superseded by PR #34.
+- It contained useful schema-envelope research, but it diverged from `main`, introduced a parallel 11-file schema family, and had no exact-head CI or accepted evidence-quality review.
+- Its durable ideas remain in Git history.
+- It is not repository authority and must not be mistaken for a deployed or accepted design.
 
 ## Latest Azure evidence boundary
 
-The latest promoted Azure control-plane evidence remains read-only planner run `29856203054`, observed July 21, 2026.
+The latest repository-promoted Azure control-plane evidence remains read-only planner run `29856203054`, observed July 21, 2026.
 
-At that time:
+At that observation:
 
+- resource group: `rg-servicetracer-dev-westus2`;
+- region: `westus2`;
 - collector VM: `vm-stcollector-mst-dev`;
 - size: `Standard_B2ats_v2`;
 - deployed image: Ubuntu 22.04;
 - desired image: Ubuntu 24.04;
 - evidence disk: attached with `deleteOption: Detach`;
 - production NIC: static address and VM `deleteOption: Delete`;
-- system-assigned identity present;
-- no visible role assignments in the planner result;
-- no Azure mutations authorized or performed.
+- system-assigned identity: present;
+- visible role assignments in the planner result: none;
+- Azure mutations: not authorized and not performed.
 
-The last guest-level record remains ServiceTracer `0.4.0` after manual repairs on July 20, 2026.
+The last repository-recorded guest observation remains ServiceTracer `0.4.0` after manual repairs on July 20, 2026.
 
-This increment does not refresh either observation.
+No live Azure connector was available during PR #34 creation. Therefore none of the following was refreshed:
+
+- tenant or subscription context;
+- resource existence or configuration;
+- effective RBAC;
+- guest health;
+- quota or SKU availability;
+- current prices or actual cost;
+- snapshot recoverability;
+- Trusted Launch bootability;
+- rollback or recovery state.
+
+```text
+repository declaration
+!= deployed Azure reality
+latest promoted evidence
+!= current-day observation
+```
 
 ## Cost boundary
 
-- Reviewed planning estimate: CAD 4.
-- Renewed approval required above CAD 4.
-- Hard stop: CAD 10.
-- Maximum snapshot capacity: 96 GiB.
-- Maximum isolated rehearsal compute: four hours.
-- Maximum temporary-resource retention: 24 hours.
-- Maximum running-compute overlap: zero minutes.
+Existing planning constraints remain:
 
-These are planning constraints, not current pricing or execution approval.
+- reviewed estimate: CAD 4;
+- renewed approval required above CAD 4;
+- unconditional hard stop above CAD 10;
+- maximum snapshot capacity: 96 GiB;
+- maximum isolated rehearsal compute: four hours;
+- maximum temporary-resource retention: 24 hours;
+- maximum running-compute overlap: zero minutes.
 
-## Required gates
+PR #34 creates no Azure resource and has CAD 0 Azure runtime cost. These values remain planning controls, not present pricing or execution approval.
+
+## Required gates for PR #34
 
 Before merge:
 
 1. preserve exactly the seven declared files in the final diff;
-2. obtain exact-head CI for the live PR #32 head after coordination updates;
-3. inspect every CI job;
-4. route the exact passing head for evidence-quality review;
-5. preserve the owner-account reviewer-independence limitation;
-6. keep the PR draft until those gates are satisfied.
+2. resolve the final coordination head from live GitHub;
+3. obtain fresh exact-head GitHub CI for that head;
+4. inspect every CI job and relevant logs;
+5. obtain a fresh evidence-quality review of that exact passing head;
+6. resolve or explicitly retain every review finding as a blocker;
+7. preserve the pull-request-owner reviewer-independence limitation;
+8. keep the pull request draft until all gates pass.
 
-## Failure behavior
+## Failure and rollback behaviour
 
 If CI fails:
 
-1. keep the pull request draft;
-2. inspect the exact job and logs;
-3. patch only the declared files;
+1. keep PR #34 draft;
+2. inspect the exact failing job and logs;
+3. patch only declared files;
 4. run fresh exact-head CI;
-5. do not weaken evidence or redaction requirements merely to make tests pass.
+5. do not weaken evidence controls merely to make CI pass.
 
 If review finds a defect:
 
 1. record the exact reviewed head and CI run;
-2. keep the pull request draft;
-3. patch inside scope or explicitly amend the scope;
+2. keep the PR draft;
+3. patch inside scope or explicitly amend scope;
 4. obtain fresh CI and re-review.
 
-Repository rollback is closing the pull request without merge or reverting its commits. No Azure rollback applies because this increment performs no Azure mutation.
+Repository rollback is closing PR #34 without merge or reverting its repository commits. No Azure rollback applies because this increment performs no Azure mutation.
 
 ## Prohibited next step
 
