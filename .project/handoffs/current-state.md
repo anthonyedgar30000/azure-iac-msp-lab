@@ -39,7 +39,7 @@ Permitted paths:
 
 - `.github/workflows/existing-collector-report-publication-plan.yml`;
 - `infra/tests/test_existing_collector_report_publication_plan_workflow.py`;
-- `docs/designs/existing-collector-public-report.md`;
+- `docs/runbooks/existing-collector-report-publication-plan.md`;
 - `.project/active-work.json`;
 - `.project/README.md`;
 - `.project/handoffs/current-state.md`.
