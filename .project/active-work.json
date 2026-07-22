@@ -6,11 +6,7 @@
     "branch": "main",
     "commit": "bb1351da492548242382a86db5293f44dabfb1f7",
     "commit_semantics": "live main head at branch creation after PR #30 reconciled PR #29 and legacy PR #1 state",
-    "last_completed_increment": {
-      "pull_request": 30,
-      "title": "Reconcile PR29 merge and close legacy PR1 state",
-      "qualification": "coordination_only_ci_verified"
-    }
+    "last_completed_increment": {"pull_request": 30, "title": "Reconcile PR29 merge and close legacy PR1 state", "qualification": "coordination_only_ci_verified"}
   },
   "completed_increments": [
     {"pull_request": 19, "title": "Add shared workflow observability state", "merge_commit": "058ee6ec7a8a26adebb2742659b9e483b74fd4ae"},
@@ -32,18 +28,18 @@
       "branch": "feature/collector-recovery-evidence-schemas",
       "write_owner": "ChatGPT conversation: HELIX Coordination and Reality Control — bounded implementation authorized by Anthony Edgar",
       "scope": "Repository-only design of the collector recovery evidence contract, deterministic validator, negative tests, design documentation, and project coordination state. Permitted paths: infra/recovery/collector-recovery-evidence-contract.json, infra/recovery/recovery_evidence_core.py, infra/recovery/validate_recovery_evidence.py, infra/tests/test_collector_recovery_evidence.py, docs/designs/collector-recovery-evidence-schemas.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/replacement/**, infra/modules/**, application source, credentials, live evidence, Azure mutation scripts, budgets, alerts, and deployed resources.",
-      "status": "ci_pending",
+      "status": "remediation_ci_pending",
       "pull_request": 32,
-      "next_gate": "Wait for exact-head GitHub CI on the final coordination head. Inspect every job, then route that exact passing head for evidence-quality review. Keep PR #32 draft and preserve all Azure execution prohibitions."
+      "next_gate": "Wait for exact-head GitHub CI after the evidence-quality remediation. Inspect every job, then route that exact passing head for re-review. Keep PR #32 draft and preserve all Azure execution prohibitions."
     }
   ],
   "known_open_pull_requests": [
     {
       "pull_request": 32,
       "title": "Add fail-closed collector recovery evidence schemas",
-      "status": "draft_ci_pending",
+      "status": "draft_changes_required_remediation_ci_pending",
       "branch": "feature/collector-recovery-evidence-schemas",
-      "action": "Keep draft until exact-head CI passes and evidence-quality review examines the exact passing head."
+      "action": "Keep draft. Evidence-quality review requested changes on head f640f6664ab72deece24b770fe95cba51b0ac6ea; remediation requires fresh exact-head CI and re-review."
     }
   ],
   "resolved_repository_items": [
@@ -80,11 +76,21 @@
       "semantics": "exact PR #30 head before merge"
     },
     "current_workstream": {
-      "repository_commit": "live PR #32 head after final coordination updates",
-      "workflow": "CI",
-      "status": "exact_head_ci_pending",
-      "authority": "Live GitHub checks are authoritative. Do not treat local tests or predecessor branch heads as final-head CI.",
-      "claim_boundary": "Local validator tests are not GitHub CI. Exact-head CI is required before review."
+      "last_reviewed_head": {
+        "repository_commit": "f640f6664ab72deece24b770fe95cba51b0ac6ea",
+        "workflow": "CI",
+        "run_id": 29946271140,
+        "run_number": 102,
+        "status": "completed_success",
+        "review_decision": "changes_required"
+      },
+      "remediation_head": {
+        "repository_commit": "live PR #32 head after final remediation coordination update",
+        "workflow": "CI",
+        "status": "exact_head_ci_pending",
+        "authority": "Live GitHub checks are authoritative. Run 102 applies only to the predecessor reviewed head."
+      },
+      "claim_boundary": "Local 31-test validation is not GitHub CI. Exact-head CI is required before re-review."
     },
     "claim_boundary": "CI proves repository consistency only. It does not prove Azure snapshot recoverability, Trusted Launch bootability, rollback, guest health, cost, quota, RBAC restoration, or execution authority."
   },
@@ -101,10 +107,23 @@
       "claim_boundary": "Approval covers repository design consistency only. It does not authorize Azure execution or satisfy external reviewer independence."
     },
     "current_evidence_schema_increment": {
-      "status": "review_pending_exact_head_ci",
+      "status": "changes_required_remediation_ci_pending",
       "required_lens": "evidence-quality",
       "pull_request": 32,
-      "claim_boundary": "No review decision exists until the exact CI-passing PR head is inspected. The pull-request owner account cannot represent independent organizational approval."
+      "reviewed_head": "f640f6664ab72deece24b770fe95cba51b0ac6ea",
+      "reviewed_ci_run_id": 29946271140,
+      "reviewed_ci_run_number": 102,
+      "decision": "changes_required",
+      "blocking_findings": [
+        "pin every contract value trusted by package validation",
+        "enforce evidence-bearing detail fields by record type",
+        "bind redaction metadata to exact marker paths",
+        "require one subscription boundary across target resource IDs",
+        "reject non-finite JSON numbers",
+        "require supersession provenance"
+      ],
+      "remediation_local_verification": "31 tests passed",
+      "claim_boundary": "Re-review must inspect the exact remediation head after fresh CI. The pull-request owner account cannot represent independent organizational approval."
     },
     "azure_cost": {
       "status": "conditionally_approved_planning_estimate",
@@ -126,7 +145,7 @@
   },
   "next_bounded_operation": {
     "operation": "collector_recovery_evidence_schema_design",
-    "status": "ci_pending",
+    "status": "remediation_ci_pending",
     "authority": "repository_design_only",
     "active_workflow_present": false,
     "dispatch_authorized": false,
@@ -143,11 +162,16 @@
     ],
     "verification_criteria": [
       "contract remains design_only and grants no authority",
-      "validator rejects false completeness, nested secret leakage, raw command lines, target drift, invalid timestamps, unsupported fields, and unsupported claims",
-      "positive and negative tests pass",
+      "all validator-driving contract values are pinned against weakening",
+      "record-type detail requirements are enforced",
+      "redaction metadata exactly matches recursive marker paths",
+      "all target resource IDs share the declared subscription",
+      "non-finite JSON and unsupported fields are rejected",
+      "supersession provenance is enforced",
+      "31 positive and negative tests pass",
       "exact-head CI passes",
-      "evidence-quality review examines the exact passing head"
+      "evidence-quality re-review examines the exact passing head"
     ],
-    "next_gate": "Wait for PR #32 exact-head CI and inspect all jobs. Keep the PR draft. Do not add collection commands, authenticate to Azure, activate workflows, mutate resources, restore RBAC, or claim operational recovery."
+    "next_gate": "Wait for PR #32 remediation exact-head CI and inspect all jobs. Keep the PR draft. Do not add collection commands, authenticate to Azure, activate workflows, mutate resources, restore RBAC, or claim operational recovery."
   }
 }
