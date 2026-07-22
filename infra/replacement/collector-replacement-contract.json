@@ -1,5 +1,5 @@
 {
-  "schema_version": "servicetracer.collector-replacement-execution-design.v1",
+  "schema_version": "servicetracer.collector-replacement-execution-design.v2",
   "state": "design_only",
   "activation": {
     "candidate_workflow": "infra/workflow-designs/collector-replacement-execution.yml",
@@ -92,7 +92,7 @@
   },
   "isolated_restore_rehearsal": {
     "phase_id": "isolated_snapshot_boot_rehearsal",
-    "required_before_phase": "remove_old_compute",
+    "required_before_phase": "teardown_isolated_rehearsal",
     "source_snapshot": "exact verified OS-disk snapshot",
     "temporary_os_disk_create_option": "Copy",
     "temporary_vm_os_disk_create_option": "Attach",
@@ -115,6 +115,31 @@
     "maximum_compute_hours": 4,
     "maximum_retention_hours": 24,
     "operational_rollback_proof": false
+  },
+  "rehearsal_teardown": {
+    "phase_id": "teardown_isolated_rehearsal",
+    "required_before_phase": "remove_old_compute",
+    "rehearsal_vm_power_state_required": "PowerState/deallocated",
+    "source_vm_must_remain_deallocated": true,
+    "remove_resources": [
+      "temporary rehearsal VM",
+      "temporary isolated NIC"
+    ],
+    "allowed_retained_artifacts": [
+      "verified OS-disk snapshot",
+      "verified evidence-disk snapshot",
+      "approved temporary recovery disk"
+    ],
+    "unapproved_retained_artifacts_allowed": false,
+    "maximum_running_compute_overlap_minutes": 0,
+    "evidence_required": [
+      "rehearsal VM power state is PowerState/deallocated",
+      "temporary rehearsal VM is absent",
+      "temporary isolated NIC is absent",
+      "source VM remains PowerState/deallocated",
+      "only approved retained artifacts remain",
+      "running compute overlap is zero minutes"
+    ]
   },
   "replacement_vm_attachment_contract": {
     "nic_resource": "nic-stcollector-mst-dev",
@@ -143,13 +168,13 @@
       "phase_id": "preserve_delete_options",
       "mutation": true,
       "requires_explicit_authorization": true,
-      "evidence_required": "source NIC and evidence disk verified Detach before maintenance; OS disk remains disposable only after exact-snapshot boot rehearsal"
+      "evidence_required": "source NIC and evidence disk verified Detach before maintenance; OS disk remains disposable only after exact-snapshot boot rehearsal and contract-backed rehearsal teardown"
     },
     {
       "phase_id": "quiesce_and_deallocate_source",
       "mutation": true,
       "requires_explicit_authorization": true,
-      "evidence_required": "writer stopped and drained, writes flushed, final checkpoint ID and SHA-256 recorded, maintenance correlation recorded, guest shutdown verified, and Azure PowerState/deallocated verified"
+      "evidence_required": "writer stopped and drained, writes flushed, final checkpoint ID and SHA-256 recorded, maintenance correlation recorded, collector service stopped, guest shutdown verified, and Azure PowerState/deallocated verified"
     },
     {
       "phase_id": "create_recovery_points",
@@ -170,16 +195,22 @@
       "evidence_required": "exact snapshot copied to a temporary disk, specialized disk attached to an isolated Trusted Launch VM, boot and VM Guest State or vTPM proven, no production NIC or evidence disk attached, source VM remains deallocated, and temporary cost and cleanup limits preserved"
     },
     {
+      "phase_id": "teardown_isolated_rehearsal",
+      "mutation": true,
+      "requires_explicit_authorization": true,
+      "evidence_required": "rehearsal VM verified PowerState/deallocated; temporary rehearsal VM and temporary isolated NIC absent; source VM remains PowerState/deallocated; only verified OS-disk snapshot, verified evidence-disk snapshot, and approved temporary recovery disk may remain; running compute overlap is zero minutes"
+    },
+    {
       "phase_id": "remove_old_compute",
       "mutation": true,
       "requires_explicit_authorization": true,
-      "evidence_required": "VM-only deletion after both snapshots and the exact-snapshot isolated boot rehearsal are verified, with production NIC and evidence disk preserved and canonical OS-disk name expected to become reusable"
+      "evidence_required": "VM-only deletion after both snapshots, the exact-snapshot isolated boot rehearsal, and contract-backed rehearsal teardown are verified, with production NIC and evidence disk preserved and canonical OS-disk name expected to become reusable"
     },
     {
       "phase_id": "verify_preservation_boundary",
       "mutation": false,
       "requires_explicit_authorization": true,
-      "evidence_required": "production NIC, static address, subnet, evidence disk, both recovery snapshots, rehearsal evidence, and canonical OS-disk name availability"
+      "evidence_required": "production NIC, static address, subnet, evidence disk, both recovery snapshots, rehearsal evidence, teardown evidence, and canonical OS-disk name availability"
     },
     {
       "phase_id": "deploy_replacement_compute",
@@ -222,7 +253,7 @@
     "status": "strategy_selected_design_only",
     "promotion_blocked": true,
     "strategy_id": "os_disk_snapshot_recreate_canonical_name",
-    "decision": "Quiesce and deallocate the source, create two consistency-bound snapshots, prove the exact OS snapshot boots in an isolated Trusted Launch rehearsal before deleting old compute, retain the canonical OS-disk name for replacement, and recreate the prior VM from the verified snapshot if rollback is required.",
+    "decision": "Quiesce and deallocate the source, create two consistency-bound snapshots, prove the exact OS snapshot boots in an isolated Trusted Launch rehearsal, tear down the rehearsal compute boundary, then delete old compute only if all recovery evidence passes; retain the canonical OS-disk name for replacement and recreate the prior VM from the verified snapshot if rollback is required.",
     "canonical_os_disk_name": "disk-stcollector-os-mst-dev",
     "snapshot_name_prefix": "snap-stcollector-os-rollback-mst-dev-",
     "preserve_old_os_disk_directly": false,
@@ -290,8 +321,8 @@
       ]
     },
     "operationally_tested": false,
-    "independent_review_status": "changes_addressed_re_review_pending",
-    "before_old_vm_deletion": "Abort without deleting old compute unless the source was quiesced and deallocated, both snapshots share the final checkpoint binding, and the exact OS snapshot passed the isolated Trusted Launch boot rehearsal.",
+    "independent_review_status": "contract_amendment_re_review_pending",
+    "before_old_vm_deletion": "Abort without deleting old compute unless the source was quiesced and deallocated, both snapshots share the final checkpoint binding, the exact OS snapshot passed the isolated Trusted Launch boot rehearsal, and the rehearsal VM/NIC teardown contract was verified.",
     "after_old_vm_deletion": "If replacement verification fails, remove only failed replacement compute after re-reading NIC and evidence-disk Detach semantics, recreate the canonical OS disk from the exact verified snapshot using Copy, recreate the prior VM using Attach with the preserved NIC and evidence disk, restore approved RBAC, and verify rollback acceptance.",
     "evidence_disk_rule": "Never discard, format, replace, restore over, or attach the production evidence disk to the isolated rehearsal VM."
   },
