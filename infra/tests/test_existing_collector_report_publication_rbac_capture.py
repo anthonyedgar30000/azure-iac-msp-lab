@@ -48,6 +48,33 @@ class ExistingCollectorReportPublicationRbacCaptureTests(unittest.TestCase):
             PLANNER,
         )
 
+    def test_provider_validation_uses_read_permission_mode(self) -> None:
+        validate_block = re.search(
+            r"az deployment group validate \\\n(?P<body>(?:\s+.*\n){1,8})",
+            PLANNER,
+        )
+        what_if_block = re.search(
+            r"az deployment group what-if \\\n(?P<body>(?:\s+.*\n){1,10})",
+            PLANNER,
+        )
+        self.assertIsNotNone(validate_block)
+        self.assertIsNotNone(what_if_block)
+
+        for block in (validate_block.group(0), what_if_block.group(0)):
+            self.assertIn("--validation-level ProviderNoRbac", block)
+            self.assertNotIn("--validation-level Provider ", block)
+            self.assertNotIn("--validation-level Template", block)
+
+        self.assertEqual(PLANNER.count("--validation-level ProviderNoRbac"), 2)
+
+    def test_provider_no_rbac_claim_boundary_is_explicit(self) -> None:
+        for expected in (
+            'arm_validation_level: "ProviderNoRbac"',
+            "rbac_deployment_authorized: false",
+            "does not prove permission or authority to create the proposed role assignment",
+        ):
+            self.assertIn(expected, PLANNER)
+
     def test_planner_remains_read_only(self) -> None:
         prohibited = (
             "az deployment group create",
