@@ -59,9 +59,9 @@
       "branch": "design/collector-rollback-snapshot-recreation",
       "write_owner": "ChatGPT conversation: ServiceTracer — Governed Azure Operations Lab",
       "scope": "Select and formalize the OS-disk snapshot-and-recreation rollback strategy and canonical OS-disk naming in repository contracts, validation, tests, review documentation, and project coordination state only. Permitted paths: infra/replacement/collector-replacement-contract.json, infra/replacement/validate_execution_design.py, infra/tests/test_collector_replacement_execution_design.py, docs/designs/collector-replacement-execution.md, docs/reviews/collector-replacement-rollback-decision-2026-07-21.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/modules/**, application source, credentials, and Azure mutation scripts.",
-      "status": "implementation_in_progress",
+      "status": "ci_pending",
       "pull_request": 27,
-      "next_gate": "Address the independent operations-and-recovery changes requested on exact head bad79ac2a8ba8fa9568737fc3c3635b93f2dbaca, preserve the conditionally approved Azure-cost boundary, run fresh exact-head CI, and return the patched design for independent re-review while PR #27 remains draft."
+      "next_gate": "Run fresh exact-head CI for the recovery-review remediation, then return the passing exact head for independent operations-and-recovery re-review while PR #27 remains draft."
     }
   ],
   "known_open_pull_requests": [
@@ -74,8 +74,8 @@
     {
       "pull_request": 27,
       "title": "Select snapshot-based collector rollback strategy",
-      "status": "draft_changes_requested_cost_conditionally_approved",
-      "action": "Patch the four operations-and-recovery findings within the existing seven-file scope, run fresh exact-head CI, and obtain another independent review. Do not authorize or perform Azure mutations."
+      "status": "draft_remediation_committed_ci_pending_cost_conditionally_approved",
+      "action": "Verify the four remediation clusters in fresh exact-head CI and obtain another independent operations-and-recovery review. Do not authorize or perform Azure mutations."
     }
   ],
   "latest_promoted_evidence": {
@@ -91,14 +91,21 @@
   },
   "review_state": {
     "operations_and_recovery": {
-      "status": "changes_requested",
+      "status": "changes_addressed_re_review_pending",
       "reviewed_head": "bad79ac2a8ba8fa9568737fc3c3635b93f2dbaca",
       "reviewed_on": "2026-07-21",
-      "required_patch": [
-        "quiesce, flush, checkpoint, and deallocate the source before snapshots",
-        "prove exact-snapshot Trusted Launch bootability in an isolated rehearsal before old-compute deletion",
-        "separate snapshot-to-disk Copy from specialized-disk-to-VM Attach and verify recreation metadata",
-        "require NIC and evidence-disk deleteOption Detach on replacement and rollback VM contracts"
+      "remediation_claim": "The four requested changes are encoded in the contract, validator, negative tests, design, and review record. This claim requires fresh exact-head CI and independent re-review.",
+      "addressed_findings": [
+        "quiesce, flush, checkpoint, and deallocate the source before snapshots; bind both snapshots to the same maintenance correlation and checkpoint",
+        "prove exact-snapshot Trusted Launch bootability in an isolated rehearsal before old-compute deletion without production attachments",
+        "separate snapshot-to-disk Copy from specialized-disk-to-VM Attach and validate complete recreation metadata",
+        "require and re-read NIC and evidence-disk deleteOption Detach on replacement and rollback VM contracts"
+      ],
+      "verification": [
+        "validator enforces phase ordering, exact snapshot identity, Copy and Attach semantics, metadata, and Detach preservation",
+        "focused tests reject pre-boundary snapshots, missing checkpoint binding, non-exact rehearsal sources, production rehearsal attachments, FromImage, missing Attach, metadata drift, and Delete semantics",
+        "rollback.operationally_tested remains false",
+        "independent re-review remains required"
       ]
     },
     "azure_cost": {
@@ -120,21 +127,20 @@
     }
   },
   "next_bounded_operation": {
-    "operation": "collector_rollback_review_remediation",
-    "authority": "repository_patch_only",
+    "operation": "collector_rollback_remediation_ci_and_re_review",
+    "authority": "repository_validation_and_independent_review_only",
     "candidate_workflow": "infra/workflow-designs/collector-replacement-execution.yml",
     "active_workflow_present": false,
     "dispatch_authorized": false,
     "azure_mutations_authorized": false,
     "required_gates": [
-      "add a quiesce-and-deallocate consistency boundary shared by both snapshots",
-      "require an isolated exact-snapshot Trusted Launch boot rehearsal before old-compute deletion",
-      "encode managed-disk Copy and specialized OS-disk Attach as separate deterministic operations",
-      "verify NIC and evidence-disk deleteOption Detach for replacement and rollback VM contracts",
+      "fresh exact-head project-state validation",
+      "fresh exact-head replacement-design validator and focused tests",
+      "fresh exact-head complete ServiceTracer tests and Bicep lint/build",
+      "independent operations-and-recovery re-review of the remediated exact head",
       "retain the CAD 4 reviewed planning estimate, CAD 10 hard ceiling, fresh authenticated cost preflight, cleanup owner, and cleanup deadline",
-      "run fresh exact-head CI and obtain another independent operations-and-recovery review",
       "promotion occurs only through a separate authority-changing pull request"
     ],
-    "next_gate": "Patch only the existing seven declared files, keep PR #27 draft, run project-state validation, focused replacement-design tests, the complete ServiceTracer suite, and Bicep build, then return the new exact head for independent re-review. Do not authenticate to Azure or perform mutations."
+    "next_gate": "After exact-head CI passes, route the exact commit to independent operations-and-recovery re-review. Do not authenticate to Azure, create temporary resources, activate the candidate workflow, or perform mutations."
   }
 }
