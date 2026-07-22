@@ -4,27 +4,27 @@
   "updated_on": "2026-07-22",
   "last_substantive_baseline": {
     "branch": "main",
-    "commit": "e379064b7ee8b6a1a8b7731d31dedef1bca19e6f",
-    "pull_request": 38,
-    "title": "Promote read-only report publication planner",
-    "qualification": "read_only_planner_workflow_exact_head_ci_passed_owner_account_review_accepted_first_dispatch_failed_at_scoped_rbac_cli_compatibility_not_deployed",
-    "claim_boundary": "This baseline proves the guarded workflow exists and OIDC authentication succeeded in run 29957833049. It does not prove complete RBAC inventory, ARM validation, What-If completion, deployment, report publication, or frontend ingestion."
+    "commit": "3b035171e274819cb9590e32ac2ff752455d4387",
+    "pull_request": 39,
+    "title": "Repair read-only planner RBAC evidence capture",
+    "qualification": "repository_repair_exact_head_and_post_merge_ci_passed_owner_account_review_accepted_second_planner_dispatch_reached_arm_provider_validation_not_deployed",
+    "claim_boundary": "This baseline proves the scoped RBAC inventory repair, atomic evidence capture, post-merge CI, OIDC authentication, current Azure inventory, and complete visible RBAC capture. It does not prove completed ARM validation, What-If, deployment permission, report publication, or frontend ingestion."
   },
   "repository_observation": {
     "observed_on": "2026-07-22",
     "source": "live_github",
-    "main_head": "e379064b7ee8b6a1a8b7731d31dedef1bca19e6f",
-    "head_semantics": "PR #38 merge commit observed before the bounded RBAC-query repair branch was opened",
+    "main_head": "3b035171e274819cb9590e32ac2ff752455d4387",
+    "head_semantics": "PR #39 merge commit observed before the ProviderNoRbac planner-repair branch was opened",
     "open_pull_requests": [],
     "claim_boundary": "This is time-bounded external evidence, not a self-updating claim. Resolve current head, pull requests, and CI from live GitHub whenever the file is read."
   },
   "authored_change": {
-    "change_id": "repair-read-only-planner-rbac-query",
-    "branch": "fix/read-only-planner-rbac-query",
-    "pull_request": 39,
-    "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — bounded planner compatibility repair explicitly authorized by Anthony Edgar with 'Proceed'",
-    "scope": "Repair only the read-only report-publication planner's scoped RBAC inventory commands and evidence-file handling after workflow run 29957833049 failed because Azure CLI rejects --scope combined with --all. Add regression tests and update project handoff records. No workflow authority expansion, deployment, RBAC mutation, Storage change, guest command, frontend change, or Azure resource mutation is permitted.",
-    "authority": "repository_only_read_only_planner_reliability_repair",
+    "change_id": "provider-no-rbac-planner-validation",
+    "branch": "fix/provider-no-rbac-planner-validation",
+    "pull_request": 40,
+    "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — bounded ProviderNoRbac planner repair explicitly authorized by Anthony Edgar with 'Proceed'",
+    "scope": "Repair only the read-only report-publication planner's ARM validation and What-If mode after workflow run 29963170574 proved that the Contributor planning identity can inventory Azure and RBAC but cannot pass default Provider validation for a proposed role assignment. Use ProviderNoRbac, preserve no-mutation authority, add regression tests and explicit claim boundaries, and update project handoff records. No Azure permission grant, deployment, role assignment, Storage change, VM command, frontend change, or Azure resource mutation is permitted.",
+    "authority": "repository_only_provider_no_rbac_planner_reliability_repair",
     "state_semantics": "declaration_not_live_status",
     "permitted_paths": [
       "infra/scripts/plan_existing_collector_report_publication.sh",
@@ -33,14 +33,14 @@
       ".project/handoffs/current-state.md"
     ],
     "verification_criteria": [
-      "both scoped az role assignment list commands omit --all and retain --include-inherited",
-      "Azure command output is written to a temporary file and promoted only after non-empty expected-type JSON validation",
-      "failed or invalid RBAC capture leaves no final evidence file that could be misread as an empty assignment inventory",
+      "both az deployment group validate and what-if use --validation-level ProviderNoRbac",
+      "planner output explicitly records ProviderNoRbac and that RBAC deployment is not authorized",
+      "existing atomic non-empty expected-type JSON evidence controls remain intact",
       "planner remains read-only and contains no Azure mutation commands",
       "bash syntax, project validation, all unit tests, and Bicep lint/build pass for the exact pull-request head",
       "final diff remains limited to the four declared paths"
     ],
-    "failure_behavior": "Keep the pull request draft, inspect the exact failing test or CI job, patch only the four permitted paths, and obtain fresh exact-head CI. Do not weaken OIDC, protected-environment, exact-commit, confirmation, cost, artifact, or no-mutation controls.",
+    "failure_behavior": "Keep the pull request draft, inspect the exact failing test or CI job, patch only the four permitted paths, and obtain fresh exact-head CI. Do not grant the planner roleAssignments/write or weaken OIDC, protected-environment, exact-commit, confirmation, cost, artifact, or no-mutation controls.",
     "rollback": "Close the pull request without merge or revert its repository-only commits. No Azure rollback applies because this repair performs no Azure authentication or Azure mutation."
   },
   "bounded_authority_grants": [
@@ -68,7 +68,7 @@
         "az deployment group what-if"
       ],
       "state_semantics": "bounded_exception_to_false_defaults",
-      "claim_boundary": "This grant authorizes authentication and dispatch only for current-state inventory, ARM validation, and What-If. It does not authorize deployment, role changes, report publication, endpoint configuration, guest commands, or any Azure resource mutation."
+      "claim_boundary": "This grant authorizes authentication and dispatch only for current-state inventory, ProviderNoRbac ARM validation, and What-If. It does not authorize deployment, role changes, report publication, endpoint configuration, guest commands, or any Azure resource mutation."
     }
   ],
   "completed_increments": [
@@ -107,6 +107,12 @@
       "title": "Promote read-only report publication planner",
       "merge_commit": "e379064b7ee8b6a1a8b7731d31dedef1bca19e6f",
       "qualification": "read_only_workflow_promoted_exact_head_ci_passed_owner_account_review_not_independent_first_dispatch_failed_safely"
+    },
+    {
+      "pull_request": 39,
+      "title": "Repair read-only planner RBAC evidence capture",
+      "merge_commit": "3b035171e274819cb9590e32ac2ff752455d4387",
+      "qualification": "repository_repair_exact_head_and_post_merge_ci_passed_owner_account_review_not_independent_second_dispatch_completed_inventory_then_failed_safely_at_provider_validation"
     }
   ],
   "resolved_repository_items": [
@@ -128,30 +134,32 @@
     }
   ],
   "latest_observed_planner_attempt": {
-    "run_id": 29957833049,
-    "commit": "e379064b7ee8b6a1a8b7731d31dedef1bca19e6f",
-    "artifact": "existing-collector-report-publication-plan-29957833049-1",
-    "artifact_sha256": "3dcd7f93d2842b873ef25b466a6686a334f77c908c0b0b2a21b9d07a37010f13",
+    "run_id": 29963170574,
+    "commit": "3b035171e274819cb9590e32ac2ff752455d4387",
+    "artifact": "existing-collector-report-publication-plan-29963170574-1",
+    "artifact_sha256": "8d7891dce5d34b84cf629c64b97202a17421bf019d0dbd92064a1ac57053ee68",
     "observed_on": "2026-07-22",
-    "status": "failed_safely_after_oidc_login_during_scoped_rbac_inventory",
+    "status": "failed_safely_after_complete_inventory_during_default_provider_validation_of_proposed_role_assignment",
     "proven": [
-      "exact reviewed commit checkout succeeded",
-      "bounded authority validation succeeded",
-      "static read-only tests succeeded",
+      "exact reviewed merge commit checkout succeeded",
+      "bounded authority validation and static read-only tests succeeded",
       "Azure OIDC login succeeded",
       "resource group and collector identity observations were captured",
+      "resource-group and report-storage RBAC inventories were captured as valid JSON",
+      "no report Storage account currently exists",
+      "no visible role assignment currently grants the collector report-storage access",
+      "planning service principal has Contributor at subscription scope and lacks roleAssignments/write",
       "no Azure mutation was authorized or performed"
     ],
     "unproven": [
-      "complete RBAC inventory",
-      "ARM validation",
-      "ARM What-If",
+      "ProviderNoRbac ARM validation",
+      "ProviderNoRbac ARM What-If",
       "current pricing and quota",
       "report endpoint deployment",
       "managed-identity publication",
       "frontend live-data ingestion"
     ],
-    "failure": "Azure CLI rejected az role assignment list because --scope and --all were combined; the resulting zero-byte final RBAC file is not evidence of zero assignments."
+    "failure": "Default Provider validation evaluated the proposed Microsoft.Authorization/roleAssignments resource and correctly rejected the Contributor planning identity because it lacks Microsoft.Authorization/roleAssignments/write. The planner must use ProviderNoRbac rather than expanding its permissions."
   },
   "latest_promoted_evidence": {
     "event_id": "collector-replacement-plan-29856203054",
@@ -164,7 +172,7 @@
     "status": "completed_read_only",
     "azure_mutations_authorized": false,
     "azure_mutations_performed": false,
-    "freshness_boundary": "This remains the latest successfully promoted Azure evidence. Planner run 29957833049 authenticated and captured partial current evidence but failed before complete RBAC inventory, ARM validation, and What-If; it must not be promoted as a completed plan."
+    "freshness_boundary": "This remains the latest successfully completed promoted Azure plan. Run 29963170574 is newer and proves current inventory and RBAC visibility, but failed before ARM validation and What-If; it must not be promoted as a completed plan."
   },
   "review_state": {
     "pr37_publication_design": {
@@ -185,6 +193,17 @@
       "review_account": "pull_request_owner",
       "independent_organizational_approval": false,
       "claim_boundary": "The workflow authority controls and OIDC path worked, but the planner did not complete RBAC inventory, validation, or What-If."
+    },
+    "pr39_rbac_capture_repair": {
+      "status": "merged_then_second_dispatch_failed_safely_at_provider_validation",
+      "reviewed_pull_request": 39,
+      "reviewed_head": "0980912de9a2a327473010f5ecea96c555a35b95",
+      "reviewed_ci_run_id": 29961608528,
+      "post_merge_ci_status": "passed",
+      "workflow_run_id": 29963170574,
+      "review_account": "pull_request_owner",
+      "independent_organizational_approval": false,
+      "claim_boundary": "The RBAC-query and atomic-evidence repair worked. The run did not complete ARM validation or What-If because default Provider validation required role-assignment write permission."
     }
   },
   "authority_defaults": {
