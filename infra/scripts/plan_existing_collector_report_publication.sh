@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  cat <<'EOF'
+  cat <<'USAGE'
 Usage:
   plan_existing_collector_report_publication.sh \
     --resource-group <name> \
@@ -17,7 +17,12 @@ This command is read-only. It resolves the existing collector identity, captures
 current Azure context, runs ARM validation and What-If for the dedicated report
 publication template, and records the unresolved current-price boundary. It does
 not deploy, update, delete, publish a report, or alter RBAC.
-EOF
+USAGE
+}
+
+fail() {
+  echo "$1" >&2
+  exit "${2:-1}"
 }
 
 resource_group=''
@@ -27,6 +32,45 @@ environment=''
 allowed_origin=''
 artifact_dir=''
 maximum_monthly_cost_cad='10.00'
+
+declare -a temporary_evidence_files=()
+cleanup_temporary_evidence() {
+  if ((${#temporary_evidence_files[@]} > 0)); then
+    rm -f -- "${temporary_evidence_files[@]}"
+  fi
+}
+trap cleanup_temporary_evidence EXIT
+
+capture_json() {
+  local expected_type="$1"
+  local destination="$2"
+  shift 2
+
+  local temp_path
+  temp_path="$(mktemp "${destination}.partial.XXXXXX")"
+  temporary_evidence_files+=("$temp_path")
+
+  if ! "$@" > "$temp_path"; then
+    echo "Failed to capture evidence for: $destination" >&2
+    rm -f -- "$temp_path"
+    return 1
+  fi
+
+  if [[ ! -s "$temp_path" ]]; then
+    echo "Refusing empty evidence for: $destination" >&2
+    rm -f -- "$temp_path"
+    return 1
+  fi
+
+  if ! jq -e --arg expected_type "$expected_type" \
+    'type == $expected_type' "$temp_path" >/dev/null; then
+    echo "Refusing invalid or unexpected JSON evidence for: $destination" >&2
+    rm -f -- "$temp_path"
+    return 1
+  fi
+
+  mv -- "$temp_path" "$destination"
+}
 
 while (($# > 0)); do
   case "$1" in
@@ -78,81 +122,62 @@ for value_name in resource_group location prefix environment allowed_origin arti
   fi
 done
 
-[[ "$resource_group" =~ ^rg-servicetracer-(dev|test)(-[a-z0-9-]+)?$ ]] || {
-  echo 'Resource group is outside the bounded ServiceTracer naming contract.' >&2
-  exit 2
-}
-[[ "$location" =~ ^[a-z0-9]+$ ]] || {
-  echo 'Location must contain lowercase letters and digits only.' >&2
-  exit 2
-}
-[[ "$prefix" =~ ^[a-z0-9]{2,12}$ ]] || {
-  echo 'Prefix must contain 2-12 lowercase letters or digits.' >&2
-  exit 2
-}
-[[ "$environment" =~ ^(dev|test)$ ]] || {
-  echo 'Environment must be dev or test.' >&2
-  exit 2
-}
-[[ "$allowed_origin" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]] || {
-  echo 'Allowed origin must be an HTTPS origin without a path.' >&2
-  exit 2
-}
-[[ "$maximum_monthly_cost_cad" =~ ^[0-9]+([.][0-9]{1,2})?$ ]] || {
-  echo 'Maximum monthly cost must be a non-negative CAD amount.' >&2
-  exit 2
-}
-awk -v amount="$maximum_monthly_cost_cad" 'BEGIN { exit !(amount <= 10.00) }' || {
-  echo 'Maximum monthly cost ceiling cannot exceed CAD 10.00.' >&2
-  exit 2
-}
+[[ "$resource_group" =~ ^rg-servicetracer-(dev|test)(-[a-z0-9-]+)?$ ]] || \
+  fail 'Resource group is outside the bounded ServiceTracer naming contract.' 2
+[[ "$location" =~ ^[a-z0-9]+$ ]] || \
+  fail 'Location must contain lowercase letters and digits only.' 2
+[[ "$prefix" =~ ^[a-z0-9]{2,12}$ ]] || \
+  fail 'Prefix must contain 2-12 lowercase letters or digits.' 2
+[[ "$environment" =~ ^(dev|test)$ ]] || \
+  fail 'Environment must be dev or test.' 2
+[[ "$allowed_origin" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]] || \
+  fail 'Allowed origin must be an HTTPS origin without a path.' 2
+[[ "$maximum_monthly_cost_cad" =~ ^[0-9]+([.][0-9]{1,2})?$ ]] || \
+  fail 'Maximum monthly cost must be a non-negative CAD amount.' 2
+awk -v amount="$maximum_monthly_cost_cad" \
+  'BEGIN { exit !(amount <= 10.00) }' || \
+  fail 'Maximum monthly cost ceiling cannot exceed CAD 10.00.' 2
 
-for command_name in az jq awk; do
-  command -v "$command_name" >/dev/null 2>&1 || {
-    echo "Required command is unavailable: $command_name" >&2
-    exit 127
-  }
+for command_name in az jq awk mktemp; do
+  command -v "$command_name" >/dev/null 2>&1 || \
+    fail "Required command is unavailable: $command_name" 127
 done
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 template="$repo_root/infra/report-publication-existing-collector.bicep"
-[[ -f "$template" ]] || {
-  echo "Missing template: $template" >&2
-  exit 1
-}
+[[ -f "$template" ]] || fail "Missing template: $template"
 
 mkdir -p "$artifact_dir"
 collector_vm="vm-stcollector-${prefix}-${environment}"
 observed_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
-az account show \
-  --query '{subscription_id:id,subscription_name:name,tenant_id:tenantId,cloud:environmentName,user_type:user.type}' \
-  --output json > "$artifact_dir/azure-context.json"
+capture_json object "$artifact_dir/azure-context.json" \
+  az account show \
+    --query '{subscription_id:id,subscription_name:name,tenant_id:tenantId,cloud:environmentName,user_type:user.type}' \
+    --output json
 
-az group show \
-  --name "$resource_group" \
-  --output json > "$artifact_dir/resource-group.json"
+capture_json object "$artifact_dir/resource-group.json" \
+  az group show \
+    --name "$resource_group" \
+    --output json
 
 actual_location="$(jq -r '.location' "$artifact_dir/resource-group.json")"
-[[ "$actual_location" == "$location" ]] || {
-  echo "Resource group is in $actual_location, not $location." >&2
-  exit 1
-}
-[[ "$(jq -r '.tags.workload // empty' "$artifact_dir/resource-group.json")" == 'azure-iac-msp-lab' ]] || {
-  echo 'Resource group workload tag does not match azure-iac-msp-lab.' >&2
-  exit 1
-}
-[[ "$(jq -r '.tags.purpose // empty' "$artifact_dir/resource-group.json")" == 'servicetracer-demo' ]] || {
-  echo 'Resource group purpose tag does not match servicetracer-demo.' >&2
-  exit 1
-}
+[[ "$actual_location" == "$location" ]] || \
+  fail "Resource group is in $actual_location, not $location."
+[[ "$(jq -r '.tags.workload // empty' "$artifact_dir/resource-group.json")" == \
+  'azure-iac-msp-lab' ]] || \
+  fail 'Resource group workload tag does not match azure-iac-msp-lab.'
+[[ "$(jq -r '.tags.purpose // empty' "$artifact_dir/resource-group.json")" == \
+  'servicetracer-demo' ]] || \
+  fail 'Resource group purpose tag does not match servicetracer-demo.'
 resource_group_id="$(jq -r '.id' "$artifact_dir/resource-group.json")"
 
-az vm show \
-  --resource-group "$resource_group" \
-  --name "$collector_vm" \
-  --query '{id:id,name:name,location:location,provisioning_state:provisioningState,vm_size:hardwareProfile.vmSize,identity_type:identity.type,principal_id:identity.principalId,image:storageProfile.imageReference}' \
-  --output json > "$artifact_dir/existing-collector.json"
+capture_json object "$artifact_dir/existing-collector.json" \
+  az vm show \
+    --resource-group "$resource_group" \
+    --name "$collector_vm" \
+    --query '{id:id,name:name,location:location,provisioning_state:provisioningState,vm_size:hardwareProfile.vmSize,identity_type:identity.type,principal_id:identity.principalId,image:storageProfile.imageReference}' \
+    --output json
 
 jq -e --arg location "$location" '
   .id != null and
@@ -162,60 +187,58 @@ jq -e --arg location "$location" '
   (.identity_type | type == "string") and
   (.identity_type | contains("SystemAssigned")) and
   (.principal_id | type == "string" and length == 36)
-' "$artifact_dir/existing-collector.json" >/dev/null || {
-  echo 'Existing collector does not have a usable system-assigned identity in the expected location.' >&2
-  exit 1
-}
+' "$artifact_dir/existing-collector.json" >/dev/null || \
+  fail 'Existing collector does not have a usable system-assigned identity in the expected location.'
+
 collector_principal_id="$(jq -r '.principal_id' "$artifact_dir/existing-collector.json")"
-[[ "$collector_principal_id" =~ ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$ ]] || {
-  echo 'Existing collector principal ID is not a canonical GUID.' >&2
-  exit 1
-}
+[[ "$collector_principal_id" =~ ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$ ]] || \
+  fail 'Existing collector principal ID is not a canonical GUID.'
 
-az storage account list \
-  --resource-group "$resource_group" \
-  --query "[?tags.component=='servicetracer-public-report'].{id:id,name:name,location:location,provisioning_state:provisioningState,public_network_access:publicNetworkAccess,allow_blob_public_access:allowBlobPublicAccess,allow_shared_key_access:allowSharedKeyAccess}" \
-  --output json > "$artifact_dir/existing-report-storage.json"
+capture_json array "$artifact_dir/existing-report-storage.json" \
+  az storage account list \
+    --resource-group "$resource_group" \
+    --query "[?tags.component=='servicetracer-public-report'].{id:id,name:name,location:location,provisioning_state:provisioningState,public_network_access:publicNetworkAccess,allow_blob_public_access:allowBlobPublicAccess,allow_shared_key_access:allowSharedKeyAccess}" \
+    --output json
+
 existing_storage_count="$(jq 'length' "$artifact_dir/existing-report-storage.json")"
-((existing_storage_count <= 1)) || {
-  echo 'More than one report Storage account is already tagged in the resource group; refusing ambiguous planning.' >&2
-  exit 1
-}
+((existing_storage_count <= 1)) || \
+  fail 'More than one report Storage account is already tagged in the resource group; refusing ambiguous planning.'
 
-az role assignment list \
-  --scope "$resource_group_id" \
-  --include-inherited \
-  --all \
-  --output json > "$artifact_dir/visible-resource-group-role-assignments-all.json"
+capture_json array "$artifact_dir/visible-resource-group-role-assignments-all.json" \
+  az role assignment list \
+    --scope "$resource_group_id" \
+    --include-inherited \
+    --output json
 
 if ((existing_storage_count == 1)); then
   existing_storage_id="$(jq -r '.[0].id' "$artifact_dir/existing-report-storage.json")"
-  az role assignment list \
-    --scope "$existing_storage_id" \
-    --include-inherited \
-    --all \
-    --output json > "$artifact_dir/visible-report-storage-role-assignments-all.json"
+  capture_json array "$artifact_dir/visible-report-storage-role-assignments-all.json" \
+    az role assignment list \
+      --scope "$existing_storage_id" \
+      --include-inherited \
+      --output json
 else
-  printf '[]\n' > "$artifact_dir/visible-report-storage-role-assignments-all.json"
+  capture_json array "$artifact_dir/visible-report-storage-role-assignments-all.json" \
+    printf '[]\n'
 fi
 
-jq -s --arg principal_id "$collector_principal_id" '
-  [
-    .[0][],
-    .[1][]
-    | select(.principalId == $principal_id)
-    | {
-        id: .id,
-        scope: .scope,
-        role_definition_name: .roleDefinitionName,
-        principal_id: .principalId
-      }
-  ]
-  | unique_by(.id)
-' \
-  "$artifact_dir/visible-resource-group-role-assignments-all.json" \
-  "$artifact_dir/visible-report-storage-role-assignments-all.json" \
-  > "$artifact_dir/visible-collector-role-assignments.json"
+capture_json array "$artifact_dir/visible-collector-role-assignments.json" \
+  jq -s --arg principal_id "$collector_principal_id" '
+    [
+      .[0][],
+      .[1][]
+      | select(.principalId == $principal_id)
+      | {
+          id: .id,
+          scope: .scope,
+          role_definition_name: .roleDefinitionName,
+          principal_id: .principalId
+        }
+    ]
+    | unique_by(.id)
+  ' \
+    "$artifact_dir/visible-resource-group-role-assignments-all.json" \
+    "$artifact_dir/visible-report-storage-role-assignments-all.json"
 visible_collector_role_assignment_count="$(jq 'length' "$artifact_dir/visible-collector-role-assignments.json")"
 
 jq -n \
@@ -243,19 +266,21 @@ jq -n \
     }
   }' > "$artifact_dir/deployment-parameters.json"
 
-az deployment group validate \
-  --resource-group "$resource_group" \
-  --template-file "$template" \
-  --parameters "@$artifact_dir/deployment-parameters.json" \
-  --output json > "$artifact_dir/arm-validation.json"
+capture_json object "$artifact_dir/arm-validation.json" \
+  az deployment group validate \
+    --resource-group "$resource_group" \
+    --template-file "$template" \
+    --parameters "@$artifact_dir/deployment-parameters.json" \
+    --output json
 
-az deployment group what-if \
-  --resource-group "$resource_group" \
-  --template-file "$template" \
-  --parameters "@$artifact_dir/deployment-parameters.json" \
-  --result-format FullResourcePayloads \
-  --no-pretty-print \
-  --output json > "$artifact_dir/arm-what-if.json"
+capture_json object "$artifact_dir/arm-what-if.json" \
+  az deployment group what-if \
+    --resource-group "$resource_group" \
+    --template-file "$template" \
+    --parameters "@$artifact_dir/deployment-parameters.json" \
+    --result-format FullResourcePayloads \
+    --no-pretty-print \
+    --output json
 
 jq -n \
   --arg observed_at "$observed_at" \
