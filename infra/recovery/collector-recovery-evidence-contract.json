@@ -56,9 +56,11 @@
       "package_id",
       "generated_at",
       "maintenance_correlation_id",
+      "producer",
       "target",
       "declared_phase_ids",
       "package_status",
+      "supersedes_package_ids",
       "records",
       "claims",
       "claim_boundary"
@@ -108,7 +110,13 @@
     ],
     "complete_requires_all_declared_phase_evidence": true,
     "failed_or_aborted_requires_terminal_decision": true,
-    "operational_claim_requires_complete_package": true
+    "operational_claim_requires_complete_package": true,
+    "producer_required_fields": [
+      "tool",
+      "version",
+      "identity",
+      "source_commit"
+    ]
   },
   "redaction_policy": {
     "forbidden_field_name_fragments": [
@@ -293,5 +301,62 @@
     ],
     "maximum_retention_hours": 24,
     "maximum_approved_cost_cad": 10.0
+  },
+  "record_detail_requirements": {
+    "guest_preflight": [
+      "service_state",
+      "health_status",
+      "evidence_mount",
+      "filesystem_uuid",
+      "recent_evidence_readable"
+    ],
+    "azure_control_plane_preflight": [
+      "vm_power_state",
+      "nic_delete_option",
+      "evidence_disk_delete_option",
+      "os_disk_public_network_access",
+      "observed_role_assignment_ids"
+    ],
+    "operation_attempt": [
+      "operation",
+      "authority_reference",
+      "started_at",
+      "finished_at"
+    ],
+    "state_observation": [
+      "property",
+      "observed_value",
+      "observation_source"
+    ],
+    "consistency_checkpoint": [
+      "checkpoint_id",
+      "checkpoint_sha256",
+      "maintenance_correlation_id"
+    ],
+    "integrity_verification": [
+      "verification",
+      "expected",
+      "observed"
+    ],
+    "cleanup_commitment": [
+      "owner",
+      "deadline",
+      "maximum_retention_hours",
+      "approved_cost_ceiling_cad"
+    ],
+    "cleanup_verification": [
+      "removed_resource_ids",
+      "retained_resource_ids",
+      "verified_at",
+      "verifier_identity",
+      "actual_temporary_cost_cad"
+    ],
+    "decision": [
+      "decision",
+      "reason",
+      "authority",
+      "safe_next_step",
+      "rollback_required"
+    ]
   }
 }
