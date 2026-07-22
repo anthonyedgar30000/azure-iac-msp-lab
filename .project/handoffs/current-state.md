@@ -2,199 +2,129 @@
 
 ## Workspace and repository reality
 
-- Umbrella conversational workspace: **HELIX — Governed Agent Engineering**.
-- Bounded repository workstream: **ServiceTracer — Governed Azure Operations Lab**.
+- Project: **ServiceTracer — Governed Azure Operations Lab**.
 - Default branch: `main`.
-- Observed `main` before this branch opened: `54466651f291e271e5da542ea0afb38679ca6ca9`, the PR #37 merge commit.
+- `main` observed before this repair branch opened: `e379064b7ee8b6a1a8b7731d31dedef1bca19e6f`, the PR #38 merge commit.
 - Open pull requests observed before branch creation: zero.
-- The GitHub connector cannot prove whether an unrelated local clone has uncommitted or unpushed work; live GitHub is authoritative for this branch and PR scope.
+- Repair branch: `fix/read-only-planner-rbac-query`.
+- Live GitHub and fresh Azure evidence remain authoritative; this handoff is time-bounded.
+
+## Accepted baseline and failed planning attempt
+
+PR #38 promoted the guarded read-only planner workflow. Its exact-head CI passed, and the workflow was manually dispatched as run `29957833049` against the merged commit.
+
+The run proved:
+
+- exact reviewed-commit checkout succeeded;
+- bounded authority and static no-mutation tests succeeded;
+- GitHub OIDC login to Azure succeeded;
+- the intended Azure subscription, resource group, and existing collector were reached;
+- the collector had a system-assigned identity and `Succeeded` provisioning state;
+- no Azure mutation was authorized or performed;
+- the protected artifact was uploaded with digest `3dcd7f93d2842b873ef25b466a6686a334f77c908c0b0b2a21b9d07a37010f13`.
+
+The run failed at scoped RBAC inventory because the planner combined `az role assignment list --scope ...` with `--all`. Current Azure CLI treats those as incompatible selection modes.
 
 ```text
-repository_observation.main_head
-!= automatically current_repository_head
+Azure_login_succeeded
+!= complete_Azure_plan
 
-remote branch clean
-!= every local clone clean
+zero_byte_RBAC_file
+!= zero_RBAC_assignments
 ```
 
-## Accepted substantive baseline
+ARM validation and What-If were not reached. The report endpoint remains undeployed, managed-identity publication remains unverified, and the frontend still has no live-data proof.
 
-PR #37 merged the decoupled existing-collector report-publication design and read-only planning script. It proved repository design and CI consistency only.
+## Authored repair
 
-- Merge commit: `54466651f291e271e5da542ea0afb38679ca6ca9`.
-- Exact reviewed head: `d5041dc0fad2d28a1b8a5a182cdea8c24dc0caf9`.
-- Exact-head CI run: `29955878403` / run 140, successful.
-- Review: owner-account technical pass, not independent organizational approval.
-- Azure endpoint deployed: no.
-- Browser live-data proof: no.
-
-## Authored change
-
-- Change: `promote-existing-collector-report-publication-plan`.
-- Branch: `feat/promote-existing-collector-report-plan`.
-- Pull request: #38, recorded as authored-change metadata only; live status remains external GitHub evidence.
-- Authority: promote and dispatch one read-only Azure planner only.
+- Change: `repair-read-only-planner-rbac-query`.
+- Authority: repository-only reliability repair.
+- Pull request: not yet assigned; live PR state remains external GitHub evidence.
 
 Permitted paths:
 
-- `.github/workflows/existing-collector-report-publication-plan.yml`;
-- `infra/tests/test_existing_collector_report_publication_plan_workflow.py`;
-- `docs/runbooks/existing-collector-report-publication-plan.md`;
+- `infra/scripts/plan_existing_collector_report_publication.sh`;
+- `infra/tests/test_existing_collector_report_publication_rbac_capture.py`;
 - `.project/active-work.json`;
-- `.project/README.md`;
 - `.project/handoffs/current-state.md`.
 
-Protected scope includes deployment workflows, Bicep resources, collector VM/NIC/disks/image/extensions, load balancer, backends, network, frontend endpoint configuration, credentials, budgets, alerts, report publication, role changes, guest commands, and every Azure mutation.
+Protected scope includes workflow authority, OIDC configuration, Bicep resources, deployment operations, RBAC changes, Storage changes, VM commands, collector compute, networking, frontend configuration, budgets, alerts, and every Azure mutation.
 
-## Bounded authority grant
+## Repair contract
 
-Anthony Edgar explicitly said **“Proceed”** after the next gate was described as a separately authorized read-only Azure planning run.
+The planner must:
 
-The resulting grant authorizes:
-
-- one manually dispatched workflow at `.github/workflows/existing-collector-report-publication-plan.yml`;
-- GitHub OIDC authentication through the protected `azure-lab` environment;
-- current Azure context and inventory reads;
-- ARM template validation;
-- exact What-If;
-- protected artifact upload.
-
-It does not authorize:
-
-- `az deployment group create`;
-- role-assignment creation or deletion;
-- Storage creation or deletion;
-- VM Run Command;
-- collector restart, replacement, deallocation, or guest change;
-- report publication;
-- frontend endpoint configuration;
-- any Azure resource mutation.
+1. use scoped `az role assignment list` queries with `--include-inherited` and without `--all`;
+2. capture command output into a temporary file;
+3. require a non-empty JSON document of the expected top-level type;
+4. move the temporary file to the final evidence path only after validation;
+5. remove temporary evidence on failure;
+6. preserve empty JSON arrays as valid evidence of no visible assignments;
+7. remain read-only.
 
 ```text
-azure_authentication_authorized = true
-azure_mutations_authorized      = false
+command_created_empty_file
+!= valid_empty_inventory
+
+file_hash_valid
+!= evidence_semantically_valid
 ```
 
-## Workflow gates
+## Intended architecture and scope
 
-The promoted planner is manual-only and requires:
-
-1. a 40-character exact reviewed commit;
-2. checkout and verification of that exact commit;
-3. the protected `azure-lab` environment;
-4. an exact typed confirmation:
+The architecture remains unchanged:
 
 ```text
-PLAN-PUBLICATION:<resource-group>:vm-stcollector-<prefix>-<environment>
+real Azure transactions and metrics
+        ↓
+ServiceTracer deterministic analysis
+        ↓
+sanitary provenance-bearing report
+        ↓
+existing collector managed identity
+        ↓
+dedicated Azure Storage endpoint
+        ↓
+GitHub Pages operator console
 ```
 
-5. a maximum monthly planning ceiling no greater than CAD 10.00;
-6. static no-mutation tests before Azure login;
-7. evidence upload even when the plan fails.
+This repair changes only planner compatibility and evidence integrity. It does not deploy the Storage endpoint, grant roles, publish a report, modify the collector, or configure the frontend.
 
-Default target inputs remain:
+## Identity, network, security, and cost boundaries
 
-- resource group: `rg-servicetracer-dev-westus2`;
-- region: `westus2`;
-- prefix: `mst`;
-- environment: `dev`;
-- collector: `vm-stcollector-mst-dev`;
-- allowed browser origin: `https://anthonyedgar30000.github.io`.
+- OIDC authentication remains through the protected `azure-lab` environment.
+- Azure mutation authority remains false.
+- Collector publication remains managed-identity based and Storage scoped when separately authorized later.
+- No browser-to-collector route is introduced.
+- CAD 10.00 remains a planning ceiling, not current price evidence or an estimate.
+- Current pricing, quota, actual cost, effective RBAC, endpoint behavior, and frontend ingestion remain deployment gates.
 
-These defaults are not accepted as current Azure facts until the workflow observes and validates them.
+## Validation
 
-## Intended planning evidence
+Before merge:
 
-The workflow calls `infra/scripts/plan_existing_collector_report_publication.sh` and should capture:
-
-- request and exact repository commit;
-- tenant, subscription, cloud, and authenticated identity type;
-- resource-group identity, region, and tags;
-- current collector resource, provisioning state, size, image, and system-assigned principal ID;
-- existing tagged report Storage inventory;
-- visible resource-group and report-Storage RBAC inventory;
-- collector-principal role-assignment subset;
-- ARM validation result;
-- exact What-If result;
-- explicit current-price boundary;
-- plan summary with mutations unauthorized and unperformed;
-- SHA-256 artifact manifest.
-
-Sensitive identifiers may be retained in the protected workflow artifact but must be sanitized before public portfolio use.
-
-## Current Azure evidence boundary
-
-The latest promoted Azure evidence remains historical read-only planner run `29856203054`, observed July 21, 2026.
-
-At that observation:
-
-- resource group: `rg-servicetracer-dev-westus2`;
-- region: `westus2`;
-- collector: `vm-stcollector-mst-dev`;
-- size: `Standard_B2ats_v2`;
-- deployed image: Ubuntu 22.04;
-- desired image: Ubuntu 24.04;
-- evidence disk: attached with `deleteOption: Detach`;
-- production NIC: static address and VM `deleteOption: Delete`;
-- system-assigned identity: present;
-- visible role assignments in that artifact: none;
-- Azure mutations: unauthorized and unperformed.
-
-That evidence does not prove the present tenant, subscription, resource inventory, principal ID, RBAC, Storage state, quota, pricing, guest health, or frontend behavior.
-
-## Cost and quota boundary
-
-The planned resource set for a future mutation remains one Standard LRS Storage account, report versions, requests, egress, and one Storage-scope role assignment, with no new compute.
-
-- CAD 10.00 is a planning ceiling, not an estimate or quotation.
-- ARM validation and What-If do not provide current pricing or actual cost.
-- The planner must preserve missing current price or quota evidence as a later deployment blocker.
-- No deployment may be inferred from a successful planning run.
-
-```text
-expected_low_cost
-!= current_price_evidence
-!= actual_cost
-```
-
-## Validation and expected outputs
-
-Repository verification must prove:
-
-- workflow is manual-only and OIDC-protected;
-- exact commit and confirmation checks exist;
-- the workflow and planner contain no Azure mutation commands;
-- bounded authority grant permits authentication and dispatch but not mutation;
-- artifacts are uploaded on success or failure;
-- all unit tests and Bicep checks pass for the exact PR head;
-- final diff remains limited to the six declared files.
-
-A successful future planner run means only:
-
-```text
-current Azure context observed
-+ ARM validation completed
-+ exact What-If completed
-+ evidence artifact preserved
-!= deployment authorized
-```
+1. validate `.project` state;
+2. run `bash -n` on the planner;
+3. run all unit tests, including the new RBAC-capture regression tests;
+4. run Bicep lint and build;
+5. inspect every exact-head CI job;
+6. confirm the final diff is limited to the four declared paths;
+7. record an owner-account technical review, explicitly not independent organizational approval;
+8. obtain explicit merge authorization.
 
 ## Failure, rollback, and cleanup
 
-Repository failure behavior:
+If CI or review fails, keep the PR draft, patch only the declared files, and obtain fresh exact-head CI. Do not weaken OIDC, protected environment, exact-commit, confirmation, artifact, cost, or no-mutation controls.
 
-1. keep the PR draft;
-2. inspect exact failing CI jobs;
-3. patch only the six declared paths;
-4. obtain fresh exact-head CI;
-5. never weaken OIDC, environment, commit, confirmation, artifact, cost, or no-mutation controls merely to pass.
+Repository rollback is closing the PR or reverting its commits. No Azure rollback or cleanup applies because this repair performs no Azure action.
 
-Repository rollback is closing the PR or reverting its commits. After merge, disabling the planner requires a reviewed revert of the workflow and its bounded grant.
+## Next gate
 
-A dispatched planning run creates no Azure resources and therefore requires no Azure cleanup. Its GitHub artifact expires after 30 days unless deliberately preserved as promoted evidence.
+After merge, manually dispatch the planner against the exact merge commit. Inspect every step and artifact, verify complete RBAC evidence, ARM validation, and exact What-If, then reconcile current Azure reality before proposing any deployment.
 
-## Claim boundary and next gate
-
-After merge, the repository may claim that a guarded read-only Azure planning workflow exists. It may not claim that the planner has run, the endpoint exists, managed-identity publication works, or the frontend ingests live data.
-
-The next gate after merge is dispatching the workflow against the exact merged commit, inspecting every job, downloading and hashing the artifact, and reconciling the resulting Azure observation before any deployment proposal.
+```text
+planner_repaired
+!= planner_rerun_succeeded
+!= endpoint_deployed
+!= frontend_live_data_proven
+```
