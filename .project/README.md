@@ -56,6 +56,35 @@ state_semantics = declaration_not_live_status
 
 The pull request number may be null before the PR is opened and a positive integer afterward. Merge, closure, CI, and review state must still be resolved from live GitHub.
 
+## Bounded authority grants
+
+`authority_defaults` remain fail-closed. A workflow, dispatch, Azure authentication, or Azure mutation is unauthorized unless a narrowly scoped entry in `bounded_authority_grants` explicitly records the exception.
+
+A bounded grant must identify:
+
+- one workflow path and one operation;
+- the human authorization source and date;
+- whether the active workflow, dispatch, and Azure authentication are allowed;
+- whether Azure mutations are allowed;
+- the protected environment, exact-commit rule, and typed confirmation;
+- permitted operations and a claim boundary.
+
+The semantic marker is:
+
+```text
+state_semantics = bounded_exception_to_false_defaults
+```
+
+A read-only grant may authorize OIDC login, resource inventory, ARM validation, and What-If while keeping `azure_mutations_authorized = false`. Such a grant never implies deployment, RBAC changes, guest commands, report publication, or endpoint configuration.
+
+```text
+azure_authenticated
+!= azure_mutation_authorized
+
+what_if_completed
+!= deployment_succeeded
+```
+
 ## Write rules
 
 - One bounded change owns writes to one feature branch.

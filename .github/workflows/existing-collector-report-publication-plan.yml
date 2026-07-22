@@ -1,0 +1,186 @@
+name: Existing collector report publication plan
+
+on:
+  workflow_dispatch:
+    inputs:
+      resource_group:
+        description: 'Existing bounded ServiceTracer resource group'
+        required: true
+        default: rg-servicetracer-dev-westus2
+        type: string
+      location:
+        description: 'Expected Azure region'
+        required: true
+        default: westus2
+        type: string
+      prefix:
+        description: 'Bicep resource-name prefix'
+        required: true
+        default: mst
+        type: string
+      environment:
+        description: 'Lab environment'
+        required: true
+        default: dev
+        type: choice
+        options: [dev, test]
+      allowed_origin:
+        description: 'Exact HTTPS browser origin permitted by CORS'
+        required: true
+        default: https://anthonyedgar30000.github.io
+        type: string
+      maximum_monthly_cost_cad:
+        description: 'Planning ceiling only; maximum CAD 10.00'
+        required: true
+        default: '10.00'
+        type: string
+      reviewed_commit:
+        description: 'Exact 40-character reviewed commit to plan'
+        required: true
+        type: string
+      confirmation:
+        description: 'Enter PLAN-PUBLICATION:<resource-group>:vm-stcollector-<prefix>-<environment>'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: existing-collector-report-publication-plan-${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+  ARTIFACT_DIR: existing-collector-report-publication-plan-evidence
+
+jobs:
+  plan:
+    name: Plan report publication without Azure mutations
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact reviewed repository state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.reviewed_commit }}
+
+      - name: Validate bounded read-only authority
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+          MAXIMUM_MONTHLY_COST_CAD: ${{ inputs.maximum_monthly_cost_cad }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          [[ "$RESOURCE_GROUP" =~ ^rg-servicetracer-(dev|test)(-[a-z0-9-]+)?$ ]]
+          [[ "$LOCATION" =~ ^[a-z0-9]+$ ]]
+          [[ "$PREFIX" =~ ^[a-z0-9]{2,12}$ ]]
+          [[ "$LAB_ENVIRONMENT" =~ ^(dev|test)$ ]]
+          [[ "$ALLOWED_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]
+          [[ "$REVIEWED_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$(git rev-parse HEAD)" == "$REVIEWED_COMMIT" ]]
+          [[ "$MAXIMUM_MONTHLY_COST_CAD" =~ ^[0-9]+([.][0-9]{1,2})?$ ]]
+          awk -v amount="$MAXIMUM_MONTHLY_COST_CAD" 'BEGIN { exit !(amount <= 10.00) }'
+          collector_vm="vm-stcollector-${PREFIX}-${LAB_ENVIRONMENT}"
+          expected="PLAN-PUBLICATION:${RESOURCE_GROUP}:${collector_vm}"
+          [[ "$CONFIRMATION" == "$expected" ]] || {
+            echo "Confirmation must exactly equal: $expected" >&2
+            exit 1
+          }
+          jq -n \
+            --arg operation existing_collector_report_publication_plan \
+            --arg reviewed_commit "$REVIEWED_COMMIT" \
+            --arg resource_group "$RESOURCE_GROUP" \
+            --arg location "$LOCATION" \
+            --arg collector_vm "$collector_vm" \
+            --arg allowed_origin "$ALLOWED_ORIGIN" \
+            --arg maximum_monthly_cost_cad "$MAXIMUM_MONTHLY_COST_CAD" \
+            '{
+              operation: $operation,
+              reviewed_commit: $reviewed_commit,
+              resource_group: $resource_group,
+              location: $location,
+              collector_vm: $collector_vm,
+              allowed_origin: $allowed_origin,
+              maximum_monthly_cost_cad: ($maximum_monthly_cost_cad | tonumber),
+              azure_authentication_authorized: true,
+              azure_mutations_authorized: false
+            }' > "$ARTIFACT_DIR/request.json"
+
+      - name: Prove planner is read-only before Azure login
+        run: |
+          set -euo pipefail
+          python -m unittest infra.tests.test_existing_collector_report_publication_plan_workflow
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Capture current Azure state and exact What-If
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+          MAXIMUM_MONTHLY_COST_CAD: ${{ inputs.maximum_monthly_cost_cad }}
+        run: |
+          set -euo pipefail
+          chmod +x infra/scripts/plan_existing_collector_report_publication.sh
+          infra/scripts/plan_existing_collector_report_publication.sh \
+            --resource-group "$RESOURCE_GROUP" \
+            --location "$LOCATION" \
+            --prefix "$PREFIX" \
+            --environment "$LAB_ENVIRONMENT" \
+            --allowed-origin "$ALLOWED_ORIGIN" \
+            --artifact-dir "$ARTIFACT_DIR" \
+            --maximum-monthly-cost-cad "$MAXIMUM_MONTHLY_COST_CAD"
+
+      - name: Write evidence manifest
+        if: always()
+        run: |
+          set -euo pipefail
+          if [[ -d "$ARTIFACT_DIR" ]]; then
+            find "$ARTIFACT_DIR" -type f ! -name artifact-manifest.sha256 -print0 \
+              | sort -z \
+              | xargs -0 -r sha256sum \
+              > "$ARTIFACT_DIR/artifact-manifest.sha256"
+          fi
+
+      - name: Write read-only planning summary
+        if: always()
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+        run: |
+          {
+            echo '## Existing collector report publication plan'
+            echo
+            echo "- Reviewed commit: \`$REVIEWED_COMMIT\`"
+            echo "- Resource group: \`$RESOURCE_GROUP\`"
+            echo '- Azure authentication authorized: `true` for this read-only planner only'
+            echo '- Azure mutations authorized: `false`'
+            echo '- Azure mutations performed: `false`'
+            echo '- Current price and quota evidence remain deployment gates unless explicitly captured and reviewed in the artifact.'
+            echo '- Deployment, RBAC changes, report publication, and frontend endpoint configuration remain out of scope.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload protected non-secret planning evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: existing-collector-report-publication-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
