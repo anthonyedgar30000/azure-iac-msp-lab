@@ -25,7 +25,7 @@ last_substantive_baseline
 
 - Change: `existing-collector-report-publication`.
 - Branch: `feat/existing-collector-report-publication`.
-- Pull request: not yet assigned; this field is authored-change metadata, not live status.
+- Pull request: #37, recorded as authored-change metadata only; live status remains external GitHub evidence.
 - Authority: repository design and read-only planning only.
 - Objective: prepare a safe publication path that uses the existing collector managed identity without redeploying or replacing collector compute.
 
@@ -163,7 +163,7 @@ The expected resource set is one Standard LRS Storage account, report versions, 
 
 Before this repository-only pull request is ready to merge:
 
-1. record the assigned pull-request number as authored-change metadata;
+1. confirm PR #37 is recorded as authored-change metadata;
 2. confirm the final diff is limited to the declared paths;
 3. run workflow-observability validation;
 4. run the existing and new report-publication tests;
