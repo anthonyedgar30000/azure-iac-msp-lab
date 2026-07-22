@@ -5,7 +5,7 @@
   "trusted_baseline": {
     "branch": "main",
     "commit": "bb1351da492548242382a86db5293f44dabfb1f7",
-    "commit_semantics": "live main head after coordination-only PR #30 merged; the active evidence-schema branch is based on this exact repository baseline",
+    "commit_semantics": "live main head after coordination-only PR #30 merged; PR #31 is based on this exact repository baseline",
     "last_completed_increment": {
       "pull_request": 30,
       "title": "Reconcile PR29 merge and close legacy PR1 state",
@@ -32,12 +32,19 @@
       "branch": "feature/collector-recovery-evidence-schema",
       "write_owner": "ChatGPT conversation: Azure IaC MSP Lab reality synchronization",
       "scope": "Design-only collector recovery evidence contract, five closed JSON schemas, standard-library fail-closed validator, negative regression tests, design documentation, and project coordination state. Permitted paths: infra/recovery-evidence/**, infra/tests/test_collector_recovery_evidence_design.py, docs/designs/collector-recovery-evidence-schema.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/modules/**, existing replacement execution contract and candidate workflow, application source, credentials, Azure mutation scripts, budgets, alerts, and live resources.",
-      "status": "implementation_in_progress",
-      "pull_request": null,
-      "next_gate": "Open a draft pull request, run exact-head CI, inspect every job, and obtain an evidence-quality review of the exact passing head. Keep Azure authentication, workflow activation, and mutations prohibited."
+      "status": "ci_pending",
+      "pull_request": 31,
+      "next_gate": "Run and inspect exact-head CI for PR #31, then obtain evidence-quality review of the exact passing head. Keep the pull request draft and Azure authentication, workflow activation, and mutations prohibited until the repository gate is satisfied."
     }
   ],
-  "known_open_pull_requests": [],
+  "known_open_pull_requests": [
+    {
+      "pull_request": 31,
+      "title": "Define collector recovery evidence schemas",
+      "status": "draft_ci_pending_evidence_quality_review_required",
+      "action": "Inspect exact-head CI and perform evidence-quality review without claiming guest, Azure, recovery, or rollback evidence."
+    }
+  ],
   "resolved_repository_items": [
     {
       "pull_request": 1,
@@ -78,15 +85,15 @@
       ]
     },
     "current_increment": {
-      "branch": "feature/collector-recovery-evidence-schema",
-      "repository_head": "live branch head after project-state update",
-      "status": "local_design_validation_complete_ci_not_yet_run"
+      "pull_request": 31,
+      "repository_head": "live PR #31 head after this coordination update",
+      "status": "exact_head_ci_pending"
     },
     "claim_boundary": "Repository tests and CI prove schema and code consistency only. They do not prove current guest health, Azure preflight, snapshot recoverability, Trusted Launch bootability, rollback, cost, quota, RBAC restoration, or execution authority."
   },
   "review_state": {
     "evidence_quality": {
-      "status": "pending",
+      "status": "pending_exact_head_ci",
       "required_scope": [
         "schema closure and version pinning",
         "correlation and target binding",
@@ -116,7 +123,7 @@
   },
   "next_bounded_operation": {
     "operation": "collector_recovery_evidence_schema_design",
-    "status": "implementation_in_progress",
+    "status": "ci_pending",
     "authority": "repository_design_only",
     "active_workflow_present": false,
     "dispatch_authorized": false,
@@ -135,6 +142,6 @@
       "evidence-quality review against the exact passing head",
       "no active workflow, execution commands, credentials, raw runtime evidence, or Azure mutations"
     ],
-    "next_gate": "Open the draft pull request and validate the exact head. Do not authenticate to Azure, activate a workflow, mutate resources, restore RBAC, or claim operational recovery."
+    "next_gate": "Complete PR #31 CI and evidence-quality review. Do not authenticate to Azure, activate a workflow, mutate resources, restore RBAC, or claim operational recovery."
   }
 }
