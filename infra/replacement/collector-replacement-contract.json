@@ -37,15 +37,20 @@
   },
   "cost_controls": {
     "currency": "CAD",
+    "review_status": "conditionally_approved_planning_estimate",
+    "reviewed_planning_estimate": 4.0,
+    "renewed_approval_threshold": 4.0,
     "maximum_declared_temporary_cost": 10.0,
     "maximum_snapshots": 2,
     "maximum_total_snapshot_gib": 96,
     "maximum_compute_overlap_minutes": 0,
+    "maximum_isolated_restore_rehearsal_compute_hours": 4,
     "maximum_recovery_resource_retention_hours": 24,
+    "fresh_authenticated_subscription_cost_preflight_required": true,
     "cleanup_owner_required": true,
     "cleanup_deadline_required": true,
     "azure_budget_or_alert_mutation_allowed": false,
-    "note": "These are policy ceilings, not a price quotation. Promotion requires a reviewed cost estimate and cleanup evidence."
+    "note": "Planning feasibility only. Stop for renewed approval above CAD 4 and stop unconditionally above CAD 10. Promotion still requires subscription-specific pricing, quota, ownership, deadline, and cleanup evidence."
   },
   "required_preflight_gates": [
     "exact target and planner evidence identity match",
@@ -56,9 +61,71 @@
     "recent evidence readable",
     "NIC subnet and static address recorded",
     "current identity and visible role assignments recorded",
-    "current OS-disk identity, size, OS type, Hyper-V generation, security type, encryption, and access policy recorded",
+    "current OS-disk identity, size, SKU, OS type, Hyper-V generation, security profile, encryption or DES, zone when present, access policy, and delete option recorded",
+    "fresh subscription-specific pricing, SKU availability, and quota preflight passed",
     "recovery owner, cost ceiling, and cleanup deadline approved"
   ],
+  "consistency_boundary": {
+    "phase_id": "quiesce_and_deallocate_source",
+    "ordered_actions": [
+      "stop accepting new collector writes",
+      "drain in-flight collector writes",
+      "flush pending evidence writes to the mounted evidence filesystem",
+      "record final evidence checkpoint identifier and SHA-256",
+      "record maintenance correlation identifier",
+      "stop the collector service",
+      "verify guest shutdown",
+      "deallocate the source VM",
+      "verify Azure PowerState/deallocated"
+    ],
+    "source_power_state_required": "PowerState/deallocated",
+    "final_evidence_checkpoint_id_required": true,
+    "final_evidence_checkpoint_sha256_required": true,
+    "maintenance_correlation_id_required": true,
+    "snapshot_binding_fields": [
+      "maintenance_correlation_id",
+      "final_evidence_checkpoint_id",
+      "final_evidence_checkpoint_sha256"
+    ],
+    "both_snapshots_must_share_binding": true,
+    "snapshot_capture_before_boundary_allowed": false
+  },
+  "isolated_restore_rehearsal": {
+    "phase_id": "isolated_snapshot_boot_rehearsal",
+    "required_before_phase": "remove_old_compute",
+    "source_snapshot": "exact verified OS-disk snapshot",
+    "temporary_os_disk_create_option": "Copy",
+    "temporary_vm_os_disk_create_option": "Attach",
+    "security_profile_source": "recorded source Trusted Launch profile",
+    "source_vm_must_remain_deallocated": true,
+    "production_nic_attached": false,
+    "production_evidence_disk_attached": false,
+    "network_boundary": "temporary isolated NIC with no production service path",
+    "required_proof": [
+      "temporary disk source is the exact verified OS-disk snapshot",
+      "temporary VM uses the recorded Trusted Launch security profile",
+      "specialized OS disk is attached with create option Attach",
+      "prior OS boots",
+      "VM Guest State and vTPM viability are proven",
+      "bounded guest health evidence succeeds",
+      "production NIC is not attached",
+      "production evidence disk is not attached"
+    ],
+    "cleanup_required": true,
+    "maximum_compute_hours": 4,
+    "maximum_retention_hours": 24,
+    "operational_rollback_proof": false
+  },
+  "replacement_vm_attachment_contract": {
+    "nic_resource": "nic-stcollector-mst-dev",
+    "nic_delete_option": "Detach",
+    "evidence_disk_resource": "disk-stcollector-evidence-mst-dev",
+    "evidence_disk_delete_option": "Detach",
+    "os_disk_resource": "disk-stcollector-os-mst-dev",
+    "os_disk_delete_option": "Delete",
+    "verify_after_vm_create": true,
+    "verify_before_failed_compute_deletion": true
+  },
   "phases": [
     {
       "phase_id": "validate_authority",
@@ -70,43 +137,55 @@
       "phase_id": "guest_and_control_plane_preflight",
       "mutation": false,
       "requires_explicit_authorization": false,
-      "evidence_required": "service, health, mount, filesystem, evidence readability, VM, NIC, disks, identity, RBAC, and OS-disk recreation metadata"
+      "evidence_required": "service, health, mount, filesystem, evidence readability, VM, NIC, disks, identity, RBAC, OS-disk recreation metadata, and subscription-specific cost and quota"
     },
     {
       "phase_id": "preserve_delete_options",
       "mutation": true,
       "requires_explicit_authorization": true,
-      "evidence_required": "NIC and evidence disk verified Detach before VM deletion; OS disk remains disposable only after its snapshot is independently verified"
+      "evidence_required": "source NIC and evidence disk verified Detach before maintenance; OS disk remains disposable only after exact-snapshot boot rehearsal"
+    },
+    {
+      "phase_id": "quiesce_and_deallocate_source",
+      "mutation": true,
+      "requires_explicit_authorization": true,
+      "evidence_required": "writer stopped and drained, writes flushed, final checkpoint ID and SHA-256 recorded, maintenance correlation recorded, guest shutdown verified, and Azure PowerState/deallocated verified"
     },
     {
       "phase_id": "create_recovery_points",
       "mutation": true,
       "requires_explicit_authorization": true,
-      "evidence_required": "evidence-disk snapshot and OS-disk snapshot for canonical-name recreation"
+      "evidence_required": "evidence-disk and OS-disk snapshots captured only after deallocation and bound to the same maintenance correlation and final evidence checkpoint"
     },
     {
       "phase_id": "verify_recovery_points",
       "mutation": false,
       "requires_explicit_authorization": true,
-      "evidence_required": "provisioning state, source identity, size, generation, access policy, expiry tags, and deterministic canonical-name OS-disk recreation contract"
+      "evidence_required": "provisioning state, source identity, size, generation, access policy, expiry tags, shared maintenance binding, and deterministic disk recreation metadata"
+    },
+    {
+      "phase_id": "isolated_snapshot_boot_rehearsal",
+      "mutation": true,
+      "requires_explicit_authorization": true,
+      "evidence_required": "exact snapshot copied to a temporary disk, specialized disk attached to an isolated Trusted Launch VM, boot and VM Guest State or vTPM proven, no production NIC or evidence disk attached, source VM remains deallocated, and temporary cost and cleanup limits preserved"
     },
     {
       "phase_id": "remove_old_compute",
       "mutation": true,
       "requires_explicit_authorization": true,
-      "evidence_required": "VM-only deletion after both snapshots are verified, with NIC and evidence disk preserved and canonical OS-disk name expected to become reusable"
+      "evidence_required": "VM-only deletion after both snapshots and the exact-snapshot isolated boot rehearsal are verified, with production NIC and evidence disk preserved and canonical OS-disk name expected to become reusable"
     },
     {
       "phase_id": "verify_preservation_boundary",
       "mutation": false,
       "requires_explicit_authorization": true,
-      "evidence_required": "NIC, static address, subnet, evidence disk, both recovery snapshots, and canonical OS-disk name availability"
+      "evidence_required": "production NIC, static address, subnet, evidence disk, both recovery snapshots, rehearsal evidence, and canonical OS-disk name availability"
     },
     {
       "phase_id": "deploy_replacement_compute",
       "mutation": true,
       "requires_explicit_authorization": true,
-      "evidence_required": "Ubuntu 24.04 VM using preserved NIC and evidence disk with canonical OS-disk name"
+      "evidence_required": "Ubuntu 24.04 VM using the preserved NIC and evidence disk with canonical OS-disk name; NIC and evidence disk use deleteOption Detach and are re-read after creation"
     },
     {
       "phase_id": "harden_replacement_os_disk",
@@ -124,7 +203,7 @@
       "phase_id": "post_change_verification",
       "mutation": false,
       "requires_explicit_authorization": true,
-      "evidence_required": "cloud-init, mount UUID, service, health, durable write, restart persistence, identity and RBAC"
+      "evidence_required": "cloud-init, mount UUID, service, health, durable write, restart persistence, identity, RBAC, and re-read Detach semantics"
     },
     {
       "phase_id": "human_recovery_acceptance",
@@ -136,14 +215,14 @@
       "phase_id": "cleanup_temporary_recovery_resources",
       "mutation": true,
       "requires_explicit_authorization": true,
-      "evidence_required": "acceptance decision, exact cleanup confirmation, deletion proof before deadline"
+      "evidence_required": "acceptance decision, exact cleanup confirmation, deletion proof before deadline, and actual temporary-cost evidence"
     }
   ],
   "rollback": {
     "status": "strategy_selected_design_only",
     "promotion_blocked": true,
     "strategy_id": "os_disk_snapshot_recreate_canonical_name",
-    "decision": "Create and independently verify an OS-disk snapshot, allow the disposable old OS disk to be deleted with the old VM, retain the canonical OS-disk name for the replacement, and recreate the prior bootable VM from the verified snapshot if rollback is required.",
+    "decision": "Quiesce and deallocate the source, create two consistency-bound snapshots, prove the exact OS snapshot boots in an isolated Trusted Launch rehearsal before deleting old compute, retain the canonical OS-disk name for replacement, and recreate the prior VM from the verified snapshot if rollback is required.",
     "canonical_os_disk_name": "disk-stcollector-os-mst-dev",
     "snapshot_name_prefix": "snap-stcollector-os-rollback-mst-dev-",
     "preserve_old_os_disk_directly": false,
@@ -152,12 +231,15 @@
     "source_preflight_required": [
       "source OS-disk resource ID",
       "disk size GiB",
+      "disk SKU",
       "OS type",
       "Hyper-V generation",
-      "security type and Trusted Launch compatibility",
-      "encryption configuration",
+      "security profile and Trusted Launch compatibility",
+      "encryption configuration and disk encryption set when present",
+      "availability zone when present",
       "network access policy",
-      "public network access state"
+      "public network access state",
+      "OS-disk delete option"
     ],
     "snapshot_verification_required": [
       "provisioning state succeeded",
@@ -166,16 +248,36 @@
       "Hyper-V generation and OS type are preserved",
       "network access policy is DenyAll",
       "public network access is Disabled",
+      "maintenance correlation ID matches the consistency boundary",
+      "final evidence checkpoint ID matches the consistency boundary",
+      "final evidence checkpoint SHA-256 matches the consistency boundary",
       "execution, owner, and cleanup-deadline tags are present",
       "cleanup deadline is no more than 24 hours after creation"
     ],
     "recreation_contract": {
-      "os_disk_create_option": "Copy",
-      "os_disk_source": "verified OS-disk snapshot",
+      "managed_disk_create_option": "Copy",
+      "managed_disk_source": "exact verified OS-disk snapshot",
+      "vm_os_disk_create_option": "Attach",
       "recreated_os_disk_name": "disk-stcollector-os-mst-dev",
+      "recreated_os_disk_delete_option": "Delete",
       "recreated_vm_name": "vm-stcollector-mst-dev",
       "attach_preserved_nic": "nic-stcollector-mst-dev",
+      "preserved_nic_delete_option": "Detach",
       "attach_preserved_evidence_disk": "disk-stcollector-evidence-mst-dev",
+      "preserved_evidence_disk_delete_option": "Detach",
+      "re_read_attachment_delete_options_after_create": true,
+      "verify_attachment_delete_options_before_failed_compute_deletion": true,
+      "metadata_required": [
+        "disk SKU",
+        "OS type",
+        "Hyper-V generation",
+        "security profile and Trusted Launch settings",
+        "encryption configuration and disk encryption set when present",
+        "availability zone when present",
+        "network access policy",
+        "public network access state",
+        "OS-disk delete option"
+      ],
       "identity_rule": "record the new system-assigned principal and restore only the approved RBAC allowlist",
       "acceptance_required": [
         "prior OS boots under the reviewed security profile",
@@ -183,21 +285,24 @@
         "recent pre-change evidence is readable",
         "collector service and local health endpoint succeed",
         "durable write and restart persistence succeed",
-        "NIC, static address, identity, RBAC, and disk access policies match the rollback contract"
+        "NIC, static address, identity, RBAC, and disk access policies match the rollback contract",
+        "NIC and evidence disk are re-read with deleteOption Detach before any failed-compute deletion"
       ]
     },
     "operationally_tested": false,
-    "independent_review_status": "pending",
-    "before_old_vm_deletion": "Abort without deleting old compute unless both evidence-disk and OS-disk recovery snapshots are independently verified.",
-    "after_old_vm_deletion": "If replacement verification fails, remove only the failed replacement compute boundary, recreate the canonical OS disk from the verified OS snapshot, recreate the prior VM with the preserved NIC and evidence disk, restore approved RBAC, and verify the rollback acceptance checks.",
-    "evidence_disk_rule": "Never discard, format, replace, or restore over the evidence disk during rollback."
+    "independent_review_status": "changes_addressed_re_review_pending",
+    "before_old_vm_deletion": "Abort without deleting old compute unless the source was quiesced and deallocated, both snapshots share the final checkpoint binding, and the exact OS snapshot passed the isolated Trusted Launch boot rehearsal.",
+    "after_old_vm_deletion": "If replacement verification fails, remove only failed replacement compute after re-reading NIC and evidence-disk Detach semantics, recreate the canonical OS disk from the exact verified snapshot using Copy, recreate the prior VM using Attach with the preserved NIC and evidence disk, restore approved RBAC, and verify rollback acceptance.",
+    "evidence_disk_rule": "Never discard, format, replace, restore over, or attach the production evidence disk to the isolated rehearsal VM."
   },
   "unresolved_blockers": [
     "operational proof of the selected OS-disk snapshot recreation rollback",
     "guest preflight evidence schema",
-    "independent recovery-point verification method",
+    "fake-Azure-CLI-tested recovery-point and isolated-rehearsal implementation",
     "managed-identity and RBAC restoration allowlist",
-    "reviewed temporary-cost estimate and cleanup owner",
-    "independent operations-and-recovery approval of this rollback decision"
+    "fresh authenticated subscription-specific cost and quota preflight",
+    "cleanup owner and deadline",
+    "renewed independent operations-and-recovery approval",
+    "independent evidence-quality and security-and-identity approval of the final implementation"
   ]
 }
