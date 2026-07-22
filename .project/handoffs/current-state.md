@@ -29,7 +29,7 @@ repository reconciled
 - Workstream: `collector-recovery-evidence-schema-design`.
 - Branch: `feature/collector-recovery-evidence-schemas`.
 - Write owner: this explicitly authorized bounded implementation conversation.
-- Status: CI pending.
+- Status: evidence-quality remediation; exact-head CI pending.
 - Pull request: #32, draft.
 - Authority: repository design only.
 
@@ -62,12 +62,36 @@ No other conversation should edit this branch or these seven paths unless owners
 - Pull request: #32, **Add fail-closed collector recovery evidence schemas**.
 - State: open draft.
 - Base: `main` at `bb1351da492548242382a86db5293f44dabfb1f7`.
-- Branch: `feature/collector-recovery-evidence-schemas`.
-- Final authoritative head: resolve from live GitHub after this coordination update.
+- Final authoritative head: resolve from live GitHub after this remediation handoff update.
 - CI state: exact-head CI pending.
-- Changed-file boundary: exactly the seven permitted files.
+- Changed-file boundary: exactly the seven permitted files before this update; reverify against live GitHub after publication.
 
 The branch history contains transient creation-and-deletion commits for an accidental temporary path. The path is absent from the final tree and PR diff. The exact changed-file comparison, not commit-message appearance alone, is the scope authority.
+
+## Evidence-quality review chronology
+
+The predecessor exact head `f640f6664ab72deece24b770fe95cba51b0ac6ea` passed CI run `29946271140` (run 102), including both ServiceTracer and Bicep jobs.
+
+Evidence-quality review of that same exact head recorded **CHANGES REQUIRED**. The blocking findings were:
+
+1. contract fields used by package validation were not all pinned against weakening;
+2. record-type detail requirements were documented but not enforced;
+3. redaction metadata was not bound to exact recursive marker paths;
+4. target resource IDs could cross subscriptions;
+5. non-finite JSON numbers were accepted;
+6. superseded packages lacked mandatory provenance.
+
+The remediation now:
+
+- pins package statuses, record statuses, claim statuses, record types, limits, patterns, phase requirements, claim requirements, detail requirements, redaction policy, failure prohibitions, and cleanup boundaries;
+- enforces minimum evidence-bearing details for every record type;
+- derives redaction marker paths recursively and requires an exact metadata match;
+- requires one declared subscription across all target Azure resource IDs;
+- rejects non-finite JSON values;
+- requires bounded supersession package IDs and prevents superseded packages from retaining verified operational claims;
+- records producer tool, version, identity, and source commit.
+
+Local remediation verification contains 31 tests and passed. Run 102 does not verify the remediation commits. Fresh exact-head CI and evidence-quality re-review are required.
 
 ## Objective
 
@@ -79,12 +103,12 @@ The increment covers:
 2. Azure control-plane preflight evidence;
 3. exact correlation and UTC timestamp requirements;
 4. logical command identity and exit status;
-5. exact target resource IDs;
+5. exact target resource IDs and one subscription boundary;
 6. before/after state;
 7. evidence digests;
 8. recursive secret and redaction controls;
 9. cleanup ownership, deadline, retention, and cost evidence;
-10. failure, abort, rollback, and recovery claim requirements;
+10. failure, abort, supersession, rollback, and recovery claim requirements;
 11. deterministic positive and negative validation.
 
 ## Contract boundary
@@ -110,18 +134,19 @@ A future package uses:
 
 - `servicetracer.collector-recovery-evidence.v1`.
 
-Every material record must preserve:
+Every package must preserve:
 
-- record identity;
-- record type and phase;
+- package identity and producer provenance;
+- record identity, type, and phase;
 - observation timestamp;
 - logical command identity;
 - exit status;
 - target resource ID;
 - before and after state;
 - evidence SHA-256;
-- bounded details;
-- redaction provenance.
+- bounded typed details;
+- redaction provenance;
+- explicit supersession provenance when applicable.
 
 Unknown top-level and record fields are rejected.
 
@@ -145,55 +170,63 @@ The validator recursively rejects:
 
 - secret-like field names;
 - credential-like value prefixes;
+- non-finite JSON numbers;
 - excessive nesting;
 - excessive collection sizes;
 - oversized text;
 - raw command lines;
 - unknown output fields.
 
-A `[REDACTED]` value requires a structured field path and SHA-256 digest of the removed value.
+A `[REDACTED]` value requires a structured field path and SHA-256 digest of the removed value. The validator derives marker paths recursively and requires the metadata path set to match exactly.
 
 Complete Azure resource IDs are preserved as provenance inside the protected internal package. They are not credentials and cannot be replaced by untraceable redaction markers.
 
-## Failure and rollback rule
+## Failure, supersession, and rollback rule
 
 A failed or aborted package requires:
 
 - a failed or aborted operation attempt;
-- a terminal decision;
+- a matching terminal decision;
 - reason;
 - authority;
 - safest next step;
 - explicit rollback requirement.
 
+A superseded package must identify at least one package ID that supersedes it. Other package states must not carry supersession IDs, and superseded packages cannot retain verified operational claims.
+
 A verified rollback or recovery claim requires complete phase evidence and an accepted human recovery decision. Schema validation remains evidence for review, not permission for a new operation.
 
 ## Local verification
 
-The bounded test suite currently contains 19 tests covering:
+The bounded test suite now contains 31 tests covering:
 
 - valid complete and incomplete packages;
 - false-completeness rejection;
+- contract drift for patterns, claims, detail requirements, and redaction policy;
+- evidence-bearing detail-field enforcement;
 - recursive secret leakage;
 - credential prefixes;
+- non-finite JSON;
 - raw command identities;
-- target drift;
+- target drift and mixed subscriptions;
 - non-UTC timestamps;
-- redaction digest requirements;
+- exact redaction path and digest requirements;
 - bounded nested data;
 - duplicate records;
 - failed-package decision evidence;
 - verified-claim gates;
+- supersession provenance;
+- producer commit provenance;
 - unknown record fields.
 
 Local result:
 
 ```text
 python -m unittest discover -s infra/tests -v
-19 tests passed in the isolated increment fixture
+31 tests passed in the isolated increment fixture
 ```
 
-This is local deterministic validation only. Exact-head GitHub CI for the final PR #32 coordination head is pending.
+This is local deterministic validation only. Exact-head GitHub CI for the remediation head is pending.
 
 ## Latest Azure evidence boundary
 
@@ -232,9 +265,9 @@ These are planning constraints, not current pricing or execution approval.
 Before merge:
 
 1. preserve exactly the seven declared files in the final diff;
-2. obtain exact-head CI for the live PR #32 head after coordination updates;
+2. obtain exact-head CI for the live PR #32 remediation head;
 3. inspect every CI job;
-4. route the exact passing head for evidence-quality review;
+4. route the exact passing remediation head for evidence-quality re-review;
 5. preserve the owner-account reviewer-independence limitation;
 6. keep the PR draft until those gates are satisfied.
 
@@ -248,7 +281,7 @@ If CI fails:
 4. run fresh exact-head CI;
 5. do not weaken evidence or redaction requirements merely to make tests pass.
 
-If review finds a defect:
+If re-review finds a defect:
 
 1. record the exact reviewed head and CI run;
 2. keep the pull request draft;
