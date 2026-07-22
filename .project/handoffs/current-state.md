@@ -13,7 +13,6 @@
 - Exact baseline commit: `bb1351da492548242382a86db5293f44dabfb1f7`.
 - Latest completed increment: PR #30, **Reconcile PR29 merge and close legacy PR1 state**.
 - PR #30 was coordination-only and its exact head `a2b3d7032a1557f9b050b5c282b0e87b70bd2259` passed CI run `29943299617` (run 92).
-- No open pull request existed when the current branch was created.
 
 Canonical boundary:
 
@@ -22,8 +21,9 @@ Canonical boundary:
 ## Active bounded increment
 
 - Branch: `feature/collector-recovery-evidence-schema`.
+- Pull request: #31, draft.
 - Workstream: `collector-recovery-evidence-schema-design`.
-- Status: implementation in progress; draft pull request not yet opened at this handoff revision.
+- Status: exact-head CI pending.
 - Authority: repository design only.
 - Azure authentication authorized: no.
 - Azure mutation authorized: no.
@@ -135,7 +135,7 @@ python -m unittest discover -s infra/tests -v
 
 The focused suite contains 23 tests, including negative cases for missing observations, duplicate identities, correlation and target drift, stale evidence, exit-code inconsistency, state mutation, Azure mutation authority, unredacted secrets, missing failure records, and unsupported rollback-success claims.
 
-This local result is preparatory evidence only. Exact-head GitHub CI remains the authority for the branch.
+This local result is preparatory evidence only. Exact-head GitHub CI for the live PR #31 head remains the authority.
 
 ## Latest promoted Azure evidence
 
@@ -147,13 +147,13 @@ It does not prove current guest health, present resource state, current pricing,
 
 If validation or CI fails:
 
-1. keep the pull request draft;
+1. keep PR #31 draft;
 2. inspect the exact failing invariant and job;
 3. patch only the declared paths;
 4. run fresh exact-head CI;
 5. do not weaken correlation, freshness, redaction, provenance, failure, or authority controls merely to pass.
 
-Repository rollback is closing the pull request without merge or reverting a later merge commit. No Azure rollback applies because no Azure authentication or mutation occurs.
+Repository rollback is closing PR #31 without merge or reverting a later merge commit. No Azure rollback applies because no Azure authentication or mutation occurs.
 
 ## Cleanup and evidence capture
 
@@ -171,8 +171,9 @@ Do not call any of those artifacts guest health, Azure preflight, recovery, roll
 
 ## Next gate
 
-1. Open a draft pull request.
-2. Run exact-head CI and inspect every job and step.
+1. Wait for exact-head PR #31 CI.
+2. Inspect every job and step.
 3. Perform an evidence-quality review against the exact passing head.
 4. Preserve owner-account reviewer-independence limitations.
-5. Keep Azure authentication, workflow activation, resource mutation, RBAC restoration, budget or alert changes, and operational recovery claims prohibited.
+5. Keep PR #31 draft until the repository design gate is explicitly satisfied.
+6. Keep Azure authentication, workflow activation, resource mutation, RBAC restoration, budget or alert changes, and operational recovery claims prohibited.
