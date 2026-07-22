@@ -115,35 +115,10 @@ jobs:
               azure_mutations_authorized: false
             }' > "$ARTIFACT_DIR/request.json"
 
-      - name: Prove planner contains no Azure mutation commands
+      - name: Prove planner is read-only before Azure login
         run: |
           set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-
-          paths = [
-              Path('.github/workflows/existing-collector-report-publication-plan.yml'),
-              Path('infra/scripts/plan_existing_collector_report_publication.sh'),
-          ]
-          prohibited = (
-              'az deployment group create',
-              'az role assignment create',
-              'az role assignment delete',
-              'az storage account create',
-              'az storage account delete',
-              'az vm run-command invoke',
-              'az vm create',
-              'az vm delete',
-              'az resource delete',
-              'az group create',
-              'az group delete',
-          )
-          for path in paths:
-              text = path.read_text(encoding='utf-8')
-              for command in prohibited:
-                  if command in text:
-                      raise SystemExit(f'Prohibited Azure mutation command found in {path}: {command}')
-          PY
+          python -m unittest infra.tests.test_existing_collector_report_publication_plan_workflow
 
       - name: Log in to Azure with workload identity federation
         uses: azure/login@v2
