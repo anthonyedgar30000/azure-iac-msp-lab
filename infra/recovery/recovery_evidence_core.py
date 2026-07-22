@@ -361,7 +361,7 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
     require(cleanup.get("maximum_approved_cost_cad"), 10.0, "cleanup cost")
 
     supersession = obj(contract.get("supersession_requirements"), "supersession requirements")
-    require(set(items(supersession.get("required_fields"), "supersession fields")), {"supersedes_package_id", "reason", "evidence_sha256"}, "supersession fields")
+    require(set(items(supersession.get("required_fields"), "supersession fields")), {"superseded_by_package_id", "reason", "evidence_sha256"}, "supersession fields")
     require(supersession.get("required_only_when_package_status_is_superseded"), True, "supersession status gate")
     require(supersession.get("verified_claims_allowed"), False, "supersession claim gate")
 
