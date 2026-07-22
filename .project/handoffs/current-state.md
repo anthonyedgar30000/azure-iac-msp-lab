@@ -11,12 +11,8 @@
 
 - Default branch: `main`.
 - Current baseline: `777ec83b8a447f01904d5f891795ebcb6ab7abaf`.
-- PR #32, **Add fail-closed collector recovery evidence schemas**, merged at that commit.
-- PR #32 merged exact head `f640f6664ab72deece24b770fe95cba51b0ac6ea`.
-- That head passed CI run `29946271140` (run 102).
-- Evidence-quality review of the same exact head recorded **CHANGES REQUIRED** before the merge.
-
-Canonical interpretation:
+- PR #32 merged exact head `f640f6664ab72deece24b770fe95cba51b0ac6ea` despite a blocking evidence-quality review on that same head.
+- PR #32 run `29946271140` (run 102) passed, but it verifies the reviewed-defective version only.
 
 ```text
 PR merged
@@ -32,7 +28,6 @@ PR merged
 - Pull request: #33, **Repair collector recovery evidence review findings**.
 - PR state: open draft.
 - Write owner: this explicitly authorized bounded repair conversation.
-- Status: exact-head CI pending.
 - Authority: repository design only.
 
 Permitted files:
@@ -45,106 +40,82 @@ Permitted files:
 - `.project/active-work.json`;
 - `.project/handoffs/current-state.md`.
 
-Protected boundaries:
-
-- `.github/workflows/**`;
-- `infra/replacement/**`;
-- `infra/modules/**`;
-- application source;
-- credentials and secrets;
-- live evidence packages;
-- Azure authentication or mutation scripts;
-- budgets and alerts;
-- deployed resources.
+Protected boundaries include workflows, replacement execution, Bicep modules, application source, credentials, live evidence, Azure mutation scripts, budgets, alerts, and deployed resources.
 
 No other conversation should edit this branch or these seven paths unless ownership is explicitly transferred.
 
-## Repair PR reality
+## Repair verification chronology
 
-- Base: current `main` at PR creation, `777ec83b8a447f01904d5f891795ebcb6ab7abaf`.
-- Head after this coordination update: resolve from live GitHub.
-- Final diff before PR-number binding: exactly the seven declared files.
-- Local validation: 31 tests passed.
-- Exact-head GitHub CI: pending.
-- Evidence-quality re-review: pending.
+### Code-bearing repair head
 
-PR #32 run 102 applies only to the predecessor version and must not be represented as verification of PR #33.
+- Exact head: `018f4769f67972bf61f947dcd29380015f116ac4`.
+- Exact-head CI: run `29947999922` (run 107), completed successfully.
+- ServiceTracer tests job: passed, including `.project` validation, unit tests, evidence spool and CLI smoke paths, and replay compatibility.
+- Bicep lint and build job: passed, including collector contract validation.
+- Changed-file boundary: exactly the seven permitted files.
 
-## Blocking findings repaired
+### Evidence-quality re-review
 
-The review of PR #32 head `f640f6664ab72deece24b770fe95cba51b0ac6ea` found:
+The evidence-quality lens reviewed exact head `018f4769f67972bf61f947dcd29380015f116ac4` with run 107 and recorded:
 
-1. contract values used by package validation were not all pinned against weakening;
-2. record-type detail requirements were documented but not enforced;
-3. redaction metadata was not bound to exact recursive marker paths;
-4. target resource IDs could cross subscriptions;
-5. non-finite JSON numbers were accepted;
-6. superseded packages lacked mandatory provenance.
+**TECHNICAL PASS — NO BLOCKING FINDINGS ON THE REVIEWED REPAIR HEAD**
+
+The repair resolves:
+
+1. contract self-protection against weakening;
+2. evidence-bearing detail enforcement for all record types;
+3. exact recursive redaction provenance;
+4. one subscription boundary across target resource IDs;
+5. canonical finite JSON enforcement;
+6. supersession provenance and verified-claim invalidation.
+
+Producer tool, version, identity, and source commit are also required. The validator continues to return `authority_granted = false` and `azure_mutations_authorized = false`.
+
+Reviewer-independence boundary:
+
+- the review was submitted through the pull-request owner's authenticated account;
+- the repository may claim a recorded evidence-quality technical pass;
+- it may not claim independent organizational approval.
+
+### Final coordination head
+
+This handoff and `.project/active-work.json` are coordination-only records written after the code-bearing CI and review.
+
+- Run 107 remains the exact code-bearing-head verification.
+- Live GitHub determines the final coordination head after this update.
+- Fresh exact-head CI is required for that final coordination head.
+- Do not create a self-referential claim that run 107 verifies later coordination commits.
+
+## Repair contents
 
 PR #33 now:
 
 - pins all package-validator-driving contract values;
-- enforces evidence-bearing detail fields for every record type;
+- enforces typed minimum details for all nine record types;
 - recursively derives redaction marker paths and requires exact metadata coverage;
 - requires one declared subscription across every target Azure resource ID;
 - rejects non-finite JSON numbers;
 - records producer tool, version, identity, and source commit;
 - requires bounded supersession provenance;
 - prevents superseded packages from retaining verified operational claims;
-- preserves `authority_granted = false` and `azure_mutations_authorized = false`.
+- preserves design-only and no-authority boundaries.
 
-## Evidence package boundaries
+The local remediation suite contains 31 tests. Synthetic fixtures prove validator behaviour only and are not operational evidence.
 
-The package remains `servicetracer.collector-recovery-evidence.v1` and is design-only.
+## Azure and runtime boundary
 
-Every package preserves:
-
-- package and producer provenance;
-- maintenance correlation;
-- exact target subscription and resource IDs;
-- record identities, types, phases, timestamps, logical command identities, exit statuses, before/after states, and evidence SHA-256 values;
-- typed details by record type;
-- exact redaction provenance;
-- explicit supersession provenance where applicable;
-- explicit claim boundaries.
-
-Completeness is evaluated only against declared phases. Missing evidence is reported and cannot silently become success.
-
-## Verification state
-
-- Contract-only local validation: passed.
-- Local remediation suite: 31 tests passed.
-- Changed-file boundary: exactly seven governed files before this final coordination commit; reverify against live GitHub.
-- Exact-head CI for the live PR #33 head: pending.
-- Evidence-quality re-review: pending.
-
-The repair branch was reconstructed from the complete remediation tree after the concurrent PR #32 merge. Branch ancestry may show the prior feature history, but the final tree and exact PR diff—not commit-message appearance—determine scope.
-
-## Azure and runtime evidence boundary
-
-The latest promoted Azure control-plane evidence remains read-only planner run `29856203054`, observed July 21, 2026.
-
-The last guest-level record remains ServiceTracer `0.4.0` after manual repairs on July 20, 2026.
+The latest promoted Azure control-plane evidence remains read-only planner run `29856203054`, observed July 21, 2026. The last guest-level record remains ServiceTracer `0.4.0` after manual repairs on July 20, 2026.
 
 PR #33 does not query Azure, refresh guest evidence, implement collection commands, authenticate, deploy, mutate resources, restore RBAC, modify budgets or alerts, or prove snapshot recoverability, Trusted Launch bootability, rollback, or recovery.
 
-## Required gates
+## Remaining gates
 
-1. reverify the final PR #33 diff contains exactly the seven declared files;
-2. obtain fresh exact-head CI on the live coordination head;
-3. inspect every CI job;
-4. route the exact passing head for evidence-quality re-review;
-5. preserve the owner-account reviewer-independence limitation;
-6. keep PR #33 draft until all gates are satisfied.
-
-## Failure behavior
-
-If CI fails, keep the PR draft, inspect the exact job and logs, patch only the declared files, and run fresh exact-head CI. Do not weaken evidence requirements merely to make tests pass.
-
-If re-review finds another defect, record the exact reviewed head and CI run, patch within scope or explicitly amend scope, and repeat CI and review.
-
-Repository rollback is closing PR #33 without merge or reverting its commits. No Azure rollback applies because this increment performs no Azure mutation.
+1. obtain fresh exact-head CI for the final coordination head;
+2. inspect both CI jobs and every material step;
+3. reverify the final diff still contains exactly seven governed files;
+4. record final read-only scope/diff confirmation;
+5. keep PR #33 draft unless an explicit merge decision is made separately.
 
 ## Prohibited next step
 
-Do not merge PR #33 based only on local tests. Do not add live guest or Azure collection commands, activate a workflow, authenticate to Azure, deallocate the collector, create snapshots or rehearsal resources, alter delete options, remove or deploy compute, restore RBAC, modify budgets or alerts, or claim operational recovery.
+Do not merge PR #33 based only on run 107. Do not activate workflows, add live collection commands, authenticate to Azure, deallocate the collector, create snapshots or rehearsal resources, alter delete options, remove or deploy compute, restore RBAC, modify budgets or alerts, or claim operational recovery.
