@@ -39,7 +39,7 @@ ARM validation and What-If were not reached. The report endpoint remains undeplo
 
 - Change: `repair-read-only-planner-rbac-query`.
 - Authority: repository-only reliability repair.
-- Pull request: not yet assigned; live PR state remains external GitHub evidence.
+- Pull request: #39, recorded as authored-change metadata only; live status remains external GitHub evidence.
 
 Permitted paths:
 
