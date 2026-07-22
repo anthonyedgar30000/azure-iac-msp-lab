@@ -4,48 +4,76 @@
   "updated_on": "2026-07-22",
   "last_substantive_baseline": {
     "branch": "main",
-    "commit": "36010582460b393c0667e274144d9700e78721bf",
-    "pull_request": 34,
-    "title": "Remediate PR32 evidence-quality findings",
-    "qualification": "repository_design_remediation_exact_head_ci_passed_owner_account_review_accepted_not_independent_not_operationally_verified",
-    "claim_boundary": "This is the last accepted substantive repository-design baseline. It is not required to equal the current repository head after coordination-only merges."
+    "commit": "54466651f291e271e5da542ea0afb38679ca6ca9",
+    "pull_request": 37,
+    "title": "Decouple live report publication from collector compute",
+    "qualification": "repository_design_and_read_only_planning_path_exact_head_ci_passed_owner_account_review_accepted_not_deployed",
+    "claim_boundary": "This baseline proves a decoupled report-publication design and planner exist in the repository. It does not prove current Azure state, successful publication, or frontend ingestion."
   },
   "repository_observation": {
     "observed_on": "2026-07-22",
     "source": "live_github",
-    "main_head": "e6dcb9a2cf1ba05620a294137fea5e21f8dba1ed",
-    "head_semantics": "PR #36 coordination-model merge commit observed before the existing-collector publication branch was opened",
+    "main_head": "54466651f291e271e5da542ea0afb38679ca6ca9",
+    "head_semantics": "PR #37 merge commit observed before the read-only planner-promotion branch was opened",
     "open_pull_requests": [],
     "claim_boundary": "This is time-bounded external evidence, not a self-updating claim. Resolve current head, pull requests, and CI from live GitHub whenever the file is read."
   },
   "authored_change": {
-    "change_id": "existing-collector-report-publication",
-    "branch": "feat/existing-collector-report-publication",
-    "pull_request": 37,
-    "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — repository-only existing-collector publication increment explicitly authorized by Anthony Edgar",
-    "scope": "Design and statically verify a report-publication path that consumes the existing collector managed-identity principal ID without redeploying collector compute. Permitted paths are limited to the dedicated Bicep entry point, read-only planner, inactive workflow design, tests, design documentation, and project coordination records. No active workflow, Azure authentication, Azure mutation, frontend endpoint change, collector VM change, or live evidence collection is authorized.",
-    "authority": "repository_design_and_read_only_planning_only",
+    "change_id": "promote-existing-collector-report-publication-plan",
+    "branch": "feat/promote-existing-collector-report-plan",
+    "pull_request": null,
+    "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — bounded read-only Azure planning promotion explicitly authorized by Anthony Edgar with 'Proceed'",
+    "scope": "Promote only the existing-collector report-publication planner into a manually dispatched GitHub Actions workflow. The workflow may authenticate through the protected azure-lab environment and perform Azure reads, ARM validation, and What-If only. No deployment, RBAC mutation, report publication, frontend endpoint change, collector compute change, budget, alert, or Azure resource mutation is permitted.",
+    "authority": "repository_workflow_promotion_and_read_only_azure_planning_only",
     "state_semantics": "declaration_not_live_status",
     "permitted_paths": [
-      "infra/report-publication-existing-collector.bicep",
-      "infra/scripts/plan_existing_collector_report_publication.sh",
-      "infra/workflow-designs/existing-collector-report-publication.yml",
-      "infra/tests/test_existing_collector_report_publication.py",
+      ".github/workflows/existing-collector-report-publication-plan.yml",
+      "infra/tests/test_existing_collector_report_publication_plan_workflow.py",
       "docs/designs/existing-collector-public-report.md",
       ".project/active-work.json",
+      ".project/README.md",
       ".project/handoffs/current-state.md"
     ],
     "verification_criteria": [
-      "the dedicated template consumes an externally resolved collector principal ID and contains no collector VM, NIC, disk, image, or network resource",
-      "the planner performs Azure reads, ARM validation, and What-If only and contains no deployment, RBAC creation, VM Run Command, or deletion command",
-      "the inactive workflow design remains outside .github/workflows and fails closed before Azure authentication or mutation",
-      "the design defines identity, network, security, cost, deployment, validation, rollback, cleanup, and evidence boundaries",
-      "workflow-observability validation, unit tests, and Bicep lint/build pass for the exact pull-request head",
-      "the final diff remains limited to the declared paths"
+      "workflow is manual-only, protected by azure-lab, pinned to an exact reviewed commit, and requires exact typed confirmation",
+      "workflow authenticates with OIDC only after static read-only tests pass",
+      "workflow calls only the existing read-only planner and cannot deploy, create or delete RBAC, run guest commands, or mutate Azure resources",
+      "planning artifacts capture Azure context, resource group, collector identity, Storage and RBAC inventory, ARM validation, exact What-If, cost boundary, and a digest manifest",
+      "bounded authority grant permits Azure authentication and dispatch for this planner only while keeping Azure mutations false",
+      "workflow-observability validation and all exact-head CI jobs pass",
+      "final diff remains limited to the six declared paths"
     ],
-    "failure_behavior": "Keep the pull request draft, inspect the exact failing validation or CI job, patch only the declared paths, and obtain fresh exact-head CI. Do not move the candidate into .github/workflows, add Azure credentials, weaken the read-only planner, or claim deployment or live-data proof.",
-    "rollback": "Close the pull request without merge or revert its repository-only commits. No Azure rollback applies because this increment does not authenticate to Azure or perform Azure mutations."
+    "failure_behavior": "Keep the pull request draft, inspect the exact failing CI job, patch only the declared paths, and obtain fresh exact-head CI. Do not weaken confirmation, protected-environment, exact-commit, artifact, cost-boundary, or no-mutation controls.",
+    "rollback": "Close the pull request without merge or revert its repository-only commits. If already merged, disable or remove only the read-only planner workflow through a reviewed revert. No Azure rollback applies unless a separately dispatched planning run produced evidence; that run performs no Azure mutation."
   },
+  "bounded_authority_grants": [
+    {
+      "grant_id": "existing-collector-report-publication-read-only-plan",
+      "workflow_path": ".github/workflows/existing-collector-report-publication-plan.yml",
+      "operation": "read_only_azure_planning",
+      "active_workflow_authorized": true,
+      "dispatch_authorized": true,
+      "azure_authentication_authorized": true,
+      "azure_mutations_authorized": false,
+      "authorized_by": "Anthony Edgar",
+      "authorized_on": "2026-07-22",
+      "authorization_source": "Explicit user instruction 'Proceed' after the read-only Azure planning boundary was stated",
+      "protected_environment": "azure-lab",
+      "required_commit_semantics": "exact_40_character_reviewed_commit_checked_out_and_verified",
+      "required_confirmation": "PLAN-PUBLICATION:<resource-group>:vm-stcollector-<prefix>-<environment>",
+      "permitted_azure_operations": [
+        "az account show",
+        "az group show",
+        "az vm show",
+        "az storage account list",
+        "az role assignment list",
+        "az deployment group validate",
+        "az deployment group what-if"
+      ],
+      "state_semantics": "bounded_exception_to_false_defaults",
+      "claim_boundary": "This grant authorizes authentication and dispatch only for current-state inventory, ARM validation, and What-If. It does not authorize deployment, role changes, report publication, endpoint configuration, guest commands, or any Azure resource mutation."
+    }
+  ],
   "completed_increments": [
     {
       "pull_request": 32,
@@ -70,6 +98,12 @@
       "title": "Eliminate self-referential project state",
       "merge_commit": "e6dcb9a2cf1ba05620a294137fea5e21f8dba1ed",
       "qualification": "coordination_model_exact_head_ci_passed_owner_account_review_not_independent"
+    },
+    {
+      "pull_request": 37,
+      "title": "Decouple live report publication from collector compute",
+      "merge_commit": "54466651f291e271e5da542ea0afb38679ca6ca9",
+      "qualification": "repository_design_and_read_only_planning_path_exact_head_ci_passed_owner_account_review_not_independent_not_deployed"
     }
   ],
   "resolved_repository_items": [
@@ -101,17 +135,17 @@
     "status": "completed_read_only",
     "azure_mutations_authorized": false,
     "azure_mutations_performed": false,
-    "freshness_boundary": "This is the latest promoted Azure control-plane evidence, not current Azure reality. The existing-collector publication design does not refresh tenant, subscription, resources, RBAC, guest health, pricing, quota, cost, report Storage state, public endpoint behavior, or live data."
+    "freshness_boundary": "This remains historical evidence until the promoted existing-collector report-publication planner is merged and dispatched. It does not prove current tenant, subscription, resources, RBAC, guest health, pricing, quota, report Storage, endpoint, or browser state."
   },
   "review_state": {
-    "pr34_evidence_quality": {
+    "pr37_publication_design": {
       "status": "accepted_for_bounded_repository_design_increment",
-      "reviewed_pull_request": 34,
-      "reviewed_head": "7d586736e842425092f7fc3a3a23f0167466875e",
-      "reviewed_ci_run_id": 29950152689,
+      "reviewed_pull_request": 37,
+      "reviewed_head": "d5041dc0fad2d28a1b8a5a182cdea8c24dc0caf9",
+      "reviewed_ci_run_id": 29955878403,
       "review_account": "pull_request_owner",
       "independent_organizational_approval": false,
-      "claim_boundary": "Repository-contract acceptance only; not operational recovery proof or independent organizational approval."
+      "claim_boundary": "Repository-design and read-only planning-path acceptance only; not Azure execution, publication, or frontend live-data proof."
     }
   },
   "authority_defaults": {
@@ -119,7 +153,7 @@
     "dispatch_authorized": false,
     "azure_authentication_authorized": false,
     "azure_mutations_authorized": false,
-    "rule": "Repository state, CI, or review never grants Azure execution authority unless a separate explicit authorization record says so."
+    "rule": "Defaults remain fail-closed. A validated bounded_authority_grants entry may authorize a narrowly scoped exception; no grant may imply Azure mutation authority unless explicitly recorded."
   },
   "live_state_resolution": {
     "repository_head": "Query the live GitHub default branch at read time.",
