@@ -2,14 +2,9 @@
 
 ## Status
 
-This document defines a repository-only, design-time evidence contract for a future
-ServiceTracer collector recovery operation.
+This is a repository-only, design-time evidence contract for a future ServiceTracer collector recovery operation.
 
-It does not implement evidence collection commands, activate a GitHub Actions
-workflow, authenticate to Azure, mutate resources, or establish that recovery is
-operationally possible.
-
-Canonical boundary:
+It does not implement collection commands, activate a GitHub Actions workflow, authenticate to Azure, mutate resources, approve spending, or prove that recovery is operationally possible.
 
 ```text
 evidence schema implemented
@@ -20,45 +15,51 @@ evidence schema implemented
 != recovery accepted
 ```
 
-## Purpose
+PR #32 merged the first version into `main`, but its exact-head evidence-quality review recorded **CHANGES REQUIRED**. PR #34 is the bounded remediation increment for those findings. Merge state is therefore not treated as review acceptance.
 
-The replacement execution contract defines what a safe recovery procedure must do.
-This evidence contract defines what must be recorded before any later system can
-claim that a phase was observed, attempted, failed, aborted, rolled back, cleaned
-up, or accepted.
-
-The contract is stored at:
+## Authoritative files
 
 - `infra/recovery/collector-recovery-evidence-contract.json`
-
-The deterministic validator is split across:
-
-- `infra/recovery/recovery_evidence_core.py`;
-- `infra/recovery/validate_recovery_evidence.py`.
-
-The negative and positive regression tests are:
-
+- `infra/recovery/recovery_evidence_core.py`
+- `infra/recovery/validate_recovery_evidence.py`
 - `infra/tests/test_collector_recovery_evidence.py`
 
-## Evidence package model
+The package schema version remains `servicetracer.collector-recovery-evidence.v1`.
 
-A package uses schema version
-`servicetracer.collector-recovery-evidence.v1`.
+## Pinned v1 semantics
 
-Every package must contain:
+`validate_contract()` pins the values consumed later by `validate_evidence_package()` rather than merely checking that they are syntactically valid.
 
-- a unique package identifier;
+Pinned values include:
+
+- package, record, claim, and record-type enumerations;
+- maintenance, record, command, and SHA-256 patterns;
+- phase requirements and claim requirements;
+- secret-field fragments and forbidden credential prefixes;
+- record-detail requirements;
+- cleanup and failure requirements;
+- prohibited failure behaviour;
+- supersession rules;
+- package size and nesting ceilings.
+
+A contract edit cannot silently weaken one of these values while continuing to pass contract validation.
+
+## Package model
+
+Every package requires:
+
+- a package identifier;
 - an RFC 3339 UTC generation timestamp;
 - one maintenance correlation identifier;
 - exact target names and complete Azure resource IDs;
-- an explicit list of declared evidence phases;
-- a package status;
+- declared phase identifiers;
+- package status;
+- explicit supersession state;
 - bounded evidence records;
 - explicit operational claims;
 - a claim-boundary statement.
 
-The validator rejects unknown top-level and record fields. This prevents evidence
-producers from silently attaching arbitrary data or expanding the trust boundary.
+Unknown top-level and record fields are rejected.
 
 ## Common record envelope
 
@@ -68,41 +69,79 @@ Every record requires:
 - `record_type`;
 - `phase_id`;
 - `observed_at`;
-- a logical `command_identity`;
+- logical `command_identity`;
 - numeric `exit_status`;
 - bounded `status`;
 - exact `target_resource_id`;
-- `before_state`;
-- `after_state`;
+- `before_state` and `after_state`;
 - `evidence_sha256`;
-- a short summary;
-- bounded structured details;
-- explicit redaction metadata.
+- summary;
+- typed evidence-bearing `details`;
+- explicit redaction provenance.
 
-`command_identity` is a logical identifier such as
-`guest.preflight.collect`, not a raw shell command. Raw stdout and stderr are not
-part of the v1 package contract.
+`command_identity` is a logical identifier such as `guest.preflight.collect`, not a raw shell command. Raw stdout and stderr are outside the v1 package.
 
-## Record types
+## Required record details
 
-The contract recognizes:
+A record type is not accepted merely because its name is present. Each type has minimum evidence-bearing detail fields:
 
-- `guest_preflight`;
-- `azure_control_plane_preflight`;
-- `operation_attempt`;
-- `state_observation`;
-- `consistency_checkpoint`;
-- `integrity_verification`;
-- `cleanup_commitment`;
-- `cleanup_verification`;
-- `decision`.
+- `guest_preflight`: service state, health status, evidence mount, filesystem UUID, and recent-evidence readability;
+- `azure_control_plane_preflight`: VM power state, NIC delete option, evidence-disk delete option, OS-disk public-network-access state, and observed role assignments;
+- `operation_attempt`: operation, requester, and authorization reference;
+- `state_observation`: observed state and source;
+- `consistency_checkpoint`: checkpoint name, consistency decision, and evidence references;
+- `integrity_verification`: verification name, result, and checks;
+- `cleanup_commitment`: owner, deadline, retention ceiling, and approved cost ceiling;
+- `cleanup_verification`: removed and retained resource IDs, verification time, verifier identity, and actual temporary cost;
+- `decision`: decision, reason, authority, safest next step, and rollback requirement.
 
-A record type alone does not prove a phase. Each declared phase has an exact set of
-required record types.
+Type-specific validation also enforces timestamps, booleans, bounded retention, finite costs, and the CAD 10 hard ceiling.
 
-## Completeness semantics
+## Target identity and subscription boundary
 
-Completeness is computed against the package's declared phase list.
+The package preserves complete Azure resource IDs for the collector VM, production NIC, evidence disk, and OS disk.
+
+Each ID must:
+
+- be a complete Azure resource ID;
+- belong to `rg-servicetracer-dev-westus2`;
+- end in its canonical resource name;
+- be distinct from the other target IDs;
+- share the same subscription identifier.
+
+This prevents a plausible-looking package from combining resources across subscriptions.
+
+Resource IDs are provenance, not credentials, and remain inside the protected evidence package.
+
+## Redaction provenance
+
+The validator recursively derives every location whose value is exactly `[REDACTED]` across `before_state`, `after_state`, and `details`.
+
+The `redactions` array must contain exactly one entry for each derived path and no entries for paths that are not redacted. It rejects:
+
+- a missing path;
+- a wrong path;
+- a path for a nonexistent marker;
+- duplicate path metadata;
+- a marker without an original-value SHA-256 digest.
+
+Example path syntax:
+
+```text
+details.subscription.items[1]
+```
+
+Secret-like field names, common credential prefixes, oversized text, excessive nesting, excessive collections, unsupported JSON values, and raw output fields remain fail-closed.
+
+## Canonical numeric handling
+
+JSON packages must be serializable with `allow_nan = false`.
+
+`NaN`, positive infinity, and negative infinity are rejected anywhere in the package. Finite numbers remain subject to type-specific bounds.
+
+## Completeness and claims
+
+Completeness is computed against the declared phases.
 
 ```text
 package_status == complete
@@ -112,178 +151,72 @@ and
 no failed or aborted records
 ```
 
-An incomplete package may still be valid evidence. The validator returns the
-missing record types per phase instead of silently claiming the package is
-complete.
+An incomplete package may remain valid evidence, but the validator returns the missing record types and does not overstate completeness.
 
-This permits bounded preflight packages without pretending that a full recovery
-was performed.
+Verified claims require a complete package, all required phases, required passing record types, and a passing human decision whose `decision` is `accepted`.
 
-## Target identity
+The validator always returns:
 
-The package must preserve complete Azure resource IDs for:
-
-- the collector VM;
-- the production NIC;
-- the evidence disk;
-- the OS disk.
-
-Each resource ID must:
-
-- be a complete Azure resource ID;
-- belong to `rg-servicetracer-dev-westus2`;
-- end in the canonical resource name;
-- remain inside the package's declared target boundary.
-
-Resource IDs are provenance, not credentials, and must not be replaced by a
-redaction marker in the internal evidence package.
-
-## Redaction and secret handling
-
-The validator recursively inspects `before_state`, `after_state`, and `details`.
-
-It rejects:
-
-- secret-like field names;
-- common credential prefixes;
-- unsupported nested values;
-- excessive object or list sizes;
-- excessive nesting depth;
-- oversized text;
-- unknown record fields;
-- raw output fields outside the contract.
-
-The `[REDACTED]` marker is allowed only when the record contains corresponding
-redaction metadata with:
-
-- the structured field path;
-- the exact marker;
-- a SHA-256 digest of the original value.
-
-This preserves evidence that a value existed and was deliberately removed without
-moving the secret into the package.
+```text
+authority_granted = false
+azure_mutations_authorized = false
+```
 
 ## Failure and abort evidence
 
-A package with status `failed` or `aborted` must include:
+A failed or aborted package requires both an `operation_attempt` and a failed or aborted terminal `decision`.
 
-- a failed or aborted `operation_attempt`;
-- a terminal failed or aborted `decision`.
+The decision records the reason, authority, safest next step, and whether rollback is required. Silent retry, unbounded retry, automatic authority escalation, recovery claims without post-change verification, and premature deletion of recovery artifacts remain prohibited.
 
-The terminal decision must record:
+## Supersession provenance
 
-- the decision;
-- reason;
-- authority;
-- safest next step;
-- whether rollback is required.
+Every package contains a `supersession` field.
 
-The contract explicitly prohibits treating silent retry, unbounded retry, or
-automatic authority escalation as valid recovery evidence.
+- For statuses other than `superseded`, the field must be `null`.
+- A superseded package must identify the prior package, state a bounded reason, and bind the superseding evidence with SHA-256.
+- A package cannot supersede itself.
+- A superseded package cannot retain a verified operational claim.
 
-## Cleanup evidence
+This prevents a stale package from disappearing behind an unexplained status change.
 
-A cleanup commitment records:
+## Cleanup and cost boundary
 
-- owner;
-- deadline;
-- maximum retention;
-- approved cost ceiling.
+Cleanup commitment and verification details are now actively validated rather than merely documented.
 
-A cleanup verification records:
+The contract preserves:
 
-- removed resource IDs;
-- retained resource IDs;
-- verification timestamp;
-- verifier identity;
-- actual temporary cost.
+- 24-hour maximum temporary-resource retention;
+- CAD 10 maximum approved temporary cost;
+- finite numeric cost values;
+- explicit cleanup owner, deadline, verifier, and removed/retained resource identities.
 
-The contract preserves the existing boundaries of 24 hours maximum temporary
-retention and CAD 10 hard cost ceiling. This schema does not approve spending or
-resource creation.
-
-## Operational claim gates
-
-The package supports four claims:
-
-- snapshot recoverability;
-- Trusted Launch bootability;
-- rollback;
-- recovery.
-
-A claim may be marked `verified` only when:
-
-1. the package is complete;
-2. every required phase is declared and complete;
-3. the required passing record types exist;
-4. a passing human-recovery decision explicitly records `decision = accepted`;
-5. no failed or aborted record invalidates the package.
-
-The validator never grants authority. Even a structurally valid package with a
-verified claim remains evidence for governed review, not permission to execute a
-new operation.
+These constraints do not authorize resource creation or spending.
 
 ## Deterministic validation
-
-The validator has two entry points:
-
-- `validate_contract()` verifies that the repository contract remains
-  design-only and that its authority, phase, claim, redaction, cost, and cleanup
-  boundaries have not drifted;
-- `validate_evidence_package()` verifies a future evidence package against the
-  exact contract.
-
-The CLI can validate the contract alone or a supplied package:
 
 ```text
 python infra/recovery/validate_recovery_evidence.py
 python infra/recovery/validate_recovery_evidence.py --package <path>
+python -m unittest discover -s infra/tests -v
 ```
 
-These commands validate files only. They do not query the guest, Azure, GitHub, or
-any runtime system.
+Before PR #34 was opened, isolated local validation produced:
 
-## Regression coverage
+```text
+contract-only validation: passed
+recovery-evidence tests: 32 passed
+```
 
-The tests cover:
+Local tests are not GitHub CI. The exact final PR head must pass all configured CI jobs and then receive a fresh evidence-quality review.
 
-- a valid complete preflight package;
-- a valid incomplete package with explicit missing evidence;
-- rejection of false completeness;
-- recursive secret-field rejection;
-- credential-prefix rejection;
-- logical command identity enforcement;
-- target-resource boundary enforcement;
-- UTC timestamp enforcement;
-- redaction digest requirements;
-- nested-size limits;
-- duplicate record rejection;
-- failed-package terminal-decision requirements;
-- claim requirements;
-- positive rollback-claim validation using synthetic evidence;
-- rejection of unknown record fields.
+## Current Azure evidence boundary
 
-Synthetic fixtures prove validator behavior only. They are not operational
-evidence.
+This remediation does not connect to Azure. The latest repository-promoted Azure evidence remains read-only planner run `29856203054`, observed July 21, 2026.
+
+It does not prove current tenant or subscription context, resource state, quota, pricing, actual cost, RBAC effectiveness, guest health, snapshot recoverability, Trusted Launch bootability, rollback, or recovery.
 
 ## Current limitations
 
-This increment does not provide:
+This increment does not provide guest or Azure collection adapters, evidence signing, append-only storage, protected-environment approvals, Azure authentication, mutation automation, actual-cost observation, restoration testing, or independent organizational review.
 
-- guest collection adapters;
-- Azure CLI collection adapters;
-- evidence signing;
-- an append-only evidence store;
-- protected-environment approvals;
-- Azure authentication;
-- execution or rollback automation;
-- actual-cost observation;
-- snapshot restoration or Trusted Launch proof;
-- external reviewer independence.
-
-## Safest next step
-
-After exact-head CI and evidence-quality review, the next bounded increment should
-design fake-adapter-backed evidence collection for guest and Azure preflight. It
-should remain read-only, use synthetic command responses, and prove that generated
-packages satisfy this contract before any live Azure collection is considered.
+The next safe step after an accepted PR #34 is another repository-only design increment for fake-adapter-backed read-only collection. Live collection and Azure mutation remain separately authorized operations.
