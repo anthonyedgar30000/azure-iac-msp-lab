@@ -13,82 +13,39 @@
     }
   },
   "completed_increments": [
-    {
-      "pull_request": 19,
-      "title": "Add shared workflow observability state",
-      "merge_commit": "058ee6ec7a8a26adebb2742659b9e483b74fd4ae"
-    },
-    {
-      "pull_request": 20,
-      "title": "Add collector image drift guard and read-only migration plan",
-      "merge_commit": "7f1bc961c9edfc29c1636518b0e4cf1d4ca949eb"
-    },
-    {
-      "pull_request": 21,
-      "title": "Add HELIX retrieval and archive governance",
-      "merge_commit": "d9b952e324b7128300e1c888d5834536fb35fc30"
-    },
-    {
-      "pull_request": 22,
-      "title": "Refresh project state after governance merges",
-      "merge_commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a"
-    },
-    {
-      "pull_request": 23,
-      "title": "Promote collector replacement planning evidence",
-      "merge_commit": "e50f2498d57cbf853d3fd493fc0eec35ca8bdd6b"
-    },
-    {
-      "pull_request": 24,
-      "title": "Govern canonical ServiceTracer workspace streams",
-      "merge_commit": "50a4789e87cdadd7d537179882427b3b2cb4b96f"
-    },
-    {
-      "pull_request": 25,
-      "title": "Add fail-closed collector replacement execution design",
-      "merge_commit": "f40ef0fab0ae920c23f4b6556c25dc4f3b99b68b"
-    },
-    {
-      "pull_request": 26,
-      "title": "Reconcile PR25 state and HELIX workspace hierarchy",
-      "merge_commit": "00ebc068f4aec4eda8cda723d8dc4d974a4cb7c6"
-    },
-    {
-      "pull_request": 27,
-      "title": "Select snapshot-based collector rollback strategy",
-      "merge_commit": "4b181c644c48fde0c5d33f3cfabc24321977161a"
-    },
-    {
-      "pull_request": 28,
-      "title": "Complete collector rollback review remediation",
-      "merge_commit": "cb5b38f3d6ab861f54f72897e6cf625a04c275e8",
-      "qualification": "merged_with_blocking_recovery_finding_later_resolved_by_pr29"
-    },
-    {
-      "pull_request": 29,
-      "title": "Make collector rehearsal teardown contract authoritative",
-      "merge_commit": "bc27ba115a2bdd3ce0eba5bc38176033be27fbe0",
-      "qualification": "repository_design_contract_repaired_not_operationally_tested"
-    },
-    {
-      "pull_request": 30,
-      "title": "Reconcile PR29 merge and close legacy PR1 state",
-      "merge_commit": "bb1351da492548242382a86db5293f44dabfb1f7",
-      "qualification": "coordination_only_ci_verified"
-    }
+    {"pull_request": 19, "title": "Add shared workflow observability state", "merge_commit": "058ee6ec7a8a26adebb2742659b9e483b74fd4ae"},
+    {"pull_request": 20, "title": "Add collector image drift guard and read-only migration plan", "merge_commit": "7f1bc961c9edfc29c1636518b0e4cf1d4ca949eb"},
+    {"pull_request": 21, "title": "Add HELIX retrieval and archive governance", "merge_commit": "d9b952e324b7128300e1c888d5834536fb35fc30"},
+    {"pull_request": 22, "title": "Refresh project state after governance merges", "merge_commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a"},
+    {"pull_request": 23, "title": "Promote collector replacement planning evidence", "merge_commit": "e50f2498d57cbf853d3fd493fc0eec35ca8bdd6b"},
+    {"pull_request": 24, "title": "Govern canonical ServiceTracer workspace streams", "merge_commit": "50a4789e87cdadd7d537179882427b3b2cb4b96f"},
+    {"pull_request": 25, "title": "Add fail-closed collector replacement execution design", "merge_commit": "f40ef0fab0ae920c23f4b6556c25dc4f3b99b68b"},
+    {"pull_request": 26, "title": "Reconcile PR25 state and HELIX workspace hierarchy", "merge_commit": "00ebc068f4aec4eda8cda723d8dc4d974a4cb7c6"},
+    {"pull_request": 27, "title": "Select snapshot-based collector rollback strategy", "merge_commit": "4b181c644c48fde0c5d33f3cfabc24321977161a"},
+    {"pull_request": 28, "title": "Complete collector rollback review remediation", "merge_commit": "cb5b38f3d6ab861f54f72897e6cf625a04c275e8", "qualification": "merged_with_blocking_recovery_finding_later_resolved_by_pr29"},
+    {"pull_request": 29, "title": "Make collector rehearsal teardown contract authoritative", "merge_commit": "bc27ba115a2bdd3ce0eba5bc38176033be27fbe0", "qualification": "repository_design_contract_repaired_not_operationally_tested"},
+    {"pull_request": 30, "title": "Reconcile PR29 merge and close legacy PR1 state", "merge_commit": "bb1351da492548242382a86db5293f44dabfb1f7", "qualification": "coordination_only_ci_verified"}
   ],
   "workstreams": [
     {
       "workstream_id": "collector-recovery-evidence-schema-design",
       "branch": "feature/collector-recovery-evidence-schemas",
       "write_owner": "ChatGPT conversation: HELIX Coordination and Reality Control — bounded implementation authorized by Anthony Edgar",
-      "scope": "Repository-only design of the collector recovery evidence contract, reusable validation core, deterministic CLI validator, negative tests, design documentation, and project coordination state. Permitted paths: infra/recovery/collector-recovery-evidence-contract.json, infra/recovery/recovery_evidence_core.py, infra/recovery/validate_recovery_evidence.py, infra/tests/test_collector_recovery_evidence.py, docs/designs/collector-recovery-evidence-schemas.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/replacement/**, infra/modules/**, application source, credentials, live evidence, Azure mutation scripts, budgets, alerts, and deployed resources.",
-      "status": "implementation_in_progress",
-      "pull_request": null,
-      "next_gate": "Complete the seven-file bounded implementation, run deterministic local validation, open a draft pull request, obtain exact-head CI, and route the exact passing head for evidence-quality review. Azure authentication and mutation remain prohibited."
+      "scope": "Repository-only design of the collector recovery evidence contract, deterministic validator, negative tests, design documentation, and project coordination state. Permitted paths: infra/recovery/collector-recovery-evidence-contract.json, infra/recovery/recovery_evidence_core.py, infra/recovery/validate_recovery_evidence.py, infra/tests/test_collector_recovery_evidence.py, docs/designs/collector-recovery-evidence-schemas.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/replacement/**, infra/modules/**, application source, credentials, live evidence, Azure mutation scripts, budgets, alerts, and deployed resources.",
+      "status": "ci_pending",
+      "pull_request": 32,
+      "next_gate": "Wait for exact-head GitHub CI on the final coordination head. Inspect every job, then route that exact passing head for evidence-quality review. Keep PR #32 draft and preserve all Azure execution prohibitions."
     }
   ],
-  "known_open_pull_requests": [],
+  "known_open_pull_requests": [
+    {
+      "pull_request": 32,
+      "title": "Add fail-closed collector recovery evidence schemas",
+      "status": "draft_ci_pending",
+      "branch": "feature/collector-recovery-evidence-schemas",
+      "action": "Keep draft until exact-head CI passes and evidence-quality review examines the exact passing head."
+    }
+  ],
   "resolved_repository_items": [
     {
       "pull_request": 1,
@@ -123,9 +80,10 @@
       "semantics": "exact PR #30 head before merge"
     },
     "current_workstream": {
-      "repository_commit": "pending",
+      "repository_commit": "live PR #32 head after final coordination updates",
       "workflow": "CI",
-      "status": "not_run",
+      "status": "exact_head_ci_pending",
+      "authority": "Live GitHub checks are authoritative. Do not treat local tests or predecessor branch heads as final-head CI.",
       "claim_boundary": "Local validator tests are not GitHub CI. Exact-head CI is required before review."
     },
     "claim_boundary": "CI proves repository consistency only. It does not prove Azure snapshot recoverability, Trusted Launch bootability, rollback, guest health, cost, quota, RBAC restoration, or execution authority."
@@ -143,9 +101,10 @@
       "claim_boundary": "Approval covers repository design consistency only. It does not authorize Azure execution or satisfy external reviewer independence."
     },
     "current_evidence_schema_increment": {
-      "status": "review_not_requested",
+      "status": "review_pending_exact_head_ci",
       "required_lens": "evidence-quality",
-      "claim_boundary": "No review decision exists until an exact passing commit is inspected."
+      "pull_request": 32,
+      "claim_boundary": "No review decision exists until the exact CI-passing PR head is inspected. The pull-request owner account cannot represent independent organizational approval."
     },
     "azure_cost": {
       "status": "conditionally_approved_planning_estimate",
@@ -167,7 +126,7 @@
   },
   "next_bounded_operation": {
     "operation": "collector_recovery_evidence_schema_design",
-    "status": "implementation_in_progress",
+    "status": "ci_pending",
     "authority": "repository_design_only",
     "active_workflow_present": false,
     "dispatch_authorized": false,
@@ -189,6 +148,6 @@
       "exact-head CI passes",
       "evidence-quality review examines the exact passing head"
     ],
-    "next_gate": "Publish the bounded draft pull request and obtain exact-head CI. Do not add collection commands, authenticate to Azure, activate workflows, mutate resources, restore RBAC, or claim operational recovery."
+    "next_gate": "Wait for PR #32 exact-head CI and inspect all jobs. Keep the PR draft. Do not add collection commands, authenticate to Azure, activate workflows, mutate resources, restore RBAC, or claim operational recovery."
   }
 }
