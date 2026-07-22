@@ -33,12 +33,20 @@
       "branch": "fix/recovery-evidence-review-remediation",
       "write_owner": "ChatGPT conversation: HELIX Coordination and Reality Control — repair ownership authorized by Anthony Edgar",
       "scope": "Repair the six blocking evidence-quality findings left unresolved when PR #32 merged. Permitted paths: infra/recovery/collector-recovery-evidence-contract.json, infra/recovery/recovery_evidence_core.py, infra/recovery/validate_recovery_evidence.py, infra/tests/test_collector_recovery_evidence.py, docs/designs/collector-recovery-evidence-schemas.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/replacement/**, infra/modules/**, application source, credentials, live evidence, Azure mutation scripts, budgets, alerts, and deployed resources.",
-      "status": "implementation_in_progress",
-      "pull_request": null,
-      "next_gate": "Open a draft repair pull request from the exact seven-file remediation tree, run fresh exact-head CI, and obtain evidence-quality re-review. Keep Azure authentication and mutation prohibited."
+      "status": "ci_pending",
+      "pull_request": 33,
+      "next_gate": "Wait for exact-head CI on PR #33, inspect every job, and obtain evidence-quality re-review on the exact passing head. Keep the PR draft and Azure authority absent."
     }
   ],
-  "known_open_pull_requests": [],
+  "known_open_pull_requests": [
+    {
+      "pull_request": 33,
+      "title": "Repair collector recovery evidence review findings",
+      "status": "draft_ci_pending",
+      "branch": "fix/recovery-evidence-review-remediation",
+      "action": "Keep draft until exact-head CI passes and evidence-quality re-review approves the exact passing head."
+    }
+  ],
   "resolved_repository_items": [
     {
       "pull_request": 1,
@@ -73,17 +81,18 @@
       "claim_boundary": "Run 102 verifies the version merged by PR #32, not the remediation."
     },
     "repair_head": {
-      "repository_commit": "live repair-branch head after coordination update",
+      "repository_commit": "live PR #33 head after this coordination update",
       "workflow": "CI",
-      "status": "not_run",
-      "claim_boundary": "Local 31-test validation is not exact-head GitHub CI."
+      "status": "exact_head_ci_pending",
+      "claim_boundary": "Local 31-test validation and predecessor CI are not exact-head verification."
     },
     "claim_boundary": "Repository CI does not prove Azure snapshot recoverability, Trusted Launch bootability, rollback, guest health, cost, quota, RBAC restoration, or execution authority."
   },
   "review_state": {
     "current_evidence_schema_increment": {
-      "status": "blocking_findings_under_repair",
+      "status": "repair_ci_pending",
       "source_pull_request": 32,
+      "repair_pull_request": 33,
       "reviewed_head": "f640f6664ab72deece24b770fe95cba51b0ac6ea",
       "reviewed_ci_run_id": 29946271140,
       "decision": "changes_required",
@@ -97,7 +106,7 @@
       ],
       "repair_local_verification": "31 tests passed",
       "independent_organizational_approval": false,
-      "claim_boundary": "The repair requires exact-head CI and evidence-quality re-review; owner-account review cannot represent independent organizational approval."
+      "claim_boundary": "PR #33 requires exact-head CI and re-review; owner-account review cannot represent independent organizational approval."
     },
     "azure_cost": {
       "status": "conditionally_approved_planning_estimate",
@@ -108,7 +117,7 @@
   },
   "next_bounded_operation": {
     "operation": "collector_recovery_evidence_review_remediation",
-    "status": "implementation_in_progress",
+    "status": "ci_pending",
     "authority": "repository_design_only",
     "active_workflow_present": false,
     "dispatch_authorized": false,
@@ -130,6 +139,6 @@
       "exact-head CI passes",
       "evidence-quality re-review examines the exact passing head"
     ],
-    "next_gate": "Open the bounded draft repair PR. Do not add collection commands, authenticate to Azure, activate workflows, mutate resources, restore RBAC, or claim operational recovery."
+    "next_gate": "Wait for PR #33 exact-head CI and inspect all jobs. Do not add collection commands, authenticate to Azure, activate workflows, mutate resources, restore RBAC, or claim operational recovery."
   }
 }
