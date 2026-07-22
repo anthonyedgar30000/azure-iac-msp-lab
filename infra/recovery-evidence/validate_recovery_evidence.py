@@ -256,15 +256,21 @@ def validate_record(record: dict[str, Any], contract: dict[str, Any], evidence_c
     expected_version = contract["schemas"][evidence_class]["schema_version"]
     require(record.get("schema_version"), expected_version, "record.schema_version")
     require(record.get("evidence_class"), evidence_class, "record.evidence_class")
+    visibility = text(record.get("visibility"), "record.visibility")
+    if visibility not in contract["common_envelope"]["allowed_visibility"]:
+        raise RecoveryEvidenceValidationError("record visibility is not allowed")
     evidence_id = text(record.get("evidence_id"), "record.evidence_id")
     if not EVIDENCE_ID.fullmatch(evidence_id):
         raise RecoveryEvidenceValidationError("evidence ID format is invalid")
     correlation = obj(record.get("correlation"), "record.correlation")
+    require_fields(correlation, contract["correlation_contract"]["required_fields"], "record.correlation")
     maintenance_id = text(correlation.get("maintenance_correlation_id"), "maintenance correlation")
     operation_id = text(correlation.get("operation_id"), "operation ID")
+    text(correlation.get("phase_id"), "phase ID")
     if not MAINTENANCE_ID.fullmatch(maintenance_id) or not OPERATION_ID.fullmatch(operation_id):
         raise RecoveryEvidenceValidationError("correlation format is invalid")
     times = obj(record.get("timestamps"), "record.timestamps")
+    require_fields(times, ["observed_at", "recorded_at"], "record.timestamps")
     observed = timestamp(times.get("observed_at"), "observed_at")
     recorded = timestamp(times.get("recorded_at"), "recorded_at")
     if recorded < observed or (recorded - observed).total_seconds() > 120:
@@ -272,32 +278,66 @@ def validate_record(record: dict[str, Any], contract: dict[str, Any], evidence_c
     target = obj(record.get("target"), "record.target")
     require(target.get("resource_group"), TARGET["resource_group"], "record.target.resource_group")
     require(target.get("vm_name"), TARGET["collector_vm"], "record.target.vm_name")
-    if record.get("visibility") == "sanitized_review":
-        digest(target.get("resource_id_sha256"), "record.target.resource_id_sha256")
-        if "resource_id" in target:
-            raise RecoveryEvidenceValidationError("sanitized evidence must not include exact resource ID")
-    elif record.get("visibility") == "raw_private":
+    digest(target.get("resource_id_sha256"), "record.target.resource_id_sha256")
+    if visibility == "sanitized_review" and "resource_id" in target:
+        raise RecoveryEvidenceValidationError("sanitized evidence must not include exact resource ID")
+    if visibility == "raw_private":
         text(target.get("resource_id"), "record.target.resource_id")
     result = obj(record.get("result"), "record.result")
+    require_fields(result, ["status", "exit_code", "assertion"], "record.result")
+    status = text(result.get("status"), "record.result.status")
+    if status not in contract["common_envelope"]["result_statuses"]:
+        raise RecoveryEvidenceValidationError("record result status is not allowed")
+    exit_code = result.get("exit_code")
+    if not isinstance(exit_code, int) or isinstance(exit_code, bool):
+        raise RecoveryEvidenceValidationError("record result exit_code must be an integer")
+    text(result.get("assertion"), "record.result.assertion")
     command = obj(record.get("command"), "record.command")
-    if result.get("status") == "success" and result.get("exit_code") != 0:
-        raise RecoveryEvidenceValidationError("success requires exit code zero")
-    if command.get("exit_code") != result.get("exit_code"):
+    required_command = contract["command_provenance"]["guest_required_fields" if evidence_class == "guest_preflight" else "azure_required_fields"]
+    require_fields(command, required_command, "record.command")
+    if command.get("exit_code") != exit_code:
         raise RecoveryEvidenceValidationError("command and result exit codes differ")
+    if status == "success" and exit_code != 0:
+        raise RecoveryEvidenceValidationError("success requires exit code zero")
+    arr(command.get("arguments_redacted"), "record.command.arguments_redacted")
+    duration = command.get("duration_ms")
+    if not isinstance(duration, int) or isinstance(duration, bool) or duration < 0:
+        raise RecoveryEvidenceValidationError("record.command.duration_ms must be a non-negative integer")
+    if evidence_class == "guest_preflight":
+        text(command.get("executable"), "record.command.executable")
+        text(command.get("run_as_identity"), "record.command.run_as_identity")
+        text(command.get("shell"), "record.command.shell")
+    else:
+        text(command.get("tool"), "record.command.tool")
+        text(command.get("command_group"), "record.command.command_group")
+        digest(command.get("authenticated_principal_hash"), "record.command.authenticated_principal_hash")
     for field in ("command_sha256", "stdout_sha256", "stderr_sha256"):
         digest(command.get(field), f"record.command.{field}")
     state = obj(record.get("state"), "record.state")
+    require_fields(state, ["before", "after", "changed"], "record.state")
+    obj(state.get("before"), "record.state.before")
+    obj(state.get("after"), "record.state.after")
     require(state.get("changed"), False, "preflight state.changed")
     redaction = obj(record.get("redaction"), "record.redaction")
+    require_fields(redaction, contract["redaction_contract"]["required_fields"], "record.redaction")
+    arr(redaction.get("fields"), "record.redaction.fields")
+    text(redaction.get("method"), "record.redaction.method")
     require(redaction.get("secrets_detected"), False, "redaction.secrets_detected")
-    if record.get("visibility") == "sanitized_review":
+    if visibility == "sanitized_review":
         require(redaction.get("applied"), True, "redaction.applied")
     authority = obj(record.get("authority"), "record.authority")
+    require_fields(authority, ["read_only", "azure_authentication_authorized", "azure_mutations_authorized", "execution_authorization_reference"], "record.authority")
     require(authority.get("read_only"), True, "authority.read_only")
+    if not isinstance(authority.get("azure_authentication_authorized"), bool):
+        raise RecoveryEvidenceValidationError("authority.azure_authentication_authorized must be boolean")
     require(authority.get("azure_mutations_authorized"), False, "authority.azure_mutations_authorized")
+    if authority.get("execution_authorization_reference") is not None:
+        text(authority.get("execution_authorization_reference"), "authority.execution_authorization_reference")
     provenance = obj(record.get("provenance"), "record.provenance")
+    require_fields(provenance, ["repository_commit", "collector_version", "artifact_sha256"], "record.provenance")
     if not SHA40.fullmatch(text(provenance.get("repository_commit"), "repository commit")):
         raise RecoveryEvidenceValidationError("repository commit format is invalid")
+    text(provenance.get("collector_version"), "record.provenance.collector_version")
     digest(provenance.get("artifact_sha256"), "artifact digest")
     serialized = json.dumps(record, sort_keys=True).lower()
     for marker in contract["redaction_contract"]["forbidden_content_markers_case_insensitive"]:
@@ -305,7 +345,9 @@ def validate_record(record: dict[str, Any], contract: dict[str, Any], evidence_c
             raise RecoveryEvidenceValidationError(f"forbidden content marker: {marker}")
     observation_name = "guest_observation" if evidence_class == "guest_preflight" else "azure_observation"
     observation = obj(record.get(observation_name), observation_name)
+    require_fields(observation, ["kind", "value", "freshness_seconds"], observation_name)
     kind = text(observation.get("kind"), f"{observation_name}.kind")
+    obj(observation.get("value"), f"{observation_name}.value")
     allowed = contract["schemas"][evidence_class]["required_observation_kinds"]
     if kind not in allowed:
         raise RecoveryEvidenceValidationError("unsupported observation kind")
@@ -326,6 +368,9 @@ def validate_noncommand_record(
     require_fields(record, common_fields + [payload_field], expected_class)
     require(record.get("schema_version"), expected_version, f"{expected_class}.schema_version")
     require(record.get("evidence_class"), expected_class, f"{expected_class}.evidence_class")
+    visibility = text(record.get("visibility"), f"{expected_class}.visibility")
+    if visibility not in contract["common_envelope"]["allowed_visibility"]:
+        raise RecoveryEvidenceValidationError(f"{expected_class} visibility is not allowed")
     evidence_id = text(record.get("evidence_id"), f"{expected_class}.evidence_id")
     if not EVIDENCE_ID.fullmatch(evidence_id):
         raise RecoveryEvidenceValidationError(f"{expected_class} evidence ID format is invalid")
@@ -343,21 +388,36 @@ def validate_noncommand_record(
     require(target.get("resource_group"), TARGET["resource_group"], f"{expected_class}.target.resource_group")
     require(target.get("vm_name"), TARGET["collector_vm"], f"{expected_class}.target.vm_name")
     target_digest = digest(target.get("resource_id_sha256"), f"{expected_class}.target.resource_id_sha256")
-    if record.get("visibility") == "sanitized_review" and "resource_id" in target:
+    if visibility == "sanitized_review" and "resource_id" in target:
         raise RecoveryEvidenceValidationError(f"sanitized {expected_class} must not include exact resource ID")
-    if record.get("visibility") == "raw_private":
+    if visibility == "raw_private":
         text(target.get("resource_id"), f"{expected_class}.target.resource_id")
     result = obj(record.get("result"), f"{expected_class}.result")
+    require_fields(result, ["status", "exit_code", "assertion"], f"{expected_class}.result")
+    status = text(result.get("status"), f"{expected_class}.result.status")
+    if status not in contract["common_envelope"]["result_statuses"]:
+        raise RecoveryEvidenceValidationError(f"{expected_class} result status is not allowed")
+    if not isinstance(result.get("exit_code"), int) or isinstance(result.get("exit_code"), bool):
+        raise RecoveryEvidenceValidationError(f"{expected_class} exit_code must be an integer")
+    text(result.get("assertion"), f"{expected_class}.result.assertion")
     state = obj(record.get("state"), f"{expected_class}.state")
     require_fields(state, ["before", "after", "changed"], f"{expected_class}.state")
+    obj(state.get("before"), f"{expected_class}.state.before")
+    obj(state.get("after"), f"{expected_class}.state.after")
     redaction = obj(record.get("redaction"), f"{expected_class}.redaction")
+    require_fields(redaction, contract["redaction_contract"]["required_fields"], f"{expected_class}.redaction")
+    arr(redaction.get("fields"), f"{expected_class}.redaction.fields")
+    text(redaction.get("method"), f"{expected_class}.redaction.method")
     require(redaction.get("secrets_detected"), False, f"{expected_class}.redaction.secrets_detected")
-    if record.get("visibility") == "sanitized_review":
+    if visibility == "sanitized_review":
         require(redaction.get("applied"), True, f"{expected_class}.redaction.applied")
-    obj(record.get("authority"), f"{expected_class}.authority")
+    authority = obj(record.get("authority"), f"{expected_class}.authority")
+    require_fields(authority, ["read_only", "azure_authentication_authorized", "azure_mutations_authorized", "execution_authorization_reference"], f"{expected_class}.authority")
     provenance = obj(record.get("provenance"), f"{expected_class}.provenance")
+    require_fields(provenance, ["repository_commit", "collector_version", "artifact_sha256"], f"{expected_class}.provenance")
     if not SHA40.fullmatch(text(provenance.get("repository_commit"), f"{expected_class} repository commit")):
         raise RecoveryEvidenceValidationError(f"{expected_class} repository commit format is invalid")
+    text(provenance.get("collector_version"), f"{expected_class}.provenance.collector_version")
     digest(provenance.get("artifact_sha256"), f"{expected_class} artifact digest")
     serialized = json.dumps(record, sort_keys=True).lower()
     for marker in contract["redaction_contract"]["forbidden_content_markers_case_insensitive"]:
@@ -367,7 +427,7 @@ def validate_noncommand_record(
     return evidence_id, maintenance_id, target_digest
 
 
-def validate_failure_record(record: dict[str, Any], contract: dict[str, Any]) -> tuple[str, str, str, str]:
+def validate_failure_record(record: dict[str, Any], contract: dict[str, Any]) -> tuple[str, str, str, str, str]:
     evidence_id, maintenance_id, target_digest = validate_noncommand_record(
         record,
         contract,
@@ -382,8 +442,10 @@ def validate_failure_record(record: dict[str, Any], contract: dict[str, Any]) ->
     failed_id = text(failure.get("failed_evidence_id"), "failure.failed_evidence_id")
     if not EVIDENCE_ID.fullmatch(failed_id):
         raise RecoveryEvidenceValidationError("failure.failed_evidence_id format is invalid")
-    text(failure.get("failed_phase_id"), "failure.failed_phase_id")
-    text(failure.get("failure_class"), "failure.failure_class")
+    failed_phase = text(failure.get("failed_phase_id"), "failure.failed_phase_id")
+    failure_class = text(failure.get("failure_class"), "failure.failure_class")
+    if failure_class not in {"precondition", "command", "state_mismatch", "authorization", "cost", "quota", "cleanup", "verification"}:
+        raise RecoveryEvidenceValidationError("failure class is not allowed")
     obj(failure.get("observed_state"), "failure.observed_state")
     stop_decision = text(failure.get("stop_decision"), "failure.stop_decision")
     if stop_decision not in contract["failure_contract"]["allowed_stop_decisions"]:
@@ -394,7 +456,7 @@ def validate_failure_record(record: dict[str, Any], contract: dict[str, Any]) ->
     if not isinstance(failure.get("rollback_required"), bool):
         raise RecoveryEvidenceValidationError("failure.rollback_required must be boolean")
     text(failure.get("operator_action_required"), "failure.operator_action_required")
-    return evidence_id, maintenance_id, target_digest, failed_id
+    return evidence_id, maintenance_id, target_digest, failed_id, failed_phase
 
 
 def validate_rollback_record(record: dict[str, Any], contract: dict[str, Any]) -> tuple[str, str, str, str]:
@@ -435,10 +497,9 @@ def validate_rollback_record(record: dict[str, Any], contract: dict[str, Any]) -
         require(result_status, "success", "rollback_outcome.result.status")
     elif result_status == "success":
         raise RecoveryEvidenceValidationError("non-successful rollback outcome cannot claim success")
-    if outcome == "succeeded" or operationally_tested:
-        require(authority.get("read_only"), False, "rollback authority.read_only")
-        require(authority.get("azure_authentication_authorized"), True, "rollback Azure authentication")
-        require(authority.get("azure_mutations_authorized"), True, "rollback Azure mutations")
+    require(authority.get("read_only"), False, "rollback authority.read_only")
+    require(authority.get("azure_authentication_authorized"), True, "rollback Azure authentication")
+    require(authority.get("azure_mutations_authorized"), True, "rollback Azure mutations")
     return evidence_id, maintenance_id, target_digest, trigger
 
 
@@ -456,8 +517,16 @@ def validate_bundle(bundle: dict[str, Any], contract: dict[str, Any]) -> dict[st
     require(redaction.get("raw_records_promoted"), False, "raw records promoted")
     require(redaction.get("secrets_detected"), False, "bundle secrets detected")
     correlation = obj(bundle.get("correlation"), "bundle.correlation")
+    require_fields(correlation, contract["correlation_contract"]["required_fields"], "bundle.correlation")
     maintenance_id = text(correlation.get("maintenance_correlation_id"), "bundle maintenance correlation")
-    target_digest = digest(obj(bundle.get("target"), "bundle.target").get("resource_id_sha256"), "bundle target digest")
+    operation_id = text(correlation.get("operation_id"), "bundle operation ID")
+    text(correlation.get("phase_id"), "bundle phase ID")
+    if not MAINTENANCE_ID.fullmatch(maintenance_id) or not OPERATION_ID.fullmatch(operation_id):
+        raise RecoveryEvidenceValidationError("bundle correlation format is invalid")
+    bundle_target = obj(bundle.get("target"), "bundle.target")
+    require(bundle_target.get("resource_group"), TARGET["resource_group"], "bundle.target.resource_group")
+    require(bundle_target.get("vm_name"), TARGET["collector_vm"], "bundle.target.vm_name")
+    target_digest = digest(bundle_target.get("resource_id_sha256"), "bundle target digest")
     guest_records = arr(bundle.get("guest_preflight"), "guest records")
     azure_records = arr(bundle.get("azure_control_plane_preflight"), "Azure records")
     failures = arr(bundle.get("failures"), "failure records")
@@ -466,9 +535,10 @@ def validate_bundle(bundle: dict[str, Any], contract: dict[str, Any]) -> dict[st
     guest_kinds: list[str] = []
     azure_kinds: list[str] = []
     failed_ids: set[str] = set()
+    failed_phases: dict[str, str] = {}
     for record in guest_records:
         evidence_id, record_correlation, kind = validate_record(obj(record, "guest record"), contract, "guest_preflight")
-        if record_correlation != maintenance_id or record["target"]["resource_id_sha256"] != target_digest:
+        if record_correlation != maintenance_id or record["correlation"] != correlation or record["target"]["resource_id_sha256"] != target_digest:
             raise RecoveryEvidenceValidationError("guest correlation or target mismatch")
         if evidence_id in seen:
             raise RecoveryEvidenceValidationError("duplicate evidence identity")
@@ -476,9 +546,10 @@ def validate_bundle(bundle: dict[str, Any], contract: dict[str, Any]) -> dict[st
         guest_kinds.append(kind)
         if record["result"]["status"] == "failure":
             failed_ids.add(evidence_id)
+            failed_phases[evidence_id] = record["correlation"]["phase_id"]
     for record in azure_records:
         evidence_id, record_correlation, kind = validate_record(obj(record, "Azure record"), contract, "azure_control_plane_preflight")
-        if record_correlation != maintenance_id or record["target"]["resource_id_sha256"] != target_digest:
+        if record_correlation != maintenance_id or record["correlation"] != correlation or record["target"]["resource_id_sha256"] != target_digest:
             raise RecoveryEvidenceValidationError("Azure correlation or target mismatch")
         if evidence_id in seen:
             raise RecoveryEvidenceValidationError("duplicate evidence identity")
@@ -486,6 +557,7 @@ def validate_bundle(bundle: dict[str, Any], contract: dict[str, Any]) -> dict[st
         azure_kinds.append(kind)
         if record["result"]["status"] == "failure":
             failed_ids.add(evidence_id)
+            failed_phases[evidence_id] = record["correlation"]["phase_id"]
     required_guest = contract["schemas"]["guest_preflight"]["required_observation_kinds"]
     required_azure = contract["schemas"]["azure_control_plane_preflight"]["required_observation_kinds"]
     if sorted(guest_kinds) != sorted(required_guest) or len(guest_kinds) != len(required_guest):
@@ -495,9 +567,11 @@ def validate_bundle(bundle: dict[str, Any], contract: dict[str, Any]) -> dict[st
 
     failure_refs: set[str] = set()
     for record in failures:
-        evidence_id, record_correlation, record_target, failed_id = validate_failure_record(obj(record, "failure record"), contract)
-        if record_correlation != maintenance_id or record_target != target_digest:
+        evidence_id, record_correlation, record_target, failed_id, failed_phase = validate_failure_record(obj(record, "failure record"), contract)
+        if record_correlation != maintenance_id or record["correlation"] != correlation or record_target != target_digest:
             raise RecoveryEvidenceValidationError("failure correlation or target mismatch")
+        if failed_id in failed_phases and failed_phase != failed_phases[failed_id]:
+            raise RecoveryEvidenceValidationError("failure phase does not match failed preflight evidence")
         if evidence_id in seen:
             raise RecoveryEvidenceValidationError("duplicate evidence identity")
         seen.add(evidence_id)
@@ -509,7 +583,7 @@ def validate_bundle(bundle: dict[str, Any], contract: dict[str, Any]) -> dict[st
 
     for record in rollbacks:
         evidence_id, record_correlation, record_target, trigger = validate_rollback_record(obj(record, "rollback record"), contract)
-        if record_correlation != maintenance_id or record_target != target_digest:
+        if record_correlation != maintenance_id or record["correlation"] != correlation or record_target != target_digest:
             raise RecoveryEvidenceValidationError("rollback correlation or target mismatch")
         if evidence_id in seen:
             raise RecoveryEvidenceValidationError("duplicate evidence identity")
