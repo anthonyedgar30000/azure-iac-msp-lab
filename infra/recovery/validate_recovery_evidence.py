@@ -38,16 +38,16 @@ def _validate_supersession(
     supersession = obj(value, "package.supersession")
     exact_keys(
         supersession,
-        {"supersedes_package_id", "reason", "evidence_sha256"},
+        {"superseded_by_package_id", "reason", "evidence_sha256"},
         "package.supersession",
     )
-    supersedes = patterned(
-        supersession.get("supersedes_package_id"),
-        "package.supersession.supersedes_package_id",
+    superseded_by = patterned(
+        supersession.get("superseded_by_package_id"),
+        "package.supersession.superseded_by_package_id",
         package_contract["record_id_pattern"],
     )
-    if supersedes == package_id:
-        raise EvidenceValidationError("package cannot supersede itself")
+    if superseded_by == package_id:
+        raise EvidenceValidationError("package cannot be superseded by itself")
     reason = text(supersession.get("reason"), "package.supersession.reason", 1024)
     digest = patterned(
         supersession.get("evidence_sha256"),
@@ -55,7 +55,7 @@ def _validate_supersession(
         package_contract["sha256_pattern"],
     )
     return {
-        "supersedes_package_id": supersedes,
+        "superseded_by_package_id": superseded_by,
         "reason": reason,
         "evidence_sha256": digest,
     }
@@ -185,7 +185,7 @@ def validate_evidence_package(package_value: dict[str, Any], contract: dict[str,
         "package_id": package_id,
         "maintenance_correlation_id": correlation_id,
         "package_status": package_status,
-        "supersedes_package_id": supersession["supersedes_package_id"] if supersession else None,
+        "superseded_by_package_id": supersession["superseded_by_package_id"] if supersession else None,
         "complete_for_declared_scope": complete,
         "missing_evidence_by_phase": missing,
         "record_count": len(records),
