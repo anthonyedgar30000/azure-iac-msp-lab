@@ -1,71 +1,75 @@
 {
-  "schema_version": "project.active-work.v1",
+  "schema_version": "project.active-work.v2",
   "project": "ServiceTracer — Governed Azure Operations Lab",
   "updated_on": "2026-07-22",
-  "trusted_baseline": {
+  "last_substantive_baseline": {
     "branch": "main",
     "commit": "36010582460b393c0667e274144d9700e78721bf",
-    "commit_semantics": "live main head after PR #34 merged the accepted repository-only remediation for the six PR #32 evidence-quality findings",
-    "last_merged_increment": {
-      "pull_request": 34,
-      "title": "Remediate PR32 evidence-quality findings",
-      "qualification": "repository_design_remediation_exact_head_ci_passed_owner_account_review_accepted_not_independent_not_operationally_verified"
-    }
+    "pull_request": 34,
+    "title": "Remediate PR32 evidence-quality findings",
+    "qualification": "repository_design_remediation_exact_head_ci_passed_owner_account_review_accepted_not_independent_not_operationally_verified",
+    "claim_boundary": "This is the last accepted substantive repository-design baseline. It is not required to equal the current repository head after coordination-only merges."
+  },
+  "repository_observation": {
+    "observed_on": "2026-07-22",
+    "source": "live_github",
+    "main_head": "a115b4cb0f3a3edbefd5171201c07bd144b7bf72",
+    "head_semantics": "PR #35 coordination-only merge commit observed before this change branch was opened",
+    "open_pull_requests": [],
+    "claim_boundary": "This is time-bounded external evidence, not a self-updating claim. Resolve current head, pull requests, and CI from live GitHub whenever the file is read."
+  },
+  "authored_change": {
+    "change_id": "eliminate-self-referential-project-state",
+    "branch": "chore/eliminate-self-referential-project-state",
+    "pull_request": 36,
+    "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — self-referential state-model repair explicitly authorized by Anthony Edgar",
+    "scope": "Repository-only migration of project coordination state from current-state prediction to observation-bound semantics. Permitted paths: .project/active-work.json, .project/validate.py, .project/README.md, and .project/handoffs/current-state.md. No workflow, infrastructure, application, credential, live evidence, budget, alert, or Azure resource change is permitted.",
+    "authority": "repository_coordination_model_only",
+    "state_semantics": "declaration_not_live_status",
+    "permitted_paths": [
+      ".project/active-work.json",
+      ".project/validate.py",
+      ".project/README.md",
+      ".project/handoffs/current-state.md"
+    ],
+    "verification_criteria": [
+      "schema distinguishes last substantive baseline from time-bounded repository observation",
+      "no field requires a pull request to predict its own merge commit or terminal state",
+      "live GitHub remains authoritative for current head, open pull requests, and CI",
+      "workflow-observability validation passes",
+      "final diff remains limited to the four declared .project files"
+    ],
+    "failure_behavior": "Keep the pull request draft, inspect the exact failing validation or CI job, patch only the four permitted .project files, and obtain fresh exact-head CI. Do not restore self-referential current-state requirements.",
+    "rollback": "Close the pull request without merge or revert its repository-only commits. No Azure rollback applies because no Azure mutation is performed."
   },
   "completed_increments": [
-    {"pull_request": 19, "title": "Add shared workflow observability state", "merge_commit": "058ee6ec7a8a26adebb2742659b9e483b74fd4ae"},
-    {"pull_request": 20, "title": "Add collector image drift guard and read-only migration plan", "merge_commit": "7f1bc961c9edfc29c1636518b0e4cf1d4ca949eb"},
-    {"pull_request": 21, "title": "Add HELIX retrieval and archive governance", "merge_commit": "d9b952e324b7128300e1c888d5834536fb35fc30"},
-    {"pull_request": 22, "title": "Refresh project state after governance merges", "merge_commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a"},
-    {"pull_request": 23, "title": "Promote collector replacement planning evidence", "merge_commit": "e50f2498d57cbf853d3fd493fc0eec35ca8bdd6b"},
-    {"pull_request": 24, "title": "Govern canonical ServiceTracer workspace streams", "merge_commit": "50a4789e87cdadd7d537179882427b3b2cb4b96f"},
-    {"pull_request": 25, "title": "Add fail-closed collector replacement execution design", "merge_commit": "f40ef0fab0ae920c23f4b6556c25dc4f3b99b68b"},
-    {"pull_request": 26, "title": "Reconcile PR25 state and HELIX workspace hierarchy", "merge_commit": "00ebc068f4aec4eda8cda723d8dc4d974a4cb7c6"},
-    {"pull_request": 27, "title": "Select snapshot-based collector rollback strategy", "merge_commit": "4b181c644c48fde0c5d33f3cfabc24321977161a"},
-    {"pull_request": 28, "title": "Complete collector rollback review remediation", "merge_commit": "cb5b38f3d6ab861f54f72897e6cf625a04c275e8", "qualification": "merged_with_blocking_recovery_finding_later_resolved_by_pr29"},
-    {"pull_request": 29, "title": "Make collector rehearsal teardown contract authoritative", "merge_commit": "bc27ba115a2bdd3ce0eba5bc38176033be27fbe0", "qualification": "repository_design_contract_repaired_not_operationally_tested"},
-    {"pull_request": 30, "title": "Reconcile PR29 merge and close legacy PR1 state", "merge_commit": "bb1351da492548242382a86db5293f44dabfb1f7", "qualification": "coordination_only_ci_verified"},
-    {"pull_request": 32, "title": "Add fail-closed collector recovery evidence schemas", "merge_commit": "777ec83b8a447f01904d5f891795ebcb6ab7abaf", "qualification": "merged_exact_head_ci_passed_evidence_quality_changes_required_later_resolved_by_pr34"},
-    {"pull_request": 34, "title": "Remediate PR32 evidence-quality findings", "merge_commit": "36010582460b393c0667e274144d9700e78721bf", "qualification": "repository_design_remediation_exact_head_ci_passed_owner_account_review_accepted_not_independent_not_operationally_verified"}
-  ],
-  "workstreams": [
     {
-      "workstream_id": "pr34-post-merge-state-reconciliation",
-      "branch": "chore/reconcile-pr34-merge-state",
-      "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — post-merge reconciliation explicitly authorized by Anthony Edgar",
-      "scope": "Repository-only reconciliation of .project/active-work.json and .project/handoffs/current-state.md after PR #34 merged and PR #33 was closed unmerged as superseded. No infrastructure, workflow, application, credential, live evidence, budget, alert, or Azure resource change is permitted.",
-      "status": "ci_pending",
-      "pull_request": 35,
-      "next_gate": "Obtain fresh exact-head CI for the final PR #35 coordination head, inspect every job, confirm the two-file diff, then request explicit merge authorization."
-    }
-  ],
-  "known_open_pull_requests": [
+      "pull_request": 32,
+      "title": "Add fail-closed collector recovery evidence schemas",
+      "merge_commit": "777ec83b8a447f01904d5f891795ebcb6ab7abaf",
+      "qualification": "merged_exact_head_ci_passed_evidence_quality_changes_required_later_resolved_by_pr34"
+    },
+    {
+      "pull_request": 34,
+      "title": "Remediate PR32 evidence-quality findings",
+      "merge_commit": "36010582460b393c0667e274144d9700e78721bf",
+      "qualification": "repository_design_remediation_exact_head_ci_passed_owner_account_review_accepted_not_independent_not_operationally_verified"
+    },
     {
       "pull_request": 35,
       "title": "Reconcile PR34 merge and project state",
-      "status": "draft_exact_head_ci_pending",
-      "branch": "chore/reconcile-pr34-merge-state",
-      "action": "Keep draft until exact-head CI passes, every job is inspected, the two-file scope is confirmed, and explicit merge authorization is given."
+      "merge_commit": "a115b4cb0f3a3edbefd5171201c07bd144b7bf72",
+      "qualification": "coordination_only_exact_head_ci_passed_owner_account_review_not_independent"
     }
   ],
   "resolved_repository_items": [
-    {
-      "pull_request": 1,
-      "title": "feat: scaffold Azure network foundation",
-      "state": "closed_unmerged",
-      "resolution": "superseded_by_current_bicep_architecture",
-      "closed_on": "2026-07-22",
-      "durable_value": "Historical Terraform static-validation, evidence vocabulary, cost-control, and verification-discipline prototype retained in Git history.",
-      "claim_boundary": "The branch was never authenticated-planned, deployed, behaviorally verified, or teardown-tested and is not part of current main."
-    },
     {
       "pull_request": 31,
       "title": "Define collector recovery evidence schemas",
       "state": "closed_unmerged",
       "resolution": "superseded_by_pr34_bounded_remediation",
       "closed_on": "2026-07-22",
-      "durable_value": "Parallel evidence-envelope and schema research retained in Git history and reviewed for reusable design ideas.",
-      "claim_boundary": "PR #31 diverged from main, introduced a parallel schema family, and did not obtain exact-head CI or evidence-quality acceptance. It is not repository authority."
+      "claim_boundary": "Historical branch only; not repository authority."
     },
     {
       "pull_request": 33,
@@ -73,8 +77,7 @@
       "state": "closed_unmerged",
       "resolution": "superseded_by_merged_pr34_after_parallel_branch_divergence",
       "closed_on": "2026-07-22",
-      "durable_value": "Parallel remediation research, including producer provenance and declared-subscription ideas, remains available in Git history for separate future evaluation.",
-      "claim_boundary": "PR #33 became conflict-bound after PR #34 merged overlapping accepted remediation. It was closed without merge and is not repository authority."
+      "claim_boundary": "Historical branch only; not repository authority."
     }
   ],
   "latest_promoted_evidence": {
@@ -88,33 +91,7 @@
     "status": "completed_read_only",
     "azure_mutations_authorized": false,
     "azure_mutations_performed": false,
-    "freshness_boundary": "This remains the latest promoted Azure control-plane evidence. The post-merge reconciliation does not refresh tenant or subscription context, resource state, effective RBAC, guest health, pricing, quota, actual cost, snapshot recoverability, Trusted Launch bootability, rollback, or recovery."
-  },
-  "ci_verification": {
-    "pr34_exact_head": {
-      "repository_commit": "7d586736e842425092f7fc3a3a23f0167466875e",
-      "workflow": "CI",
-      "run_id": 29950152689,
-      "run_number": 122,
-      "status": "completed_success",
-      "jobs_inspected": ["Bicep lint and build", "ServiceTracer tests"],
-      "review_decision": "accepted_for_bounded_repository_design_increment",
-      "independent_organizational_approval": false,
-      "claim_boundary": "CI and owner-account review establish repository design consistency only; they do not prove Azure state or operational recovery."
-    },
-    "merge_commit": {
-      "repository_commit": "36010582460b393c0667e274144d9700e78721bf",
-      "pull_request": 34,
-      "status": "merged",
-      "pull_request_triggered_workflow_run_observed": false
-    },
-    "current_workstream": {
-      "repository_commit": "live PR #35 head after recording the pull request number",
-      "workflow": "CI",
-      "status": "exact_head_ci_pending",
-      "authority": "Live GitHub checks are authoritative. This state-only change must pass fresh exact-head CI before merge."
-    },
-    "claim_boundary": "CI does not refresh or validate Azure runtime reality and grants no authentication, dispatch, mutation, cost, rollback, recovery, or deployment authority."
+    "freshness_boundary": "This is the latest promoted Azure control-plane evidence, not current Azure reality. This change does not refresh tenant, subscription, resources, RBAC, guest health, pricing, quota, cost, snapshot recoverability, Trusted Launch bootability, rollback, or recovery."
   },
   "review_state": {
     "pr34_evidence_quality": {
@@ -122,52 +99,23 @@
       "reviewed_pull_request": 34,
       "reviewed_head": "7d586736e842425092f7fc3a3a23f0167466875e",
       "reviewed_ci_run_id": 29950152689,
-      "reviewed_on": "2026-07-22",
       "review_account": "pull_request_owner",
       "independent_organizational_approval": false,
-      "claim_boundary": "The six PR #32 findings were accepted as resolved at the repository-contract level. This is not independent organizational approval and does not prove operational recovery."
-    },
-    "azure_cost": {
-      "status": "conditionally_approved_planning_estimate",
-      "approved_on": "2026-07-22",
-      "approved_by": "Anthony Edgar",
-      "reviewed_estimate_cad": 4.0,
-      "hard_execution_ceiling_cad": 10.0,
-      "maximum_snapshot_capacity_gib": 96,
-      "maximum_retention_hours": 24,
-      "expected_restore_rehearsal_compute_hours": 4,
-      "conditions": [
-        "fresh authenticated subscription-specific meter, SKU availability, and quota preflight before any execution",
-        "stop and obtain renewed cost approval if projected temporary cost exceeds CAD 4",
-        "unconditional stop if projected temporary cost exceeds CAD 10",
-        "cleanup owner and deadline must be approved before any temporary resource is created"
-      ],
-      "claim_boundary": "Planning feasibility only; this is not actual-cost evidence, a subscription-specific quotation, budget approval, or Azure execution authorization."
+      "claim_boundary": "Repository-contract acceptance only; not operational recovery proof or independent organizational approval."
     }
   },
-  "next_bounded_operation": {
-    "operation": "pr34_post_merge_state_reconciliation",
-    "status": "ci_pending",
-    "authority": "repository_coordination_only",
+  "authority_defaults": {
     "active_workflow_present": false,
     "dispatch_authorized": false,
     "azure_authentication_authorized": false,
     "azure_mutations_authorized": false,
-    "permitted_paths": [
-      ".project/active-work.json",
-      ".project/handoffs/current-state.md"
-    ],
-    "verification_criteria": [
-      "trusted baseline equals live main merge commit 36010582460b393c0667e274144d9700e78721bf",
-      "PR #34 is recorded as merged and accepted only for bounded repository design consistency",
-      "PR #33 is recorded as closed unmerged and superseded",
-      "known open pull requests match live GitHub reality",
-      "latest promoted Azure evidence remains explicitly stale and read-only",
-      "exact-head CI passes for PR #35",
-      "final diff remains limited to the two .project files"
-    ],
-    "failure_behavior": "Keep PR #35 draft, inspect the exact failing job, patch only the two permitted .project files, and obtain fresh exact-head CI. Do not alter infrastructure or weaken workflow-observability validation.",
-    "rollback": "Close PR #35 without merge or revert its repository-only commits. No Azure rollback applies because this operation performs no Azure mutation.",
-    "next_gate": "Wait for the final PR #35 head to pass exact-head CI, inspect every job, confirm the two-file diff, then request explicit merge authorization."
+    "rule": "Repository state, CI, or review never grants Azure execution authority unless a separate explicit authorization record says so."
+  },
+  "live_state_resolution": {
+    "repository_head": "Query the live GitHub default branch at read time.",
+    "pull_requests": "Query live open pull requests at read time.",
+    "ci": "Query workflow runs and jobs for the exact commit under evaluation.",
+    "azure": "Use fresh authenticated Azure evidence; repository declarations and historical artifacts are insufficient.",
+    "canonical_distinction": "last_substantive_baseline != current_repository_head"
   }
 }
