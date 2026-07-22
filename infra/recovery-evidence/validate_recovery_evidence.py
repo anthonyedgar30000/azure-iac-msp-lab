@@ -276,6 +276,8 @@ def validate_record(record: dict[str, Any], contract: dict[str, Any], evidence_c
         digest(target.get("resource_id_sha256"), "record.target.resource_id_sha256")
         if "resource_id" in target:
             raise RecoveryEvidenceValidationError("sanitized evidence must not include exact resource ID")
+    elif record.get("visibility") == "raw_private":
+        text(target.get("resource_id"), "record.target.resource_id")
     result = obj(record.get("result"), "record.result")
     command = obj(record.get("command"), "record.command")
     if result.get("status") == "success" and result.get("exit_code") != 0:
@@ -313,6 +315,133 @@ def validate_record(record: dict[str, Any], contract: dict[str, Any], evidence_c
     return evidence_id, maintenance_id, kind
 
 
+def validate_noncommand_record(
+    record: dict[str, Any],
+    contract: dict[str, Any],
+    expected_version: str,
+    expected_class: str,
+    payload_field: str,
+) -> tuple[str, str, str]:
+    common_fields = arr(contract["common_envelope"]["required_fields"], "common fields")
+    require_fields(record, common_fields + [payload_field], expected_class)
+    require(record.get("schema_version"), expected_version, f"{expected_class}.schema_version")
+    require(record.get("evidence_class"), expected_class, f"{expected_class}.evidence_class")
+    evidence_id = text(record.get("evidence_id"), f"{expected_class}.evidence_id")
+    if not EVIDENCE_ID.fullmatch(evidence_id):
+        raise RecoveryEvidenceValidationError(f"{expected_class} evidence ID format is invalid")
+    correlation = obj(record.get("correlation"), f"{expected_class}.correlation")
+    maintenance_id = text(correlation.get("maintenance_correlation_id"), f"{expected_class} maintenance correlation")
+    operation_id = text(correlation.get("operation_id"), f"{expected_class} operation ID")
+    if not MAINTENANCE_ID.fullmatch(maintenance_id) or not OPERATION_ID.fullmatch(operation_id):
+        raise RecoveryEvidenceValidationError(f"{expected_class} correlation format is invalid")
+    times = obj(record.get("timestamps"), f"{expected_class}.timestamps")
+    observed = timestamp(times.get("observed_at"), f"{expected_class}.observed_at")
+    recorded = timestamp(times.get("recorded_at"), f"{expected_class}.recorded_at")
+    if recorded < observed or (recorded - observed).total_seconds() > 120:
+        raise RecoveryEvidenceValidationError(f"{expected_class} timestamp ordering or skew is invalid")
+    target = obj(record.get("target"), f"{expected_class}.target")
+    require(target.get("resource_group"), TARGET["resource_group"], f"{expected_class}.target.resource_group")
+    require(target.get("vm_name"), TARGET["collector_vm"], f"{expected_class}.target.vm_name")
+    target_digest = digest(target.get("resource_id_sha256"), f"{expected_class}.target.resource_id_sha256")
+    if record.get("visibility") == "sanitized_review" and "resource_id" in target:
+        raise RecoveryEvidenceValidationError(f"sanitized {expected_class} must not include exact resource ID")
+    if record.get("visibility") == "raw_private":
+        text(target.get("resource_id"), f"{expected_class}.target.resource_id")
+    result = obj(record.get("result"), f"{expected_class}.result")
+    state = obj(record.get("state"), f"{expected_class}.state")
+    require_fields(state, ["before", "after", "changed"], f"{expected_class}.state")
+    redaction = obj(record.get("redaction"), f"{expected_class}.redaction")
+    require(redaction.get("secrets_detected"), False, f"{expected_class}.redaction.secrets_detected")
+    if record.get("visibility") == "sanitized_review":
+        require(redaction.get("applied"), True, f"{expected_class}.redaction.applied")
+    obj(record.get("authority"), f"{expected_class}.authority")
+    provenance = obj(record.get("provenance"), f"{expected_class}.provenance")
+    if not SHA40.fullmatch(text(provenance.get("repository_commit"), f"{expected_class} repository commit")):
+        raise RecoveryEvidenceValidationError(f"{expected_class} repository commit format is invalid")
+    digest(provenance.get("artifact_sha256"), f"{expected_class} artifact digest")
+    serialized = json.dumps(record, sort_keys=True).lower()
+    for marker in contract["redaction_contract"]["forbidden_content_markers_case_insensitive"]:
+        if marker.lower() in serialized:
+            raise RecoveryEvidenceValidationError(f"forbidden content marker in {expected_class}: {marker}")
+    text(result.get("status"), f"{expected_class}.result.status")
+    return evidence_id, maintenance_id, target_digest
+
+
+def validate_failure_record(record: dict[str, Any], contract: dict[str, Any]) -> tuple[str, str, str, str]:
+    evidence_id, maintenance_id, target_digest = validate_noncommand_record(
+        record,
+        contract,
+        contract["schemas"]["phase_failure"]["schema_version"],
+        "phase_failure",
+        "failure",
+    )
+    require(obj(record.get("result"), "phase_failure.result").get("status"), "failure", "phase_failure.result.status")
+    failure = obj(record.get("failure"), "phase_failure.failure")
+    required = arr(contract["failure_contract"]["required_fields"], "failure required fields")
+    require_fields(failure, required, "phase_failure.failure")
+    failed_id = text(failure.get("failed_evidence_id"), "failure.failed_evidence_id")
+    if not EVIDENCE_ID.fullmatch(failed_id):
+        raise RecoveryEvidenceValidationError("failure.failed_evidence_id format is invalid")
+    text(failure.get("failed_phase_id"), "failure.failed_phase_id")
+    text(failure.get("failure_class"), "failure.failure_class")
+    obj(failure.get("observed_state"), "failure.observed_state")
+    stop_decision = text(failure.get("stop_decision"), "failure.stop_decision")
+    if stop_decision not in contract["failure_contract"]["allowed_stop_decisions"]:
+        raise RecoveryEvidenceValidationError("failure stop decision is not allowed")
+    mutations = arr(failure.get("mutations_observed"), "failure.mutations_observed")
+    if stop_decision == "abort_before_mutation" and mutations:
+        raise RecoveryEvidenceValidationError("abort_before_mutation cannot report mutations")
+    if not isinstance(failure.get("rollback_required"), bool):
+        raise RecoveryEvidenceValidationError("failure.rollback_required must be boolean")
+    text(failure.get("operator_action_required"), "failure.operator_action_required")
+    return evidence_id, maintenance_id, target_digest, failed_id
+
+
+def validate_rollback_record(record: dict[str, Any], contract: dict[str, Any]) -> tuple[str, str, str, str]:
+    evidence_id, maintenance_id, target_digest = validate_noncommand_record(
+        record,
+        contract,
+        contract["schemas"]["rollback_outcome"]["schema_version"],
+        "rollback_outcome",
+        "rollback",
+    )
+    rollback = obj(record.get("rollback"), "rollback_outcome.rollback")
+    required = arr(contract["rollback_contract"]["required_fields"], "rollback required fields") + ["operationally_tested"]
+    require_fields(rollback, required, "rollback_outcome.rollback")
+    trigger = text(rollback.get("trigger_failure_evidence_id"), "rollback.trigger_failure_evidence_id")
+    if not EVIDENCE_ID.fullmatch(trigger):
+        raise RecoveryEvidenceValidationError("rollback trigger evidence ID format is invalid")
+    require(rollback.get("strategy_id"), contract["rollback_contract"]["strategy_id"], "rollback.strategy_id")
+    authorization = text(rollback.get("authorization_reference"), "rollback.authorization_reference")
+    started = timestamp(rollback.get("started_at"), "rollback.started_at")
+    completed = timestamp(rollback.get("completed_at"), "rollback.completed_at")
+    if completed < started:
+        raise RecoveryEvidenceValidationError("rollback completed_at precedes started_at")
+    if not arr(rollback.get("steps"), "rollback.steps") or not arr(rollback.get("verification"), "rollback.verification"):
+        raise RecoveryEvidenceValidationError("rollback steps and verification must be non-empty")
+    arr(rollback.get("residual_risk"), "rollback.residual_risk")
+    outcome = text(rollback.get("outcome"), "rollback.outcome")
+    if outcome not in contract["rollback_contract"]["allowed_outcomes"]:
+        raise RecoveryEvidenceValidationError("rollback outcome is not allowed")
+    operationally_tested = rollback.get("operationally_tested")
+    if not isinstance(operationally_tested, bool):
+        raise RecoveryEvidenceValidationError("rollback.operationally_tested must be boolean")
+    authority = obj(record.get("authority"), "rollback_outcome.authority")
+    if authority.get("execution_authorization_reference") != authorization:
+        raise RecoveryEvidenceValidationError("rollback authorization references differ")
+    result_status = obj(record.get("result"), "rollback_outcome.result").get("status")
+    if outcome == "succeeded":
+        require(operationally_tested, True, "rollback.operationally_tested")
+        require(result_status, "success", "rollback_outcome.result.status")
+    elif result_status == "success":
+        raise RecoveryEvidenceValidationError("non-successful rollback outcome cannot claim success")
+    if outcome == "succeeded" or operationally_tested:
+        require(authority.get("read_only"), False, "rollback authority.read_only")
+        require(authority.get("azure_authentication_authorized"), True, "rollback Azure authentication")
+        require(authority.get("azure_mutations_authorized"), True, "rollback Azure mutations")
+    return evidence_id, maintenance_id, target_digest, trigger
+
+
 def validate_bundle(bundle: dict[str, Any], contract: dict[str, Any]) -> dict[str, Any]:
     require(bundle.get("schema_version"), BUNDLE_VERSION, "bundle.schema_version")
     require(bundle.get("state"), "design_fixture", "bundle.state")
@@ -336,7 +465,7 @@ def validate_bundle(bundle: dict[str, Any], contract: dict[str, Any]) -> dict[st
     seen: set[str] = set()
     guest_kinds: list[str] = []
     azure_kinds: list[str] = []
-    failed = 0
+    failed_ids: set[str] = set()
     for record in guest_records:
         evidence_id, record_correlation, kind = validate_record(obj(record, "guest record"), contract, "guest_preflight")
         if record_correlation != maintenance_id or record["target"]["resource_id_sha256"] != target_digest:
@@ -345,7 +474,8 @@ def validate_bundle(bundle: dict[str, Any], contract: dict[str, Any]) -> dict[st
             raise RecoveryEvidenceValidationError("duplicate evidence identity")
         seen.add(evidence_id)
         guest_kinds.append(kind)
-        failed += int(record["result"]["status"] == "failure")
+        if record["result"]["status"] == "failure":
+            failed_ids.add(evidence_id)
     for record in azure_records:
         evidence_id, record_correlation, kind = validate_record(obj(record, "Azure record"), contract, "azure_control_plane_preflight")
         if record_correlation != maintenance_id or record["target"]["resource_id_sha256"] != target_digest:
@@ -354,25 +484,38 @@ def validate_bundle(bundle: dict[str, Any], contract: dict[str, Any]) -> dict[st
             raise RecoveryEvidenceValidationError("duplicate evidence identity")
         seen.add(evidence_id)
         azure_kinds.append(kind)
-        failed += int(record["result"]["status"] == "failure")
+        if record["result"]["status"] == "failure":
+            failed_ids.add(evidence_id)
     required_guest = contract["schemas"]["guest_preflight"]["required_observation_kinds"]
     required_azure = contract["schemas"]["azure_control_plane_preflight"]["required_observation_kinds"]
     if sorted(guest_kinds) != sorted(required_guest) or len(guest_kinds) != len(required_guest):
         raise RecoveryEvidenceValidationError("guest observation coverage is incomplete or duplicated")
     if sorted(azure_kinds) != sorted(required_azure) or len(azure_kinds) != len(required_azure):
         raise RecoveryEvidenceValidationError("Azure observation coverage is incomplete or duplicated")
-    if failed and not failures:
-        raise RecoveryEvidenceValidationError("failure record required")
-    if not failed and failures:
-        raise RecoveryEvidenceValidationError("fixture must not invent failure records")
+
+    failure_refs: set[str] = set()
+    for record in failures:
+        evidence_id, record_correlation, record_target, failed_id = validate_failure_record(obj(record, "failure record"), contract)
+        if record_correlation != maintenance_id or record_target != target_digest:
+            raise RecoveryEvidenceValidationError("failure correlation or target mismatch")
+        if evidence_id in seen:
+            raise RecoveryEvidenceValidationError("duplicate evidence identity")
+        seen.add(evidence_id)
+        if failed_id in failure_refs:
+            raise RecoveryEvidenceValidationError("duplicate failure reference")
+        failure_refs.add(failed_id)
+    if failed_ids != failure_refs:
+        raise RecoveryEvidenceValidationError("failure records must exactly match failed preflight evidence")
+
     for record in rollbacks:
-        record = obj(record, "rollback record")
-        body = obj(record.get("rollback"), "rollback body")
-        if body.get("outcome") == "succeeded" or body.get("operationally_tested") is True:
-            rollback_authority = obj(record.get("authority"), "rollback authority")
-            require(rollback_authority.get("azure_authentication_authorized"), True, "rollback Azure authentication")
-            require(rollback_authority.get("azure_mutations_authorized"), True, "rollback Azure mutations")
-            text(rollback_authority.get("execution_authorization_reference"), "rollback authorization reference")
+        evidence_id, record_correlation, record_target, trigger = validate_rollback_record(obj(record, "rollback record"), contract)
+        if record_correlation != maintenance_id or record_target != target_digest:
+            raise RecoveryEvidenceValidationError("rollback correlation or target mismatch")
+        if evidence_id in seen:
+            raise RecoveryEvidenceValidationError("duplicate evidence identity")
+        seen.add(evidence_id)
+        if trigger not in failed_ids:
+            raise RecoveryEvidenceValidationError("rollback trigger does not reference failed preflight evidence")
     return {
         "bundle_valid": True,
         "bundle_state": contract["bundle_contract"]["bundle_status_when_complete"],
