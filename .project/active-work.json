@@ -35,16 +35,16 @@
       "scope": "Repair the six blocking evidence-quality findings left unresolved when PR #32 merged. Permitted paths: infra/recovery/collector-recovery-evidence-contract.json, infra/recovery/recovery_evidence_core.py, infra/recovery/validate_recovery_evidence.py, infra/tests/test_collector_recovery_evidence.py, docs/designs/collector-recovery-evidence-schemas.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/replacement/**, infra/modules/**, application source, credentials, live evidence, Azure mutation scripts, budgets, alerts, and deployed resources.",
       "status": "ci_pending",
       "pull_request": 33,
-      "next_gate": "Wait for exact-head CI on PR #33, inspect every job, and obtain evidence-quality re-review on the exact passing head. Keep the PR draft and Azure authority absent."
+      "next_gate": "Run fresh exact-head CI on the final coordination-only head, inspect every job, and record final scope/diff confirmation. Keep PR #33 draft and Azure authority absent."
     }
   ],
   "known_open_pull_requests": [
     {
       "pull_request": 33,
       "title": "Repair collector recovery evidence review findings",
-      "status": "draft_ci_pending",
+      "status": "draft_evidence_quality_pass_final_coordination_ci_pending",
       "branch": "fix/recovery-evidence-review-remediation",
-      "action": "Keep draft until exact-head CI passes and evidence-quality re-review approves the exact passing head."
+      "action": "Keep draft until the final coordination head passes exact-head CI and a final read-only scope/diff confirmation is recorded."
     }
   ],
   "resolved_repository_items": [
@@ -80,33 +80,36 @@
       "review_decision": "changes_required",
       "claim_boundary": "Run 102 verifies the version merged by PR #32, not the remediation."
     },
-    "repair_head": {
+    "repair_code_bearing_head": {
+      "repository_commit": "018f4769f67972bf61f947dcd29380015f116ac4",
+      "workflow": "CI",
+      "run_id": 29947999922,
+      "run_number": 107,
+      "status": "completed_success",
+      "review_decision": "technical_pass_no_blocking_findings",
+      "claim_boundary": "Run 107 and the evidence-quality pass apply to the repair code-bearing head."
+    },
+    "final_coordination_head": {
       "repository_commit": "live PR #33 head after this coordination update",
       "workflow": "CI",
       "status": "exact_head_ci_pending",
-      "claim_boundary": "Local 31-test validation and predecessor CI are not exact-head verification."
+      "claim_boundary": "Live GitHub checks are authoritative; run 107 is not final coordination-head CI."
     },
     "claim_boundary": "Repository CI does not prove Azure snapshot recoverability, Trusted Launch bootability, rollback, guest health, cost, quota, RBAC restoration, or execution authority."
   },
   "review_state": {
     "current_evidence_schema_increment": {
-      "status": "repair_ci_pending",
+      "status": "technical_pass_final_coordination_ci_pending",
       "source_pull_request": 32,
       "repair_pull_request": 33,
-      "reviewed_head": "f640f6664ab72deece24b770fe95cba51b0ac6ea",
-      "reviewed_ci_run_id": 29946271140,
-      "decision": "changes_required",
-      "blocking_findings": [
-        "pin every contract value trusted by package validation",
-        "enforce evidence-bearing detail fields by record type",
-        "bind redaction metadata to exact marker paths",
-        "require one subscription boundary across target resource IDs",
-        "reject non-finite JSON numbers",
-        "require supersession provenance"
-      ],
-      "repair_local_verification": "31 tests passed",
+      "reviewed_head": "018f4769f67972bf61f947dcd29380015f116ac4",
+      "reviewed_ci_run_id": 29947999922,
+      "reviewed_ci_run_number": 107,
+      "decision": "technical_pass_no_blocking_findings",
+      "decision_summary": "The repair pins validator-driving contract values, enforces record details, exact redaction provenance, one subscription boundary, finite JSON, and supersession provenance.",
+      "review_account": "pull_request_owner",
       "independent_organizational_approval": false,
-      "claim_boundary": "PR #33 requires exact-head CI and re-review; owner-account review cannot represent independent organizational approval."
+      "claim_boundary": "The evidence-quality lens passed the exact repair code head; this is not independent organizational approval and does not grant Azure authority."
     },
     "azure_cost": {
       "status": "conditionally_approved_planning_estimate",
@@ -117,7 +120,7 @@
   },
   "next_bounded_operation": {
     "operation": "collector_recovery_evidence_review_remediation",
-    "status": "ci_pending",
+    "status": "final_coordination_ci_pending",
     "authority": "repository_design_only",
     "active_workflow_present": false,
     "dispatch_authorized": false,
@@ -134,11 +137,13 @@
     ],
     "verification_criteria": [
       "final diff contains exactly the seven declared files",
-      "all six blocking review findings are deterministically tested",
+      "all six blocking review findings are repaired",
       "31 positive and negative tests pass",
-      "exact-head CI passes",
-      "evidence-quality re-review examines the exact passing head"
+      "repair code-bearing head passed CI run 107",
+      "evidence-quality re-review passed the exact repair code-bearing head",
+      "final coordination head passes exact-head CI",
+      "final read-only scope and diff confirmation is recorded"
     ],
-    "next_gate": "Wait for PR #33 exact-head CI and inspect all jobs. Do not add collection commands, authenticate to Azure, activate workflows, mutate resources, restore RBAC, or claim operational recovery."
+    "next_gate": "Wait for PR #33 final coordination-head CI and inspect all jobs. Do not merge, add collection commands, authenticate to Azure, activate workflows, mutate resources, restore RBAC, or claim operational recovery."
   }
 }
