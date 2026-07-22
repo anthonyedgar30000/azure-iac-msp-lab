@@ -68,7 +68,8 @@ A standard-library Python validator generates a sanitized design fixture and enf
 - SHA-256 provenance bindings;
 - raw-versus-sanitized evidence separation;
 - secret-marker rejection;
-- failure records when a preflight fails;
+- complete failure records tied exactly to failed preflight evidence;
+- complete rollback records tied to triggering failures and explicit runtime authority;
 - separate authorized runtime evidence before rollback success can be claimed.
 
 Canonical boundary:
@@ -133,7 +134,7 @@ python infra/recovery-evidence/validate_recovery_evidence.py --root .
 python -m unittest discover -s infra/tests -v
 ```
 
-The focused suite contains 23 tests, including negative cases for missing observations, duplicate identities, correlation and target drift, stale evidence, exit-code inconsistency, state mutation, Azure mutation authority, unredacted secrets, missing failure records, and unsupported rollback-success claims.
+The focused suite contains 34 tests, including positive complete failure and rollback fixtures plus negative cases for missing observations, duplicate identities, correlation and target drift, stale evidence, incomplete command identity, invalid result status, exit-code inconsistency, state mutation, Azure mutation authority, unredacted secrets, incomplete or mismatched failure evidence, and unsupported rollback-success claims.
 
 This local result is preparatory evidence only. Exact-head GitHub CI for the live PR #31 head remains the authority.
 
