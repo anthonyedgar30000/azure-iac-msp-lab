@@ -29,8 +29,8 @@ repository reconciled
 - Workstream: `collector-recovery-evidence-schema-design`.
 - Branch: `feature/collector-recovery-evidence-schemas`.
 - Write owner: this explicitly authorized bounded implementation conversation.
-- Status: implementation in progress.
-- Pull request: not yet opened.
+- Status: CI pending.
+- Pull request: #32, draft.
 - Authority: repository design only.
 
 Permitted files:
@@ -56,6 +56,18 @@ Protected boundaries:
 - deployed resources.
 
 No other conversation should edit this branch or these seven paths unless ownership is explicitly transferred.
+
+## Pull request state
+
+- Pull request: #32, **Add fail-closed collector recovery evidence schemas**.
+- State: open draft.
+- Base: `main` at `bb1351da492548242382a86db5293f44dabfb1f7`.
+- Branch: `feature/collector-recovery-evidence-schemas`.
+- Final authoritative head: resolve from live GitHub after this coordination update.
+- CI state: exact-head CI pending.
+- Changed-file boundary: exactly the seven permitted files.
+
+The branch history contains transient creation-and-deletion commits for an accidental temporary path. The path is absent from the final tree and PR diff. The exact changed-file comparison, not commit-message appearance alone, is the scope authority.
 
 ## Objective
 
@@ -181,7 +193,7 @@ python -m unittest discover -s infra/tests -v
 19 tests passed in the isolated increment fixture
 ```
 
-This is local deterministic validation only. Exact-head GitHub CI is still required.
+This is local deterministic validation only. Exact-head GitHub CI for the final PR #32 coordination head is pending.
 
 ## Latest Azure evidence boundary
 
@@ -219,13 +231,12 @@ These are planning constraints, not current pricing or execution approval.
 
 Before merge:
 
-1. complete only the seven declared files;
-2. validate the contract and tests locally;
-3. open a draft pull request;
-4. obtain exact-head CI;
-5. inspect every CI job;
-6. route the exact passing head for evidence-quality review;
-7. preserve the owner-account reviewer-independence limitation.
+1. preserve exactly the seven declared files in the final diff;
+2. obtain exact-head CI for the live PR #32 head after coordination updates;
+3. inspect every CI job;
+4. route the exact passing head for evidence-quality review;
+5. preserve the owner-account reviewer-independence limitation;
+6. keep the PR draft until those gates are satisfied.
 
 ## Failure behavior
 
