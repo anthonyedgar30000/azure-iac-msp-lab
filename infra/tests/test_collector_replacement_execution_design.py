@@ -54,6 +54,7 @@ class CollectorReplacementExecutionDesignTests(unittest.TestCase):
             "az vm delete",
             "az vm deallocate",
             "az snapshot create",
+            "az disk create",
             "az disk update",
             "az resource update",
             "az deployment group create",
@@ -70,6 +71,10 @@ class CollectorReplacementExecutionDesignTests(unittest.TestCase):
         self.assertFalse(result["azure_mutations_authorized"])
         self.assertFalse(result["promotion_ready"])
         self.assertEqual(result["rollback_status"], "strategy_selected_design_only")
+        self.assertEqual(
+            result["rollback_review_status"],
+            "changes_addressed_re_review_pending",
+        )
         self.assertFalse(result["rollback_operationally_tested"])
 
     def test_contract_is_pinned_to_promoted_planner_evidence(self) -> None:
@@ -84,111 +89,178 @@ class CollectorReplacementExecutionDesignTests(unittest.TestCase):
             "REPLACE:rg-servicetracer-dev-westus2:vm-stcollector-mst-dev",
         )
 
-    def test_snapshot_rollback_preserves_canonical_os_disk_name(self) -> None:
+    def test_quiesce_and_deallocate_precedes_both_snapshots(self) -> None:
         result = self._validate(self.contract)
-        rollback = self.contract["rollback"]
-        recreation = rollback["recreation_contract"]
+        phases = result["phase_order"]
+        self.assertLess(
+            phases.index("quiesce_and_deallocate_source"),
+            phases.index("create_recovery_points"),
+        )
+        boundary = self.contract["consistency_boundary"]
+        self.assertEqual(
+            boundary["source_power_state_required"],
+            "PowerState/deallocated",
+        )
+        self.assertTrue(boundary["both_snapshots_must_share_binding"])
+        self.assertFalse(boundary["snapshot_capture_before_boundary_allowed"])
+        self.assertEqual(
+            set(boundary["snapshot_binding_fields"]),
+            {
+                "maintenance_correlation_id",
+                "final_evidence_checkpoint_id",
+                "final_evidence_checkpoint_sha256",
+            },
+        )
+
+    def test_validator_rejects_snapshot_capture_before_consistency_boundary(self) -> None:
+        modified = copy.deepcopy(self.contract)
+        modified["consistency_boundary"]["snapshot_capture_before_boundary_allowed"] = True
+        with self.assertRaises(Exception):
+            self._validate(modified)
+
+    def test_validator_rejects_missing_checkpoint_binding(self) -> None:
+        modified = copy.deepcopy(self.contract)
+        modified["consistency_boundary"]["snapshot_binding_fields"].remove(
+            "final_evidence_checkpoint_sha256"
+        )
+        with self.assertRaises(Exception):
+            self._validate(modified)
+
+    def test_isolated_exact_snapshot_boot_rehearsal_precedes_old_compute_removal(self) -> None:
+        result = self._validate(self.contract)
+        phases = result["phase_order"]
+        self.assertLess(
+            phases.index("isolated_snapshot_boot_rehearsal"),
+            phases.index("remove_old_compute"),
+        )
+        rehearsal = self.contract["isolated_restore_rehearsal"]
+        self.assertEqual(rehearsal["source_snapshot"], "exact verified OS-disk snapshot")
+        self.assertEqual(rehearsal["temporary_os_disk_create_option"], "Copy")
+        self.assertEqual(rehearsal["temporary_vm_os_disk_create_option"], "Attach")
+        self.assertTrue(rehearsal["source_vm_must_remain_deallocated"])
+        self.assertFalse(rehearsal["production_nic_attached"])
+        self.assertFalse(rehearsal["production_evidence_disk_attached"])
+        self.assertFalse(rehearsal["operational_rollback_proof"])
+
+    def test_validator_rejects_non_exact_rehearsal_snapshot(self) -> None:
+        modified = copy.deepcopy(self.contract)
+        modified["isolated_restore_rehearsal"]["source_snapshot"] = "latest snapshot"
+        with self.assertRaises(Exception):
+            self._validate(modified)
+
+    def test_validator_rejects_production_attachment_during_rehearsal(self) -> None:
+        for field in ("production_nic_attached", "production_evidence_disk_attached"):
+            modified = copy.deepcopy(self.contract)
+            modified["isolated_restore_rehearsal"][field] = True
+            with self.assertRaises(Exception):
+                self._validate(modified)
+
+    def test_rollback_separates_copy_from_attach(self) -> None:
+        result = self._validate(self.contract)
+        recreation = self.contract["rollback"]["recreation_contract"]
         self.assertEqual(
             result["rollback_strategy"],
             "os_disk_snapshot_recreate_canonical_name",
         )
+        self.assertEqual(recreation["managed_disk_create_option"], "Copy")
+        self.assertEqual(recreation["vm_os_disk_create_option"], "Attach")
         self.assertEqual(
-            result["canonical_os_disk_name"], "disk-stcollector-os-mst-dev"
+            recreation["managed_disk_source"],
+            "exact verified OS-disk snapshot",
         )
         self.assertEqual(
-            recreation["recreated_os_disk_name"], "disk-stcollector-os-mst-dev"
-        )
-        self.assertEqual(recreation["os_disk_create_option"], "Copy")
-        self.assertFalse(rollback["preserve_old_os_disk_directly"])
-
-    def test_selected_rollback_remains_unverified_and_review_pending(self) -> None:
-        rollback = self.contract["rollback"]
-        self.assertFalse(rollback["operationally_tested"])
-        self.assertEqual(rollback["independent_review_status"], "pending")
-        self.assertTrue(rollback["promotion_blocked"])
-        self.assertIn(
-            "operational proof of the selected OS-disk snapshot recreation rollback",
-            self.contract["unresolved_blockers"],
+            recreation["recreated_os_disk_name"],
+            "disk-stcollector-os-mst-dev",
         )
 
-    def test_phase_order_places_both_recovery_points_before_old_compute_removal(self) -> None:
-        result = self._validate(self.contract)
-        phases = result["phase_order"]
-        self.assertLess(
-            phases.index("create_recovery_points"), phases.index("remove_old_compute")
+    def test_validator_rejects_from_image_for_snapshot_restore(self) -> None:
+        modified = copy.deepcopy(self.contract)
+        modified["rollback"]["recreation_contract"]["managed_disk_create_option"] = (
+            "FromImage"
         )
-        self.assertLess(
-            phases.index("verify_recovery_points"), phases.index("remove_old_compute")
+        with self.assertRaises(Exception):
+            self._validate(modified)
+
+    def test_validator_rejects_missing_attach_semantics(self) -> None:
+        modified = copy.deepcopy(self.contract)
+        modified["rollback"]["recreation_contract"]["vm_os_disk_create_option"] = (
+            "FromImage"
         )
-        self.assertLess(
-            phases.index("verify_preservation_boundary"),
-            phases.index("deploy_replacement_compute"),
+        with self.assertRaises(Exception):
+            self._validate(modified)
+
+    def test_validator_rejects_recreation_metadata_drift(self) -> None:
+        modified = copy.deepcopy(self.contract)
+        modified["rollback"]["recreation_contract"]["metadata_required"].remove(
+            "disk SKU"
         )
-        self.assertLess(
-            phases.index("post_change_verification"),
-            phases.index("human_recovery_acceptance"),
+        with self.assertRaises(Exception):
+            self._validate(modified)
+
+    def test_replacement_and_rollback_preserve_production_attachments(self) -> None:
+        replacement = self.contract["replacement_vm_attachment_contract"]
+        rollback = self.contract["rollback"]["recreation_contract"]
+        self.assertEqual(replacement["nic_delete_option"], "Detach")
+        self.assertEqual(replacement["evidence_disk_delete_option"], "Detach")
+        self.assertTrue(replacement["verify_after_vm_create"])
+        self.assertTrue(replacement["verify_before_failed_compute_deletion"])
+        self.assertEqual(rollback["preserved_nic_delete_option"], "Detach")
+        self.assertEqual(rollback["preserved_evidence_disk_delete_option"], "Detach")
+        self.assertTrue(rollback["re_read_attachment_delete_options_after_create"])
+        self.assertTrue(
+            rollback["verify_attachment_delete_options_before_failed_compute_deletion"]
         )
-        self.assertLess(
-            phases.index("human_recovery_acceptance"),
-            phases.index("cleanup_temporary_recovery_resources"),
+
+    def test_validator_rejects_delete_semantics_for_preserved_attachments(self) -> None:
+        cases = (
+            ("replacement_vm_attachment_contract", "nic_delete_option"),
+            ("replacement_vm_attachment_contract", "evidence_disk_delete_option"),
         )
-        remove_phase = next(
-            phase
-            for phase in self.contract["phases"]
-            if phase["phase_id"] == "remove_old_compute"
+        for object_name, field in cases:
+            modified = copy.deepcopy(self.contract)
+            modified[object_name][field] = "Delete"
+            with self.assertRaises(Exception):
+                self._validate(modified)
+
+        for field in (
+            "preserved_nic_delete_option",
+            "preserved_evidence_disk_delete_option",
+        ):
+            modified = copy.deepcopy(self.contract)
+            modified["rollback"]["recreation_contract"][field] = "Delete"
+            with self.assertRaises(Exception):
+                self._validate(modified)
+
+    def test_cost_controls_preserve_reviewed_boundary(self) -> None:
+        cost = self.contract["cost_controls"]
+        self.assertEqual(cost["currency"], "CAD")
+        self.assertEqual(cost["reviewed_planning_estimate"], 4.0)
+        self.assertEqual(cost["renewed_approval_threshold"], 4.0)
+        self.assertEqual(cost["maximum_declared_temporary_cost"], 10.0)
+        self.assertEqual(cost["maximum_snapshots"], 2)
+        self.assertEqual(cost["maximum_total_snapshot_gib"], 96)
+        self.assertEqual(cost["maximum_compute_overlap_minutes"], 0)
+        self.assertEqual(
+            cost["maximum_isolated_restore_rehearsal_compute_hours"],
+            4,
         )
-        self.assertIn("both snapshots", remove_phase["evidence_required"])
+        self.assertEqual(cost["maximum_recovery_resource_retention_hours"], 24)
+        self.assertTrue(
+            cost["fresh_authenticated_subscription_cost_preflight_required"]
+        )
+        self.assertFalse(cost["azure_budget_or_alert_mutation_allowed"])
 
     def test_every_mutation_phase_requires_explicit_authorization(self) -> None:
         for phase in self.contract["phases"]:
             if phase["mutation"]:
                 self.assertTrue(
-                    phase["requires_explicit_authorization"], phase["phase_id"]
+                    phase["requires_explicit_authorization"],
+                    phase["phase_id"],
                 )
-
-    def test_cost_controls_fit_evidence_and_os_disk_snapshot_ceiling(self) -> None:
-        cost = self.contract["cost_controls"]
-        rollback = self.contract["rollback"]
-        self.assertEqual(cost["currency"], "CAD")
-        self.assertLessEqual(cost["maximum_declared_temporary_cost"], 10)
-        self.assertEqual(cost["maximum_snapshots"], 2)
-        self.assertEqual(cost["maximum_total_snapshot_gib"], 96)
-        self.assertEqual(rollback["maximum_os_disk_snapshot_gib"], 64)
-        self.assertEqual(cost["maximum_compute_overlap_minutes"], 0)
-        self.assertLessEqual(cost["maximum_recovery_resource_retention_hours"], 24)
-        self.assertFalse(cost["azure_budget_or_alert_mutation_allowed"])
 
     def test_validator_rejects_authorization_in_design_branch(self) -> None:
         modified = copy.deepcopy(self.contract)
         modified["activation"]["azure_mutations_authorized"] = True
-        with self.assertRaises(Exception):
-            self._validate(modified)
-
-    def test_validator_rejects_cost_ceiling_above_policy_limit(self) -> None:
-        modified = copy.deepcopy(self.contract)
-        modified["cost_controls"]["maximum_declared_temporary_cost"] = 25
-        with self.assertRaises(Exception):
-            self._validate(modified)
-
-    def test_validator_rejects_missing_recovery_phase(self) -> None:
-        modified = copy.deepcopy(self.contract)
-        modified["phases"] = [
-            phase
-            for phase in modified["phases"]
-            if phase["phase_id"] != "verify_recovery_points"
-        ]
-        with self.assertRaises(Exception):
-            self._validate(modified)
-
-    def test_validator_rejects_canonical_os_disk_name_drift(self) -> None:
-        modified = copy.deepcopy(self.contract)
-        modified["rollback"]["canonical_os_disk_name"] = "disk-stcollector-os-temp"
-        with self.assertRaises(Exception):
-            self._validate(modified)
-
-    def test_validator_rejects_direct_old_os_disk_preservation(self) -> None:
-        modified = copy.deepcopy(self.contract)
-        modified["rollback"]["preserve_old_os_disk_directly"] = True
         with self.assertRaises(Exception):
             self._validate(modified)
 
@@ -198,11 +270,13 @@ class CollectorReplacementExecutionDesignTests(unittest.TestCase):
         with self.assertRaises(Exception):
             self._validate(modified)
 
-    def test_validator_rejects_weakened_snapshot_verification(self) -> None:
+    def test_validator_rejects_missing_required_phase(self) -> None:
         modified = copy.deepcopy(self.contract)
-        modified["rollback"]["snapshot_verification_required"].remove(
-            "source OS-disk resource ID matches"
-        )
+        modified["phases"] = [
+            phase
+            for phase in modified["phases"]
+            if phase["phase_id"] != "isolated_snapshot_boot_rehearsal"
+        ]
         with self.assertRaises(Exception):
             self._validate(modified)
 
@@ -229,10 +303,9 @@ class CollectorReplacementExecutionDesignTests(unittest.TestCase):
             self.assertFalse(rendered["dispatch_authorized"])
             self.assertFalse(rendered["azure_mutations_authorized"])
             self.assertFalse(rendered["promotion_ready"])
-            self.assertEqual(
-                rendered["rollback_strategy"],
-                "os_disk_snapshot_recreate_canonical_name",
-            )
+            self.assertTrue(rendered["consistency_boundary_required"])
+            self.assertTrue(rendered["isolated_snapshot_boot_rehearsal_required"])
+            self.assertEqual(rendered["production_attachment_delete_option"], "Detach")
             self.assertFalse(rendered["rollback_operationally_tested"])
 
 
