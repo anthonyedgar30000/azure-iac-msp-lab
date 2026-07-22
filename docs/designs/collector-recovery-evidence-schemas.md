@@ -173,8 +173,8 @@ The decision records the reason, authority, safest next step, and whether rollba
 Every package contains a `supersession` field.
 
 - For statuses other than `superseded`, the field must be `null`.
-- A superseded package must identify the prior package, state a bounded reason, and bind the superseding evidence with SHA-256.
-- A package cannot supersede itself.
+- A superseded package must identify the replacement package, state a bounded reason, and bind evidence of that replacement with SHA-256.
+- A package cannot be superseded by itself.
 - A superseded package cannot retain a verified operational claim.
 
 This prevents a stale package from disappearing behind an unexplained status change.
