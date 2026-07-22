@@ -107,7 +107,7 @@ awk -v amount="$maximum_monthly_cost_cad" 'BEGIN { exit !(amount <= 10.00) }' ||
   exit 2
 }
 
-for command_name in az jq; do
+for command_name in az jq awk; do
   command -v "$command_name" >/dev/null 2>&1 || {
     echo "Required command is unavailable: $command_name" >&2
     exit 127
@@ -167,6 +167,10 @@ jq -e --arg location "$location" '
   exit 1
 }
 collector_principal_id="$(jq -r '.principal_id' "$artifact_dir/existing-collector.json")"
+[[ "$collector_principal_id" =~ ^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$ ]] || {
+  echo 'Existing collector principal ID is not a canonical GUID.' >&2
+  exit 1
+}
 
 az storage account list \
   --resource-group "$resource_group" \
@@ -179,12 +183,40 @@ existing_storage_count="$(jq 'length' "$artifact_dir/existing-report-storage.jso
 }
 
 az role assignment list \
-  --assignee "$collector_principal_id" \
   --scope "$resource_group_id" \
   --include-inherited \
   --all \
-  --query '[].{id:id,scope:scope,role_definition_name:roleDefinitionName,principal_id:principalId}' \
-  --output json > "$artifact_dir/visible-collector-role-assignments.json"
+  --output json > "$artifact_dir/visible-resource-group-role-assignments-all.json"
+
+if ((existing_storage_count == 1)); then
+  existing_storage_id="$(jq -r '.[0].id' "$artifact_dir/existing-report-storage.json")"
+  az role assignment list \
+    --scope "$existing_storage_id" \
+    --include-inherited \
+    --all \
+    --output json > "$artifact_dir/visible-report-storage-role-assignments-all.json"
+else
+  printf '[]\n' > "$artifact_dir/visible-report-storage-role-assignments-all.json"
+fi
+
+jq -s --arg principal_id "$collector_principal_id" '
+  [
+    .[0][],
+    .[1][]
+    | select(.principalId == $principal_id)
+    | {
+        id: .id,
+        scope: .scope,
+        role_definition_name: .roleDefinitionName,
+        principal_id: .principalId
+      }
+  ]
+  | unique_by(.id)
+' \
+  "$artifact_dir/visible-resource-group-role-assignments-all.json" \
+  "$artifact_dir/visible-report-storage-role-assignments-all.json" \
+  > "$artifact_dir/visible-collector-role-assignments.json"
+visible_collector_role_assignment_count="$(jq 'length' "$artifact_dir/visible-collector-role-assignments.json")"
 
 jq -n \
   --arg prefix "$prefix" \
@@ -247,6 +279,7 @@ jq -n \
   --arg allowed_origin "$allowed_origin" \
   --arg template "$template" \
   --argjson existing_storage_count "$existing_storage_count" \
+  --argjson visible_role_assignment_count "$visible_collector_role_assignment_count" \
   '{
     schema_version: "servicetracer.existing-collector-report-plan.v1",
     observed_at: $observed_at,
@@ -258,6 +291,7 @@ jq -n \
     allowed_origin: $allowed_origin,
     template: $template,
     existing_report_storage_count: $existing_storage_count,
+    visible_collector_role_assignment_count: $visible_role_assignment_count,
     arm_validation: "completed",
     arm_what_if: "completed",
     current_price_review: "required_before_deployment",
