@@ -33,7 +33,7 @@
       "branch": "fix/pr32-evidence-review-remediation",
       "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — bounded remediation explicitly authorized by Anthony Edgar",
       "scope": "Repository-only remediation of the six evidence-quality findings recorded against PR #32, plus design documentation and project-state reconciliation. Permitted paths: infra/recovery/collector-recovery-evidence-contract.json, infra/recovery/recovery_evidence_core.py, infra/recovery/validate_recovery_evidence.py, infra/tests/test_collector_recovery_evidence.py, docs/designs/collector-recovery-evidence-schemas.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/replacement/**, infra/modules/**, application source, credentials, live evidence, Azure mutation scripts, budgets, alerts, and deployed resources.",
-      "status": "final_coordination_ci_pending",
+      "status": "ci_pending",
       "pull_request": 34,
       "base_commit": "777ec83b8a447f01904d5f891795ebcb6ab7abaf",
       "local_verification": {
