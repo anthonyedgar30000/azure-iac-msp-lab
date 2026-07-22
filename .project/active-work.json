@@ -21,7 +21,7 @@
   "authored_change": {
     "change_id": "eliminate-self-referential-project-state",
     "branch": "chore/eliminate-self-referential-project-state",
-    "pull_request": null,
+    "pull_request": 36,
     "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — self-referential state-model repair explicitly authorized by Anthony Edgar",
     "scope": "Repository-only migration of project coordination state from current-state prediction to observation-bound semantics. Permitted paths: .project/active-work.json, .project/validate.py, .project/README.md, and .project/handoffs/current-state.md. No workflow, infrastructure, application, credential, live evidence, budget, alert, or Azure resource change is permitted.",
     "authority": "repository_coordination_model_only",
