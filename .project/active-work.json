@@ -32,7 +32,7 @@
       "scope": "Reconcile PR #28 merge reality and make isolated-rehearsal teardown authoritative in the contract, validator, tests, candidate workflow design, design/review documentation, and project coordination state only. Permitted paths: infra/replacement/collector-replacement-contract.json, infra/replacement/validate_execution_design.py, infra/tests/test_collector_replacement_execution_design.py, infra/workflow-designs/collector-replacement-execution.yml, docs/designs/collector-replacement-execution.md, docs/reviews/collector-replacement-rollback-decision-2026-07-21.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/modules/**, application source, credentials, Azure mutation scripts, budgets, alerts, and deployed resources.",
       "status": "ci_pending",
       "pull_request": 29,
-      "next_gate": "Run fresh exact-head CI for PR #29, inspect every job, and route the passing exact head for operations-and-recovery re-review. Keep the PR draft and Azure mutations prohibited."
+      "next_gate": "Confirm fresh exact-head CI on the final coordination-only head. Keep PR #29 draft unless an external reviewer or Anthony explicitly accepts the owner-account review limitation and authorizes merge. Azure mutations remain prohibited."
     }
   ],
   "known_open_pull_requests": [
@@ -45,8 +45,8 @@
     {
       "pull_request": 29,
       "title": "Make collector rehearsal teardown contract authoritative",
-      "status": "draft_ci_pending_operations_re_review_required",
-      "action": "Validate the exact head, obtain operations-and-recovery approval, and do not merge based on CI alone."
+      "status": "draft_operations_review_approved_owner_account_final_coordination_ci_pending",
+      "action": "Verify the final coordination head in CI. Do not represent the owner-account review as independent organizational approval."
     }
   ],
   "latest_promoted_evidence": {
@@ -63,39 +63,44 @@
     "freshness_boundary": "This remains the latest promoted Azure control-plane evidence. It does not prove current guest health, pricing, SKU availability, quota, actual cost, or present-day deployment state."
   },
   "ci_verification": {
-    "last_completed_exact_head": {
-      "repository_commit": "e98c6039d4a896bea49f48af0eb0c733ee491f5b",
+    "last_code_bearing_head": {
+      "repository_commit": "b9b21c3f5c6c860db8edbb6821d676f764d99b18",
       "workflow": "CI",
-      "run_id": 29899440550,
-      "run_number": 84,
+      "run_id": 29941065236,
+      "run_number": 88,
       "status": "completed_success",
-      "pull_request": 28,
-      "review_outcome": "changes_required"
+      "verified_gates": [
+        "workflow-observability project-state validation",
+        "complete ServiceTracer unit and operational smoke-test path",
+        "collector replacement contract validator and regression tests",
+        "Bicep lint and build"
+      ]
     },
-    "current_increment": {
-      "pull_request": 29,
-      "repository_head": "pending_after_project_state_commit",
-      "status": "ci_pending"
+    "reviewed_code_bearing_head": {
+      "repository_commit": "b9b21c3f5c6c860db8edbb6821d676f764d99b18",
+      "operations_and_recovery_decision": "approved_for_repository_design_increment",
+      "submitted_at": "2026-07-22T17:10:34Z",
+      "review_account": "pull_request_owner",
+      "independent_organizational_approval": false
     },
-    "claim_boundary": "PR #28 CI proved repository execution but did not close the contract-backed rehearsal-teardown finding. PR #29 requires fresh exact-head CI. No CI run proves Azure snapshot recoverability, Trusted Launch bootability, rollback, cost, quota, or execution authority."
+    "final_coordination_head": {
+      "repository_commit": "live PR #29 head after this coordination-only update",
+      "status": "exact_head_ci_pending",
+      "authority": "live GitHub checks are authoritative; CI run 29941065236 must be described as the last code-bearing-head verification, not as final coordination-head CI"
+    },
+    "claim_boundary": "Repository CI and the operations-and-recovery lens review resolve the contract-design finding only. They do not prove Azure snapshot recoverability, Trusted Launch bootability, rollback, cost, quota, guest health, RBAC restoration, or execution authority."
   },
   "review_state": {
     "operations_and_recovery": {
-      "status": "changes_requested_contract_amendment_pending",
-      "reviewed_pull_request": 28,
-      "reviewed_head": "e98c6039d4a896bea49f48af0eb0c733ee491f5b",
-      "reviewed_ci_run_id": 29899440550,
+      "status": "approved_for_repository_design_increment",
+      "reviewed_pull_request": 29,
+      "reviewed_head": "b9b21c3f5c6c860db8edbb6821d676f764d99b18",
+      "reviewed_ci_run_id": 29941065236,
       "reviewed_on": "2026-07-22",
-      "blocking_finding": "The validator synthesized successful rehearsal teardown without authoritative contract fields or phase evidence requiring deallocation and removal before forward progress.",
-      "required_patch": [
-        "add contract-backed rehearsal deallocation and temporary-compute removal requirements",
-        "place teardown before the selected forward boundary",
-        "enumerate the only temporary recovery artifacts allowed to remain",
-        "validate contract and phase evidence rather than hard-coded result booleans",
-        "add negative tests for missing deallocation, missing removal, late boundary, and unapproved retained artifacts",
-        "obtain fresh exact-head CI and another operations-and-recovery review"
-      ],
-      "claim_boundary": "The PR #28 merge did not convert the changes-required review into approval."
+      "decision_summary": "The v2 contract, validator, negative tests, candidate workflow phase alignment, and PR #28 merge-reality reconciliation resolve the contract-backed rehearsal-teardown finding.",
+      "review_account": "pull_request_owner",
+      "independent_organizational_approval": false,
+      "claim_boundary": "Approval covers this repository design increment only. It does not authorize Azure execution or satisfy external reviewer independence."
     },
     "azure_cost": {
       "status": "conditionally_approved_planning_estimate",
@@ -116,20 +121,17 @@
     }
   },
   "next_bounded_operation": {
-    "operation": "collector_rehearsal_teardown_contract_amendment",
-    "authority": "repository_patch_only",
+    "operation": "collector_rehearsal_teardown_contract_amendment_coordination_verification",
+    "authority": "repository_coordination_only",
     "candidate_workflow": "infra/workflow-designs/collector-replacement-execution.yml",
     "active_workflow_present": false,
     "dispatch_authorized": false,
     "azure_mutations_authorized": false,
     "required_gates": [
-      "authoritative rehearsal_teardown contract object",
-      "distinct teardown_isolated_rehearsal phase before remove_old_compute",
-      "validator reads and fails closed on deallocation, removal, retained-artifact, boundary, and zero-overlap fields",
-      "negative regression tests for each blocking review case",
-      "candidate workflow phase-order alignment",
-      "fresh exact-head CI and operations-and-recovery approval"
+      "fresh exact-head CI for the final coordination-only commit",
+      "preserve the distinction between owner-account lens review and independent organizational approval",
+      "explicit merge decision without expanding Azure authority"
     ],
-    "next_gate": "Complete PR #29 CI and re-review only. Do not merge, authenticate to Azure, activate workflows, or perform mutations."
+    "next_gate": "Verify final coordination-head CI. Keep Azure authentication, workflow activation, resource mutation, and recovery claims prohibited."
   }
 }
