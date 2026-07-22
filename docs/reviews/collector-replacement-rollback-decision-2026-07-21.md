@@ -2,99 +2,115 @@
 
 ## Decision state
 
-**Selected as a repository design; not independently approved, deployed, or operationally tested.**
+**Snapshot-and-recreate remains the selected repository design. The second operations-and-recovery review requested additional remediation. Nothing is deployed or operationally tested.**
 
-This review selects the rollback architecture for the collector replacement candidate. It does not activate a workflow, authenticate to Azure, create snapshots, change delete options, delete a VM, create a disk or VM, restore RBAC, or authorize use of the `REPLACE:` confirmation phrase.
+This record does not activate a workflow, authenticate to Azure, create snapshots, deallocate or delete a VM, change delete options, restore RBAC, modify budgets, or authorize replacement execution.
+
+## Selected strategy
+
+Strategy: `os_disk_snapshot_recreate_canonical_name`
+
+The canonical OS-disk name remains `disk-stcollector-os-mst-dev`. The design uses an exact verified OS snapshot rather than retaining the old OS disk directly.
 
 ## Evidence reviewed
 
 - merged fail-closed execution design from PR #25;
-- current replacement contract and deterministic validator;
 - promoted read-only planner run `29856203054`;
-- planner artifact `collector-replacement-plan-29856203054-1` with SHA-256 `76f3b44e6e97e906dac6d62eeb212a6bc55265e77271a030b9c45b0cacf55637`;
-- current Bicep collector module, which declares the canonical OS-disk name `disk-stcollector-os-mst-dev` and currently uses delete-on-VM-delete semantics;
-- current environment facts for the preserved evidence disk, static-address NIC, system-assigned identity, and disposable OS disk.
+- artifact `collector-replacement-plan-29856203054-1` with SHA-256 `76f3b44e6e97e906dac6d62eeb212a6bc55265e77271a030b9c45b0cacf55637`;
+- PR #27 recovery-contract changes and partial merge;
+- draft PR #28 head `7162506e5abad60f49c191309b85192d6d885a45`;
+- exact-head CI run `29894321483`, which passed;
+- second operations-and-recovery review dated July 22, 2026, which recorded **CHANGES REQUIRED**;
+- conditional Azure-cost planning decision approved by Anthony Edgar.
 
-The planner evidence proves bounded Azure control-plane configuration only. It does not prove the current OS-disk size, guest service state, snapshot recoverability, bootability from a recreated disk, or successful rollback.
+CI proves repository consistency only. The planner evidence does not prove current guest health, crash consistency, snapshot recoverability, Trusted Launch bootability, rollback, current price, quota, or execution authority.
 
-## Options considered
+## Second-review finding 1: order-sensitive quiescence
 
-### Option A: preserve the old OS disk directly
+The prior validator converted `ordered_actions` to a set. That accepted unsafe reordering and did not explicitly require stopping the collector service.
 
-The old OS disk would be detached and retained while a replacement VM used a different OS-disk name.
+The remediation validates this exact sequence:
 
-Advantages:
+1. stop accepting new writes;
+2. drain in-flight writes;
+3. flush evidence writes;
+4. record final checkpoint ID and SHA-256;
+5. record maintenance correlation ID;
+6. stop the collector service;
+7. verify guest shutdown;
+8. deallocate the source VM;
+9. verify Azure `PowerState/deallocated`.
 
-- the prior boot disk remains directly available;
-- rollback does not depend on recreating a managed disk from a snapshot.
+Negative tests reject reordering and service-stop omission.
 
-Costs and defects:
+## Second-review finding 2: rehearsal teardown
 
-- the replacement cannot use the canonical OS-disk name while the old disk exists;
-- the current Bicep module would no longer converge without a second naming change;
-- the design would introduce a temporary or permanent alternate naming convention;
-- later cleanup and IaC reconciliation would require another authority-bearing change.
+The earlier design capped rehearsal duration and required eventual cleanup, but it did not make teardown a mandatory transition before replacement compute.
 
-### Option B: snapshot the old OS disk and recreate it if rollback is required
+The remediation establishes:
 
-The old OS disk receives a bounded, independently verified snapshot. After both the evidence-disk and OS-disk recovery points are verified, the old VM and disposable OS disk may be removed. The replacement keeps the canonical OS-disk name. If replacement verification fails, the prior boot disk is recreated from the verified snapshot under the same canonical name and the prior VM boundary is rebuilt with the preserved NIC and evidence disk.
+- source compute remains deallocated;
+- rehearsal proof is captured from the exact verified OS snapshot under the recorded Trusted Launch profile;
+- the rehearsal VM is deallocated after evidence capture;
+- the rehearsal VM and isolated NIC are removed before replacement compute;
+- no rehearsal compute remains allocated;
+- only approved snapshots and temporary recovery disks may remain;
+- running-compute overlap remains zero minutes.
 
-Advantages:
+Negative tests reject non-zero overlap and omission of the cleanup boundary.
 
-- preserves the canonical OS-disk name expected by the current IaC model;
-- avoids a second naming migration merely to restore convergence;
-- creates a deterministic recovery object with explicit source identity, size, generation, access-policy, ownership, and expiry checks;
-- fits the existing maximum of two snapshots and 96 GiB total only when the current OS disk is no larger than 64 GiB.
+## Second-review finding 3: CI and review chronology
 
-Risks:
+The prior `.project` state identified predecessor commit `623647ca...` and CI run `29894210458` while calling it final-head evidence.
 
-- snapshot creation success is not proof that the prior VM can boot after recreation;
-- the old system-assigned principal cannot be recovered and must be treated as a new identity;
-- Trusted Launch, Hyper-V generation, OS type, encryption, and disk security metadata must be captured and preserved;
-- the strategy must fail closed if the OS disk exceeds the 64 GiB snapshot allocation or if any required metadata is missing.
+The corrected chronology distinguishes:
 
-## Selected strategy
+- last code-bearing head: `623647cad4d83083a416f4250ae8688e58a5fc57`, CI run `29894210458`;
+- reviewed coordination-only head: `7162506e5abad60f49c191309b85192d6d885a45`, CI run `29894321483`;
+- review outcome on the coordination head: **CHANGES REQUIRED**.
 
-**Option B: `os_disk_snapshot_recreate_canonical_name`.**
+Live GitHub checks and review evidence are authoritative for the final coordination-only head. A new code-bearing remediation head requires fresh CI.
 
-The canonical OS-disk name remains:
+## Deterministic rollback contract
 
-`disk-stcollector-os-mst-dev`
+If replacement verification fails after old-compute removal:
 
-The future OS-disk snapshot must use a deterministic execution-scoped name beginning with:
+1. preserve both verified snapshots, the production NIC, and the evidence disk;
+2. re-read production attachment `Detach` semantics;
+3. delete only failed replacement compute and its disposable OS disk;
+4. recreate the canonical OS disk from the exact verified snapshot using `Copy`;
+5. validate all recorded recreation metadata;
+6. recreate the collector VM by attaching the specialized OS disk using `Attach`;
+7. attach the preserved NIC and evidence disk using `Detach`;
+8. restore only approved RBAC to the new system-assigned identity;
+9. prove boot, evidence UUID/readability, service health, durable write, restart persistence, identity, RBAC, network behavior, disk policy, and attachment semantics.
 
-`snap-stcollector-os-rollback-mst-dev-`
+The evidence disk is never deleted, formatted, replaced, restored over, or attached to the isolated rehearsal VM.
 
-The selected design does not preserve the old OS disk directly. It requires:
+## Cost boundary
 
-1. fresh preflight capture of the old OS-disk resource ID, size, OS type, Hyper-V generation, Trusted Launch/security type, encryption configuration, network access policy, and public access state;
-2. a verified evidence-disk snapshot;
-3. a separately verified OS-disk snapshot;
-4. a hard stop if the OS disk exceeds 64 GiB or the combined snapshot ceiling would exceed 96 GiB;
-5. restrictive snapshot network access, required ownership/cleanup tags, and retention of no more than 24 hours;
-6. removal of old compute only after both recovery points are independently verified;
-7. rollback recreation of the canonical OS disk from the verified snapshot using create option `Copy`;
-8. recreation of `vm-stcollector-mst-dev` with the preserved NIC and evidence disk;
-9. capture of the new system-assigned principal and restoration of only an approved RBAC allowlist;
-10. boot, mount UUID, evidence readability, service, health, durable-write, restart-persistence, identity, RBAC, NIC, address, and disk-policy acceptance checks.
+- reviewed planning estimate: CAD 4;
+- renewed approval required above CAD 4;
+- unconditional stop above CAD 10;
+- maximum two snapshots and 96 GiB total;
+- maximum isolated rehearsal compute: four hours;
+- maximum temporary-resource retention: 24 hours;
+- maximum running-compute overlap: zero minutes.
 
-## Why the design remains blocked
+This is planning feasibility, not a current subscription-specific quote or actual-cost observation.
 
-Repository tests can prove that required fields and phase ordering exist. They cannot prove Azure snapshot recoverability or that the prior collector will boot from a recreated disk.
+## Why promotion remains blocked
 
-The contract therefore records:
+- rollback is `strategy_selected_design_only`;
+- `operationally_tested` remains `false`;
+- Azure mutations remain unauthorized;
+- execution commands are not yet fake-Azure-CLI tested;
+- guest/control-plane evidence schemas are incomplete;
+- RBAC restoration allowlist is unresolved;
+- current pricing, SKU availability, quota, cleanup owner, and deadline are unverified;
+- another operations-and-recovery review is required;
+- evidence-quality and security/identity reviews remain required.
 
-- rollback status: `strategy_selected_design_only`;
-- operationally tested: `false`;
-- independent review status: `pending`;
-- promotion blocked: `true`;
-- dispatch authorized: `false`;
-- Azure mutations authorized: `false`.
+## Conclusion
 
-## Required next evidence
-
-Before workflow promotion, a separate bounded increment must define a fake-Azure-CLI-tested recreation implementation and an independently testable recovery-verification package. Any real recovery drill or replacement execution requires a separate authority-changing PR, protected-environment approval, current cost review, and explicit human authorization.
-
-## Review conclusion
-
-The snapshot-and-recreation strategy is the preferred deterministic design because it preserves canonical IaC naming and avoids a second disk-name migration. This conclusion is a design decision only. Independent operations-and-recovery review is still required, and no claim of actual recoverability is made.
+Snapshot-and-recreate remains preferred because it preserves canonical IaC naming and provides a bounded recovery route. The second-review changes strengthen order-sensitive quiescence, eliminate rehearsal/replacement compute overlap, and correct project-state chronology. They remain repository assertions until fresh CI and another independent review verify the new exact head.
