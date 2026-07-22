@@ -131,6 +131,36 @@ class CollectorRecoveryEvidenceDesignTests(unittest.TestCase):
         self.assertFalse(result["runtime_execution_authorized"])
         self.assertFalse(result["azure_mutations_authorized"])
 
+    def test_validator_rejects_unknown_visibility(self) -> None:
+        modified = copy.deepcopy(self.bundle)
+        modified["guest_preflight"][0]["visibility"] = "public_unredacted"
+        with self.assertRaises(Exception):
+            self._validate_bundle(modified)
+
+    def test_validator_rejects_missing_command_identity(self) -> None:
+        modified = copy.deepcopy(self.bundle)
+        del modified["guest_preflight"][0]["command"]["executable"]
+        with self.assertRaises(Exception):
+            self._validate_bundle(modified)
+
+    def test_validator_rejects_unsupported_result_status(self) -> None:
+        modified = copy.deepcopy(self.bundle)
+        modified["azure_control_plane_preflight"][0]["result"]["status"] = "probably_ok"
+        with self.assertRaises(Exception):
+            self._validate_bundle(modified)
+
+    def test_validator_rejects_bundle_operation_correlation_drift(self) -> None:
+        modified = copy.deepcopy(self.bundle)
+        modified["guest_preflight"][0]["correlation"]["operation_id"] = "op-different-operation"
+        with self.assertRaises(Exception):
+            self._validate_bundle(modified)
+
+    def test_validator_rejects_bundle_target_identity_drift(self) -> None:
+        modified = copy.deepcopy(self.bundle)
+        modified["target"]["vm_name"] = "vm-wrong-target"
+        with self.assertRaises(Exception):
+            self._validate_bundle(modified)
+
     def test_validator_rejects_missing_guest_observation_kind(self) -> None:
         modified = copy.deepcopy(self.bundle)
         modified["guest_preflight"].pop()
@@ -229,6 +259,30 @@ class CollectorRecoveryEvidenceDesignTests(unittest.TestCase):
         result = self._validate_bundle(modified)
         self.assertEqual(result["failure_record_count"], 1)
         self.assertEqual(result["evidence_identity_count"], 25)
+
+    def test_validator_rejects_failure_phase_mismatch(self) -> None:
+        modified = copy.deepcopy(self.bundle)
+        record = modified["guest_preflight"][0]
+        record["result"]["status"] = "failure"
+        record["result"]["exit_code"] = 4
+        record["command"]["exit_code"] = 4
+        failure = self._failure_for(record)
+        failure["failure"]["failed_phase_id"] = "wrong_phase"
+        modified["failures"].append(failure)
+        with self.assertRaises(Exception):
+            self._validate_bundle(modified)
+
+    def test_validator_rejects_unknown_failure_class(self) -> None:
+        modified = copy.deepcopy(self.bundle)
+        record = modified["guest_preflight"][0]
+        record["result"]["status"] = "failure"
+        record["result"]["exit_code"] = 4
+        record["command"]["exit_code"] = 4
+        failure = self._failure_for(record)
+        failure["failure"]["failure_class"] = "mystery"
+        modified["failures"].append(failure)
+        with self.assertRaises(Exception):
+            self._validate_bundle(modified)
 
     def test_validator_rejects_placeholder_failure_record(self) -> None:
         modified = copy.deepcopy(self.bundle)
