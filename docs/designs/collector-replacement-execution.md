@@ -6,6 +6,8 @@
 
 The candidate workflow remains outside `.github/workflows/`. Promotion requires a separate authority-changing pull request, protected-environment approval, explicit human authorization, and all required independent reviews.
 
+PR #28 merged into `main` after a blocking operations-and-recovery review had identified that rehearsal teardown was documented and synthesized by the validator but not present in the authoritative contract. This increment amends the contract; it does not retroactively convert PR #28 into an approved recovery design.
+
 ## Target
 
 - Resource group: `rg-servicetracer-dev-westus2`
@@ -16,7 +18,7 @@ The candidate workflow remains outside `.github/workflows/`. Promotion requires 
 - Canonical OS disk: `disk-stcollector-os-mst-dev`
 - Evidence mount: `/var/lib/servicetracer`
 
-The deployed Ubuntu 22.04 image line differs from the desired Ubuntu 24.04 image line. Replacement, rather than an ordinary in-place image update, remains required.
+The latest promoted Azure control-plane evidence is dated July 21, 2026. It records a deployed Ubuntu 22.04 image line and a desired Ubuntu 24.04 image line. Replacement, rather than an ordinary in-place image update, remains required. No current guest-health, pricing, SKU-availability, quota, or actual-cost claim is made from that evidence.
 
 ## Authority and cost gates
 
@@ -70,7 +72,7 @@ Metadata verification does not prove bootability or rollback.
 
 ## Isolated exact-snapshot rehearsal
 
-Before old compute may be removed:
+Before the teardown phase may begin:
 
 1. create a temporary managed OS disk from the exact verified OS snapshot using `Copy`;
 2. create an isolated temporary VM by attaching that specialized disk using `Attach`;
@@ -82,18 +84,21 @@ Before old compute may be removed:
 
 The rehearsal is recovery evidence, not operational rollback proof.
 
-## Mandatory rehearsal teardown transition
+## Authoritative rehearsal teardown transition
 
-After rehearsal evidence is captured and before `deploy_replacement_compute`:
+The contract now contains a distinct `teardown_isolated_rehearsal` mutation phase. It must complete **before `remove_old_compute`**, which is stronger than merely requiring eventual cleanup before replacement deployment.
 
-- deallocate the isolated rehearsal VM and record its final power state;
-- remove the temporary rehearsal VM;
-- remove the isolated temporary NIC and any other rehearsal-only compute boundary;
-- verify that no rehearsal compute remains allocated;
-- retain only explicitly approved recovery artifacts: the verified OS snapshot, verified evidence snapshot, and an approved temporary recovery disk when required;
-- preserve zero minutes of running-compute overlap.
+The phase must prove all of the following from contract inputs and phase evidence:
 
-The final cleanup phase handles retained recovery artifacts after human acceptance. It must not be used to justify leaving rehearsal compute allocated during replacement deployment.
+- the rehearsal VM reached Azure `PowerState/deallocated` after proof capture;
+- the temporary rehearsal VM is absent;
+- the temporary isolated NIC is absent;
+- the source VM remains `PowerState/deallocated`;
+- running-compute overlap is zero minutes;
+- only the verified OS-disk snapshot, verified evidence-disk snapshot, and an explicitly approved temporary recovery disk may remain;
+- no unapproved temporary resource may be retained.
+
+The final cleanup phase handles the approved retained recovery artifacts after human acceptance. It cannot be used to justify leaving rehearsal compute allocated while old compute is removed or replacement compute is deployed.
 
 ## Old-compute removal and preservation boundary
 
@@ -102,7 +107,7 @@ Old compute may be removed only after:
 - exact ordered quiescence and Azure deallocation;
 - both consistency-bound snapshots are verified;
 - exact-snapshot Trusted Launch rehearsal succeeds;
-- rehearsal compute teardown succeeds;
+- the authoritative rehearsal teardown phase succeeds;
 - the production NIC and evidence disk are confirmed preserved.
 
 Deletion is VM-only. The production NIC and evidence disk must not be deleted.
@@ -119,6 +124,10 @@ The replacement VM must:
 - disable public access on the OS disk and use network access policy `DenyAll`;
 - receive a new system-assigned identity;
 - receive only RBAC assignments from an approved allowlist.
+
+## Candidate workflow alignment
+
+The non-dispatchable candidate workflow mirrors the complete contract phase order, including quiescence, snapshot rehearsal, and the new teardown phase. Tests compare the workflow's phase markers against the authoritative contract so the two artifacts cannot silently drift again.
 
 ## Post-change verification
 
@@ -152,14 +161,16 @@ If replacement validation fails after old-compute removal:
 
 The evidence disk is never deleted, formatted, replaced, restored over, or attached to the isolated rehearsal VM.
 
-## Evidence and rollback behavior
+## Evidence, failure, rollback, and cleanup behavior
 
 Every mutation must capture command, exit code, timestamp, correlation ID, target resource IDs, before/after state, and cleanup ownership. Failures stop forward progress. The design does not permit infinite retries or automatic authority expansion.
 
+A failed rehearsal or teardown leaves the source VM deallocated and the old compute intact. No old-compute removal or replacement deployment is permitted. Temporary resources must be cleaned up within the approved deadline, while verified snapshots may be retained only under the explicit allowlist and cost boundary.
+
 ## Current blockers
 
-- fresh CI on the latest code-bearing remediation head;
-- another operations-and-recovery review;
+- fresh exact-head CI for this contract-amendment increment;
+- another operations-and-recovery review of that passing exact head;
 - fake-Azure-CLI-tested execution and recovery commands;
 - guest and control-plane evidence schemas;
 - identity/RBAC allowlist;

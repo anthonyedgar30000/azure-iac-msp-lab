@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "servicetracer.collector-replacement-execution-design.v1"
+SCHEMA_VERSION = "servicetracer.collector-replacement-execution-design.v2"
 REQUIRED_PHASE_ORDER = [
     "validate_authority",
     "guest_and_control_plane_preflight",
@@ -14,6 +14,7 @@ REQUIRED_PHASE_ORDER = [
     "create_recovery_points",
     "verify_recovery_points",
     "isolated_snapshot_boot_rehearsal",
+    "teardown_isolated_rehearsal",
     "remove_old_compute",
     "verify_preservation_boundary",
     "deploy_replacement_compute",
@@ -28,6 +29,7 @@ MUTATION_PHASES = {
     "quiesce_and_deallocate_source",
     "create_recovery_points",
     "isolated_snapshot_boot_rehearsal",
+    "teardown_isolated_rehearsal",
     "remove_old_compute",
     "deploy_replacement_compute",
     "harden_replacement_os_disk",
@@ -43,7 +45,7 @@ EXPECTED_OS_DISK = "disk-stcollector-os-mst-dev"
 EXPECTED_CONFIRMATION = "REPLACE:rg-servicetracer-dev-westus2:vm-stcollector-mst-dev"
 EXPECTED_ROLLBACK_STATUS = "strategy_selected_design_only"
 EXPECTED_ROLLBACK_STRATEGY = "os_disk_snapshot_recreate_canonical_name"
-EXPECTED_REVIEW_STATUS = "changes_addressed_re_review_pending"
+EXPECTED_REVIEW_STATUS = "contract_amendment_re_review_pending"
 EXPECTED_ROLLBACK_SNAPSHOT_PREFIX = "snap-stcollector-os-rollback-mst-dev-"
 EXPECTED_BINDING_FIELDS = {
     "maintenance_correlation_id",
@@ -71,22 +73,43 @@ REQUIRED_REHEARSAL_PROOF = {
     "production NIC is not attached",
     "production evidence disk is not attached",
 }
-REHEARSAL_TEARDOWN_EVIDENCE = [
-    "isolated rehearsal VM is deallocated after proof capture",
-    "temporary rehearsal VM and isolated NIC are removed before replacement compute",
-    "only approved snapshots and temporary recovery disks may remain",
-]
+EXPECTED_TEARDOWN_REMOVE_RESOURCES = {
+    "temporary rehearsal VM",
+    "temporary isolated NIC",
+}
+EXPECTED_ALLOWED_RETAINED_ARTIFACTS = {
+    "verified OS-disk snapshot",
+    "verified evidence-disk snapshot",
+    "approved temporary recovery disk",
+}
+REQUIRED_TEARDOWN_EVIDENCE = {
+    "rehearsal VM power state is PowerState/deallocated",
+    "temporary rehearsal VM is absent",
+    "temporary isolated NIC is absent",
+    "source VM remains PowerState/deallocated",
+    "only approved retained artifacts remain",
+    "running compute overlap is zero minutes",
+}
 REQUIRED_ROLLBACK_PREFLIGHT = {
-    "source OS-disk resource ID", "disk size GiB", "disk SKU", "OS type",
-    "Hyper-V generation", "security profile and Trusted Launch compatibility",
+    "source OS-disk resource ID",
+    "disk size GiB",
+    "disk SKU",
+    "OS type",
+    "Hyper-V generation",
+    "security profile and Trusted Launch compatibility",
     "encryption configuration and disk encryption set when present",
-    "availability zone when present", "network access policy",
-    "public network access state", "OS-disk delete option",
+    "availability zone when present",
+    "network access policy",
+    "public network access state",
+    "OS-disk delete option",
 }
 REQUIRED_SNAPSHOT_VERIFICATION = {
-    "provisioning state succeeded", "source OS-disk resource ID matches",
-    "snapshot size matches source disk", "Hyper-V generation and OS type are preserved",
-    "network access policy is DenyAll", "public network access is Disabled",
+    "provisioning state succeeded",
+    "source OS-disk resource ID matches",
+    "snapshot size matches source disk",
+    "Hyper-V generation and OS type are preserved",
+    "network access policy is DenyAll",
+    "public network access is Disabled",
     "maintenance correlation ID matches the consistency boundary",
     "final evidence checkpoint ID matches the consistency boundary",
     "final evidence checkpoint SHA-256 matches the consistency boundary",
@@ -94,11 +117,15 @@ REQUIRED_SNAPSHOT_VERIFICATION = {
     "cleanup deadline is no more than 24 hours after creation",
 }
 REQUIRED_RECREATION_METADATA = {
-    "disk SKU", "OS type", "Hyper-V generation",
+    "disk SKU",
+    "OS type",
+    "Hyper-V generation",
     "security profile and Trusted Launch settings",
     "encryption configuration and disk encryption set when present",
-    "availability zone when present", "network access policy",
-    "public network access state", "OS-disk delete option",
+    "availability zone when present",
+    "network access policy",
+    "public network access state",
+    "OS-disk delete option",
 }
 REQUIRED_ROLLBACK_ACCEPTANCE = {
     "prior OS boots under the reviewed security profile",
@@ -166,10 +193,14 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
         raise DesignValidationError("unexpected active workflow promotion path")
     for field in ("active_workflow_present", "dispatch_authorized", "azure_mutations_authorized"):
         _require_false(activation.get(field), f"activation.{field}")
-    _require_true(activation.get("promotion_requires_separate_pull_request"), "activation.promotion_requires_separate_pull_request")
-    if _text_set(activation.get("promotion_requires_independent_reviews"), "activation.promotion_requires_independent_reviews") != {
-        "evidence-quality", "operations-and-recovery", "security-and-identity", "azure-cost"
-    }:
+    _require_true(
+        activation.get("promotion_requires_separate_pull_request"),
+        "activation.promotion_requires_separate_pull_request",
+    )
+    if _text_set(
+        activation.get("promotion_requires_independent_reviews"),
+        "activation.promotion_requires_independent_reviews",
+    ) != {"evidence-quality", "operations-and-recovery", "security-and-identity", "azure-cost"}:
         raise DesignValidationError("all four independent review lenses are required")
 
     evidence = _object(contract.get("evidence_anchor"), "evidence_anchor")
@@ -177,8 +208,14 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
         raise DesignValidationError("planner run ID does not match promoted evidence")
     if evidence.get("planner_artifact_sha256") != EXPECTED_PLANNER_DIGEST:
         raise DesignValidationError("planner artifact digest does not match promoted evidence")
-    _require_false(evidence.get("planner_azure_mutations_authorized"), "evidence_anchor.planner_azure_mutations_authorized")
-    _require_false(evidence.get("planner_azure_mutations_performed"), "evidence_anchor.planner_azure_mutations_performed")
+    _require_false(
+        evidence.get("planner_azure_mutations_authorized"),
+        "evidence_anchor.planner_azure_mutations_authorized",
+    )
+    _require_false(
+        evidence.get("planner_azure_mutations_performed"),
+        "evidence_anchor.planner_azure_mutations_performed",
+    )
 
     target = _object(contract.get("target"), "target")
     expected_target_values = {
@@ -195,19 +232,30 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
 
     cost = _object(contract.get("cost_controls"), "cost_controls")
     expected_cost_values = {
-        "currency": "CAD", "review_status": "conditionally_approved_planning_estimate",
-        "reviewed_planning_estimate": 4.0, "renewed_approval_threshold": 4.0,
-        "maximum_declared_temporary_cost": 10.0, "maximum_snapshots": 2,
-        "maximum_total_snapshot_gib": 96, "maximum_compute_overlap_minutes": 0,
+        "currency": "CAD",
+        "review_status": "conditionally_approved_planning_estimate",
+        "reviewed_planning_estimate": 4.0,
+        "renewed_approval_threshold": 4.0,
+        "maximum_declared_temporary_cost": 10.0,
+        "maximum_snapshots": 2,
+        "maximum_total_snapshot_gib": 96,
+        "maximum_compute_overlap_minutes": 0,
         "maximum_isolated_restore_rehearsal_compute_hours": 4,
         "maximum_recovery_resource_retention_hours": 24,
     }
     for field, expected in expected_cost_values.items():
         if cost.get(field) != expected:
             raise DesignValidationError(f"cost control changed: {field}")
-    for field in ("fresh_authenticated_subscription_cost_preflight_required", "cleanup_owner_required", "cleanup_deadline_required"):
+    for field in (
+        "fresh_authenticated_subscription_cost_preflight_required",
+        "cleanup_owner_required",
+        "cleanup_deadline_required",
+    ):
         _require_true(cost.get(field), f"cost_controls.{field}")
-    _require_false(cost.get("azure_budget_or_alert_mutation_allowed"), "cost_controls.azure_budget_or_alert_mutation_allowed")
+    _require_false(
+        cost.get("azure_budget_or_alert_mutation_allowed"),
+        "cost_controls.azure_budget_or_alert_mutation_allowed",
+    )
 
     gates = _text_set(contract.get("required_preflight_gates"), "required_preflight_gates")
     if not any("subscription-specific pricing" in gate for gate in gates):
@@ -223,16 +271,27 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
         raise DesignValidationError("consistency boundary actions are missing, duplicated, or out of order")
     if consistency.get("source_power_state_required") != "PowerState/deallocated":
         raise DesignValidationError("source VM must be deallocated before snapshots")
-    for field in ("final_evidence_checkpoint_id_required", "final_evidence_checkpoint_sha256_required", "maintenance_correlation_id_required", "both_snapshots_must_share_binding"):
+    for field in (
+        "final_evidence_checkpoint_id_required",
+        "final_evidence_checkpoint_sha256_required",
+        "maintenance_correlation_id_required",
+        "both_snapshots_must_share_binding",
+    ):
         _require_true(consistency.get(field), f"consistency_boundary.{field}")
-    _require_false(consistency.get("snapshot_capture_before_boundary_allowed"), "consistency_boundary.snapshot_capture_before_boundary_allowed")
-    if _text_set(consistency.get("snapshot_binding_fields"), "consistency_boundary.snapshot_binding_fields") != EXPECTED_BINDING_FIELDS:
+    _require_false(
+        consistency.get("snapshot_capture_before_boundary_allowed"),
+        "consistency_boundary.snapshot_capture_before_boundary_allowed",
+    )
+    if _text_set(
+        consistency.get("snapshot_binding_fields"),
+        "consistency_boundary.snapshot_binding_fields",
+    ) != EXPECTED_BINDING_FIELDS:
         raise DesignValidationError("snapshot binding fields changed")
 
     rehearsal = _object(contract.get("isolated_restore_rehearsal"), "isolated_restore_rehearsal")
     expected_rehearsal_values = {
         "phase_id": "isolated_snapshot_boot_rehearsal",
-        "required_before_phase": "remove_old_compute",
+        "required_before_phase": "teardown_isolated_rehearsal",
         "source_snapshot": "exact verified OS-disk snapshot",
         "temporary_os_disk_create_option": "Copy",
         "temporary_vm_os_disk_create_option": "Attach",
@@ -245,15 +304,68 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
             raise DesignValidationError(f"isolated rehearsal contract changed: {field}")
     for field in ("source_vm_must_remain_deallocated", "cleanup_required"):
         _require_true(rehearsal.get(field), f"isolated_restore_rehearsal.{field}")
-    for field in ("production_nic_attached", "production_evidence_disk_attached", "operational_rollback_proof"):
+    for field in (
+        "production_nic_attached",
+        "production_evidence_disk_attached",
+        "operational_rollback_proof",
+    ):
         _require_false(rehearsal.get(field), f"isolated_restore_rehearsal.{field}")
-    if _text_set(rehearsal.get("required_proof"), "isolated_restore_rehearsal.required_proof") != REQUIRED_REHEARSAL_PROOF:
+    if _text_set(
+        rehearsal.get("required_proof"),
+        "isolated_restore_rehearsal.required_proof",
+    ) != REQUIRED_REHEARSAL_PROOF:
         raise DesignValidationError("isolated rehearsal proof requirements changed")
 
-    attachments = _object(contract.get("replacement_vm_attachment_contract"), "replacement_vm_attachment_contract")
-    if attachments.get("nic_resource") != EXPECTED_NIC or attachments.get("evidence_disk_resource") != EXPECTED_EVIDENCE_DISK or attachments.get("os_disk_resource") != EXPECTED_OS_DISK:
+    teardown = _object(contract.get("rehearsal_teardown"), "rehearsal_teardown")
+    if teardown.get("phase_id") != "teardown_isolated_rehearsal":
+        raise DesignValidationError("unexpected rehearsal teardown phase")
+    if teardown.get("required_before_phase") != "remove_old_compute":
+        raise DesignValidationError("rehearsal teardown must complete before old-compute removal")
+    if teardown.get("rehearsal_vm_power_state_required") != "PowerState/deallocated":
+        raise DesignValidationError("rehearsal VM must be deallocated before teardown")
+    _require_true(
+        teardown.get("source_vm_must_remain_deallocated"),
+        "rehearsal_teardown.source_vm_must_remain_deallocated",
+    )
+    _require_false(
+        teardown.get("unapproved_retained_artifacts_allowed"),
+        "rehearsal_teardown.unapproved_retained_artifacts_allowed",
+    )
+    if teardown.get("maximum_running_compute_overlap_minutes") != 0:
+        raise DesignValidationError("rehearsal and replacement running-compute overlap must remain zero")
+    teardown_remove_resources = _text_set(
+        teardown.get("remove_resources"),
+        "rehearsal_teardown.remove_resources",
+    )
+    if teardown_remove_resources != EXPECTED_TEARDOWN_REMOVE_RESOURCES:
+        raise DesignValidationError("rehearsal-only compute resources must be removed")
+    allowed_retained_artifacts = _text_set(
+        teardown.get("allowed_retained_artifacts"),
+        "rehearsal_teardown.allowed_retained_artifacts",
+    )
+    if allowed_retained_artifacts != EXPECTED_ALLOWED_RETAINED_ARTIFACTS:
+        raise DesignValidationError("rehearsal teardown retained-artifact allowlist changed")
+    teardown_evidence = _text_set(
+        teardown.get("evidence_required"),
+        "rehearsal_teardown.evidence_required",
+    )
+    if teardown_evidence != REQUIRED_TEARDOWN_EVIDENCE:
+        raise DesignValidationError("rehearsal teardown evidence requirements changed")
+
+    attachments = _object(
+        contract.get("replacement_vm_attachment_contract"),
+        "replacement_vm_attachment_contract",
+    )
+    if (
+        attachments.get("nic_resource") != EXPECTED_NIC
+        or attachments.get("evidence_disk_resource") != EXPECTED_EVIDENCE_DISK
+        or attachments.get("os_disk_resource") != EXPECTED_OS_DISK
+    ):
         raise DesignValidationError("replacement attachment resource changed")
-    if attachments.get("nic_delete_option") != "Detach" or attachments.get("evidence_disk_delete_option") != "Detach":
+    if (
+        attachments.get("nic_delete_option") != "Detach"
+        or attachments.get("evidence_disk_delete_option") != "Detach"
+    ):
         raise DesignValidationError("replacement production attachments must use deleteOption Detach")
     for field in ("verify_after_vm_create", "verify_before_failed_compute_deletion"):
         _require_true(attachments.get(field), f"replacement_vm_attachment_contract.{field}")
@@ -271,18 +383,26 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
             raise DesignValidationError(f"phases[{index}].mutation must be boolean")
         if mutation:
             mutation_ids.add(phase_id)
-            _require_true(phase.get("requires_explicit_authorization"), f"phases[{index}].requires_explicit_authorization")
-        phase_evidence[phase_id] = _text(phase.get("evidence_required"), f"phases[{index}].evidence_required")
+            _require_true(
+                phase.get("requires_explicit_authorization"),
+                f"phases[{index}].requires_explicit_authorization",
+            )
+        phase_evidence[phase_id] = _text(
+            phase.get("evidence_required"),
+            f"phases[{index}].evidence_required",
+        )
     if phase_ids != REQUIRED_PHASE_ORDER:
         raise DesignValidationError("replacement phases are missing or out of order")
     if mutation_ids != MUTATION_PHASES:
         raise DesignValidationError("mutation phase classification changed unexpectedly")
+
     required_evidence_fragments = {
         "quiesce_and_deallocate_source": "PowerState/deallocated",
         "create_recovery_points": "same maintenance correlation",
         "isolated_snapshot_boot_rehearsal": "source VM remains deallocated",
-        "remove_old_compute": "isolated boot rehearsal",
-        "verify_preservation_boundary": "rehearsal evidence",
+        "teardown_isolated_rehearsal": "temporary rehearsal VM",
+        "remove_old_compute": "contract-backed rehearsal teardown",
+        "verify_preservation_boundary": "teardown evidence",
         "deploy_replacement_compute": "deleteOption Detach",
         "cleanup_temporary_recovery_resources": "deletion proof before deadline",
     }
@@ -290,53 +410,86 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
         if fragment not in phase_evidence[phase_id]:
             raise DesignValidationError(f"{phase_id} evidence must include: {fragment}")
 
-    # The immutable contract already sets zero compute overlap and requires cleanup.
-    # This validator makes the transition consequence explicit: the rehearsal compute
-    # boundary must be gone before replacement compute begins, while approved recovery
-    # snapshots/disks may remain until final acceptance.
     rehearsal_index = phase_ids.index("isolated_snapshot_boot_rehearsal")
+    teardown_index = phase_ids.index("teardown_isolated_rehearsal")
+    old_compute_index = phase_ids.index("remove_old_compute")
     replacement_index = phase_ids.index("deploy_replacement_compute")
-    if rehearsal_index >= replacement_index:
-        raise DesignValidationError("replacement compute cannot precede the isolated rehearsal")
+    if not rehearsal_index < teardown_index < old_compute_index < replacement_index:
+        raise DesignValidationError(
+            "rehearsal teardown must precede old-compute removal and replacement deployment"
+        )
+    if teardown.get("required_before_phase") != phase_ids[old_compute_index]:
+        raise DesignValidationError("teardown boundary does not match phase order")
 
     rollback = _object(contract.get("rollback"), "rollback")
     rollback_status = _text(rollback.get("status"), "rollback.status")
     if rollback_status != EXPECTED_ROLLBACK_STATUS:
         raise DesignValidationError("rollback must remain selected design-only state")
     _require_true(rollback.get("promotion_blocked"), "rollback.promotion_blocked")
-    if rollback.get("strategy_id") != EXPECTED_ROLLBACK_STRATEGY or rollback.get("canonical_os_disk_name") != EXPECTED_OS_DISK or rollback.get("snapshot_name_prefix") != EXPECTED_ROLLBACK_SNAPSHOT_PREFIX:
+    if (
+        rollback.get("strategy_id") != EXPECTED_ROLLBACK_STRATEGY
+        or rollback.get("canonical_os_disk_name") != EXPECTED_OS_DISK
+        or rollback.get("snapshot_name_prefix") != EXPECTED_ROLLBACK_SNAPSHOT_PREFIX
+    ):
         raise DesignValidationError("rollback identity changed")
-    _require_false(rollback.get("preserve_old_os_disk_directly"), "rollback.preserve_old_os_disk_directly")
-    if rollback.get("maximum_os_disk_snapshot_gib") != 64 or rollback.get("block_if_os_disk_exceeds_snapshot_gib") != 64:
+    _require_false(
+        rollback.get("preserve_old_os_disk_directly"),
+        "rollback.preserve_old_os_disk_directly",
+    )
+    if (
+        rollback.get("maximum_os_disk_snapshot_gib") != 64
+        or rollback.get("block_if_os_disk_exceeds_snapshot_gib") != 64
+    ):
         raise DesignValidationError("OS-disk snapshot ceiling changed")
-    if _text_set(rollback.get("source_preflight_required"), "rollback.source_preflight_required") != REQUIRED_ROLLBACK_PREFLIGHT:
+    if _text_set(
+        rollback.get("source_preflight_required"),
+        "rollback.source_preflight_required",
+    ) != REQUIRED_ROLLBACK_PREFLIGHT:
         raise DesignValidationError("rollback source preflight requirements changed")
-    if _text_set(rollback.get("snapshot_verification_required"), "rollback.snapshot_verification_required") != REQUIRED_SNAPSHOT_VERIFICATION:
+    if _text_set(
+        rollback.get("snapshot_verification_required"),
+        "rollback.snapshot_verification_required",
+    ) != REQUIRED_SNAPSHOT_VERIFICATION:
         raise DesignValidationError("snapshot verification requirements changed")
 
     recreation = _object(rollback.get("recreation_contract"), "rollback.recreation_contract")
     expected_recreation_values = {
-        "managed_disk_create_option": "Copy", "managed_disk_source": "exact verified OS-disk snapshot",
-        "vm_os_disk_create_option": "Attach", "recreated_os_disk_name": EXPECTED_OS_DISK,
-        "recreated_vm_name": EXPECTED_TARGET, "attach_preserved_nic": EXPECTED_NIC,
-        "preserved_nic_delete_option": "Detach", "attach_preserved_evidence_disk": EXPECTED_EVIDENCE_DISK,
+        "managed_disk_create_option": "Copy",
+        "managed_disk_source": "exact verified OS-disk snapshot",
+        "vm_os_disk_create_option": "Attach",
+        "recreated_os_disk_name": EXPECTED_OS_DISK,
+        "recreated_vm_name": EXPECTED_TARGET,
+        "attach_preserved_nic": EXPECTED_NIC,
+        "preserved_nic_delete_option": "Detach",
+        "attach_preserved_evidence_disk": EXPECTED_EVIDENCE_DISK,
         "preserved_evidence_disk_delete_option": "Detach",
     }
     for field, expected in expected_recreation_values.items():
         if recreation.get(field) != expected:
             raise DesignValidationError(f"rollback recreation contract changed: {field}")
-    for field in ("re_read_attachment_delete_options_after_create", "verify_attachment_delete_options_before_failed_compute_deletion"):
+    for field in (
+        "re_read_attachment_delete_options_after_create",
+        "verify_attachment_delete_options_before_failed_compute_deletion",
+    ):
         _require_true(recreation.get(field), f"rollback.recreation_contract.{field}")
-    if _text_set(recreation.get("metadata_required"), "rollback.recreation_contract.metadata_required") != REQUIRED_RECREATION_METADATA:
+    if _text_set(
+        recreation.get("metadata_required"),
+        "rollback.recreation_contract.metadata_required",
+    ) != REQUIRED_RECREATION_METADATA:
         raise DesignValidationError("rollback recreation metadata requirements changed")
-    if _text_set(recreation.get("acceptance_required"), "rollback.recreation_contract.acceptance_required") != REQUIRED_ROLLBACK_ACCEPTANCE:
+    if _text_set(
+        recreation.get("acceptance_required"),
+        "rollback.recreation_contract.acceptance_required",
+    ) != REQUIRED_ROLLBACK_ACCEPTANCE:
         raise DesignValidationError("rollback acceptance requirements changed")
 
     _require_false(rollback.get("operationally_tested"), "rollback.operationally_tested")
     if rollback.get("independent_review_status") != EXPECTED_REVIEW_STATUS:
-        raise DesignValidationError("rollback must remain pending independent re-review")
+        raise DesignValidationError("rollback contract amendment must remain pending re-review")
     for field in ("decision", "before_old_vm_deletion", "after_old_vm_deletion", "evidence_disk_rule"):
         _text(rollback.get(field), f"rollback.{field}")
+    if "teardown" not in rollback["before_old_vm_deletion"]:
+        raise DesignValidationError("rollback deletion gate must include rehearsal teardown")
 
     blockers = _text_set(contract.get("unresolved_blockers"), "unresolved_blockers")
     for required in (
@@ -349,7 +502,7 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
             raise DesignValidationError(f"required unresolved blocker missing: {required}")
 
     return {
-        "schema_version": "servicetracer.collector-replacement-design-validation.v1",
+        "schema_version": "servicetracer.collector-replacement-design-validation.v2",
         "design_valid": True,
         "design_state": "fail_closed",
         "candidate_workflow": candidate_workflow,
@@ -357,8 +510,15 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
         "dispatch_authorized": False,
         "azure_mutations_authorized": False,
         "promotion_ready": False,
-        "evidence_anchor": {"planner_run_id": EXPECTED_PLANNER_RUN, "planner_artifact_sha256": EXPECTED_PLANNER_DIGEST},
-        "target": {"collector_vm": EXPECTED_TARGET, "collector_os_disk": EXPECTED_OS_DISK, "exact_future_confirmation": EXPECTED_CONFIRMATION},
+        "evidence_anchor": {
+            "planner_run_id": EXPECTED_PLANNER_RUN,
+            "planner_artifact_sha256": EXPECTED_PLANNER_DIGEST,
+        },
+        "target": {
+            "collector_vm": EXPECTED_TARGET,
+            "collector_os_disk": EXPECTED_OS_DISK,
+            "exact_future_confirmation": EXPECTED_CONFIRMATION,
+        },
         "phase_order": phase_ids,
         "mutation_phase_ids": sorted(mutation_ids),
         "cost_controls": cost,
@@ -370,18 +530,24 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
         "consistency_boundary_required": True,
         "consistency_actions_exact_order": EXPECTED_CONSISTENCY_ACTIONS,
         "isolated_snapshot_boot_rehearsal_required": True,
-        "rehearsal_compute_deallocated_before_replacement": True,
-        "rehearsal_temporary_compute_removed_before_replacement": True,
-        "rehearsal_teardown_before_phase": "deploy_replacement_compute",
-        "rehearsal_teardown_evidence_required": REHEARSAL_TEARDOWN_EVIDENCE,
-        "approved_temporary_recovery_artifacts_may_remain": ["verified OS-disk snapshot", "verified evidence-disk snapshot", "approved temporary recovery disk"],
+        "rehearsal_compute_deallocated_before_replacement": (
+            teardown["rehearsal_vm_power_state_required"] == "PowerState/deallocated"
+        ),
+        "rehearsal_temporary_compute_removed_before_replacement": (
+            teardown_remove_resources == EXPECTED_TEARDOWN_REMOVE_RESOURCES
+        ),
+        "rehearsal_teardown_before_phase": teardown["required_before_phase"],
+        "rehearsal_teardown_evidence_required": sorted(teardown_evidence),
+        "approved_temporary_recovery_artifacts_may_remain": sorted(allowed_retained_artifacts),
         "production_attachment_delete_option": "Detach",
         "unresolved_blockers": sorted(blockers),
     }
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate and render the fail-closed collector replacement design.")
+    parser = argparse.ArgumentParser(
+        description="Validate and render the fail-closed collector replacement design."
+    )
     parser.add_argument("--contract", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
@@ -390,11 +556,14 @@ def main() -> int:
         raise DesignValidationError("contract root must be an object")
     result = validate_contract(contract)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    args.output.write_text(
+        json.dumps(result, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     print(
         "collector replacement execution design validated: exact ordered quiescence, "
-        "consistency-bound snapshots, isolated Trusted Launch boot rehearsal, mandatory "
-        "rehearsal teardown before replacement compute, Copy/Attach separation, "
+        "consistency-bound snapshots, isolated Trusted Launch boot rehearsal, contract-backed "
+        "rehearsal teardown before old-compute removal, Copy/Attach separation, "
         "Detach-preserved production attachments, fail-closed and Azure mutations unauthorized"
     )
     return 0

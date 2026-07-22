@@ -89,17 +89,23 @@ jobs:
     steps:
       - name: Validate authority and promoted planner evidence
         run: echo validate_authority
-      - name: Verify guest service, health, mount, filesystem, and recent evidence
+      - name: Verify guest and Azure control-plane preflight
         run: echo guest_and_control_plane_preflight
-      - name: Preserve NIC and evidence-disk delete options
+      - name: Preserve production attachment delete options
         run: echo preserve_delete_options
-      - name: Create bounded recovery points
+      - name: Quiesce collector and deallocate source
+        run: echo quiesce_and_deallocate_source
+      - name: Create consistency-bound recovery points
         run: echo create_recovery_points
       - name: Independently verify recovery points
         run: echo verify_recovery_points
+      - name: Rehearse the exact OS snapshot in isolation
+        run: echo isolated_snapshot_boot_rehearsal
+      - name: Deallocate and remove rehearsal-only compute
+        run: echo teardown_isolated_rehearsal
       - name: Remove only old collector compute
         run: echo remove_old_compute
-      - name: Verify NIC, static address, subnet, and evidence disk survived
+      - name: Verify preservation boundary
         run: echo verify_preservation_boundary
       - name: Deploy Ubuntu 24.04 replacement compute
         run: echo deploy_replacement_compute
@@ -107,9 +113,9 @@ jobs:
         run: echo harden_replacement_os_disk
       - name: Restore and verify managed-identity RBAC
         run: echo restore_identity_and_rbac
-      - name: Verify cloud-init, evidence UUID, service, durable write, and restart
+      - name: Verify guest, service, durability, identity, and attachments
         run: echo post_change_verification
       - name: Require independent human recovery acceptance
         run: echo human_recovery_acceptance
-      - name: Clean up temporary recovery resources after acceptance
+      - name: Clean up retained temporary recovery artifacts
         run: echo cleanup_temporary_recovery_resources
