@@ -2,28 +2,26 @@
 
 ## Status
 
-**Design-only and fail-closed.**
+**Design-only, fail-closed, and pending independent re-review.**
 
-The candidate workflow is stored at `infra/workflow-designs/collector-replacement-execution.yml`, outside `.github/workflows`. GitHub therefore cannot dispatch it. The candidate also exits before Azure authentication and contains no Azure mutation commands.
+The candidate workflow remains at `infra/workflow-designs/collector-replacement-execution.yml`, outside `.github/workflows`. GitHub cannot dispatch it. It exits before Azure authentication and contains no Azure mutation commands.
 
-The governing machine-readable contract is `infra/replacement/collector-replacement-contract.json`. CI validates it with `infra/replacement/validate_execution_design.py` and `infra/tests/test_collector_replacement_execution_design.py`.
+The governing contract is `infra/replacement/collector-replacement-contract.json`. CI validates it with `infra/replacement/validate_execution_design.py` and `infra/tests/test_collector_replacement_execution_design.py`.
 
-The rollback strategy is now selected as **OS-disk snapshot plus deterministic recreation under the canonical OS-disk name**. Selection is a repository design decision only. Rollback remains operationally untested, independently unapproved, and a blocker to workflow promotion.
+The selected strategy remains **OS-disk snapshot plus deterministic recreation under the canonical OS-disk name**. The first independent operations-and-recovery review requested four changes. This revision encodes those changes as contract invariants and tests; it does not claim independent approval or operational proof.
 
-This design does not authorize the generated `REPLACE:` phrase, Azure login, snapshot creation, delete-option changes, VM deletion, resource creation, role assignment, or cleanup.
+No `REPLACE:` phrase, Azure login, snapshot, deallocation, delete-option change, VM deletion, resource creation, role assignment, or cleanup is authorized by this design.
 
 ## Evidence anchor
 
-The design is pinned to the promoted read-only planning evidence:
+- Planner run: `29856203054`
+- Repository commit: `93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a`
+- Artifact: `collector-replacement-plan-29856203054-1`
+- Artifact SHA-256: `76f3b44e6e97e906dac6d62eeb212a6bc55265e77271a030b9c45b0cacf55637`
+- Planner Azure mutations authorized: `false`
+- Planner Azure mutations performed: `false`
 
-- workflow run `29856203054`;
-- repository commit `93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a`;
-- artifact `collector-replacement-plan-29856203054-1`;
-- artifact SHA-256 `76f3b44e6e97e906dac6d62eeb212a6bc55265e77271a030b9c45b0cacf55637`;
-- Azure mutations authorized: `false`;
-- Azure mutations performed: `false`.
-
-The sanitized four-lens review remains `docs/reviews/collector-replacement-plan-2026-07-21.md`. The selected rollback decision is documented in `docs/reviews/collector-replacement-rollback-decision-2026-07-21.md`.
+The artifact is control-plane evidence. It does not prove current guest health, snapshot consistency, Trusted Launch bootability, rollback, or current subscription pricing.
 
 ## Target boundary
 
@@ -39,180 +37,184 @@ The sanitized four-lens review remains `docs/reviews/collector-replacement-plan-
 | Desired image | Canonical Ubuntu 24.04 |
 | Future confirmation | `REPLACE:rg-servicetracer-dev-westus2:vm-stcollector-mst-dev` |
 
-A promoted implementation must refuse any target that does not exactly match the reviewed authorization package and current control-plane evidence.
+A future implementation must refuse any target that does not exactly match the reviewed authorization package and fresh Azure evidence.
 
-## Authority model
+## Authority and cost boundary
 
-The future execution path requires all of the following as separate evidence:
+A future execution requires a reviewed implementation commit, promoted planner evidence, fresh guest/control-plane evidence, recovery proof, explicit NIC handling, an RBAC allowlist, independent review decisions, protected-environment approval, and an unexpired exact confirmation.
 
-1. a reviewed implementation commit;
-2. the promoted planner run and artifact digest;
-3. a fresh guest and control-plane preflight package;
-4. independently verified evidence-disk and OS-disk recovery points;
-5. explicit NIC handling;
-6. an approved identity/RBAC restoration allowlist;
-7. a temporary-cost ceiling, cleanup owner, and deadline;
-8. four independent review decisions;
-9. protected-environment approval;
-10. exact typed confirmation that has not expired.
+The cost lens is conditionally approved for planning only:
 
-A confirmation phrase is only one field in the authority package. It is never sufficient by itself.
+- reviewed planning estimate: CAD 4;
+- renewed approval required above CAD 4;
+- unconditional stop above CAD 10;
+- maximum two snapshots and 96 GiB total;
+- maximum isolated rehearsal compute: four hours;
+- maximum recovery-resource retention: 24 hours;
+- old and rehearsal or replacement compute overlap: zero minutes.
+
+A real run still requires authenticated subscription-specific meter pricing, SKU availability, quota, cleanup owner, and cleanup deadline. The estimate is not actual spend or Azure execution authority.
 
 ## Ordered state machine
 
 ### 1. Validate authority
 
-Validate the exact target, reviewed commit, planner evidence identity, approval owner, approval time, expiry, cost ceiling, cleanup owner, cleanup deadline, and confirmation phrase. Refuse stale or incomplete authorization.
+Validate the exact target, reviewed commit, planner evidence, approval owner and expiry, cost controls, cleanup ownership, deadline, and confirmation phrase. Refuse stale or incomplete authorization.
 
 ### 2. Guest and control-plane preflight
 
-Immediately before maintenance, capture:
+Capture service and `/healthz` state, evidence mount and UUID, recent evidence readability, VM/NIC/disk configuration, identity and visible RBAC, and all OS-disk recreation metadata:
 
-- `systemctl is-active servicetracer-collector.service`;
-- local `/healthz` success;
-- `findmnt` evidence proving `/var/lib/servicetracer` is mounted from the managed evidence disk;
-- filesystem UUID and block-device identity;
-- recent evidence readability without printing evidence contents or credentials;
-- current VM image, size, NIC, static address, subnet, OS disk, evidence disk, identity, and visible role assignments;
-- current delete options and disk network-access policies;
-- current OS-disk resource ID, size, OS type, Hyper-V generation, security type, Trusted Launch compatibility, encryption configuration, network access policy, and public network access state.
+- resource ID and size;
+- SKU and OS type;
+- Hyper-V generation;
+- Trusted Launch/security profile;
+- encryption and Disk Encryption Set when present;
+- availability zone when present;
+- network and public-access policies;
+- OS-disk delete option.
 
-Azure VM Run Command is suitable for bounded guest checks, but its returned output must be sanitized and treated as operationally sensitive evidence.
+Also obtain fresh subscription-specific pricing, SKU availability, quota, cleanup owner, and cleanup deadline evidence.
 
-### 3. Preserve delete options
+### 3. Preserve source delete options
 
-Before deleting the VM, a future implementation must update and then re-read the VM resource so that:
+Before maintenance, update and re-read the source VM representation so that:
 
-- the evidence disk remains `Detach`;
-- the NIC is changed from `Delete` to `Detach`;
-- the old OS disk remains disposable only after its OS-disk snapshot is independently verified.
+- production NIC: `deleteOption: Detach`;
+- production evidence disk: `deleteOption: Detach`;
+- OS disk remains disposable only after the exact-snapshot rehearsal succeeds.
 
-Microsoft documents changing VM delete behavior through the resource update path. The implementation must verify the resulting resource representation before continuing.
+### 4. Quiesce and deallocate the source
 
-### 4. Create recovery points
+Before either snapshot:
 
-Create exactly two bounded recovery snapshots:
+1. stop accepting new collector writes;
+2. drain in-flight writes;
+3. flush pending evidence writes to the mounted evidence filesystem;
+4. record a final evidence checkpoint identifier and SHA-256;
+5. record a maintenance correlation identifier;
+6. stop the collector service;
+7. verify guest shutdown;
+8. deallocate the source VM;
+9. verify Azure `PowerState/deallocated`.
 
-1. an evidence-disk snapshot whose source identity matches `disk-stcollector-evidence-mst-dev`;
-2. an OS-disk rollback snapshot whose name begins with `snap-stcollector-os-rollback-mst-dev-` and whose source identity matches `disk-stcollector-os-mst-dev`.
+Snapshot capture before this boundary is prohibited.
 
-Both snapshots require restrictive network access, public network access disabled, and workload, execution, owner, and cleanup-deadline tags.
+### 5. Create consistency-bound recovery points
 
-The total snapshot ceiling is 96 GiB. Because the evidence disk is 32 GiB, the design blocks if the current OS disk exceeds 64 GiB. The size must be freshly observed; the repository does not currently claim it as a runtime fact.
+Create exactly two snapshots only after deallocation:
 
-### 5. Independently verify recovery points
+1. evidence-disk snapshot sourced from `disk-stcollector-evidence-mst-dev`;
+2. OS-disk snapshot named with prefix `snap-stcollector-os-rollback-mst-dev-` and sourced from `disk-stcollector-os-mst-dev`.
 
-A separate verification step must prove for both snapshots:
+Both snapshots must carry the same:
 
-- provisioning state is successful;
-- source disk identity matches;
-- size is expected;
-- network access is restricted;
-- cleanup deadline is present and no more than 24 hours away.
+- maintenance correlation ID;
+- final evidence checkpoint ID;
+- final evidence checkpoint SHA-256.
 
-The OS-disk snapshot verification must additionally preserve OS type and Hyper-V generation and reconcile the Trusted Launch/security and encryption metadata required to recreate the prior bootable VM under the reviewed security profile.
+Both require restrictive network access, public access disabled, owner/execution/deadline tags, and no more than 24 hours retention. Stop if the OS disk exceeds 64 GiB or total snapshot capacity would exceed 96 GiB.
 
-Creation success alone is not recovery proof. Repository validation proves only that these requirements are present; it does not prove Azure recoverability.
+### 6. Verify recovery points
 
-### 6. Remove only old compute
+Independently verify source identity, size, provisioning state, generation, OS type, access policies, shared consistency binding, ownership, and cleanup deadline. Snapshot creation success is not boot proof.
 
-The design prohibits overlapping old and replacement VM compute. After both recovery snapshots and delete-option changes are independently verified, remove only the old VM boundary. The NIC and evidence disk must survive. The disposable old OS disk may be deleted so that the canonical name becomes available.
+### 7. Isolated exact-snapshot Trusted Launch rehearsal
 
-### 7. Verify preservation boundary
+Before deleting old compute:
 
-Before any replacement deployment, re-read and compare:
+1. create a temporary managed OS disk from the **exact verified OS snapshot** using `Copy`;
+2. create a temporary isolated VM using the recorded Trusted Launch profile;
+3. attach the specialized temporary OS disk using `Attach`;
+4. use only a temporary isolated NIC;
+5. do not attach the production NIC;
+6. do not attach the production evidence disk;
+7. keep the source VM deallocated;
+8. prove OS boot, VM Guest State/vTPM viability, and bounded guest health;
+9. clean up within the reviewed cost and 24-hour deadline.
 
-- NIC resource ID, subnet, static private address, and security relationships;
-- evidence-disk resource ID, size, attachment state, and access policy;
-- both recovery-snapshot identities and states;
-- absence of the old VM boundary;
-- availability of the canonical OS-disk name `disk-stcollector-os-mst-dev`.
+This rehearsal proves the exact snapshot can boot under the recorded security profile. It does not prove the full production rollback because the production NIC, evidence disk, identity, RBAC, and service path remain excluded.
 
-Any mismatch stops the workflow and enters rollback or human intervention.
+### 8. Remove only old compute
 
-### 8. Deploy replacement compute
+Remove old compute only after:
 
-Create the Ubuntu 24.04 collector using the preserved NIC and evidence disk. The source commit must be pinned. Cloud-init must preserve the existing filesystem and must not format the evidence disk. The replacement OS disk must use the canonical name `disk-stcollector-os-mst-dev`.
+- both consistency-bound snapshots pass verification;
+- the exact OS snapshot passes the isolated Trusted Launch rehearsal;
+- production NIC and evidence disk remain `Detach`;
+- all cost and cleanup gates remain valid.
 
-### 9. Harden the replacement OS disk
+Remove only the old VM boundary and disposable old OS disk. Preserve the production NIC and evidence disk.
 
-After the replacement OS disk exists, explicitly set:
+### 9. Verify preservation boundary
+
+Re-read and compare the production NIC, static IP, subnet, security relationships, evidence-disk identity and policy, both snapshots, rehearsal evidence, old-VM absence, and canonical OS-disk-name availability.
+
+### 10. Deploy replacement compute
+
+Create Ubuntu 24.04 with a pinned source commit, the canonical OS-disk name, production NIC, and existing evidence disk. Cloud-init must not format or replace the evidence filesystem.
+
+The replacement VM contract requires:
+
+- production NIC: `deleteOption: Detach`;
+- production evidence disk: `deleteOption: Detach`;
+- both settings re-read after creation;
+- both settings re-read before any failed-replacement deletion.
+
+### 11. Harden the replacement OS disk
+
+Set and re-read:
 
 - public network access: `Disabled`;
 - network access policy: `DenyAll`.
 
-The implementation must re-read the disk and prove both settings.
+### 12. Restore identity and RBAC
 
-### 10. Restore identity and RBAC
+Capture the new system-assigned principal and recreate only the approved RBAC allowlist. Do not infer permissions from architectural intent.
 
-A system-assigned identity receives a new principal ID. Capture the new principal, compare it with the old identity, and recreate only role assignments present in the approved allowlist. Do not infer permissions from architecture intent.
+### 13. Post-change verification
 
-The current promoted plan returned no visible role assignments, so an empty restoration set is valid only if a fresh preflight independently confirms it.
+Prove Ubuntu 24.04, pinned source, cloud-init without manual repair, the same evidence UUID, readable pre-change evidence, service and health, durable write, restart persistence, identity/RBAC, network state, disk hardening, and re-read `Detach` semantics.
 
-### 11. Post-change verification
+### 14. Human recovery acceptance
 
-Reuse and extend `infra/scripts/verify_collector_deployment.sh` to prove:
+Evidence-quality, operations/recovery, security/identity, and Azure-cost reviewers issue separate decisions. No single decision implies universal approval.
 
-- Ubuntu 24.04 and the reviewed ServiceTracer source commit;
-- cloud-init completion without manual repair;
-- the same evidence filesystem UUID is mounted at `/var/lib/servicetracer`;
-- recent pre-change evidence remains readable;
-- service and health endpoint are successful;
-- an authenticated durable record can be written;
-- restart persistence succeeds;
-- NIC, address, disk, identity, RBAC, and OS-disk hardening match the approved contract.
+### 15. Cleanup temporary recovery resources
 
-### 12. Human recovery acceptance
+Cleanup requires separate exact confirmation, deletion evidence before the deadline, and actual temporary-cost evidence. Budget and billing-alert resources remain out of scope.
 
-Evidence-quality, operations/recovery, security/identity, and Azure-cost reviewers issue separate typed decisions. One lens cannot imply universal approval.
+## Deterministic rollback semantics
 
-### 13. Cleanup temporary recovery resources
+If replacement verification fails after old-compute removal:
 
-Cleanup requires a separate exact confirmation after recovery acceptance. It must occur before the approved deadline and produce deletion evidence. Budget and billing-alert resources remain out of scope and must not be modified.
+1. stop before cleanup and preserve both snapshots, the production NIC, and evidence disk;
+2. re-read NIC and evidence-disk `Detach` semantics;
+3. remove only failed replacement compute and its disposable OS disk;
+4. create `disk-stcollector-os-mst-dev` from the exact verified snapshot using managed-disk create option `Copy`;
+5. validate SKU, OS type, Hyper-V generation, Trusted Launch/security profile, encryption/DES, zone when present, network policy, public-access state, and OS-disk delete option;
+6. recreate `vm-stcollector-mst-dev` by attaching the specialized OS disk using VM OS-disk create option `Attach`;
+7. attach the production NIC and evidence disk with `deleteOption: Detach`;
+8. re-read both attachment settings after creation and before any later failed-compute deletion;
+9. restore only approved RBAC to the new principal;
+10. verify boot, evidence UUID and readability, service, health, durable write, restart persistence, identity, RBAC, network, and disk policies.
 
-## Cost policy
+`FromImage` is prohibited for snapshot restoration. Missing `Attach`, metadata drift, or `Delete` on either preserved production attachment is a hard failure.
 
-The repository contract currently sets these policy ceilings:
-
-- currency: CAD;
-- maximum declared temporary cost: CAD 10;
-- maximum snapshots: 2;
-- maximum snapshot capacity: 96 GiB;
-- maximum OS-disk snapshot size: 64 GiB;
-- maximum overlapping compute: 0 minutes;
-- maximum recovery-resource retention: 24 hours.
-
-These are governance ceilings, not price quotations. Promotion requires a current reviewed estimate. The implementation may create only named recovery resources and must not create or edit Azure budgets, action groups, cost alerts, or billing configuration.
-
-## Selected rollback strategy
-
-The selected strategy is `os_disk_snapshot_recreate_canonical_name`.
-
-If replacement verification fails after old compute removal:
-
-1. stop before cleanup and preserve the NIC, evidence disk, and both recovery snapshots;
-2. remove only the failed replacement compute boundary and its disposable replacement OS disk;
-3. recreate `disk-stcollector-os-mst-dev` from the independently verified OS-disk snapshot using managed-disk create option `Copy`;
-4. recreate `vm-stcollector-mst-dev` under the recorded prior security profile with the preserved NIC and evidence disk;
-5. record the new system-assigned principal and restore only the approved RBAC allowlist;
-6. prove the prior OS boots, the same evidence filesystem UUID mounts at `/var/lib/servicetracer`, recent evidence is readable, service and health checks succeed, durable write and restart persistence succeed, and network/disk/identity state matches the rollback contract.
-
-The evidence disk is never a disposable rollback component. It must not be deleted, formatted, replaced, or restored over.
-
-This strategy was selected because it preserves the canonical IaC disk name and avoids a second naming migration. It remains operationally untested. Independent operations-and-recovery approval and an executable fake-Azure-CLI-tested recreation implementation are still required.
+The production evidence disk must never be deleted, formatted, replaced, restored over, or attached to the isolated rehearsal VM.
 
 ## Promotion gate
 
 A later PR may promote an implementation into `.github/workflows/collector-replacement-execution.yml` only after:
 
-- the selected rollback strategy receives independent operations-and-recovery approval and operational proof;
-- a preflight evidence schema exists;
-- recovery verification is independently testable;
-- mutation commands are bounded and unit-tested with a fake Azure CLI;
-- RBAC restoration uses an explicit allowlist;
-- cost and cleanup inputs are validated;
-- reviewers approve their separate scopes;
-- repository state records execution as still unauthorized until a human explicitly authorizes one run.
+- independent re-review approves this remediation;
+- guest/control-plane evidence schemas exist;
+- recovery and rehearsal commands are fake-Azure-CLI tested;
+- identity/RBAC restoration uses an explicit allowlist;
+- subscription-specific cost and quota checks are implemented;
+- cleanup owner/deadline controls are implemented;
+- all independent lenses approve their scopes;
+- execution remains unauthorized until a separate human-authorized run.
 
 ## Primary references
 
