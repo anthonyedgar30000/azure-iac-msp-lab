@@ -2,7 +2,7 @@
 
 ## Decision state
 
-**Snapshot-and-recreate remains the selected repository design. The second operations-and-recovery review requested additional remediation. Nothing is deployed or operationally tested.**
+**Snapshot-and-recreate remains the selected repository design. A blocking operations-and-recovery finding remained open when PR #28 was merged. This contract-amendment increment addresses that finding; nothing is deployed or operationally tested.**
 
 This record does not activate a workflow, authenticate to Azure, create snapshots, deallocate or delete a VM, change delete options, restore RBAC, modify budgets, or authorize replacement execution.
 
@@ -18,18 +18,32 @@ The canonical OS-disk name remains `disk-stcollector-os-mst-dev`. The design use
 - promoted read-only planner run `29856203054`;
 - artifact `collector-replacement-plan-29856203054-1` with SHA-256 `76f3b44e6e97e906dac6d62eeb212a6bc55265e77271a030b9c45b0cacf55637`;
 - PR #27 recovery-contract changes and partial merge;
-- draft PR #28 head `7162506e5abad60f49c191309b85192d6d885a45`;
-- exact-head CI run `29894321483`, which passed;
-- second operations-and-recovery review dated July 22, 2026, which recorded **CHANGES REQUIRED**;
+- PR #28 exact head `e98c6039d4a896bea49f48af0eb0c733ee491f5b`;
+- exact-head CI run `29899440550` (run 84), which passed;
+- operations-and-recovery review of that exact head, which recorded **CHANGES REQUIRED**;
+- merge commit `cb5b38f3d6ab861f54f72897e6cf625a04c275e8`, which brought PR #28 into `main` after that blocking review;
 - conditional Azure-cost planning decision approved by Anthony Edgar.
 
-CI proves repository consistency only. The planner evidence does not prove current guest health, crash consistency, snapshot recoverability, Trusted Launch bootability, rollback, current price, quota, or execution authority.
+CI proves repository execution only. The planner evidence does not prove current guest health, crash consistency, snapshot recoverability, Trusted Launch bootability, rollback, current price, quota, actual cost, or execution authority.
 
-## Second-review finding 1: order-sensitive quiescence
+## Merge-reality reconciliation
 
-The prior validator converted `ordered_actions` to a set. That accepted unsafe reordering and did not explicitly require stopping the collector service.
+The exact-head review found that two earlier issues were resolved:
 
-The remediation validates this exact sequence:
+1. quiesce actions were validated in exact order and explicitly included collector-service stop;
+2. `.project` distinguished code-bearing CI from coordination-only CI.
+
+The remaining blocker was not cosmetic. The design documents described rehearsal teardown, but the authoritative contract contained only generic eventual cleanup. The validator then returned successful teardown booleans without reading corresponding contract fields. Tests asserted those synthesized values, so a contract that allowed rehearsal compute to survive until final cleanup still passed.
+
+PR #28 merged despite that review outcome. Therefore:
+
+- `merged_into_main != operations_and_recovery_approved`;
+- the PR #28 merge is repository history, not proof that the recovery contract was complete;
+- the next bounded increment must amend the authoritative contract and then obtain fresh exact-head CI and re-review.
+
+## Exact quiescence retained
+
+The contract continues to validate this exact sequence:
 
 1. stop accepting new writes;
 2. drain in-flight writes;
@@ -43,33 +57,37 @@ The remediation validates this exact sequence:
 
 Negative tests reject reordering and service-stop omission.
 
-## Second-review finding 2: rehearsal teardown
+## Contract-backed rehearsal teardown amendment
 
-The earlier design capped rehearsal duration and required eventual cleanup, but it did not make teardown a mandatory transition before replacement compute.
+The schema is advanced to `servicetracer.collector-replacement-execution-design.v2` and gains an authoritative `rehearsal_teardown` object plus a distinct `teardown_isolated_rehearsal` phase.
 
-The remediation establishes:
+The contract now requires, before `remove_old_compute`:
 
-- source compute remains deallocated;
-- rehearsal proof is captured from the exact verified OS snapshot under the recorded Trusted Launch profile;
-- the rehearsal VM is deallocated after evidence capture;
-- the rehearsal VM and isolated NIC are removed before replacement compute;
-- no rehearsal compute remains allocated;
-- only approved snapshots and temporary recovery disks may remain;
-- running-compute overlap remains zero minutes.
+- rehearsal VM power state `PowerState/deallocated`;
+- source VM still `PowerState/deallocated`;
+- removal of the temporary rehearsal VM;
+- removal of the temporary isolated NIC;
+- zero minutes of running-compute overlap;
+- an explicit retained-artifact allowlist containing only the verified OS snapshot, verified evidence snapshot, and an approved temporary recovery disk;
+- rejection of every unapproved retained artifact;
+- phase evidence proving deallocation, resource absence, source-state preservation, retained-artifact compliance, and zero overlap.
 
-Negative tests reject non-zero overlap and omission of the cleanup boundary.
+The validator reads and validates those contract fields. It no longer synthesizes teardown success from phase ordering and generic cleanup controls.
 
-## Second-review finding 3: CI and review chronology
+Negative tests now reject:
 
-The prior `.project` state identified predecessor commit `623647ca...` and CI run `29894210458` while calling it final-head evidence.
+- missing or altered rehearsal deallocation requirements;
+- missing temporary VM or NIC removal requirements;
+- a teardown boundary moved after replacement deployment;
+- an unapproved retained artifact;
+- a missing teardown phase;
+- non-zero running-compute overlap.
 
-The corrected chronology distinguishes:
+## Candidate workflow drift repaired
 
-- last code-bearing head: `623647cad4d83083a416f4250ae8688e58a5fc57`, CI run `29894210458`;
-- reviewed coordination-only head: `7162506e5abad60f49c191309b85192d6d885a45`, CI run `29894321483`;
-- review outcome on the coordination head: **CHANGES REQUIRED**.
+The non-dispatchable workflow design previously omitted multiple authoritative phases, including quiescence and rehearsal. Its phase markers now match the complete contract order, and a regression test compares the two lists exactly.
 
-Live GitHub checks and review evidence are authoritative for the final coordination-only head. A new code-bearing remediation head requires fresh CI.
+This alignment still does not activate the workflow or add Azure mutation commands.
 
 ## Deterministic rollback contract
 
@@ -97,20 +115,20 @@ The evidence disk is never deleted, formatted, replaced, restored over, or attac
 - maximum temporary-resource retention: 24 hours;
 - maximum running-compute overlap: zero minutes.
 
-This is planning feasibility, not a current subscription-specific quote or actual-cost observation.
+This remains planning feasibility, not a current subscription-specific quote or actual-cost observation. Fresh authenticated pricing, SKU availability, quota, cleanup owner, and deadline are still required.
 
 ## Why promotion remains blocked
 
 - rollback is `strategy_selected_design_only`;
 - `operationally_tested` remains `false`;
 - Azure mutations remain unauthorized;
+- the contract-amendment head needs fresh CI and operations-and-recovery re-review;
 - execution commands are not yet fake-Azure-CLI tested;
 - guest/control-plane evidence schemas are incomplete;
 - RBAC restoration allowlist is unresolved;
 - current pricing, SKU availability, quota, cleanup owner, and deadline are unverified;
-- another operations-and-recovery review is required;
 - evidence-quality and security/identity reviews remain required.
 
 ## Conclusion
 
-Snapshot-and-recreate remains preferred because it preserves canonical IaC naming and provides a bounded recovery route. The second-review changes strengthen order-sensitive quiescence, eliminate rehearsal/replacement compute overlap, and correct project-state chronology. They remain repository assertions until fresh CI and another independent review verify the new exact head.
+Snapshot-and-recreate remains preferred because it preserves canonical IaC naming and provides a bounded recovery route. The contract now makes rehearsal teardown an explicit, fail-closed transition rather than a documentation claim. Approval is still withheld until CI and review validate the exact amendment head, and operational proof remains a later, separately authorized lifecycle increment.
