@@ -271,6 +271,7 @@ capture_json object "$artifact_dir/arm-validation.json" \
     --resource-group "$resource_group" \
     --template-file "$template" \
     --parameters "@$artifact_dir/deployment-parameters.json" \
+    --validation-level ProviderNoRbac \
     --output json
 
 capture_json object "$artifact_dir/arm-what-if.json" \
@@ -278,6 +279,7 @@ capture_json object "$artifact_dir/arm-what-if.json" \
     --resource-group "$resource_group" \
     --template-file "$template" \
     --parameters "@$artifact_dir/deployment-parameters.json" \
+    --validation-level ProviderNoRbac \
     --result-format FullResourcePayloads \
     --no-pretty-print \
     --output json
@@ -292,7 +294,7 @@ jq -n \
     current_price_evidence: null,
     estimate_status: "unresolved_requires_fresh_region_and_subscription_specific_price_evidence",
     deployment_blocked_until_price_review: true,
-    claim_boundary: "ARM validation and What-If do not provide a current price quotation or actual-cost evidence."
+    claim_boundary: "ProviderNoRbac ARM validation and What-If do not provide a current price quotation, actual-cost evidence, or authorization to create role assignments."
   }' > "$artifact_dir/cost-boundary.json"
 
 jq -n \
@@ -319,10 +321,13 @@ jq -n \
     visible_collector_role_assignment_count: $visible_role_assignment_count,
     arm_validation: "completed",
     arm_what_if: "completed",
+    arm_validation_level: "ProviderNoRbac",
+    rbac_deployment_authorized: false,
     current_price_review: "required_before_deployment",
     deployment_authorized: false,
     azure_mutations_performed: false,
-    next_gate: "Review the What-If, obtain fresh cost evidence and explicit mutation authorization, then promote a separately reviewed execution workflow."
+    claim_boundary: "ProviderNoRbac validates provider behavior with read permissions but does not prove permission or authority to create the proposed role assignment.",
+    next_gate: "Review the What-If, obtain fresh cost evidence and explicit mutation authorization, then use a separately reviewed execution identity with the minimum required deployment and RBAC permissions."
   }' > "$artifact_dir/plan-summary.json"
 
 cat "$artifact_dir/plan-summary.json"
