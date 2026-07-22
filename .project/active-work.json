@@ -4,12 +4,12 @@
   "updated_on": "2026-07-22",
   "trusted_baseline": {
     "branch": "main",
-    "commit": "bc27ba115a2bdd3ce0eba5bc38176033be27fbe0",
-    "commit_semantics": "last substantive repository baseline after PR #29 merged; this reconciliation is coordination-only and live Git determines the exact current main head",
+    "commit": "bb1351da492548242382a86db5293f44dabfb1f7",
+    "commit_semantics": "live main head after coordination-only PR #30 merged; the active evidence-schema branch is based on this exact repository baseline",
     "last_completed_increment": {
-      "pull_request": 29,
-      "title": "Make collector rehearsal teardown contract authoritative",
-      "qualification": "repository_design_contract_repaired_not_operationally_tested"
+      "pull_request": 30,
+      "title": "Reconcile PR29 merge and close legacy PR1 state",
+      "qualification": "coordination_state_synchronized_no_azure_change"
     }
   },
   "completed_increments": [
@@ -23,9 +23,20 @@
     {"pull_request": 26, "title": "Reconcile PR25 state and HELIX workspace hierarchy", "merge_commit": "00ebc068f4aec4eda8cda723d8dc4d974a4cb7c6"},
     {"pull_request": 27, "title": "Select snapshot-based collector rollback strategy", "merge_commit": "4b181c644c48fde0c5d33f3cfabc24321977161a"},
     {"pull_request": 28, "title": "Complete collector rollback review remediation", "merge_commit": "cb5b38f3d6ab861f54f72897e6cf625a04c275e8", "qualification": "merged_with_blocking_recovery_finding_later_resolved_by_pr29"},
-    {"pull_request": 29, "title": "Make collector rehearsal teardown contract authoritative", "merge_commit": "bc27ba115a2bdd3ce0eba5bc38176033be27fbe0", "qualification": "repository_design_contract_repaired_not_operationally_tested"}
+    {"pull_request": 29, "title": "Make collector rehearsal teardown contract authoritative", "merge_commit": "bc27ba115a2bdd3ce0eba5bc38176033be27fbe0", "qualification": "repository_design_contract_repaired_not_operationally_tested"},
+    {"pull_request": 30, "title": "Reconcile PR29 merge and close legacy PR1 state", "merge_commit": "bb1351da492548242382a86db5293f44dabfb1f7", "qualification": "coordination_state_synchronized_no_azure_change"}
   ],
-  "workstreams": [],
+  "workstreams": [
+    {
+      "workstream_id": "collector-recovery-evidence-schema-design",
+      "branch": "feature/collector-recovery-evidence-schema",
+      "write_owner": "ChatGPT conversation: Azure IaC MSP Lab reality synchronization",
+      "scope": "Design-only collector recovery evidence contract, five closed JSON schemas, standard-library fail-closed validator, negative regression tests, design documentation, and project coordination state. Permitted paths: infra/recovery-evidence/**, infra/tests/test_collector_recovery_evidence_design.py, docs/designs/collector-recovery-evidence-schema.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/modules/**, existing replacement execution contract and candidate workflow, application source, credentials, Azure mutation scripts, budgets, alerts, and live resources.",
+      "status": "implementation_in_progress",
+      "pull_request": null,
+      "next_gate": "Open a draft pull request, run exact-head CI, inspect every job, and obtain an evidence-quality review of the exact passing head. Keep Azure authentication, workflow activation, and mutations prohibited."
+    }
+  ],
   "known_open_pull_requests": [],
   "resolved_repository_items": [
     {
@@ -52,46 +63,40 @@
     "freshness_boundary": "This remains the latest promoted Azure control-plane evidence. It does not prove current guest health, pricing, SKU availability, quota, actual cost, present-day deployment state, snapshot recoverability, or rollback."
   },
   "ci_verification": {
-    "last_code_bearing_head": {
-      "repository_commit": "b9b21c3f5c6c860db8edbb6821d676f764d99b18",
+    "last_completed_coordination_head": {
+      "repository_commit": "a2b3d7032a1557f9b050b5c282b0e87b70bd2259",
       "workflow": "CI",
-      "run_id": 29941065236,
-      "run_number": 88,
+      "run_id": 29943299617,
+      "run_number": 92,
       "status": "completed_success",
+      "pull_request": 30,
       "verified_gates": [
         "workflow-observability project-state validation",
         "complete ServiceTracer unit and operational smoke-test path",
-        "collector replacement contract validator and negative regression tests",
+        "collector replacement contract validation and negative regression tests",
         "Bicep lint and build"
       ]
     },
-    "final_pr_head": {
-      "repository_commit": "8e161c079714d96688255e5e86f067f784b268f5",
-      "workflow": "CI",
-      "run_id": 29941348786,
-      "run_number": 90,
-      "status": "completed_success",
-      "semantics": "exact final coordination head of PR #29 before merge"
+    "current_increment": {
+      "branch": "feature/collector-recovery-evidence-schema",
+      "repository_head": "live branch head after project-state update",
+      "status": "local_design_validation_complete_ci_not_yet_run"
     },
-    "merge_observation": {
-      "repository_commit": "bc27ba115a2bdd3ce0eba5bc38176033be27fbe0",
-      "pull_request": 29,
-      "status": "merged",
-      "post_merge_ci_evidence": "not separately captured through the connected pull-request run lookup"
-    },
-    "claim_boundary": "CI proves repository consistency only. It does not prove Azure snapshot recoverability, Trusted Launch bootability, rollback, guest health, cost, quota, RBAC restoration, or execution authority."
+    "claim_boundary": "Repository tests and CI prove schema and code consistency only. They do not prove current guest health, Azure preflight, snapshot recoverability, Trusted Launch bootability, rollback, cost, quota, RBAC restoration, or execution authority."
   },
   "review_state": {
-    "operations_and_recovery": {
-      "status": "approved_for_repository_design_increment",
-      "reviewed_pull_request": 29,
-      "reviewed_head": "b9b21c3f5c6c860db8edbb6821d676f764d99b18",
-      "reviewed_ci_run_id": 29941065236,
-      "reviewed_on": "2026-07-22",
-      "decision_summary": "The v2 contract, validator, negative tests, candidate workflow phase alignment, and PR #28 merge-reality reconciliation resolve the contract-backed rehearsal-teardown finding.",
-      "review_account": "pull_request_owner",
-      "independent_organizational_approval": false,
-      "claim_boundary": "Approval covers repository design consistency only. It does not authorize Azure execution or satisfy external reviewer independence."
+    "evidence_quality": {
+      "status": "pending",
+      "required_scope": [
+        "schema closure and version pinning",
+        "correlation and target binding",
+        "command and artifact provenance",
+        "freshness and exit-code integrity",
+        "raw-versus-sanitized evidence separation",
+        "secret-marker rejection",
+        "failure and rollback claim boundaries"
+      ],
+      "claim_boundary": "A future review disposition covers repository evidence design only and cannot authorize Azure execution."
     },
     "azure_cost": {
       "status": "conditionally_approved_planning_estimate",
@@ -99,39 +104,37 @@
       "approved_by": "Anthony Edgar",
       "reviewed_estimate_cad": 4.0,
       "hard_execution_ceiling_cad": 10.0,
-      "maximum_snapshot_capacity_gib": 96,
-      "maximum_retention_hours": 24,
-      "expected_restore_rehearsal_compute_hours": 4,
+      "schema_design_increment_cost_cad": 0.0,
       "conditions": [
         "fresh authenticated subscription-specific meter, SKU availability, and quota preflight before any execution",
         "stop and obtain renewed cost approval if projected temporary cost exceeds CAD 4",
         "unconditional stop if projected temporary cost exceeds CAD 10",
         "cleanup owner and deadline must be approved before any temporary resource is created"
       ],
-      "claim_boundary": "Planning feasibility only; this is not an actual-cost observation, subscription-specific quotation, budget approval, or Azure execution authorization."
+      "claim_boundary": "This design increment has no Azure runtime cost; existing planning estimates are not current subscription-specific quotations or execution authorization."
     }
   },
   "next_bounded_operation": {
     "operation": "collector_recovery_evidence_schema_design",
-    "status": "candidate_not_started",
+    "status": "implementation_in_progress",
     "authority": "repository_design_only",
     "active_workflow_present": false,
     "dispatch_authorized": false,
     "azure_authentication_authorized": false,
     "azure_mutations_authorized": false,
     "intended_scope": [
-      "guest preflight evidence schema",
-      "Azure control-plane preflight evidence schema",
-      "correlation, timestamps, command identity, exit status, target resource IDs, before/after state, and redaction rules",
-      "failure and rollback evidence requirements",
-      "schema validation and negative tests"
+      "guest preflight evidence schema with eight exact observation kinds",
+      "Azure control-plane preflight evidence schema with sixteen exact observation kinds",
+      "phase-failure and rollback-outcome evidence schemas",
+      "correlated evidence bundle with command identity, timestamps, exit status, target bindings, before and after state, provenance, and redaction rules",
+      "fail-closed standard-library validator and negative regression tests"
     ],
     "required_gates": [
-      "open a separate bounded pull request",
-      "keep execution commands and active workflows out of scope",
-      "define expected outputs and fail-closed validation",
-      "run exact-head CI and evidence-quality review"
+      "draft pull request with exact changed-file boundary",
+      "exact-head CI including complete infra tests and Bicep validation",
+      "evidence-quality review against the exact passing head",
+      "no active workflow, execution commands, credentials, raw runtime evidence, or Azure mutations"
     ],
-    "next_gate": "Open a separate repository-only design increment for evidence schemas. Do not authenticate to Azure, activate the candidate workflow, mutate resources, restore RBAC, or claim operational recovery."
+    "next_gate": "Open the draft pull request and validate the exact head. Do not authenticate to Azure, activate a workflow, mutate resources, restore RBAC, or claim operational recovery."
   }
 }
