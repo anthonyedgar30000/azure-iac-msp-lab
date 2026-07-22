@@ -172,9 +172,14 @@ az storage account list \
   --resource-group "$resource_group" \
   --query "[?tags.component=='servicetracer-public-report'].{id:id,name:name,location:location,provisioning_state:provisioningState,public_network_access:publicNetworkAccess,allow_blob_public_access:allowBlobPublicAccess,allow_shared_key_access:allowSharedKeyAccess}" \
   --output json > "$artifact_dir/existing-report-storage.json"
+existing_storage_count="$(jq 'length' "$artifact_dir/existing-report-storage.json")"
+((existing_storage_count <= 1)) || {
+  echo 'More than one report Storage account is already tagged in the resource group; refusing ambiguous planning.' >&2
+  exit 1
+}
 
 az role assignment list \
-  --assignee-object-id "$collector_principal_id" \
+  --assignee "$collector_principal_id" \
   --scope "$resource_group_id" \
   --include-inherited \
   --all \
@@ -188,18 +193,22 @@ jq -n \
   --arg collectorPrincipalId "$collector_principal_id" \
   --arg allowedOrigin "$allowed_origin" \
   '{
-    prefix: {value: $prefix},
-    environment: {value: $environment},
-    location: {value: $location},
-    collectorPrincipalId: {value: $collectorPrincipalId},
-    allowedOrigins: {value: [$allowedOrigin]},
-    tags: {value: {
-      workload: "azure-iac-msp-lab",
-      environment: $environment,
-      managedBy: "bicep",
-      purpose: "servicetracer-live-report",
-      changeScope: "existing-collector-publication-only"
-    }}
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    contentVersion: "1.0.0.0",
+    parameters: {
+      prefix: {value: $prefix},
+      environment: {value: $environment},
+      location: {value: $location},
+      collectorPrincipalId: {value: $collectorPrincipalId},
+      allowedOrigins: {value: [$allowedOrigin]},
+      tags: {value: {
+        workload: "azure-iac-msp-lab",
+        environment: $environment,
+        managedBy: "bicep",
+        purpose: "servicetracer-live-report",
+        changeScope: "existing-collector-publication-only"
+      }}
+    }
   }' > "$artifact_dir/deployment-parameters.json"
 
 az deployment group validate \
@@ -237,7 +246,7 @@ jq -n \
   --arg collector_principal_id "$collector_principal_id" \
   --arg allowed_origin "$allowed_origin" \
   --arg template "$template" \
-  --argjson existing_storage_count "$(jq 'length' "$artifact_dir/existing-report-storage.json")" \
+  --argjson existing_storage_count "$existing_storage_count" \
   '{
     schema_version: "servicetracer.existing-collector-report-plan.v1",
     observed_at: $observed_at,
