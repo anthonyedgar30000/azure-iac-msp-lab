@@ -29,8 +29,10 @@ PR merged
 
 - Workstream: `collector-recovery-evidence-review-remediation`.
 - Branch: `fix/recovery-evidence-review-remediation`.
+- Pull request: #33, **Repair collector recovery evidence review findings**.
+- PR state: open draft.
 - Write owner: this explicitly authorized bounded repair conversation.
-- Pull request: not yet opened.
+- Status: exact-head CI pending.
 - Authority: repository design only.
 
 Permitted files:
@@ -57,7 +59,18 @@ Protected boundaries:
 
 No other conversation should edit this branch or these seven paths unless ownership is explicitly transferred.
 
-## Blocking findings being repaired
+## Repair PR reality
+
+- Base: current `main` at PR creation, `777ec83b8a447f01904d5f891795ebcb6ab7abaf`.
+- Head after this coordination update: resolve from live GitHub.
+- Final diff before PR-number binding: exactly the seven declared files.
+- Local validation: 31 tests passed.
+- Exact-head GitHub CI: pending.
+- Evidence-quality re-review: pending.
+
+PR #32 run 102 applies only to the predecessor version and must not be represented as verification of PR #33.
+
+## Blocking findings repaired
 
 The review of PR #32 head `f640f6664ab72deece24b770fe95cba51b0ac6ea` found:
 
@@ -68,28 +81,17 @@ The review of PR #32 head `f640f6664ab72deece24b770fe95cba51b0ac6ea` found:
 5. non-finite JSON numbers were accepted;
 6. superseded packages lacked mandatory provenance.
 
-## Repair contents
+PR #33 now:
 
-The repair tree now:
-
-- pins package statuses, record statuses, claim statuses, record types, limits, patterns, phase requirements, claim requirements, detail requirements, redaction controls, failure prohibitions, and cleanup boundaries;
-- enforces minimum evidence-bearing detail fields for all nine record types;
-- recursively derives redaction marker paths and requires an exact one-to-one metadata match;
-- requires a declared subscription ID shared by every target Azure resource ID;
-- rejects `NaN` and infinite values so evidence remains canonical finite JSON;
-- requires producer tool, version, identity, and source commit;
-- requires supersession package IDs only for superseded packages and prevents superseded packages from retaining verified claims;
+- pins all package-validator-driving contract values;
+- enforces evidence-bearing detail fields for every record type;
+- recursively derives redaction marker paths and requires exact metadata coverage;
+- requires one declared subscription across every target Azure resource ID;
+- rejects non-finite JSON numbers;
+- records producer tool, version, identity, and source commit;
+- requires bounded supersession provenance;
+- prevents superseded packages from retaining verified operational claims;
 - preserves `authority_granted = false` and `azure_mutations_authorized = false`.
-
-## Verification state
-
-- Local contract validation: passed.
-- Local remediation suite: 31 tests passed.
-- Exact-head GitHub CI for the repair branch: not yet run.
-- Evidence-quality re-review: not yet performed.
-- PR #32 run 102 applies only to the merged predecessor version and must not be represented as verification of this repair.
-
-The branch was reconstructed from the complete remediation tree after the concurrent PR #32 merge. Its final diff must be verified against current `main` before a repair PR is opened.
 
 ## Evidence package boundaries
 
@@ -108,24 +110,32 @@ Every package preserves:
 
 Completeness is evaluated only against declared phases. Missing evidence is reported and cannot silently become success.
 
+## Verification state
+
+- Contract-only local validation: passed.
+- Local remediation suite: 31 tests passed.
+- Changed-file boundary: exactly seven governed files before this final coordination commit; reverify against live GitHub.
+- Exact-head CI for the live PR #33 head: pending.
+- Evidence-quality re-review: pending.
+
+The repair branch was reconstructed from the complete remediation tree after the concurrent PR #32 merge. Branch ancestry may show the prior feature history, but the final tree and exact PR diff—not commit-message appearance—determine scope.
+
 ## Azure and runtime evidence boundary
 
 The latest promoted Azure control-plane evidence remains read-only planner run `29856203054`, observed July 21, 2026.
 
 The last guest-level record remains ServiceTracer `0.4.0` after manual repairs on July 20, 2026.
 
-This repair does not query Azure, refresh guest evidence, implement collection commands, authenticate, deploy, mutate resources, restore RBAC, modify budgets or alerts, or prove snapshot recoverability, Trusted Launch bootability, rollback, or recovery.
+PR #33 does not query Azure, refresh guest evidence, implement collection commands, authenticate, deploy, mutate resources, restore RBAC, modify budgets or alerts, or prove snapshot recoverability, Trusted Launch bootability, rollback, or recovery.
 
 ## Required gates
 
-1. verify the branch is based on current repository reality and the final diff contains exactly the seven declared files;
-2. open a draft repair pull request;
-3. bind the PR number into `.project`;
-4. obtain fresh exact-head CI;
-5. inspect every CI job;
-6. route the exact passing head for evidence-quality re-review;
-7. preserve the owner-account reviewer-independence limitation;
-8. keep the repair PR draft until all gates are satisfied.
+1. reverify the final PR #33 diff contains exactly the seven declared files;
+2. obtain fresh exact-head CI on the live coordination head;
+3. inspect every CI job;
+4. route the exact passing head for evidence-quality re-review;
+5. preserve the owner-account reviewer-independence limitation;
+6. keep PR #33 draft until all gates are satisfied.
 
 ## Failure behavior
 
@@ -133,8 +143,8 @@ If CI fails, keep the PR draft, inspect the exact job and logs, patch only the d
 
 If re-review finds another defect, record the exact reviewed head and CI run, patch within scope or explicitly amend scope, and repeat CI and review.
 
-Repository rollback is closing the repair PR without merge or reverting its commits. No Azure rollback applies because this increment performs no Azure mutation.
+Repository rollback is closing PR #33 without merge or reverting its commits. No Azure rollback applies because this increment performs no Azure mutation.
 
 ## Prohibited next step
 
-Do not add live guest or Azure collection commands, activate a workflow, authenticate to Azure, deallocate the collector, create snapshots or rehearsal resources, alter delete options, remove or deploy compute, restore RBAC, modify budgets or alerts, or claim operational recovery.
+Do not merge PR #33 based only on local tests. Do not add live guest or Azure collection commands, activate a workflow, authenticate to Azure, deallocate the collector, create snapshots or rehearsal resources, alter delete options, remove or deploy compute, restore RBAC, modify budgets or alerts, or claim operational recovery.
