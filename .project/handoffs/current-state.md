@@ -32,7 +32,7 @@ PR #37 merged the decoupled existing-collector report-publication design and rea
 
 - Change: `promote-existing-collector-report-publication-plan`.
 - Branch: `feat/promote-existing-collector-report-plan`.
-- Pull request: not yet assigned; this is authored-change metadata, not live status.
+- Pull request: #38, recorded as authored-change metadata only; live status remains external GitHub evidence.
 - Authority: promote and dispatch one read-only Azure planner only.
 
 Permitted paths:
