@@ -19,13 +19,13 @@
 - Branch: `fix/collector-rollback-review-remediation`
 - Pull request: #28, draft
 - Objective: repair the partial PR #27 merge by carrying the matching validator, focused tests, design documentation, rollback review, active-work state, and handoff onto the merged `main` baseline.
-- Current status: implementation committed and PR opened; exact-head CI and independent operations-and-recovery re-review are pending.
+- Current status: remediation passed CI at commit `623647cad4d83083a416f4250ae8688e58a5fc57`; the final coordination-only head requires one confirming CI run before independent re-review.
 - Permitted paths: `infra/replacement/validate_execution_design.py`, `infra/tests/test_collector_replacement_execution_design.py`, `docs/designs/collector-replacement-execution.md`, `docs/reviews/collector-replacement-rollback-decision-2026-07-21.md`, `.project/active-work.json`, and this handoff.
 - Protected paths: the already-merged replacement contract, `.github/workflows/**`, Bicep modules, application source, credentials, and Azure mutation scripts.
 
 ## Why this repair is required
 
-The merged contract now requires:
+The merged contract requires:
 
 - a quiesce-and-deallocate consistency boundary before snapshots;
 - shared maintenance-correlation and final-checkpoint binding for both snapshots;
@@ -69,6 +69,20 @@ Twenty-three focused tests cover the fail-closed design and reject:
 
 The design and review documents describe the complete 15-phase state machine, isolated rehearsal boundary, deterministic restoration operations, attachment preservation, cost boundary, and remaining blockers.
 
+## CI evidence
+
+Exact-head CI run `29894210458` passed on repository commit `623647cad4d83083a416f4250ae8688e58a5fc57`:
+
+- `.project` workflow-observability validation;
+- complete Python unit suite, including 23 focused recovery-remediation tests;
+- operational evidence collection;
+- source-evidence CLI smoke test;
+- preassembled replay compatibility;
+- collector VM contract validation;
+- Bicep lint and build.
+
+This proves repository consistency only. It does not prove Azure snapshot recoverability, Trusted Launch bootability, actual rollback, actual cost, or execution authority.
+
 ## Runtime and deployment state
 
 - Latest promoted control-plane evidence shows collector size `Standard_B2ats_v2` in `rg-servicetracer-dev-westus2`.
@@ -93,7 +107,7 @@ The design and review documents describe the complete 15-phase state machine, is
 
 ## Remaining blockers
 
-- exact-head CI for draft PR #28;
+- confirming CI on the final coordination-only PR #28 head;
 - independent operations-and-recovery re-review;
 - guest/control-plane evidence schemas;
 - fake-Azure-CLI-tested recovery and rehearsal implementation;
@@ -104,11 +118,10 @@ The design and review documents describe the complete 15-phase state machine, is
 
 ## Next bounded gate
 
-1. Run project validation, focused replacement tests, complete ServiceTracer tests, and Bicep lint/build on PR #28's exact head.
-2. Record the passing exact head and CI run.
-3. Route that exact head for independent operations-and-recovery re-review.
-4. Keep PR #28 draft.
-5. Keep all Azure authentication and mutations prohibited.
+1. Confirm CI on the final exact head after this state update.
+2. Route the passing exact head for independent operations-and-recovery re-review.
+3. Keep PR #28 draft.
+4. Keep all Azure authentication and mutations prohibited.
 
 ## Prohibited next step
 
