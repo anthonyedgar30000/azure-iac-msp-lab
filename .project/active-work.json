@@ -65,8 +65,8 @@
       "write_owner": "ChatGPT conversation: ServiceTracer — Governed Azure Operations Lab",
       "scope": "Repair the partial PR #27 merge by aligning the validator, focused tests, design documentation, rollback review, active-work state, and current handoff with the already-merged recovery contract. Permitted paths: infra/replacement/validate_execution_design.py, infra/tests/test_collector_replacement_execution_design.py, docs/designs/collector-replacement-execution.md, docs/reviews/collector-replacement-rollback-decision-2026-07-21.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: infra/replacement/collector-replacement-contract.json, .github/workflows/**, infra/modules/**, application source, credentials, and Azure mutation scripts.",
       "status": "ci_pending",
-      "pull_request": null,
-      "next_gate": "Open a draft remediation PR, run fresh exact-head CI, and obtain independent operations-and-recovery re-review."
+      "pull_request": 28,
+      "next_gate": "Run fresh exact-head CI on draft PR #28, then route the passing exact head for independent operations-and-recovery re-review."
     }
   ],
   "known_open_pull_requests": [
@@ -77,10 +77,10 @@
       "action": "Do not treat as current implementation work. Review for unique durable evidence, then close as superseded through a separate explicit action."
     },
     {
-      "pull_request": null,
+      "pull_request": 28,
       "title": "Complete collector rollback review remediation",
-      "status": "branch_created_pr_pending",
-      "action": "Open as a draft against main, run exact-head CI, and keep Azure mutations unauthorized."
+      "status": "draft_ci_pending_re_review_pending",
+      "action": "Keep draft, verify exact-head CI, and obtain independent operations-and-recovery re-review. Do not authorize or perform Azure mutations."
     }
   ],
   "latest_promoted_evidence": {
@@ -99,7 +99,7 @@
       "status": "changes_addressed_re_review_pending",
       "reviewed_head": "bad79ac2a8ba8fa9568737fc3c3635b93f2dbaca",
       "reviewed_on": "2026-07-21",
-      "merge_reconciliation": "PR #27 merged after only the contract remediation commit. This branch carries the matching validator, tests, and records onto the merged main baseline.",
+      "merge_reconciliation": "PR #27 merged after only the contract remediation commit. Draft PR #28 carries the matching validator, tests, and records onto the merged main baseline.",
       "addressed_findings": [
         "quiesce, flush, checkpoint, and deallocate the source before snapshots; bind both snapshots to the same maintenance correlation and checkpoint",
         "prove exact-snapshot Trusted Launch bootability in an isolated rehearsal before old-compute deletion without production attachments",
@@ -133,12 +133,12 @@
     "dispatch_authorized": false,
     "azure_mutations_authorized": false,
     "required_gates": [
-      "draft remediation pull request against merge commit 4b181c644c48fde0c5d33f3cfabc24321977161a",
+      "draft PR #28 against merge commit 4b181c644c48fde0c5d33f3cfabc24321977161a",
       "fresh exact-head project validation, focused tests, complete ServiceTracer tests, and Bicep lint/build",
       "independent operations-and-recovery re-review",
       "retain CAD 4 reviewed planning estimate and CAD 10 hard ceiling",
       "promotion or Azure execution only through separate authority-changing work"
     ],
-    "next_gate": "Open the draft remediation PR, verify CI, and route its exact head for independent re-review. Do not authenticate to Azure or perform mutations."
+    "next_gate": "Verify draft PR #28 CI and route its passing exact head for independent re-review. Do not authenticate to Azure or perform mutations."
   }
 }
