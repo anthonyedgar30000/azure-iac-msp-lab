@@ -1,8 +1,8 @@
 {
   "schema_version": "helix.repository-context.v1",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
-  "classified_on": "2026-07-21",
-  "classification_scope": "governed retrieval boundary for the ServiceTracer bounded workstream within the HELIX umbrella workspace, including canonical workstream governance, promoted collector planning evidence, and the merged fail-closed replacement execution design; not an exhaustive file inventory",
+  "classified_on": "2026-07-22",
+  "classification_scope": "governed retrieval boundary for the ServiceTracer bounded workstream within the HELIX umbrella workspace, including canonical workstream governance, promoted collector planning evidence, the merged v2 replacement contract, and current post-merge coordination state; not an exhaustive file inventory",
   "workspace_hierarchy": {
     "umbrella_conversation_workspace": "HELIX — Governed Agent Engineering",
     "bounded_repository_workstream": "ServiceTracer — Governed Azure Operations Lab",
@@ -10,13 +10,13 @@
   },
   "baseline_observation": {
     "branch": "main",
-    "commit": "f40ef0fab0ae920c23f4b6556c25dc4f3b99b68b",
-    "commit_semantics": "verified main observation anchor after PR #25 merged and before this state-only reconciliation branch was created; live Git determines the current head",
+    "commit": "bc27ba115a2bdd3ce0eba5bc38176033be27fbe0",
+    "commit_semantics": "last substantive repository baseline after PR #29 merged; live Git determines the exact current head and this reconciliation is coordination-only",
     "latest_merged_increment": {
-      "pull_request": 25,
-      "title": "Add fail-closed collector replacement execution design"
+      "pull_request": 29,
+      "title": "Make collector rehearsal teardown contract authoritative"
     },
-    "observed_on": "2026-07-21"
+    "observed_on": "2026-07-22"
   },
   "entries": [
     {
@@ -32,7 +32,7 @@
       "content_role": "replacement_execution_contract_and_validation",
       "retrieval_class": "supporting-current",
       "default_retrieval": true,
-      "claim_boundary": "proves committed and CI-verified design invariants and deterministic validation only; it does not prove workflow activation, authorization, Azure execution, rollback readiness, or recoverability"
+      "claim_boundary": "proves committed and CI-verified v2 design invariants, authoritative rehearsal teardown requirements, and deterministic validation only; it does not prove workflow activation, authorization, Azure execution, rollback readiness, or recoverability"
     },
     {
       "path": "infra/**",
@@ -74,9 +74,9 @@
       "content_role": "current_state_record",
       "retrieval_class": "supporting-current",
       "default_retrieval": true,
-      "freshness_status": "refreshed",
+      "freshness_status": "verify_before_use",
       "refreshed_on": "2026-07-21",
-      "claim_boundary": "use state sections as a starting point and verify every consequential claim against Git, PR, CI, and Azure evidence"
+      "claim_boundary": "use state sections as a starting point and verify every consequential claim against Git, PR, CI, .project, and Azure evidence"
     },
     {
       "path": "docs/reviews/**",
@@ -147,8 +147,8 @@
       "retrieval_class": "authoritative-current",
       "default_retrieval": true,
       "freshness_status": "refreshed",
-      "refreshed_on": "2026-07-21",
-      "claim_boundary": "records promoted active work, workspace hierarchy, canonical ServiceTracer streams, handoffs, environment facts, and deployment history; live Git, CI, workflow artifacts, and runtime evidence still determine current external state"
+      "refreshed_on": "2026-07-22",
+      "claim_boundary": "records promoted active work, workspace hierarchy, canonical ServiceTracer streams, handoffs, environment facts, deployment history, merged PR #29, and closed legacy PR #1; live Git, CI, workflow artifacts, and runtime evidence still determine current external state"
     },
     {
       "path": ".helix/**",
@@ -173,59 +173,17 @@
     }
   ],
   "resolved_coordination_boundaries": [
-    {
-      "pull_request": 19,
-      "branch": "feature/workflow-observability",
-      "state": "merged",
-      "merge_commit": "058ee6ec7a8a26adebb2742659b9e483b74fd4ae",
-      "scope": ".project workflow observability and active-work metadata"
-    },
-    {
-      "pull_request": 20,
-      "branch": "fix/collector-image-drift-guard",
-      "state": "merged",
-      "merge_commit": "7f1bc961c9edfc29c1636518b0e4cf1d4ca949eb",
-      "scope": "collector image drift detection and read-only replacement planning",
-      "authority_boundary": "detection and planning are implemented; no Azure replacement execution is authorized or evidenced"
-    },
-    {
-      "pull_request": 21,
-      "branch": "docs/helix-retrieval-archive-governance",
-      "state": "merged",
-      "merge_commit": "d9b952e324b7128300e1c888d5834536fb35fc30",
-      "scope": "HELIX retrieval, promotion, and archive governance"
-    },
-    {
-      "pull_request": 22,
-      "branch": "docs/refresh-project-state-after-pr21",
-      "state": "merged",
-      "merge_commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a",
-      "scope": "post-governance project state and freshness reconciliation"
-    },
-    {
-      "pull_request": 23,
-      "branch": "docs/reconcile-collector-plan-evidence",
-      "state": "merged",
-      "merge_commit": "e50f2498d57cbf853d3fd493fc0eec35ca8bdd6b",
-      "scope": "promoted read-only collector replacement evidence and four-lens review",
-      "authority_boundary": "supports design work only; no replacement execution is authorized"
-    },
-    {
-      "pull_request": 24,
-      "branch": "feature/canonical-workspace-governance",
-      "state": "merged",
-      "merge_commit": "50a4789e87cdadd7d537179882427b3b2cb4b96f",
-      "scope": "canonical ServiceTracer workspace identity, exact six-stream catalog, and validator enforcement",
-      "authority_boundary": "organizes conversational and repository context; Git, CI, workflow artifacts, and Azure evidence remain authoritative for implementation and runtime state"
-    },
-    {
-      "pull_request": 25,
-      "branch": "feature/collector-replacement-execution-design",
-      "state": "merged",
-      "merge_commit": "f40ef0fab0ae920c23f4b6556c25dc4f3b99b68b",
-      "scope": "fail-closed collector replacement execution contract, inactive candidate, validator, tests, and design documentation",
-      "authority_boundary": "design and CI validation are implemented; active workflow, dispatch authority, Azure mutation authority, rollback readiness, deployment, and operational verification remain absent"
-    }
+    {"pull_request": 19, "branch": "feature/workflow-observability", "state": "merged", "merge_commit": "058ee6ec7a8a26adebb2742659b9e483b74fd4ae", "scope": ".project workflow observability and active-work metadata"},
+    {"pull_request": 20, "branch": "fix/collector-image-drift-guard", "state": "merged", "merge_commit": "7f1bc961c9edfc29c1636518b0e4cf1d4ca949eb", "scope": "collector image drift detection and read-only replacement planning", "authority_boundary": "detection and planning are implemented; no Azure replacement execution is authorized or evidenced"},
+    {"pull_request": 21, "branch": "docs/helix-retrieval-archive-governance", "state": "merged", "merge_commit": "d9b952e324b7128300e1c888d5834536fb35fc30", "scope": "HELIX retrieval, promotion, and archive governance"},
+    {"pull_request": 22, "branch": "docs/refresh-project-state-after-pr21", "state": "merged", "merge_commit": "93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a", "scope": "post-governance project state and freshness reconciliation"},
+    {"pull_request": 23, "branch": "docs/reconcile-collector-plan-evidence", "state": "merged", "merge_commit": "e50f2498d57cbf853d3fd493fc0eec35ca8bdd6b", "scope": "promoted read-only collector replacement evidence and four-lens review", "authority_boundary": "supports design work only; no replacement execution is authorized"},
+    {"pull_request": 24, "branch": "feature/canonical-workspace-governance", "state": "merged", "merge_commit": "50a4789e87cdadd7d537179882427b3b2cb4b96f", "scope": "canonical ServiceTracer workspace identity, exact six-stream catalog, and validator enforcement", "authority_boundary": "organizes conversational and repository context; Git, CI, workflow artifacts, and Azure evidence remain authoritative for implementation and runtime state"},
+    {"pull_request": 25, "branch": "feature/collector-replacement-execution-design", "state": "merged", "merge_commit": "f40ef0fab0ae920c23f4b6556c25dc4f3b99b68b", "scope": "fail-closed collector replacement execution contract, inactive candidate, validator, tests, and design documentation", "authority_boundary": "design and CI validation are implemented; active workflow, dispatch authority, Azure mutation authority, rollback readiness, deployment, and operational verification remain absent"},
+    {"pull_request": 26, "branch": "docs/reconcile-pr25-state-and-helix-workspace", "state": "merged", "merge_commit": "00ebc068f4aec4eda8cda723d8dc4d974a4cb7c6", "scope": "post-PR25 project state and HELIX workspace hierarchy reconciliation"},
+    {"pull_request": 27, "branch": "design/collector-rollback-snapshot-recreation", "state": "merged", "merge_commit": "4b181c644c48fde0c5d33f3cfabc24321977161a", "scope": "snapshot-based rollback strategy selection", "authority_boundary": "design selection only; rollback remained operationally untested"},
+    {"pull_request": 28, "branch": "fix/collector-rollback-review-remediation", "state": "merged_with_blocking_review_finding", "merge_commit": "cb5b38f3d6ab861f54f72897e6cf625a04c275e8", "scope": "rollback review remediation", "authority_boundary": "merge did not resolve the missing authoritative rehearsal-teardown contract; PR #29 later repaired the defect"},
+    {"pull_request": 29, "branch": "fix/collector-rehearsal-teardown-contract", "state": "merged", "merge_commit": "bc27ba115a2bdd3ce0eba5bc38176033be27fbe0", "scope": "authoritative v2 rehearsal-teardown contract, validator, negative tests, workflow phase alignment, and project-state reconciliation", "authority_boundary": "repository design contract repaired; no active workflow, Azure execution authority, operational recovery proof, or external reviewer independence"}
   ],
   "promoted_runtime_evidence": [
     {
@@ -236,16 +194,21 @@
       "artifact_sha256": "76f3b44e6e97e906dac6d62eeb212a6bc55265e77271a030b9c45b0cacf55637",
       "sanitized_review": "docs/reviews/collector-replacement-plan-2026-07-21.md",
       "state": "reviewed_read_only_no_mutation",
-      "authority_boundary": "supports current control-plane inventory and replacement planning; does not authorize or prove replacement execution"
+      "authority_boundary": "supports July 21 control-plane inventory and replacement planning; does not authorize or prove replacement execution and is not current-day proof"
     }
   ],
   "active_coordination_boundaries": [],
-  "known_open_legacy_items": [
+  "known_open_legacy_items": [],
+  "resolved_legacy_items": [
     {
       "pull_request": 1,
-      "state": "legacy_draft",
+      "branch": "feature/network-foundation",
+      "state": "closed_unmerged",
+      "closed_on": "2026-07-22",
+      "resolution": "superseded_by_current_bicep_architecture",
       "retrieval_class": "explicit-only",
-      "rule": "do not treat as current implementation; review for unique durable evidence before separate closure"
+      "durable_value": "historical Terraform static-validation, cost-control, evidence-index, and verification-discipline prototype",
+      "claim_boundary": "never authenticated-planned, deployed, behaviorally verified, or teardown-tested; never part of current main"
     }
   ],
   "known_freshness_defects": []
