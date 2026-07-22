@@ -105,10 +105,13 @@ class ExistingCollectorReportPublicationTests(unittest.TestCase):
         for expected in (
             "Re-resolve tenant, subscription, resource group, region, and tags",
             "Re-resolve the existing collector system-assigned principal ID",
+            "Classify current and obsolete collector-principal role assignments",
             "Run ARM validation and exact What-If",
-            "Require human approval of What-If and current cost evidence",
-            "Deploy only report Storage configuration and scoped role assignment",
+            "Require human approval of What-If, cost evidence, and any obsolete-role revocation",
+            "Deploy only report Storage configuration and current scoped role assignment",
             "Publish a fresh sanitized envelope through the existing collector identity",
+            "Remove only explicitly approved obsolete collector-principal assignments",
+            "Verify no obsolete publication role remains",
             "Roll back only the new role assignment and report Storage",
         ):
             self.assertIn(expected, DESIGN)
