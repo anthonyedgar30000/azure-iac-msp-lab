@@ -34,6 +34,65 @@ class CollectorRecoveryEvidenceDesignTests(unittest.TestCase):
             contract if contract is not None else self.contract,
         )
 
+    def _failure_for(self, failed_record: dict) -> dict:
+        return {
+            "schema_version": self.contract["schemas"]["phase_failure"]["schema_version"],
+            "evidence_id": "ev-phase-failure-design-fixture",
+            "evidence_class": "phase_failure",
+            "visibility": "sanitized_review",
+            "correlation": copy.deepcopy(failed_record["correlation"]),
+            "timestamps": copy.deepcopy(failed_record["timestamps"]),
+            "target": copy.deepcopy(failed_record["target"]),
+            "result": {"status": "failure", "exit_code": 4, "assertion": "preflight failed", "error_code": "PRECHECK_FAILED", "retryable": False},
+            "state": copy.deepcopy(failed_record["state"]),
+            "redaction": copy.deepcopy(failed_record["redaction"]),
+            "authority": copy.deepcopy(failed_record["authority"]),
+            "provenance": copy.deepcopy(failed_record["provenance"]),
+            "failure": {
+                "failed_phase_id": failed_record["correlation"]["phase_id"],
+                "failed_evidence_id": failed_record["evidence_id"],
+                "failure_class": "precondition",
+                "observed_state": {"design_fixture": True},
+                "stop_decision": "abort_before_mutation",
+                "mutations_observed": [],
+                "rollback_required": False,
+                "operator_action_required": "review failed preflight evidence",
+            },
+        }
+
+    def _rollback_for(self, failure: dict, authorized: bool) -> dict:
+        return {
+            "schema_version": self.contract["schemas"]["rollback_outcome"]["schema_version"],
+            "evidence_id": "ev-rollback-outcome-design-fixture",
+            "evidence_class": "rollback_outcome",
+            "visibility": "sanitized_review",
+            "correlation": copy.deepcopy(failure["correlation"]),
+            "timestamps": copy.deepcopy(failure["timestamps"]),
+            "target": copy.deepcopy(failure["target"]),
+            "result": {"status": "success", "exit_code": 0, "assertion": "rollback succeeded", "error_code": None, "retryable": False},
+            "state": {"before": {"state": "failed"}, "after": {"state": "restored"}, "changed": True},
+            "redaction": copy.deepcopy(failure["redaction"]),
+            "authority": {
+                "read_only": False,
+                "azure_authentication_authorized": authorized,
+                "azure_mutations_authorized": authorized,
+                "execution_authorization_reference": "approval-design-fixture",
+            },
+            "provenance": copy.deepcopy(failure["provenance"]),
+            "rollback": {
+                "trigger_failure_evidence_id": failure["failure"]["failed_evidence_id"],
+                "strategy_id": "os_disk_snapshot_recreate_canonical_name",
+                "authorization_reference": "approval-design-fixture",
+                "started_at": "2026-07-22T17:46:00Z",
+                "completed_at": "2026-07-22T17:47:00Z",
+                "steps": [{"step": "recreate"}],
+                "verification": [{"check": "health"}],
+                "outcome": "succeeded",
+                "residual_risk": [],
+                "operationally_tested": True,
+            },
+        }
+
     def test_design_contract_and_all_five_schemas_validate(self) -> None:
         result = self._validate_contract()
         self.assertTrue(result["design_valid"])
@@ -53,6 +112,13 @@ class CollectorRecoveryEvidenceDesignTests(unittest.TestCase):
                     schema["properties"]["schema_version"]["const"],
                     self.contract["schemas"][key]["schema_version"],
                 )
+
+    def test_bundle_schema_binds_each_array_to_its_record_schema(self) -> None:
+        properties = self.schemas["bundle"]["properties"]
+        self.assertEqual(properties["guest_preflight"]["items"]["$ref"], self.contract["schemas"]["guest_preflight"]["schema_id"])
+        self.assertEqual(properties["azure_control_plane_preflight"]["items"]["$ref"], self.contract["schemas"]["azure_control_plane_preflight"]["schema_id"])
+        self.assertEqual(properties["failures"]["items"]["$ref"], self.contract["schemas"]["phase_failure"]["schema_id"])
+        self.assertEqual(properties["rollbacks"]["items"]["$ref"], self.contract["schemas"]["rollback_outcome"]["schema_id"])
 
     def test_valid_design_fixture_has_exact_observation_coverage(self) -> None:
         result = self._validate_bundle()
@@ -153,22 +219,51 @@ class CollectorRecoveryEvidenceDesignTests(unittest.TestCase):
         with self.assertRaises(Exception):
             self._validate_bundle(modified)
 
-    def test_validator_rejects_rollback_success_without_authorized_runtime_evidence(self) -> None:
+    def test_complete_failure_record_matches_failed_preflight(self) -> None:
         modified = copy.deepcopy(self.bundle)
-        modified["rollbacks"].append(
-            {
-                "evidence_class": "rollback_outcome",
-                "authority": {
-                    "read_only": True,
-                    "azure_authentication_authorized": False,
-                    "azure_mutations_authorized": False,
-                    "execution_authorization_reference": None,
-                },
-                "rollback": {"outcome": "succeeded", "operationally_tested": True},
-            }
-        )
+        record = modified["guest_preflight"][0]
+        record["result"]["status"] = "failure"
+        record["result"]["exit_code"] = 4
+        record["command"]["exit_code"] = 4
+        modified["failures"].append(self._failure_for(record))
+        result = self._validate_bundle(modified)
+        self.assertEqual(result["failure_record_count"], 1)
+        self.assertEqual(result["evidence_identity_count"], 25)
+
+    def test_validator_rejects_placeholder_failure_record(self) -> None:
+        modified = copy.deepcopy(self.bundle)
+        record = modified["guest_preflight"][0]
+        record["result"]["status"] = "failure"
+        record["result"]["exit_code"] = 4
+        record["command"]["exit_code"] = 4
+        modified["failures"].append({})
         with self.assertRaises(Exception):
             self._validate_bundle(modified)
+
+    def test_validator_rejects_rollback_success_without_authorized_runtime_evidence(self) -> None:
+        modified = copy.deepcopy(self.bundle)
+        record = modified["guest_preflight"][0]
+        record["result"]["status"] = "failure"
+        record["result"]["exit_code"] = 4
+        record["command"]["exit_code"] = 4
+        failure = self._failure_for(record)
+        modified["failures"].append(failure)
+        modified["rollbacks"].append(self._rollback_for(failure, authorized=False))
+        with self.assertRaises(Exception):
+            self._validate_bundle(modified)
+
+    def test_complete_authorized_rollback_record_validates_without_granting_bundle_authority(self) -> None:
+        modified = copy.deepcopy(self.bundle)
+        record = modified["guest_preflight"][0]
+        record["result"]["status"] = "failure"
+        record["result"]["exit_code"] = 4
+        record["command"]["exit_code"] = 4
+        failure = self._failure_for(record)
+        modified["failures"].append(failure)
+        modified["rollbacks"].append(self._rollback_for(failure, authorized=True))
+        result = self._validate_bundle(modified)
+        self.assertEqual(result["rollback_record_count"], 1)
+        self.assertFalse(result["runtime_execution_authorized"])
 
     def test_contract_rejects_enabling_azure_authentication(self) -> None:
         modified = copy.deepcopy(self.contract)
