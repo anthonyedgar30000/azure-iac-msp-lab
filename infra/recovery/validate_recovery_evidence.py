@@ -7,8 +7,12 @@ from typing import Any
 
 from recovery_evidence_core import (
     CLAIMS,
+    CLAIM_STATUSES,
     PACKAGE_SCHEMA,
+    PACKAGE_STATUSES,
+    PATTERNS,
     PHASES,
+    PRODUCER_FIELDS,
     EvidenceValidationError,
     canonical_size,
     exact_keys,
@@ -26,20 +30,35 @@ from recovery_evidence_core import (
 def validate_evidence_package(package_value: dict[str, Any], contract: dict[str, Any]) -> dict[str, Any]:
     validate_contract(contract)
     package_contract = obj(contract["package"], "package")
-    if canonical_size(package_value) > package_contract["maximum_package_bytes"]:
+    try:
+        package_size = canonical_size(package_value)
+    except (TypeError, ValueError) as exc:
+        raise EvidenceValidationError("evidence package is not canonical finite JSON") from exc
+    if package_size > package_contract["maximum_package_bytes"]:
         raise EvidenceValidationError("evidence package exceeds maximum_package_bytes")
     exact_keys(package_value, set(package_contract["required_top_level_fields"]), "package")
     if package_value.get("schema_version") != PACKAGE_SCHEMA:
         raise EvidenceValidationError("package.schema_version changed")
 
-    package_id = patterned(package_value.get("package_id"), "package.package_id", package_contract["record_id_pattern"])
+    package_id = patterned(package_value.get("package_id"), "package.package_id", PATTERNS["record_id_pattern"])
     generated_at = timestamp(package_value.get("generated_at"), "package.generated_at")
     correlation_id = patterned(
         package_value.get("maintenance_correlation_id"),
         "package.maintenance_correlation_id",
-        package_contract["maintenance_correlation_id_pattern"],
+        PATTERNS["maintenance_correlation_id_pattern"],
     )
-    resource_ids = validate_target(obj(package_value.get("target"), "package.target"), obj(contract["target"], "target"))
+
+    producer = obj(package_value.get("producer"), "package.producer")
+    exact_keys(producer, PRODUCER_FIELDS, "package.producer")
+    text(producer.get("tool"), "package.producer.tool", 256)
+    text(producer.get("version"), "package.producer.version", 128)
+    text(producer.get("identity"), "package.producer.identity", 256)
+    patterned(producer.get("source_commit"), "package.producer.source_commit", r"^[0-9a-f]{40}$")
+
+    resource_ids = validate_target(
+        obj(package_value.get("target"), "package.target"),
+        obj(contract["target"], "target"),
+    )
 
     declared_list = items(package_value.get("declared_phase_ids"), "package.declared_phase_ids")
     declared = {text(value, "package.declared_phase_ids[]") for value in declared_list}
@@ -50,8 +69,21 @@ def validate_evidence_package(package_value: dict[str, Any], contract: dict[str,
         raise EvidenceValidationError(f"unknown or empty declared phase IDs: {sorted(unknown)}")
 
     package_status = text(package_value.get("package_status"), "package.package_status")
-    if package_status not in set(package_contract["package_statuses"]):
+    if package_status not in PACKAGE_STATUSES:
         raise EvidenceValidationError("unsupported package_status")
+    supersedes_list = [
+        patterned(value, "package.supersedes_package_ids[]", PATTERNS["record_id_pattern"])
+        for value in items(package_value.get("supersedes_package_ids"), "package.supersedes_package_ids")
+    ]
+    if len(supersedes_list) != len(set(supersedes_list)):
+        raise EvidenceValidationError("supersedes_package_ids contains duplicates")
+    if package_id in supersedes_list:
+        raise EvidenceValidationError("a package cannot supersede itself")
+    if package_status == "superseded" and not supersedes_list:
+        raise EvidenceValidationError("superseded package must identify superseding package IDs")
+    if package_status != "superseded" and supersedes_list:
+        raise EvidenceValidationError("supersedes_package_ids must be empty unless package_status is superseded")
+
     records = items(package_value.get("records"), "package.records")
     if not records or len(records) > package_contract["maximum_records"]:
         raise EvidenceValidationError("record count is outside the bounded range")
@@ -69,6 +101,7 @@ def validate_evidence_package(package_value: dict[str, Any], contract: dict[str,
             declared_phases=declared,
             generated_at=generated_at,
             resource_ids=resource_ids,
+            correlation_id=correlation_id,
         )
         if record_id in record_ids:
             raise EvidenceValidationError(f"duplicate record_id: {record_id}")
@@ -93,21 +126,20 @@ def validate_evidence_package(package_value: dict[str, Any], contract: dict[str,
             raise EvidenceValidationError("failed or aborted package lacks operation_attempt and decision evidence")
         terminal = [
             record for record in records
-            if record["record_type"] == "decision" and record["status"] in {"failed", "aborted"}
+            if record["record_type"] == "decision" and record["status"] == package_status
         ]
         if not terminal:
-            raise EvidenceValidationError("failed or aborted package lacks a terminal decision")
-        required = set(contract["failure_and_abort_requirements"]["decision_details_required"])
-        if any(required - set(record["details"]) for record in terminal):
-            raise EvidenceValidationError("terminal decision lacks required details")
+            raise EvidenceValidationError("failed or aborted package lacks a matching terminal decision")
 
     claims = obj(package_value.get("claims"), "package.claims")
     exact_keys(claims, CLAIMS, "package.claims")
     verified: list[str] = []
     for claim, status_value in claims.items():
         claim_status = text(status_value, f"package.claims.{claim}")
-        if claim_status not in set(package_contract["claim_statuses"]):
+        if claim_status not in CLAIM_STATUSES:
             raise EvidenceValidationError(f"unsupported claim status for {claim}")
+        if package_status == "superseded" and claim_status == "verified":
+            raise EvidenceValidationError("superseded packages cannot retain verified operational claims")
         if claim_status != "verified":
             continue
         if package_status != "complete":
@@ -144,6 +176,7 @@ def validate_evidence_package(package_value: dict[str, Any], contract: dict[str,
         "missing_evidence_by_phase": missing,
         "record_count": len(records),
         "verified_claims": sorted(verified),
+        "supersedes_package_ids": supersedes_list,
         "authority_granted": False,
         "azure_mutations_authorized": False,
     }
@@ -151,14 +184,21 @@ def validate_evidence_package(package_value: dict[str, Any], contract: dict[str,
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate the collector recovery evidence contract and package.")
-    parser.add_argument("--contract", type=Path, default=Path(__file__).with_name("collector-recovery-evidence-contract.json"))
+    parser.add_argument(
+        "--contract",
+        type=Path,
+        default=Path(__file__).with_name("collector-recovery-evidence-contract.json"),
+    )
     parser.add_argument("--package", type=Path)
     args = parser.parse_args()
     contract = json.loads(args.contract.read_text(encoding="utf-8"))
     result = validate_contract(contract)
     if args.package:
-        result = validate_evidence_package(json.loads(args.package.read_text(encoding="utf-8")), contract)
-    print(json.dumps(result, indent=2, sort_keys=True))
+        result = validate_evidence_package(
+            json.loads(args.package.read_text(encoding="utf-8")),
+            contract,
+        )
+    print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))
     return 0
 
 
