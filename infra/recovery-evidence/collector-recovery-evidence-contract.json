@@ -1,0 +1,267 @@
+{
+  "schema_version": "servicetracer.collector-recovery-evidence-design.v1",
+  "state": "design_only",
+  "activation": {
+    "validator": "infra/recovery-evidence/validate_recovery_evidence.py",
+    "active_workflow_present": false,
+    "dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_mutations_authorized": false,
+    "promotion_requires_separate_pull_request": true,
+    "promotion_requires_reviews": [
+      "evidence-quality",
+      "operations-and-recovery",
+      "security-and-identity",
+      "azure-cost"
+    ]
+  },
+  "target": {
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "collector_vm": "vm-stcollector-mst-dev",
+    "collector_nic": "nic-stcollector-mst-dev",
+    "collector_evidence_disk": "disk-stcollector-evidence-mst-dev",
+    "collector_os_disk": "disk-stcollector-os-mst-dev",
+    "evidence_mount": "/var/lib/servicetracer"
+  },
+  "schemas": {
+    "guest_preflight": {
+      "schema_id": "https://schemas.servicetracer.local/collector-recovery/guest-preflight.v1.json",
+      "path": "infra/recovery-evidence/schemas/guest-preflight.schema.json",
+      "schema_version": "servicetracer.collector-recovery.guest-preflight.v1",
+      "maximum_age_seconds": 900,
+      "required_observation_kinds": [
+        "collector_service_active",
+        "local_health_endpoint_success",
+        "evidence_mount_source",
+        "filesystem_uuid",
+        "recent_evidence_readable",
+        "evidence_checkpoint_digest",
+        "guest_os_identity",
+        "collector_write_quiescence_capability"
+      ]
+    },
+    "azure_control_plane_preflight": {
+      "schema_id": "https://schemas.servicetracer.local/collector-recovery/azure-control-plane-preflight.v1.json",
+      "path": "infra/recovery-evidence/schemas/azure-control-plane-preflight.schema.json",
+      "schema_version": "servicetracer.collector-recovery.azure-control-plane-preflight.v1",
+      "maximum_age_seconds": 900,
+      "required_observation_kinds": [
+        "subscription_context",
+        "resource_group_identity",
+        "collector_vm_state",
+        "collector_vm_security_profile",
+        "collector_nic_binding",
+        "collector_static_address",
+        "evidence_disk_identity",
+        "evidence_disk_access_policy",
+        "os_disk_identity",
+        "os_disk_recreation_metadata",
+        "managed_identity_principal",
+        "visible_role_assignments",
+        "sku_availability",
+        "regional_quota",
+        "temporary_cost_preflight",
+        "cleanup_owner_and_deadline"
+      ]
+    },
+    "phase_failure": {
+      "schema_id": "https://schemas.servicetracer.local/collector-recovery/phase-failure.v1.json",
+      "path": "infra/recovery-evidence/schemas/phase-failure.schema.json",
+      "schema_version": "servicetracer.collector-recovery.phase-failure.v1"
+    },
+    "rollback_outcome": {
+      "schema_id": "https://schemas.servicetracer.local/collector-recovery/rollback-outcome.v1.json",
+      "path": "infra/recovery-evidence/schemas/rollback-outcome.schema.json",
+      "schema_version": "servicetracer.collector-recovery.rollback-outcome.v1"
+    },
+    "bundle": {
+      "schema_id": "https://schemas.servicetracer.local/collector-recovery/evidence-bundle.v1.json",
+      "path": "infra/recovery-evidence/schemas/recovery-evidence-bundle.schema.json",
+      "schema_version": "servicetracer.collector-recovery.evidence-bundle.v1"
+    }
+  },
+  "common_envelope": {
+    "required_fields": [
+      "schema_version",
+      "evidence_id",
+      "evidence_class",
+      "visibility",
+      "correlation",
+      "timestamps",
+      "target",
+      "result",
+      "state",
+      "redaction",
+      "authority",
+      "provenance"
+    ],
+    "evidence_id_pattern": "^ev-[a-z0-9][a-z0-9-]{7,95}$",
+    "timestamp_format": "RFC3339 UTC with Z suffix",
+    "maximum_clock_skew_seconds": 120,
+    "allowed_visibility": [
+      "raw_private",
+      "sanitized_review"
+    ],
+    "result_statuses": [
+      "success",
+      "failure",
+      "not_observed"
+    ],
+    "preflight_state_changed_must_be_false": true
+  },
+  "correlation_contract": {
+    "required_fields": [
+      "maintenance_correlation_id",
+      "operation_id",
+      "phase_id"
+    ],
+    "maintenance_correlation_pattern": "^maint-[a-z0-9][a-z0-9-]{7,95}$",
+    "operation_id_pattern": "^op-[a-z0-9][a-z0-9-]{7,95}$",
+    "all_preflight_records_share_maintenance_correlation_id": true,
+    "all_records_target_same_collector": true,
+    "duplicate_evidence_ids_allowed": false
+  },
+  "command_provenance": {
+    "guest_required_fields": [
+      "executable",
+      "arguments_redacted",
+      "command_sha256",
+      "run_as_identity",
+      "shell",
+      "exit_code",
+      "duration_ms",
+      "stdout_sha256",
+      "stderr_sha256"
+    ],
+    "azure_required_fields": [
+      "tool",
+      "command_group",
+      "arguments_redacted",
+      "command_sha256",
+      "authenticated_principal_hash",
+      "exit_code",
+      "duration_ms",
+      "stdout_sha256",
+      "stderr_sha256"
+    ],
+    "digest_algorithm": "SHA-256 lowercase hexadecimal",
+    "success_requires_exit_code_zero": true,
+    "raw_stdout_or_stderr_embedded": false
+  },
+  "target_identity": {
+    "raw_private_requires_exact_resource_id": true,
+    "sanitized_review_requires_resource_id_sha256": true,
+    "sanitized_review_forbids_exact_subscription_id": true,
+    "sanitized_review_forbids_exact_tenant_id": true,
+    "resource_id_digest_algorithm": "SHA-256 lowercase hexadecimal"
+  },
+  "redaction_contract": {
+    "required_fields": [
+      "applied",
+      "fields",
+      "method",
+      "secrets_detected"
+    ],
+    "sanitized_review_requires_applied": true,
+    "secrets_detected_must_be_false": true,
+    "forbidden_content_markers_case_insensitive": [
+      "authorization: bearer",
+      "client_secret",
+      "password=",
+      "private key",
+      "-----begin",
+      "sig=",
+      "se="
+    ],
+    "raw_private_repository_promotion_allowed": false,
+    "sanitized_examples_only_in_repository": true
+  },
+  "bundle_contract": {
+    "example_path": "infra/recovery-evidence/examples/valid-preflight-bundle.json",
+    "guest_records_required": 8,
+    "azure_control_plane_records_required": 16,
+    "all_required_observation_kinds_exactly_once": true,
+    "all_preflight_results_success": true,
+    "all_preflight_records_read_only": true,
+    "all_preflight_records_azure_mutations_authorized_false": true,
+    "all_preflight_records_within_maximum_age": true,
+    "bundle_status_when_complete": "preflight_evidence_complete_design_fixture",
+    "runtime_execution_authorized_by_bundle": false
+  },
+  "failure_contract": {
+    "required_when_any_record_fails": true,
+    "required_fields": [
+      "failed_phase_id",
+      "failed_evidence_id",
+      "failure_class",
+      "observed_state",
+      "stop_decision",
+      "mutations_observed",
+      "rollback_required",
+      "operator_action_required"
+    ],
+    "allowed_stop_decisions": [
+      "abort_before_mutation",
+      "stop_and_preserve",
+      "initiate_reviewed_rollback"
+    ],
+    "success_claim_allowed": false
+  },
+  "rollback_contract": {
+    "required_when_rollback_attempted": true,
+    "required_fields": [
+      "trigger_failure_evidence_id",
+      "strategy_id",
+      "authorization_reference",
+      "started_at",
+      "completed_at",
+      "steps",
+      "verification",
+      "outcome",
+      "residual_risk"
+    ],
+    "strategy_id": "os_disk_snapshot_recreate_canonical_name",
+    "allowed_outcomes": [
+      "succeeded",
+      "failed",
+      "partial",
+      "aborted"
+    ],
+    "operationally_tested_default": false,
+    "operational_success_requires_separate_authorized_runtime_evidence": true
+  },
+  "cost_and_retention": {
+    "schema_design_increment_cost_cad": 0.0,
+    "runtime_raw_evidence_maximum_retention_hours": 24,
+    "sanitized_review_retention": "repository history according to project governance",
+    "cost_preflight_record_required_before_execution": true,
+    "cleanup_owner_and_deadline_record_required_before_temporary_resources": true
+  },
+  "validation": {
+    "fail_closed": true,
+    "external_python_dependencies_required": false,
+    "negative_tests_required": [
+      "missing required observation kind",
+      "duplicate evidence identity",
+      "correlation mismatch",
+      "target mismatch",
+      "stale evidence",
+      "success with non-zero exit code",
+      "preflight state mutation",
+      "Azure mutation authorization enabled",
+      "sanitized record missing resource digest",
+      "unredacted secret marker",
+      "failure without failure record",
+      "rollback success claimed without authorized runtime evidence"
+    ]
+  },
+  "unresolved_blockers": [
+    "no runtime collector emits these records yet",
+    "no active workflow consumes the bundle",
+    "no authenticated Azure preflight captured under this schema",
+    "no guest preflight captured under this schema",
+    "no recovery or rollback has been operationally tested",
+    "independent evidence-quality and security-and-identity review remain required before promotion"
+  ]
+}
