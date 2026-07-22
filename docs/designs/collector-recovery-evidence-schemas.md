@@ -50,9 +50,11 @@ Every package must contain:
 - a unique package identifier;
 - an RFC 3339 UTC generation timestamp;
 - one maintenance correlation identifier;
-- exact target names and complete Azure resource IDs;
+- producer tool, version, identity, and source commit;
+- exact target names, subscription identity, and complete Azure resource IDs;
 - an explicit list of declared evidence phases;
 - a package status;
+- bounded supersession package identifiers;
 - bounded evidence records;
 - explicit operational claims;
 - a claim-boundary statement.
@@ -98,7 +100,11 @@ The contract recognizes:
 - `decision`.
 
 A record type alone does not prove a phase. Each declared phase has an exact set of
-required record types.
+required record types. Each record type also has minimum evidence-bearing detail
+fields. For example, cleanup commitments require an owner, deadline, retention
+limit, and approved cost ceiling; operation attempts require an authority
+reference and ordered start/finish timestamps; consistency checkpoints must bind
+their digest to the package maintenance correlation.
 
 ## Completeness semantics
 
@@ -131,6 +137,7 @@ The package must preserve complete Azure resource IDs for:
 Each resource ID must:
 
 - be a complete Azure resource ID;
+- use the same declared subscription ID as every other target resource;
 - belong to `rg-servicetracer-dev-westus2`;
 - end in the canonical resource name;
 - remain inside the package's declared target boundary.
@@ -144,6 +151,7 @@ The validator recursively inspects `before_state`, `after_state`, and `details`.
 
 It rejects:
 
+- non-finite JSON numbers;
 - secret-like field names;
 - common credential prefixes;
 - unsupported nested values;
@@ -160,8 +168,18 @@ redaction metadata with:
 - the exact marker;
 - a SHA-256 digest of the original value.
 
+The validator recursively derives every marker path and requires the redaction
+metadata paths to match exactly, with no missing, duplicate, or unrelated entries.
+
 This preserves evidence that a value existed and was deliberately removed without
 moving the secret into the package.
+
+## Supersession provenance
+
+A package marked `superseded` must identify at least one package ID that supersedes
+it. Packages in any other state must carry an empty supersession list, a package
+cannot supersede itself, and a superseded package cannot retain a verified
+operational claim.
 
 ## Failure and abort evidence
 
@@ -225,6 +243,12 @@ new operation.
 
 ## Deterministic validation
 
+The contract validator pins every v1 value that the package validator trusts:
+statuses, record types, patterns, limits, phase requirements, claim requirements,
+detail requirements, redaction controls, failure prohibitions, and cleanup
+boundaries. A repository edit cannot silently weaken those values while still
+passing contract validation.
+
 The validator has two entry points:
 
 - `validate_contract()` verifies that the repository contract remains
@@ -245,22 +269,26 @@ any runtime system.
 
 ## Regression coverage
 
-The tests cover:
+The 31 tests cover:
 
 - a valid complete preflight package;
 - a valid incomplete package with explicit missing evidence;
 - rejection of false completeness;
+- contract-drift rejection for patterns, claims, detail requirements, and redaction policy;
+- required detail-field enforcement;
 - recursive secret-field rejection;
 - credential-prefix rejection;
 - logical command identity enforcement;
-- target-resource boundary enforcement;
-- UTC timestamp enforcement;
+- target-resource and single-subscription boundary enforcement;
+- canonical finite-JSON and UTC timestamp enforcement;
 - redaction digest requirements;
 - nested-size limits;
 - duplicate record rejection;
 - failed-package terminal-decision requirements;
 - claim requirements;
 - positive rollback-claim validation using synthetic evidence;
+- supersession provenance rules;
+- producer provenance;
 - rejection of unknown record fields.
 
 Synthetic fixtures prove validator behavior only. They are not operational
