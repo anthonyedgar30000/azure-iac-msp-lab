@@ -1,0 +1,106 @@
+name: Existing collector report publication (DESIGN ONLY)
+
+# This file is intentionally outside .github/workflows and cannot be dispatched.
+# It defines the bounded promotion contract for deploying only the public-report
+# Storage account and the existing collector's scoped Blob data role assignment.
+# Promotion requires a separate reviewed authority-changing pull request.
+
+on:
+  workflow_dispatch:
+    inputs:
+      resource_group:
+        description: 'Existing bounded ServiceTracer resource group'
+        required: true
+        default: rg-servicetracer-dev-westus2
+        type: string
+      location:
+        description: 'Expected Azure region'
+        required: true
+        default: westus2
+        type: string
+      prefix:
+        description: 'Bicep resource-name prefix'
+        required: true
+        default: mst
+        type: string
+      environment:
+        description: 'Lab environment'
+        required: true
+        default: dev
+        type: choice
+        options: [dev, test]
+      allowed_origin:
+        description: 'Exact HTTPS browser origin permitted by CORS'
+        required: true
+        default: https://anthonyedgar30000.github.io
+        type: string
+      reviewed_commit:
+        description: 'Exact reviewed commit containing the promoted implementation'
+        required: true
+        type: string
+      current_price_evidence_id:
+        description: 'Identifier for fresh region-specific cost evidence'
+        required: true
+        type: string
+      maximum_monthly_cost_cad:
+        description: 'Approved monthly cost ceiling in CAD; maximum 10'
+        required: true
+        default: '10.00'
+        type: string
+      confirmation:
+        description: 'Future gate: PUBLISH:<resource-group>:vm-stcollector-<prefix>-<environment>'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: existing-collector-report-publication-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  design-only-blocker:
+    name: Refuse publication deployment from an unpromoted design
+    runs-on: ubuntu-latest
+    env:
+      DESIGN_ONLY_BLOCKER: 'true'
+    steps:
+      - name: Fail closed before Azure authentication or mutation
+        run: |
+          set -euo pipefail
+          echo 'This workflow is a non-executable design artifact.' >&2
+          echo 'Run the read-only planner, review exact What-If and cost evidence, then promote a separately reviewed workflow with explicit mutation authority.' >&2
+          exit 64
+
+  candidate-phase-contract:
+    name: Candidate existing-collector publication phase contract
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate exact commit, bounded inputs, cost evidence, and confirmation
+        run: echo validate_authority_and_inputs
+      - name: Authenticate with workload identity federation after authorization
+        run: echo azure_oidc_login_after_gate
+      - name: Re-resolve tenant, subscription, resource group, region, and tags
+        run: echo resolve_current_azure_context
+      - name: Re-resolve the existing collector system-assigned principal ID
+        run: echo resolve_existing_collector_identity
+      - name: Capture current report Storage and visible RBAC state
+        run: echo capture_prechange_inventory
+      - name: Run ARM validation and exact What-If
+        run: echo validate_and_what_if_existing_collector_template
+      - name: Require human approval of What-If and current cost evidence
+        run: echo human_predeployment_approval
+      - name: Deploy only report Storage configuration and scoped role assignment
+        run: echo deploy_report_publication_only
+      - name: Verify Storage security, CORS, retention, versioning, and role scope
+        run: echo verify_publication_resources
+      - name: Publish a fresh sanitized envelope through the existing collector identity
+        run: echo publish_fresh_report_with_existing_identity
+      - name: Fetch and validate provenance, expiry, and report schema from the public URL
+        run: echo verify_public_report_end_to_end
+      - name: Record deployment evidence and exact browser test URL
+        run: echo capture_nonsecret_evidence
+      - name: Roll back only the new role assignment and report Storage if verification fails
+        run: echo bounded_publication_rollback
