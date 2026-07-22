@@ -26,14 +26,16 @@ param allowedOrigins array = [
   'https://anthonyedgar30000.github.io'
 ]
 
-@description('Tags applied to report publication resources.')
-param tags object = {
+@description('Additional tags merged into the bounded publication resource tags.')
+param tags object = {}
+
+var publicationTags = union(tags, {
   workload: 'azure-iac-msp-lab'
   environment: environment
   managedBy: 'bicep'
   purpose: 'servicetracer-live-report'
   changeScope: 'existing-collector-publication-only'
-}
+})
 
 module reportPublication './modules/report_publication.bicep' = {
   name: 'existing-collector-report-publication-${environment}'
@@ -41,7 +43,7 @@ module reportPublication './modules/report_publication.bicep' = {
     prefix: prefix
     environment: environment
     location: location
-    tags: tags
+    tags: publicationTags
     collectorPrincipalId: collectorPrincipalId
     allowedOrigins: allowedOrigins
   }
