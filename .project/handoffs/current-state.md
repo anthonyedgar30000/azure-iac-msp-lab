@@ -116,7 +116,7 @@ The collector VM, production NIC, evidence disk, and OS disk IDs must be:
 Every package has a `supersession` field:
 
 - `null` unless status is `superseded`;
-- exact prior-package ID, reason, and evidence SHA-256 when superseded;
+- exact replacement-package ID, reason, and evidence SHA-256 when superseded;
 - self-supersession prohibited;
 - verified claims prohibited on superseded packages.
 
