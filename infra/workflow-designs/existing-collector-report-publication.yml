@@ -88,18 +88,24 @@ jobs:
         run: echo resolve_existing_collector_identity
       - name: Capture current report Storage and visible RBAC state
         run: echo capture_prechange_inventory
+      - name: Classify current and obsolete collector-principal role assignments
+        run: echo classify_current_and_obsolete_publication_roles
       - name: Run ARM validation and exact What-If
         run: echo validate_and_what_if_existing_collector_template
-      - name: Require human approval of What-If and current cost evidence
+      - name: Require human approval of What-If, cost evidence, and any obsolete-role revocation
         run: echo human_predeployment_approval
-      - name: Deploy only report Storage configuration and scoped role assignment
+      - name: Deploy only report Storage configuration and current scoped role assignment
         run: echo deploy_report_publication_only
-      - name: Verify Storage security, CORS, retention, versioning, and role scope
+      - name: Verify Storage security, CORS, retention, versioning, and current role scope
         run: echo verify_publication_resources
       - name: Publish a fresh sanitized envelope through the existing collector identity
         run: echo publish_fresh_report_with_existing_identity
       - name: Fetch and validate provenance, expiry, and report schema from the public URL
         run: echo verify_public_report_end_to_end
+      - name: Remove only explicitly approved obsolete collector-principal assignments
+        run: echo revoke_approved_obsolete_publication_roles
+      - name: Verify no obsolete publication role remains
+        run: echo verify_obsolete_publication_roles_absent
       - name: Record deployment evidence and exact browser test URL
         run: echo capture_nonsecret_evidence
       - name: Roll back only the new role assignment and report Storage if verification fails
