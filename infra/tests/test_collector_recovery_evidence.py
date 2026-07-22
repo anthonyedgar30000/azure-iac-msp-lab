@@ -399,7 +399,7 @@ class CollectorRecoveryEvidenceTests(unittest.TestCase):
 
     def test_non_superseded_package_requires_null_supersession(self) -> None:
         package = self._complete_preflight_package()
-        package["supersession"] = {"supersedes_package_id": "pkg-previous-0001", "reason": "replacement", "evidence_sha256": SHA_A}
+        package["supersession"] = {"superseded_by_package_id": "pkg-replacement-0001", "reason": "replacement", "evidence_sha256": SHA_A}
         with self.assertRaises(Exception):
             self.validate_package(package, self.contract)
 
@@ -412,21 +412,21 @@ class CollectorRecoveryEvidenceTests(unittest.TestCase):
     def test_superseded_package_with_provenance_is_valid(self) -> None:
         package = self._complete_preflight_package()
         package["package_status"] = "superseded"
-        package["supersession"] = {"supersedes_package_id": "pkg-previous-0001", "reason": "new evidence package replaces the older observation", "evidence_sha256": SHA_B}
+        package["supersession"] = {"superseded_by_package_id": "pkg-replacement-0001", "reason": "a newer evidence package replaces this observation", "evidence_sha256": SHA_B}
         result = self.validate_package(package, self.contract)
-        self.assertEqual(result["supersedes_package_id"], "pkg-previous-0001")
+        self.assertEqual(result["superseded_by_package_id"], "pkg-replacement-0001")
 
-    def test_superseded_package_cannot_supersede_itself(self) -> None:
+    def test_superseded_package_cannot_be_superseded_by_itself(self) -> None:
         package = self._complete_preflight_package()
         package["package_status"] = "superseded"
-        package["supersession"] = {"supersedes_package_id": package["package_id"], "reason": "invalid", "evidence_sha256": SHA_B}
+        package["supersession"] = {"superseded_by_package_id": package["package_id"], "reason": "invalid", "evidence_sha256": SHA_B}
         with self.assertRaises(Exception):
             self.validate_package(package, self.contract)
 
     def test_superseded_package_cannot_retain_verified_claim(self) -> None:
         package = self._complete_rollback_package()
         package["package_status"] = "superseded"
-        package["supersession"] = {"supersedes_package_id": "pkg-previous-0001", "reason": "replacement", "evidence_sha256": SHA_B}
+        package["supersession"] = {"superseded_by_package_id": "pkg-replacement-0001", "reason": "replacement", "evidence_sha256": SHA_B}
         with self.assertRaises(Exception):
             self.validate_package(package, self.contract)
 
