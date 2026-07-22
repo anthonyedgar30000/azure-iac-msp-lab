@@ -21,7 +21,7 @@
   "authored_change": {
     "change_id": "promote-existing-collector-report-publication-plan",
     "branch": "feat/promote-existing-collector-report-plan",
-    "pull_request": null,
+    "pull_request": 38,
     "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — bounded read-only Azure planning promotion explicitly authorized by Anthony Edgar with 'Proceed'",
     "scope": "Promote only the existing-collector report-publication planner into a manually dispatched GitHub Actions workflow. The workflow may authenticate through the protected azure-lab environment and perform Azure reads, ARM validation, and What-If only. No deployment, RBAC mutation, report publication, frontend endpoint change, collector compute change, budget, alert, or Azure resource mutation is permitted.",
     "authority": "repository_workflow_promotion_and_read_only_azure_planning_only",
