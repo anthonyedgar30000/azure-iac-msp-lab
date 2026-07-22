@@ -7,114 +7,201 @@
 - GitHub, pull requests, CI, `.project/`, protected workflow artifacts, and current Azure evidence determine implementation and runtime state.
 - Chat context supports reasoning only and never authorizes deployment or mutation.
 
-## Reality-synchronized repository baseline
+## Trusted repository baseline
 
 - Default branch: `main`.
-- Last substantive repository baseline: `bc27ba115a2bdd3ce0eba5bc38176033be27fbe0`.
-- Latest merged increment: PR #29, **Make collector rehearsal teardown contract authoritative**.
-- PR #29 merged the v2 contract, fail-closed validator, negative regression tests, candidate workflow phase alignment, design/review records, and project-state reconciliation.
-- No open pull requests existed when this reconciliation branch was created.
-- This reconciliation is coordination-only. While its pull request is open, live GitHub is authoritative; after merge, the files intentionally describe the stable post-merge state.
+- Branch-creation baseline: `bb1351da492548242382a86db5293f44dabfb1f7`.
+- Baseline increment: PR #30, **Reconcile PR29 merge and close legacy PR1 state**.
+- PR #30 exact head `a2b3d7032a1557f9b050b5c282b0e87b70bd2259` passed CI run `29943299617` (run 92).
+- PR #30 was coordination-only. It recorded PR #29 as completed, closed legacy PR #1 as superseded, and released previous write ownership.
 
 Canonical interpretation:
 
-`merged_into_main != deployed_to_azure != operationally_tested != execution_authorized`
+```text
+repository reconciled
+!= Azure state refreshed
+!= recovery executed
+!= rollback operationally verified
+```
 
-## PR #29 verification and review chronology
+## Active bounded increment
 
-### Code-bearing head
+- Workstream: `collector-recovery-evidence-schema-design`.
+- Branch: `feature/collector-recovery-evidence-schemas`.
+- Write owner: this explicitly authorized bounded implementation conversation.
+- Status: implementation in progress.
+- Pull request: not yet opened.
+- Authority: repository design only.
 
-Exact code-bearing head: `b9b21c3f5c6c860db8edbb6821d676f764d99b18`.
+Permitted files:
 
-CI run `29941065236` (run 88) completed successfully:
+- `infra/recovery/collector-recovery-evidence-contract.json`;
+- `infra/recovery/recovery_evidence_core.py`;
+- `infra/recovery/validate_recovery_evidence.py`;
+- `infra/tests/test_collector_recovery_evidence.py`;
+- `docs/designs/collector-recovery-evidence-schemas.md`;
+- `.project/active-work.json`;
+- `.project/handoffs/current-state.md`.
 
-- workflow-observability project-state validation;
-- complete ServiceTracer unit and operational smoke-test path;
-- collector replacement contract validation and negative regression tests;
-- Bicep lint and build.
+Protected boundaries:
 
-### Final PR head
+- `.github/workflows/**`;
+- `infra/replacement/**`;
+- `infra/modules/**`;
+- application source;
+- credentials and secrets;
+- live evidence packages;
+- Azure authentication or mutation scripts;
+- budgets and alerts;
+- deployed resources.
 
-Final PR head: `8e161c079714d96688255e5e86f067f784b268f5`.
+No other conversation should edit this branch or these seven paths unless ownership is explicitly transferred.
 
-CI run `29941348786` (run 90) completed successfully. This was the exact final coordination head before merge.
+## Objective
 
-### Operations-and-recovery lens
+Define a fail-closed evidence package for future collector recovery work without implementing collection or execution.
 
-The operations-and-recovery lens recorded **APPROVED FOR THIS REPOSITORY DESIGN INCREMENT** against the code-bearing head and run 88.
+The increment covers:
 
-Reviewer-independence boundary:
+1. guest preflight evidence;
+2. Azure control-plane preflight evidence;
+3. exact correlation and UTC timestamp requirements;
+4. logical command identity and exit status;
+5. exact target resource IDs;
+6. before/after state;
+7. evidence digests;
+8. recursive secret and redaction controls;
+9. cleanup ownership, deadline, retention, and cost evidence;
+10. failure, abort, rollback, and recovery claim requirements;
+11. deterministic positive and negative validation.
 
-- the review was submitted through the pull-request owner's authenticated GitHub account;
-- the repository may claim a recorded operations-and-recovery lens decision;
-- it may not claim external or organizational reviewer independence.
+## Contract boundary
 
-### Merge
+The authoritative contract is:
 
-- PR #29 merge commit: `bc27ba115a2bdd3ce0eba5bc38176033be27fbe0`.
-- The connected pull-request run lookup did not expose a separate post-merge CI run for that merge commit.
-- The exact PR-head CI evidence remains the recorded repository verification evidence.
+- `infra/recovery/collector-recovery-evidence-contract.json`.
 
-## Authoritative rehearsal-teardown contract now in main
+It remains `design_only` and explicitly records:
 
-The v2 replacement contract now requires:
+- active workflow absent;
+- dispatch unauthorized;
+- Azure authentication unauthorized;
+- Azure mutation unauthorized;
+- collection commands not implemented;
+- promotion requiring a separate pull request.
 
-- exact ordered quiescence, including stopping the collector service;
-- source VM `PowerState/deallocated` before snapshots;
-- two snapshots bound to the same maintenance correlation and final evidence checkpoint;
-- isolated boot rehearsal from the exact verified OS snapshot under the recorded Trusted Launch profile;
-- a distinct `teardown_isolated_rehearsal` phase;
-- rehearsal VM `PowerState/deallocated` evidence;
-- removal of the temporary rehearsal VM and isolated NIC before old-compute removal and replacement compute;
-- zero minutes of running-compute overlap;
-- an exact allowlist for temporary recovery artifacts permitted to remain;
-- fail-closed rejection of missing deallocation, missing removal, late boundaries, unapproved artifacts, missing phases, and non-zero overlap.
+The validator must never turn a structurally valid package into execution authority.
 
-These are repository design requirements, not observed Azure actions.
+## Evidence package model
 
-## Legacy PR #1 resolution
+A future package uses:
 
-PR #1, **feat: scaffold Azure network foundation**, was closed without merge on July 22, 2026.
+- `servicetracer.collector-recovery-evidence.v1`.
 
-Resolution:
+Every material record must preserve:
 
-- the branch was 199 commits behind current `main`;
-- its Terraform checks proved static formatting, initialization, and validation only;
-- it never produced an authenticated plan, Azure deployment, traffic-behaviour verification, or teardown proof;
-- its narrow two-subnet Terraform design was superseded by the current Bicep architecture;
-- the branch and commits remain in Git history as historical evidence of early cost-control, evidence-index, and verification-discipline work.
+- record identity;
+- record type and phase;
+- observation timestamp;
+- logical command identity;
+- exit status;
+- target resource ID;
+- before and after state;
+- evidence SHA-256;
+- bounded details;
+- redaction provenance.
 
-Canonical interpretation:
+Unknown top-level and record fields are rejected.
 
-`historical_prototype != current_architecture`
+## Completeness rule
 
-## Latest Azure evidence
+Completeness is evaluated against explicitly declared phases.
 
-The latest promoted control-plane evidence remains read-only planner run `29856203054`, captured July 21, 2026.
+```text
+complete package
+requires
+every required record type for every declared phase
+and
+no failed or aborted record
+```
 
-Observed at that time:
+An incomplete package may remain valid evidence, but its missing record types must be reported. It cannot silently claim completeness.
 
-- resource group: `rg-servicetracer-dev-westus2`;
-- region: `westus2`;
+## Secret and redaction rule
+
+The validator recursively rejects:
+
+- secret-like field names;
+- credential-like value prefixes;
+- excessive nesting;
+- excessive collection sizes;
+- oversized text;
+- raw command lines;
+- unknown output fields.
+
+A `[REDACTED]` value requires a structured field path and SHA-256 digest of the removed value.
+
+Complete Azure resource IDs are preserved as provenance inside the protected internal package. They are not credentials and cannot be replaced by untraceable redaction markers.
+
+## Failure and rollback rule
+
+A failed or aborted package requires:
+
+- a failed or aborted operation attempt;
+- a terminal decision;
+- reason;
+- authority;
+- safest next step;
+- explicit rollback requirement.
+
+A verified rollback or recovery claim requires complete phase evidence and an accepted human recovery decision. Schema validation remains evidence for review, not permission for a new operation.
+
+## Local verification
+
+The bounded test suite currently contains 19 tests covering:
+
+- valid complete and incomplete packages;
+- false-completeness rejection;
+- recursive secret leakage;
+- credential prefixes;
+- raw command identities;
+- target drift;
+- non-UTC timestamps;
+- redaction digest requirements;
+- bounded nested data;
+- duplicate records;
+- failed-package decision evidence;
+- verified-claim gates;
+- unknown record fields.
+
+Local result:
+
+```text
+python -m unittest discover -s infra/tests -v
+19 tests passed in the isolated increment fixture
+```
+
+This is local deterministic validation only. Exact-head GitHub CI is still required.
+
+## Latest Azure evidence boundary
+
+The latest promoted Azure control-plane evidence remains read-only planner run `29856203054`, observed July 21, 2026.
+
+At that time:
+
 - collector VM: `vm-stcollector-mst-dev`;
-- collector size: `Standard_B2ats_v2`;
-- deployed image: Canonical Ubuntu 22.04 Jammy;
-- desired image: Canonical Ubuntu 24.04;
-- evidence disk: 32 GiB Standard SSD, attached with `deleteOption: Detach`, public access disabled, network policy `DenyAll`;
-- production NIC: static `10.20.40.10` on the operations subnet, attached with VM `deleteOption: Delete`;
-- OS disk: 30 GiB Standard SSD, Trusted Launch generation 2, public access enabled, network policy `AllowAll`;
+- size: `Standard_B2ats_v2`;
+- deployed image: Ubuntu 22.04;
+- desired image: Ubuntu 24.04;
+- evidence disk: attached with `deleteOption: Detach`;
+- production NIC: static address and VM `deleteOption: Delete`;
 - system-assigned identity present;
 - no visible role assignments in the planner result;
 - no Azure mutations authorized or performed.
 
-This evidence is not current-day proof. It does not establish present guest health, present resource state, current pricing, SKU availability, quota, actual cost, snapshot recoverability, Trusted Launch restore bootability, or rollback.
+The last guest-level record remains ServiceTracer `0.4.0` after manual repairs on July 20, 2026.
 
-## Guest and deployment evidence boundary
-
-- Last recorded guest-level state: ServiceTracer `0.4.0` after manual repairs on July 20, 2026.
-- The planner did not re-run guest commands.
-- No collector replacement, isolated rehearsal, teardown, rollback, RBAC restoration, budget mutation, or alert mutation has been authorized or performed.
-- `deployment_succeeded != service_validated` and `resource_exists != securely_configured` remain active boundaries.
+This increment does not refresh either observation.
 
 ## Cost boundary
 
@@ -125,49 +212,40 @@ This evidence is not current-day proof. It does not establish present guest heal
 - Maximum isolated rehearsal compute: four hours.
 - Maximum temporary-resource retention: 24 hours.
 - Maximum running-compute overlap: zero minutes.
-- Fresh authenticated subscription-specific pricing, SKU availability, quota, cleanup owner, and cleanup deadline remain required.
 
-## Current repository work state
+These are planning constraints, not current pricing or execution approval.
 
-- Active bounded workstreams: none.
-- Known open pull requests: none at reconciliation-branch creation.
-- Active execution workflow: absent.
-- Dispatch authority: absent.
-- Azure authentication authority: absent.
-- Azure mutation authority: absent.
+## Required gates
 
-## Next bounded candidate
+Before merge:
 
-Candidate: **collector recovery evidence-schema design**.
+1. complete only the seven declared files;
+2. validate the contract and tests locally;
+3. open a draft pull request;
+4. obtain exact-head CI;
+5. inspect every CI job;
+6. route the exact passing head for evidence-quality review;
+7. preserve the owner-account reviewer-independence limitation.
 
-Repository-only intended scope:
+## Failure behavior
 
-1. define guest preflight evidence records;
-2. define Azure control-plane preflight evidence records;
-3. require correlation identifiers, timestamps, command identity, exit status, target resource IDs, before/after state, cleanup ownership, and redaction rules;
-4. define failure, abort, rollback, and recovery evidence requirements;
-5. add deterministic schema validation and negative tests.
-
-This candidate is not started and carries no Azure authority. Open it through a separate bounded pull request.
-
-## Failure and rollback behavior for the next repository increment
-
-If its CI fails:
+If CI fails:
 
 1. keep the pull request draft;
-2. inspect the exact failing job and logs;
+2. inspect the exact job and logs;
 3. patch only the declared files;
 4. run fresh exact-head CI;
-5. do not weaken evidence requirements merely to make tests pass.
+5. do not weaken evidence or redaction requirements merely to make tests pass.
 
-If review requests changes:
+If review finds a defect:
 
 1. record the exact reviewed head and CI run;
-2. patch within declared scope or explicitly amend scope;
-3. obtain fresh CI and re-review.
+2. keep the pull request draft;
+3. patch inside scope or explicitly amend the scope;
+4. obtain fresh CI and re-review.
 
-Repository rollback is closing the candidate pull request without merge or reverting its commits. No Azure rollback applies because the candidate must remain repository-only.
+Repository rollback is closing the pull request without merge or reverting its commits. No Azure rollback applies because this increment performs no Azure mutation.
 
 ## Prohibited next step
 
-Do not activate the candidate replacement workflow, authenticate to Azure for replacement execution, deallocate the collector, create snapshots or rehearsal resources, alter delete options, remove or deploy compute, restore RBAC, modify budgets or alerts, or claim rollback is operationally verified.
+Do not add live guest or Azure collection commands, activate a workflow, authenticate to Azure, deallocate the collector, create snapshots, create rehearsal resources, alter delete options, remove or deploy compute, restore RBAC, modify budgets or alerts, or claim snapshot recoverability, Trusted Launch bootability, rollback, or recovery as operationally verified.
