@@ -7,9 +7,13 @@
 - GitHub, pull requests, CI, `.project/`, protected workflow artifacts, and fresh Azure evidence determine implementation and runtime reality.
 - Chat context supports reasoning only and never authorizes deployment or mutation.
 
-## State-model correction
+## Repository observation
 
-The project no longer requires a coordination pull request to predict its own merge commit or terminal state.
+- Default branch: `main`.
+- Observed `main` before this branch opened: `e6dcb9a2cf1ba05620a294137fea5e21f8dba1ed`, the PR #36 merge commit.
+- Open pull requests observed before branch creation: zero.
+- Last substantive repository-design baseline: PR #34 merge commit `36010582460b393c0667e274144d9700e78721bf`.
+- The stored observation is time-bounded. Query live GitHub for current head, pull requests, and CI.
 
 ```text
 last_substantive_baseline
@@ -17,108 +21,157 @@ last_substantive_baseline
 != current_repository_head
 ```
 
-- The last substantive baseline is PR #34 merge commit `36010582460b393c0667e274144d9700e78721bf`.
-- PR #35 was a coordination-only merge at `a115b4cb0f3a3edbefd5171201c07bd144b7bf72`.
-- That PR advanced `main` without changing the substantive collector-recovery evidence design.
-- The repository observation stored in `active-work.json` is explicitly time-bounded external evidence.
-- Current `main`, open pull requests, and CI must be queried from live GitHub at read time.
-
-This removes the self-referential loop where every state-reconciliation merge immediately made the embedded “current head” and “open PR” claims stale.
-
 ## Authored change
 
-- Change: `eliminate-self-referential-project-state`.
-- Branch: `chore/eliminate-self-referential-project-state`.
-- Pull request: #36, recorded as authored-change metadata only; live status remains external GitHub evidence.
-- Authority: repository coordination model only.
-- Permitted files:
-  - `.project/active-work.json`;
-  - `.project/validate.py`;
-  - `.project/README.md`;
-  - `.project/handoffs/current-state.md`.
-- Protected scope includes workflows, Bicep and Terraform, application source, credentials, live evidence, budgets, alerts, and all Azure resources.
-- The authored-change declaration is historical governance metadata, not live branch or PR status.
+- Change: `existing-collector-report-publication`.
+- Branch: `feat/existing-collector-report-publication`.
+- Pull request: not yet assigned; this field is authored-change metadata, not live status.
+- Authority: repository design and read-only planning only.
+- Objective: prepare a safe publication path that uses the existing collector managed identity without redeploying or replacing collector compute.
 
-## Validation behavior
+Permitted paths:
 
-`project.active-work.v2` now requires:
+- `infra/report-publication-existing-collector.bicep`;
+- `infra/scripts/plan_existing_collector_report_publication.sh`;
+- `infra/workflow-designs/existing-collector-report-publication.yml`;
+- `infra/tests/test_existing_collector_report_publication.py`;
+- `docs/designs/existing-collector-public-report.md`;
+- `.project/active-work.json`;
+- `.project/handoffs/current-state.md`.
 
-1. a last substantive baseline with a valid `main` commit;
-2. a time-bounded `live_github` repository observation;
-3. an authored-change declaration marked `declaration_not_live_status`;
-4. explicit fail-closed authority defaults;
-5. live-state resolution rules for GitHub, CI, and Azure;
-6. the canonical distinction `last_substantive_baseline != current_repository_head`.
+Protected scope includes `.github/workflows/**`, the existing collector VM, NIC, OS disk, evidence disk, image, extensions, network, load balancer, backend VMs, application source, credentials, live evidence, budgets, alerts, and all Azure resources.
 
-The validator rejects the retired self-referential fields:
+## Intended architecture
 
-- `trusted_baseline`;
-- `workstreams`;
-- `known_open_pull_requests`;
-- `next_bounded_operation`.
+```text
+real Azure transactions and probe metrics
+        ↓
+ServiceTracer deterministic analysis
+        ↓
+sanitized provenance-bearing public envelope
+        ↓
+existing collector system-assigned identity
+        ↓
+dedicated Azure Storage report endpoint
+        ↓
+GitHub Pages operator console
+```
 
-## Accepted substantive baseline
+This increment implements only the repository design and read-only planning boundary. It does not deploy the endpoint or prove that the browser consumed live data.
 
-PR #34 resolved the six evidence-quality findings recorded against PR #32 at the repository-contract level:
+## Decoupling rule
 
-1. authoritative v1 semantics are pinned against contract drift;
-2. every record type requires typed evidence-bearing details;
-3. recursive redaction markers must match provenance metadata exactly once;
-4. target IDs are canonical, distinct, and share one subscription boundary;
-5. non-finite numbers fail closed;
-6. superseded packages require bounded replacement provenance and cannot retain verified claims.
+The existing lifecycle deployment couples `deployPublicReportEndpoint` to `deployOperationsCollector=true`. That is not safe for this increment because the deployed collector uses Ubuntu 22.04 while the desired contract uses Ubuntu 24.04 and replacement is separately governed.
 
-PR #34 exact head `7d586736e842425092f7fc3a3a23f0167466875e` passed CI run `29950152689` (run 122). The owner-account evidence-quality review accepted the bounded repository-design remediation. It was not independent organizational approval and did not prove operational recovery.
+The dedicated template therefore:
+
+- accepts a freshly resolved existing collector principal ID;
+- invokes only the report-publication module;
+- creates no VM, NIC, disk, image, extension, load-balancer, backend, or network resource;
+- exports the Storage account, static website endpoint, public report URL, and role-assignment ID.
+
+```text
+report endpoint deployment
+!= collector replacement
+```
+
+## Read-only planner
+
+`infra/scripts/plan_existing_collector_report_publication.sh` is designed to:
+
+1. capture current subscription and tenant context;
+2. verify the existing resource group, region, and tags;
+3. resolve the existing collector and its current system-assigned principal ID;
+4. capture existing report Storage and visible RBAC state;
+5. run ARM validation and exact What-If against the dedicated template;
+6. record that current price evidence remains unresolved;
+7. emit a plan summary proving no deployment authorization and no Azure mutation.
+
+The script must not contain deployment, role-assignment creation, VM Run Command, or deletion commands.
+
+## Inactive workflow design
+
+`infra/workflow-designs/existing-collector-report-publication.yml` is intentionally outside `.github/workflows` and cannot be dispatched. Its first job fails closed before authentication or mutation, and its candidate phase contract is disabled.
+
+Promotion requires a separate authority-changing pull request after:
+
+- exact-head CI and review;
+- fresh Azure context and collector identity evidence;
+- exact What-If review;
+- current region-appropriate cost evidence;
+- explicit human mutation authorization;
+- a reviewed rollback and cleanup procedure.
+
+## Security and identity boundary
+
+- Browser reads use HTTPS from the exact GitHub Pages origin.
+- Collector writes use managed-identity OAuth to Azure Blob Storage.
+- Shared-key authorization remains disabled.
+- CORS remains an exact HTTPS-origin allowlist; wildcard origins are prohibited.
+- The collector role is Storage Blob Data Contributor at the dedicated Storage account only.
+- No browser route to the private collector is introduced.
+- No credential, token, private endpoint, raw evidence, or exact-root-cause claim belongs in the public envelope.
+
+```text
+RBAC assignment
+!= effective permission verified
+```
+
+Effective permission is proven only by a successful collector publication and validated browser fetch after a separately authorized deployment.
 
 ## Latest Azure evidence boundary
 
-The latest repository-promoted Azure control-plane evidence remains read-only planner run `29856203054`, observed July 21, 2026.
+The latest promoted Azure control-plane evidence remains read-only planner run `29856203054`, observed July 21, 2026.
 
 At that observation:
 
 - resource group: `rg-servicetracer-dev-westus2`;
 - region: `westus2`;
 - collector VM: `vm-stcollector-mst-dev`;
-- size: `Standard_B2ats_v2`;
+- VM size: `Standard_B2ats_v2`;
 - deployed image: Ubuntu 22.04;
 - desired image: Ubuntu 24.04;
 - evidence disk: attached with `deleteOption: Detach`;
 - production NIC: static address and VM `deleteOption: Delete`;
 - system-assigned identity: present;
-- visible role assignments in the planner result: none;
+- visible role assignments in that planner result: none;
 - Azure mutations: not authorized and not performed.
 
-This change does not refresh:
-
-- tenant or subscription context;
-- resource existence or configuration;
-- effective RBAC;
-- guest health;
-- quota or SKU availability;
-- current prices or actual cost;
-- snapshot recoverability;
-- Trusted Launch bootability;
-- rollback or recovery state.
+This branch does not refresh tenant, subscription, resource, RBAC, guest, quota, pricing, report Storage, public endpoint, or browser state.
 
 ```text
-repository declaration != deployed Azure reality
-historical evidence != current-day observation
-CI passed != service validated
+repository design
+!= deployed Azure reality
+
+historical principal observation
+!= current principal ID
+
+frontend live-report support
+!= live endpoint configured
 ```
 
-## Cost and execution boundary
+## Cost boundary
 
-Existing planning controls remain historical constraints:
+The expected resource set is one Standard LRS Storage account, report versions, requests, egress, and one role assignment, with no new compute. That expectation is not a current quotation.
 
-- reviewed estimate: CAD 4;
-- renewed approval required above CAD 4;
-- unconditional hard stop above CAD 10;
-- maximum snapshot capacity: 96 GiB;
-- maximum isolated rehearsal compute: four hours;
-- maximum temporary-resource retention: 24 hours;
-- maximum running-compute overlap: zero minutes.
+- Current price evidence is required before deployment.
+- The planning ceiling is CAD 10 monthly for this bounded endpoint.
+- ARM validation and What-If do not prove current price or actual cost.
+- Missing or excessive cost evidence is a deployment blocker.
 
-This coordination-model change has CAD 0 Azure runtime cost. It grants no authentication, dispatch, mutation, spending, rollback, recovery, or deployment authority.
+## Verification gates
+
+Before this repository-only pull request is ready to merge:
+
+1. record the assigned pull-request number as authored-change metadata;
+2. confirm the final diff is limited to the declared paths;
+3. run workflow-observability validation;
+4. run the existing and new report-publication tests;
+5. pass Bicep lint and build for the dedicated template;
+6. inspect every exact-head CI job;
+7. obtain a repository-design, security/identity, and cost-boundary review of the exact passing head;
+8. preserve the statement that no Azure connection or mutation occurred;
+9. obtain Anthony Edgar's explicit merge authorization.
 
 ## Failure and rollback behavior
 
@@ -126,8 +179,26 @@ If validation or CI fails:
 
 1. keep the pull request draft;
 2. inspect the exact failing job and logs;
-3. patch only the four permitted `.project` files;
+3. patch only the declared paths;
 4. obtain fresh exact-head CI;
-5. do not restore self-referential current-state requirements merely to make validation pass.
+5. do not activate the workflow, add credentials, remove cost gates, or couple the change back to collector deployment.
 
-Repository rollback is closing the pull request without merge or reverting its repository-only commits. No Azure rollback applies.
+Repository rollback is closing the pull request without merge or reverting its commits. No Azure rollback applies because this increment performs no Azure authentication or mutation.
+
+A future deployment rollback must remove only the new Storage-scope role assignment and dedicated report Storage account, preserve required non-secret evidence, and verify the collector VM, NIC, disks, identity, load balancer, backends, and network are unchanged.
+
+## Claim boundary
+
+After this branch, the repository may claim that a decoupled existing-collector publication design and read-only planning path exist and are CI-verified. It may not claim that the endpoint is deployed, the collector can publish to it, the browser consumed live data, the observed incident is current, or the scenario is no longer controlled.
+
+The eventual defensible demonstration claim is:
+
+```text
+controlled scenario
++ real Azure resources
++ real transactions
++ current Azure metrics
++ deterministic analysis
++ fresh provenance-bearing publication
+!= static fixture simulation
+```
