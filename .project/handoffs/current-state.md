@@ -44,7 +44,7 @@ This is a least-privilege planning boundary, not a reason to grant the read-only
 
 - Change: `provider-no-rbac-planner-validation`.
 - Authority: repository-only planner reliability repair.
-- Pull request: not assigned at branch creation; live status remains external GitHub evidence.
+- Pull request: #40, recorded as authored-change metadata only; live status remains external GitHub evidence.
 
 Permitted paths:
 
