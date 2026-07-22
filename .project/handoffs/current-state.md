@@ -46,14 +46,15 @@ operational_recovery_verified
 
 - Workstream: `pr34-post-merge-state-reconciliation`.
 - Branch: `chore/reconcile-pr34-merge-state`.
-- Pull request: not opened yet.
+- Pull request: #35, draft.
 - Base: `36010582460b393c0667e274144d9700e78721bf`.
 - Authority: repository coordination only.
 - Permitted files:
   - `.project/active-work.json`;
   - `.project/handoffs/current-state.md`.
 - Protected scope includes workflows, Bicep and Terraform, application source, credentials, live evidence, budgets, alerts, and all Azure resources.
-- Next gate: open a draft pull request, record its number, obtain fresh exact-head CI, inspect every job, confirm the two-file diff, and obtain explicit merge authorization.
+- Current status: fresh exact-head CI pending after recording PR #35 in both coordination files.
+- Next gate: inspect every CI job, confirm the final two-file diff, and obtain explicit merge authorization.
 
 ## PR #34 remediation accepted in `main`
 
@@ -120,19 +121,29 @@ Existing planning constraints remain:
 - maximum temporary-resource retention: 24 hours;
 - maximum running-compute overlap: zero minutes.
 
-The reconciliation has CAD 0 Azure runtime cost. These values remain planning controls, not present pricing, spending approval, or execution authority.
+PR #35 has CAD 0 Azure runtime cost. These values remain planning controls, not present pricing, spending approval, or execution authority.
+
+## Required gates for PR #35
+
+Before merge:
+
+1. preserve exactly the two declared `.project` files in the final diff;
+2. obtain fresh exact-head GitHub CI for the final coordination head;
+3. inspect every CI job and relevant logs;
+4. preserve the owner-account reviewer-independence limitation inherited from PR #34;
+5. obtain explicit merge authorization.
 
 ## Failure and rollback behavior
 
 If reconciliation CI fails:
 
-1. keep the pull request draft;
+1. keep PR #35 draft;
 2. inspect the exact failing job and logs;
 3. patch only the two permitted `.project` files;
 4. run fresh exact-head CI;
 5. do not weaken workflow-observability validation.
 
-Repository rollback is closing the reconciliation pull request without merge or reverting its repository-only commits. No Azure rollback applies because this operation performs no Azure mutation.
+Repository rollback is closing PR #35 without merge or reverting its repository-only commits. No Azure rollback applies because this operation performs no Azure mutation.
 
 ## Prohibited next step
 
