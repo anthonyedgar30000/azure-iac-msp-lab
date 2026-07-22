@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
 import unittest
 
 
@@ -12,9 +13,8 @@ TEMPLATE = (INFRA / "report-publication-existing-collector.bicep").read_text(
 MODULE = (INFRA / "modules" / "report_publication.bicep").read_text(
     encoding="utf-8"
 )
-PLANNER = (
-    INFRA / "scripts" / "plan_existing_collector_report_publication.sh"
-).read_text(encoding="utf-8")
+PLANNER_PATH = INFRA / "scripts" / "plan_existing_collector_report_publication.sh"
+PLANNER = PLANNER_PATH.read_text(encoding="utf-8")
 DESIGN = (
     INFRA / "workflow-designs" / "existing-collector-report-publication.yml"
 ).read_text(encoding="utf-8")
@@ -42,14 +42,26 @@ class ExistingCollectorReportPublicationTests(unittest.TestCase):
         self.assertIn("reports/technician-handoff-report.json", MODULE)
         self.assertIn("scope: reportStorage", MODULE)
 
+    def test_planner_has_valid_shell_syntax(self) -> None:
+        subprocess.run(
+            ["bash", "-n", str(PLANNER_PATH)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
     def test_planner_is_read_only_and_re_resolves_live_identity(self) -> None:
         for expected in (
             "az account show",
             "az group show",
             "az vm show",
             "identity.principalId",
+            "canonical GUID",
             "az storage account list",
             "az role assignment list",
+            "visible-resource-group-role-assignments-all.json",
+            "visible-report-storage-role-assignments-all.json",
+            "visible_collector_role_assignment_count",
             "az deployment group validate",
             "az deployment group what-if",
             "deployment_authorized: false",
