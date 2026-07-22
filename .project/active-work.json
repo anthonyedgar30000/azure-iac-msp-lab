@@ -1,7 +1,7 @@
 {
   "schema_version": "project.active-work.v1",
   "project": "ServiceTracer — Governed Azure Operations Lab",
-  "updated_on": "2026-07-21",
+  "updated_on": "2026-07-22",
   "trusted_baseline": {
     "branch": "main",
     "commit": "00ebc068f4aec4eda8cda723d8dc4d974a4cb7c6",
@@ -59,9 +59,9 @@
       "branch": "design/collector-rollback-snapshot-recreation",
       "write_owner": "ChatGPT conversation: ServiceTracer — Governed Azure Operations Lab",
       "scope": "Select and formalize the OS-disk snapshot-and-recreation rollback strategy and canonical OS-disk naming in repository contracts, validation, tests, review documentation, and project coordination state only. Permitted paths: infra/replacement/collector-replacement-contract.json, infra/replacement/validate_execution_design.py, infra/tests/test_collector_replacement_execution_design.py, docs/designs/collector-replacement-execution.md, docs/reviews/collector-replacement-rollback-decision-2026-07-21.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/modules/**, application source, credentials, and Azure mutation scripts.",
-      "status": "ci_verified",
+      "status": "implementation_in_progress",
       "pull_request": 27,
-      "next_gate": "Obtain an independent operations-and-recovery review of the selected snapshot/recreation strategy while PR #27 remains draft. Do not claim operational rollback verification or promote the workflow."
+      "next_gate": "Address the independent operations-and-recovery changes requested on exact head bad79ac2a8ba8fa9568737fc3c3635b93f2dbaca, preserve the conditionally approved Azure-cost boundary, run fresh exact-head CI, and return the patched design for independent re-review while PR #27 remains draft."
     }
   ],
   "known_open_pull_requests": [
@@ -74,8 +74,8 @@
     {
       "pull_request": 27,
       "title": "Select snapshot-based collector rollback strategy",
-      "status": "draft_ci_verified_review_pending",
-      "action": "Keep draft until an independent operations-and-recovery review evaluates the selected snapshot/recreation strategy."
+      "status": "draft_changes_requested_cost_conditionally_approved",
+      "action": "Patch the four operations-and-recovery findings within the existing seven-file scope, run fresh exact-head CI, and obtain another independent review. Do not authorize or perform Azure mutations."
     }
   ],
   "latest_promoted_evidence": {
@@ -89,22 +89,52 @@
     "azure_mutations_authorized": false,
     "azure_mutations_performed": false
   },
+  "review_state": {
+    "operations_and_recovery": {
+      "status": "changes_requested",
+      "reviewed_head": "bad79ac2a8ba8fa9568737fc3c3635b93f2dbaca",
+      "reviewed_on": "2026-07-21",
+      "required_patch": [
+        "quiesce, flush, checkpoint, and deallocate the source before snapshots",
+        "prove exact-snapshot Trusted Launch bootability in an isolated rehearsal before old-compute deletion",
+        "separate snapshot-to-disk Copy from specialized-disk-to-VM Attach and verify recreation metadata",
+        "require NIC and evidence-disk deleteOption Detach on replacement and rollback VM contracts"
+      ]
+    },
+    "azure_cost": {
+      "status": "conditionally_approved_planning_estimate",
+      "approved_on": "2026-07-22",
+      "approved_by": "Anthony Edgar",
+      "reviewed_estimate_cad": 4.0,
+      "hard_execution_ceiling_cad": 10.0,
+      "maximum_snapshot_capacity_gib": 96,
+      "maximum_retention_hours": 24,
+      "expected_restore_rehearsal_compute_hours": 4,
+      "conditions": [
+        "fresh authenticated subscription-specific meter, SKU-availability, and quota preflight before any execution",
+        "stop and obtain renewed cost approval if projected temporary cost exceeds CAD 4",
+        "unconditional stop if projected temporary cost exceeds CAD 10",
+        "cleanup owner and deadline must be approved before any temporary resource is created"
+      ],
+      "claim_boundary": "Planning feasibility only; this is not an actual-cost observation, subscription-specific quotation, budget approval, or Azure execution authorization."
+    }
+  },
   "next_bounded_operation": {
-    "operation": "collector_rollback_snapshot_recreation_design_review",
-    "authority": "independent_repository_review_only",
+    "operation": "collector_rollback_review_remediation",
+    "authority": "repository_patch_only",
     "candidate_workflow": "infra/workflow-designs/collector-replacement-execution.yml",
     "active_workflow_present": false,
     "dispatch_authorized": false,
     "azure_mutations_authorized": false,
     "required_gates": [
-      "independent operations-and-recovery review of OS-disk snapshot recreation",
-      "fresh preflight must prove the current OS disk is no larger than 64 GiB",
-      "future recovery verification must prove both evidence-disk and OS-disk snapshots",
-      "future implementation must be fake-Azure-CLI tested before promotion",
-      "NIC and evidence disk remain preserved",
-      "identity/RBAC, cost, cleanup, and remaining review blockers remain unresolved",
+      "add a quiesce-and-deallocate consistency boundary shared by both snapshots",
+      "require an isolated exact-snapshot Trusted Launch boot rehearsal before old-compute deletion",
+      "encode managed-disk Copy and specialized OS-disk Attach as separate deterministic operations",
+      "verify NIC and evidence-disk deleteOption Detach for replacement and rollback VM contracts",
+      "retain the CAD 4 reviewed planning estimate, CAD 10 hard ceiling, fresh authenticated cost preflight, cleanup owner, and cleanup deadline",
+      "run fresh exact-head CI and obtain another independent operations-and-recovery review",
       "promotion occurs only through a separate authority-changing pull request"
     ],
-    "next_gate": "Review PR #27 independently. Do not move the candidate into .github/workflows, authenticate to Azure, create snapshots, change delete options, delete or create resources, or claim operational rollback verification."
+    "next_gate": "Patch only the existing seven declared files, keep PR #27 draft, run project-state validation, focused replacement-design tests, the complete ServiceTracer suite, and Bicep build, then return the new exact head for independent re-review. Do not authenticate to Azure or perform mutations."
   }
 }
