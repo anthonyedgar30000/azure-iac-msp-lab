@@ -4,47 +4,44 @@
   "updated_on": "2026-07-22",
   "last_substantive_baseline": {
     "branch": "main",
-    "commit": "54466651f291e271e5da542ea0afb38679ca6ca9",
-    "pull_request": 37,
-    "title": "Decouple live report publication from collector compute",
-    "qualification": "repository_design_and_read_only_planning_path_exact_head_ci_passed_owner_account_review_accepted_not_deployed",
-    "claim_boundary": "This baseline proves a decoupled report-publication design and planner exist in the repository. It does not prove current Azure state, successful publication, or frontend ingestion."
+    "commit": "e379064b7ee8b6a1a8b7731d31dedef1bca19e6f",
+    "pull_request": 38,
+    "title": "Promote read-only report publication planner",
+    "qualification": "read_only_planner_workflow_exact_head_ci_passed_owner_account_review_accepted_first_dispatch_failed_at_scoped_rbac_cli_compatibility_not_deployed",
+    "claim_boundary": "This baseline proves the guarded workflow exists and OIDC authentication succeeded in run 29957833049. It does not prove complete RBAC inventory, ARM validation, What-If completion, deployment, report publication, or frontend ingestion."
   },
   "repository_observation": {
     "observed_on": "2026-07-22",
     "source": "live_github",
-    "main_head": "54466651f291e271e5da542ea0afb38679ca6ca9",
-    "head_semantics": "PR #37 merge commit observed before the read-only planner-promotion branch was opened",
+    "main_head": "e379064b7ee8b6a1a8b7731d31dedef1bca19e6f",
+    "head_semantics": "PR #38 merge commit observed before the bounded RBAC-query repair branch was opened",
     "open_pull_requests": [],
     "claim_boundary": "This is time-bounded external evidence, not a self-updating claim. Resolve current head, pull requests, and CI from live GitHub whenever the file is read."
   },
   "authored_change": {
-    "change_id": "promote-existing-collector-report-publication-plan",
-    "branch": "feat/promote-existing-collector-report-plan",
-    "pull_request": 38,
-    "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — bounded read-only Azure planning promotion explicitly authorized by Anthony Edgar with 'Proceed'",
-    "scope": "Promote only the existing-collector report-publication planner into a manually dispatched GitHub Actions workflow. The workflow may authenticate through the protected azure-lab environment and perform Azure reads, ARM validation, and What-If only. No deployment, RBAC mutation, report publication, frontend endpoint change, collector compute change, budget, alert, or Azure resource mutation is permitted.",
-    "authority": "repository_workflow_promotion_and_read_only_azure_planning_only",
+    "change_id": "repair-read-only-planner-rbac-query",
+    "branch": "fix/read-only-planner-rbac-query",
+    "pull_request": 39,
+    "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — bounded planner compatibility repair explicitly authorized by Anthony Edgar with 'Proceed'",
+    "scope": "Repair only the read-only report-publication planner's scoped RBAC inventory commands and evidence-file handling after workflow run 29957833049 failed because Azure CLI rejects --scope combined with --all. Add regression tests and update project handoff records. No workflow authority expansion, deployment, RBAC mutation, Storage change, guest command, frontend change, or Azure resource mutation is permitted.",
+    "authority": "repository_only_read_only_planner_reliability_repair",
     "state_semantics": "declaration_not_live_status",
     "permitted_paths": [
-      ".github/workflows/existing-collector-report-publication-plan.yml",
-      "infra/tests/test_existing_collector_report_publication_plan_workflow.py",
-      "docs/runbooks/existing-collector-report-publication-plan.md",
+      "infra/scripts/plan_existing_collector_report_publication.sh",
+      "infra/tests/test_existing_collector_report_publication_rbac_capture.py",
       ".project/active-work.json",
-      ".project/README.md",
       ".project/handoffs/current-state.md"
     ],
     "verification_criteria": [
-      "workflow is manual-only, protected by azure-lab, pinned to an exact reviewed commit, and requires exact typed confirmation",
-      "workflow authenticates with OIDC only after static read-only tests pass",
-      "workflow calls only the existing read-only planner and cannot deploy, create or delete RBAC, run guest commands, or mutate Azure resources",
-      "planning artifacts capture Azure context, resource group, collector identity, Storage and RBAC inventory, ARM validation, exact What-If, cost boundary, and a digest manifest",
-      "bounded authority grant permits Azure authentication and dispatch for this planner only while keeping Azure mutations false",
-      "workflow-observability validation and all exact-head CI jobs pass",
-      "final diff remains limited to the six declared paths"
+      "both scoped az role assignment list commands omit --all and retain --include-inherited",
+      "Azure command output is written to a temporary file and promoted only after non-empty expected-type JSON validation",
+      "failed or invalid RBAC capture leaves no final evidence file that could be misread as an empty assignment inventory",
+      "planner remains read-only and contains no Azure mutation commands",
+      "bash syntax, project validation, all unit tests, and Bicep lint/build pass for the exact pull-request head",
+      "final diff remains limited to the four declared paths"
     ],
-    "failure_behavior": "Keep the pull request draft, inspect the exact failing CI job, patch only the declared paths, and obtain fresh exact-head CI. Do not weaken confirmation, protected-environment, exact-commit, artifact, cost-boundary, or no-mutation controls.",
-    "rollback": "Close the pull request without merge or revert its repository-only commits. If already merged, disable or remove only the read-only planner workflow through a reviewed revert. No Azure rollback applies unless a separately dispatched planning run produced evidence; that run performs no Azure mutation."
+    "failure_behavior": "Keep the pull request draft, inspect the exact failing test or CI job, patch only the four permitted paths, and obtain fresh exact-head CI. Do not weaken OIDC, protected-environment, exact-commit, confirmation, cost, artifact, or no-mutation controls.",
+    "rollback": "Close the pull request without merge or revert its repository-only commits. No Azure rollback applies because this repair performs no Azure authentication or Azure mutation."
   },
   "bounded_authority_grants": [
     {
@@ -104,6 +101,12 @@
       "title": "Decouple live report publication from collector compute",
       "merge_commit": "54466651f291e271e5da542ea0afb38679ca6ca9",
       "qualification": "repository_design_and_read_only_planning_path_exact_head_ci_passed_owner_account_review_not_independent_not_deployed"
+    },
+    {
+      "pull_request": 38,
+      "title": "Promote read-only report publication planner",
+      "merge_commit": "e379064b7ee8b6a1a8b7731d31dedef1bca19e6f",
+      "qualification": "read_only_workflow_promoted_exact_head_ci_passed_owner_account_review_not_independent_first_dispatch_failed_safely"
     }
   ],
   "resolved_repository_items": [
@@ -124,6 +127,32 @@
       "claim_boundary": "Historical branch only; not repository authority."
     }
   ],
+  "latest_observed_planner_attempt": {
+    "run_id": 29957833049,
+    "commit": "e379064b7ee8b6a1a8b7731d31dedef1bca19e6f",
+    "artifact": "existing-collector-report-publication-plan-29957833049-1",
+    "artifact_sha256": "3dcd7f93d2842b873ef25b466a6686a334f77c908c0b0b2a21b9d07a37010f13",
+    "observed_on": "2026-07-22",
+    "status": "failed_safely_after_oidc_login_during_scoped_rbac_inventory",
+    "proven": [
+      "exact reviewed commit checkout succeeded",
+      "bounded authority validation succeeded",
+      "static read-only tests succeeded",
+      "Azure OIDC login succeeded",
+      "resource group and collector identity observations were captured",
+      "no Azure mutation was authorized or performed"
+    ],
+    "unproven": [
+      "complete RBAC inventory",
+      "ARM validation",
+      "ARM What-If",
+      "current pricing and quota",
+      "report endpoint deployment",
+      "managed-identity publication",
+      "frontend live-data ingestion"
+    ],
+    "failure": "Azure CLI rejected az role assignment list because --scope and --all were combined; the resulting zero-byte final RBAC file is not evidence of zero assignments."
+  },
   "latest_promoted_evidence": {
     "event_id": "collector-replacement-plan-29856203054",
     "workflow": "Collector replacement plan",
@@ -135,7 +164,7 @@
     "status": "completed_read_only",
     "azure_mutations_authorized": false,
     "azure_mutations_performed": false,
-    "freshness_boundary": "This remains historical evidence until the promoted existing-collector report-publication planner is merged and dispatched. It does not prove current tenant, subscription, resources, RBAC, guest health, pricing, quota, report Storage, endpoint, or browser state."
+    "freshness_boundary": "This remains the latest successfully promoted Azure evidence. Planner run 29957833049 authenticated and captured partial current evidence but failed before complete RBAC inventory, ARM validation, and What-If; it must not be promoted as a completed plan."
   },
   "review_state": {
     "pr37_publication_design": {
@@ -146,6 +175,16 @@
       "review_account": "pull_request_owner",
       "independent_organizational_approval": false,
       "claim_boundary": "Repository-design and read-only planning-path acceptance only; not Azure execution, publication, or frontend live-data proof."
+    },
+    "pr38_planner_promotion": {
+      "status": "merged_then_first_dispatch_failed_safely",
+      "reviewed_pull_request": 38,
+      "reviewed_head": "bde4ea15378aab22ee6a9d352a91bbc50bc63f2b",
+      "reviewed_ci_run_id": 29957069233,
+      "workflow_run_id": 29957833049,
+      "review_account": "pull_request_owner",
+      "independent_organizational_approval": false,
+      "claim_boundary": "The workflow authority controls and OIDC path worked, but the planner did not complete RBAC inventory, validation, or What-If."
     }
   },
   "authority_defaults": {
