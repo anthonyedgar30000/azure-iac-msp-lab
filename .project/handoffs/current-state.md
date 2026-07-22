@@ -12,87 +12,78 @@
 - Branch: `main`
 - Current reconciled baseline: `4b181c644c48fde0c5d33f3cfabc24321977161a`
 - Latest completed increment: PR #27, `Select snapshot-based collector rollback strategy`
-- PR #27 merged while remediation was in progress. Its merge contains the new recovery contract but not the matching validator, tests, and synchronized records.
+- PR #27 merged while remediation was in progress. Its merge contains the recovery contract but not the matching validator, tests, and synchronized records.
 
 ## Active repair increment
 
 - Branch: `fix/collector-rollback-review-remediation`
 - Pull request: #28, draft
-- Objective: repair the partial PR #27 merge by carrying the matching validator, focused tests, design documentation, rollback review, active-work state, and handoff onto the merged `main` baseline.
-- Current status: remediation passed CI at commit `623647cad4d83083a416f4250ae8688e58a5fc57`; the final coordination-only head requires one confirming CI run before independent re-review.
-- Permitted paths: `infra/replacement/validate_execution_design.py`, `infra/tests/test_collector_replacement_execution_design.py`, `docs/designs/collector-replacement-execution.md`, `docs/reviews/collector-replacement-rollback-decision-2026-07-21.md`, `.project/active-work.json`, and this handoff.
-- Protected paths: the already-merged replacement contract, `.github/workflows/**`, Bicep modules, application source, credentials, and Azure mutation scripts.
+- Objective: repair the partial PR #27 merge and address the second operations-and-recovery review without changing the already-merged contract.
+- Permitted files: validator, focused tests, execution design, rollback review, active-work state, and this handoff.
+- Protected files: the replacement contract, active workflows, Bicep modules, application source, credentials, and Azure mutation scripts.
 
-## Why this repair is required
+## CI and review chronology
 
-The merged contract requires:
+The repository must distinguish code-bearing CI from coordination-only CI:
 
-- a quiesce-and-deallocate consistency boundary before snapshots;
-- shared maintenance-correlation and final-checkpoint binding for both snapshots;
-- an isolated exact-snapshot Trusted Launch boot rehearsal before old-compute deletion;
-- deterministic snapshot-to-disk `Copy` and specialized-disk-to-VM `Attach` semantics;
-- complete recreation metadata validation;
-- `deleteOption: Detach` for the production NIC and evidence disk on replacement and rollback VM boundaries.
+1. Commit `623647cad4d83083a416f4250ae8688e58a5fc57` was the last code-bearing remediation head before the coordination handoff update. CI run `29894210458` (run 76) passed.
+2. Commit `7162506e5abad60f49c191309b85192d6d885a45` was the reviewed coordination-only head. Exact-head CI run `29894321483` (run 78) passed.
+3. The operations-and-recovery re-review of `7162506e...` recorded **CHANGES REQUIRED** on July 22, 2026.
 
-The validator and tests on `main` still describe the earlier contract. Therefore `declared contract != validated contract` until PR #28 merges.
+Live GitHub checks and review evidence are authoritative for the final coordination-only head. The predecessor CI run must not be described as final-head evidence.
 
-## Remediation carried by PR #28
+## Second-review findings
 
-### Validator
+### 1. Exact quiesce ordering
 
-The validator enforces:
+The validator converted `consistency_boundary.ordered_actions` to a set. That proved membership but discarded order and omitted the explicit requirement to stop the collector service.
 
-- source deallocation and checkpoint binding before snapshots;
-- exact snapshot identity and recorded Trusted Launch profile for the isolated rehearsal;
-- no production NIC or evidence disk attached to the rehearsal VM;
-- `Copy` for managed-disk creation and `Attach` for VM OS-disk attachment;
-- SKU, OS type, Hyper-V generation, security profile, encryption/DES, zone, network policy, public-access state, and OS-disk delete option;
-- `Detach` semantics and re-read requirements for both preserved production attachments;
-- the CAD 4 reviewed estimate, CAD 10 hard stop, four-hour rehearsal, 24-hour retention, and fresh subscription-specific preflight;
-- `rollback.operationally_tested: false` and independent re-review still pending.
+The remediation validates this exact sequence:
 
-### Focused tests
+1. stop accepting new collector writes;
+2. drain in-flight collector writes;
+3. flush pending evidence writes to the mounted evidence filesystem;
+4. record the final evidence checkpoint identifier and SHA-256;
+5. record the maintenance correlation identifier;
+6. stop the collector service;
+7. verify guest shutdown;
+8. deallocate the source VM;
+9. verify Azure `PowerState/deallocated`.
 
-Twenty-three focused tests cover the fail-closed design and reject:
+Negative tests reject reordering and omission of the service-stop action.
 
-- snapshots before the consistency boundary;
-- missing checkpoint binding;
-- a non-exact rehearsal snapshot;
-- production attachments during rehearsal;
-- `FromImage` restoration;
-- missing `Attach` semantics;
-- recreation metadata drift;
-- `Delete` semantics on the production NIC or evidence disk;
-- authorization or false operational-verification claims.
+### 2. Rehearsal teardown before replacement compute
 
-### Design and review records
+A four-hour cap and final cleanup phase do not prevent the isolated rehearsal VM from remaining allocated while replacement compute starts.
 
-The design and review documents describe the complete 15-phase state machine, isolated rehearsal boundary, deterministic restoration operations, attachment preservation, cost boundary, and remaining blockers.
+The fail-closed transition invariant is now:
 
-## CI evidence
+- source compute remains deallocated throughout the rehearsal;
+- after rehearsal proof is captured, the rehearsal VM is deallocated;
+- the temporary rehearsal VM and isolated NIC are removed before `deploy_replacement_compute`;
+- the verified OS-disk snapshot, verified evidence-disk snapshot, and an explicitly approved temporary recovery disk may remain until final acceptance;
+- running-compute overlap remains zero minutes.
 
-Exact-head CI run `29894210458` passed on repository commit `623647cad4d83083a416f4250ae8688e58a5fc57`:
+Negative tests reject cleanup omission and non-zero compute overlap.
 
-- `.project` workflow-observability validation;
-- complete Python unit suite, including 23 focused recovery-remediation tests;
-- operational evidence collection;
-- source-evidence CLI smoke test;
-- preassembled replay compatibility;
-- collector VM contract validation;
-- Bicep lint and build.
+### 3. Non-self-referential project state
 
-This proves repository consistency only. It does not prove Azure snapshot recoverability, Trusted Launch bootability, actual rollback, actual cost, or execution authority.
+`.project` records both the last code-bearing-head CI and the reviewed coordination-head CI, while treating live GitHub checks and review evidence as authority for the final head. A new code-bearing remediation commit requires fresh CI rather than editing `.project` into an endless final-head loop.
 
 ## Runtime and deployment state
 
-- Latest promoted control-plane evidence shows collector size `Standard_B2ats_v2` in `rg-servicetracer-dev-westus2`.
-- Deployed image: Ubuntu 22.04 Jammy.
-- Desired image: Ubuntu 24.04.
-- Last guest-level record: ServiceTracer `0.4.0` after manual Python and certificate repairs.
-- The evidence disk must be preserved.
-- The deployed NIC delete behavior remains an execution blocker until a separately authorized operation changes and verifies it.
-- System-assigned identity replacement and any RBAC restoration remain unresolved.
-- No Azure replacement, rehearsal, or rollback has been authorized or performed.
+The latest promoted Azure control-plane evidence remains dated July 21, 2026:
+
+- resource group: `rg-servicetracer-dev-westus2`;
+- collector size: `Standard_B2ats_v2`;
+- deployed image: Ubuntu 22.04 Jammy;
+- desired image: Ubuntu 24.04;
+- evidence disk must be preserved;
+- deployed NIC delete behavior remains an execution blocker;
+- system-assigned identity replacement and approved RBAC restoration remain unresolved;
+- last guest-level record: ServiceTracer `0.4.0` after manual repairs.
+
+No Azure replacement, rehearsal, rollback, budget mutation, or RBAC restoration has been authorized or performed.
 
 ## Cost boundary
 
@@ -103,12 +94,12 @@ This proves repository consistency only. It does not prove Azure snapshot recove
 - Maximum isolated rehearsal compute: four hours.
 - Maximum temporary-resource retention: 24 hours.
 - Maximum running-compute overlap: zero minutes.
-- A future run still requires authenticated subscription-specific pricing, SKU availability, quota, cleanup owner, and cleanup deadline.
+- Fresh authenticated subscription-specific pricing, SKU availability, quota, cleanup owner, and cleanup deadline remain required.
 
 ## Remaining blockers
 
-- confirming CI on the final coordination-only PR #28 head;
-- independent operations-and-recovery re-review;
+- fresh CI on the new code-bearing remediation head;
+- another operations-and-recovery review;
 - guest/control-plane evidence schemas;
 - fake-Azure-CLI-tested recovery and rehearsal implementation;
 - identity/RBAC allowlist;
@@ -118,11 +109,12 @@ This proves repository consistency only. It does not prove Azure snapshot recove
 
 ## Next bounded gate
 
-1. Confirm CI on the final exact head after this state update.
-2. Route the passing exact head for independent operations-and-recovery re-review.
+1. Modify only the six declared PR #28 files.
+2. Run `.project` validation, the complete Python suite, operational evidence smoke tests, collector VM validation, and Bicep lint/build on the new exact head.
 3. Keep PR #28 draft.
-4. Keep all Azure authentication and mutations prohibited.
+4. Route the passing exact head for another operations-and-recovery review.
+5. Keep all Azure authentication and mutations prohibited.
 
 ## Prohibited next step
 
-Do not activate the candidate workflow, authenticate to Azure, deallocate the collector, create snapshots or rehearsal resources, change delete options, delete or deploy compute, restore RBAC, modify budgets or alerts, or claim rollback is operationally verified.
+Do not merge PR #28, activate the candidate workflow, authenticate to Azure for execution, deallocate the collector, create snapshots or rehearsal resources, change delete options, delete or deploy compute, restore RBAC, modify budgets or alerts, or claim rollback is operationally verified.
