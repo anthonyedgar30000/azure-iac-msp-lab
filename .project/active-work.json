@@ -4,11 +4,11 @@
   "updated_on": "2026-07-22",
   "trusted_baseline": {
     "branch": "main",
-    "commit": "00ebc068f4aec4eda8cda723d8dc4d974a4cb7c6",
-    "commit_semantics": "verified live main head after PR #26 merged and before the collector rollback snapshot-recreation branch was created; live Git determines the current head",
+    "commit": "4b181c644c48fde0c5d33f3cfabc24321977161a",
+    "commit_semantics": "verified live main head after PR #27 merged with only the first remediation commit; live Git determines the current head",
     "last_completed_increment": {
-      "pull_request": 26,
-      "title": "Reconcile PR25 state and HELIX workspace hierarchy"
+      "pull_request": 27,
+      "title": "Select snapshot-based collector rollback strategy"
     }
   },
   "completed_increments": [
@@ -51,17 +51,22 @@
       "pull_request": 26,
       "title": "Reconcile PR25 state and HELIX workspace hierarchy",
       "merge_commit": "00ebc068f4aec4eda8cda723d8dc4d974a4cb7c6"
+    },
+    {
+      "pull_request": 27,
+      "title": "Select snapshot-based collector rollback strategy",
+      "merge_commit": "4b181c644c48fde0c5d33f3cfabc24321977161a"
     }
   ],
   "workstreams": [
     {
-      "workstream_id": "collector-rollback-snapshot-recreation",
-      "branch": "design/collector-rollback-snapshot-recreation",
+      "workstream_id": "collector-rollback-review-remediation",
+      "branch": "fix/collector-rollback-review-remediation",
       "write_owner": "ChatGPT conversation: ServiceTracer — Governed Azure Operations Lab",
-      "scope": "Select and formalize the OS-disk snapshot-and-recreation rollback strategy and canonical OS-disk naming in repository contracts, validation, tests, review documentation, and project coordination state only. Permitted paths: infra/replacement/collector-replacement-contract.json, infra/replacement/validate_execution_design.py, infra/tests/test_collector_replacement_execution_design.py, docs/designs/collector-replacement-execution.md, docs/reviews/collector-replacement-rollback-decision-2026-07-21.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: .github/workflows/**, infra/modules/**, application source, credentials, and Azure mutation scripts.",
-      "status": "implementation_in_progress",
-      "pull_request": 27,
-      "next_gate": "Address the independent operations-and-recovery changes requested on exact head bad79ac2a8ba8fa9568737fc3c3635b93f2dbaca, preserve the conditionally approved Azure-cost boundary, run fresh exact-head CI, and return the patched design for independent re-review while PR #27 remains draft."
+      "scope": "Repair the partial PR #27 merge by aligning the validator, focused tests, design documentation, rollback review, active-work state, and current handoff with the already-merged recovery contract. Permitted paths: infra/replacement/validate_execution_design.py, infra/tests/test_collector_replacement_execution_design.py, docs/designs/collector-replacement-execution.md, docs/reviews/collector-replacement-rollback-decision-2026-07-21.md, .project/active-work.json, and .project/handoffs/current-state.md. Protected paths: infra/replacement/collector-replacement-contract.json, .github/workflows/**, infra/modules/**, application source, credentials, and Azure mutation scripts.",
+      "status": "ci_pending",
+      "pull_request": null,
+      "next_gate": "Open a draft remediation PR, run fresh exact-head CI, and obtain independent operations-and-recovery re-review."
     }
   ],
   "known_open_pull_requests": [
@@ -72,10 +77,10 @@
       "action": "Do not treat as current implementation work. Review for unique durable evidence, then close as superseded through a separate explicit action."
     },
     {
-      "pull_request": 27,
-      "title": "Select snapshot-based collector rollback strategy",
-      "status": "draft_changes_requested_cost_conditionally_approved",
-      "action": "Patch the four operations-and-recovery findings within the existing seven-file scope, run fresh exact-head CI, and obtain another independent review. Do not authorize or perform Azure mutations."
+      "pull_request": null,
+      "title": "Complete collector rollback review remediation",
+      "status": "branch_created_pr_pending",
+      "action": "Open as a draft against main, run exact-head CI, and keep Azure mutations unauthorized."
     }
   ],
   "latest_promoted_evidence": {
@@ -91,14 +96,15 @@
   },
   "review_state": {
     "operations_and_recovery": {
-      "status": "changes_requested",
+      "status": "changes_addressed_re_review_pending",
       "reviewed_head": "bad79ac2a8ba8fa9568737fc3c3635b93f2dbaca",
       "reviewed_on": "2026-07-21",
-      "required_patch": [
-        "quiesce, flush, checkpoint, and deallocate the source before snapshots",
-        "prove exact-snapshot Trusted Launch bootability in an isolated rehearsal before old-compute deletion",
-        "separate snapshot-to-disk Copy from specialized-disk-to-VM Attach and verify recreation metadata",
-        "require NIC and evidence-disk deleteOption Detach on replacement and rollback VM contracts"
+      "merge_reconciliation": "PR #27 merged after only the contract remediation commit. This branch carries the matching validator, tests, and records onto the merged main baseline.",
+      "addressed_findings": [
+        "quiesce, flush, checkpoint, and deallocate the source before snapshots; bind both snapshots to the same maintenance correlation and checkpoint",
+        "prove exact-snapshot Trusted Launch bootability in an isolated rehearsal before old-compute deletion without production attachments",
+        "separate snapshot-to-disk Copy from specialized-disk-to-VM Attach and validate complete recreation metadata",
+        "require and re-read NIC and evidence-disk deleteOption Detach on replacement and rollback VM contracts"
       ]
     },
     "azure_cost": {
@@ -120,21 +126,19 @@
     }
   },
   "next_bounded_operation": {
-    "operation": "collector_rollback_review_remediation",
-    "authority": "repository_patch_only",
+    "operation": "collector_rollback_partial_merge_reconciliation",
+    "authority": "repository_repair_and_independent_review_only",
     "candidate_workflow": "infra/workflow-designs/collector-replacement-execution.yml",
     "active_workflow_present": false,
     "dispatch_authorized": false,
     "azure_mutations_authorized": false,
     "required_gates": [
-      "add a quiesce-and-deallocate consistency boundary shared by both snapshots",
-      "require an isolated exact-snapshot Trusted Launch boot rehearsal before old-compute deletion",
-      "encode managed-disk Copy and specialized OS-disk Attach as separate deterministic operations",
-      "verify NIC and evidence-disk deleteOption Detach for replacement and rollback VM contracts",
-      "retain the CAD 4 reviewed planning estimate, CAD 10 hard ceiling, fresh authenticated cost preflight, cleanup owner, and cleanup deadline",
-      "run fresh exact-head CI and obtain another independent operations-and-recovery review",
-      "promotion occurs only through a separate authority-changing pull request"
+      "draft remediation pull request against merge commit 4b181c644c48fde0c5d33f3cfabc24321977161a",
+      "fresh exact-head project validation, focused tests, complete ServiceTracer tests, and Bicep lint/build",
+      "independent operations-and-recovery re-review",
+      "retain CAD 4 reviewed planning estimate and CAD 10 hard ceiling",
+      "promotion or Azure execution only through separate authority-changing work"
     ],
-    "next_gate": "Patch only the existing seven declared files, keep PR #27 draft, run project-state validation, focused replacement-design tests, the complete ServiceTracer suite, and Bicep build, then return the new exact head for independent re-review. Do not authenticate to Azure or perform mutations."
+    "next_gate": "Open the draft remediation PR, verify CI, and route its exact head for independent re-review. Do not authenticate to Azure or perform mutations."
   }
 }
