@@ -1,0 +1,3 @@
+# Install with: sudo crontab -u prs-scheduler -e
+# The script also takes its own non-blocking flock as a second safety boundary.
+*/15 * * * * SCHEDULER_CONFIG=/etc/azure-iac-msp-lab/collector-demo-api-scheduler.env /opt/azure-iac-msp-lab/current/infra/scripts/run_collector_demo_api_what_if_cycle.sh >> /var/log/azure-iac-msp-lab/collector-demo-api-scheduler.log 2>&1
