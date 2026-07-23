@@ -14,14 +14,16 @@
     "observed_on": "2026-07-23",
     "source": "live_github",
     "main_head": "e77d5e9c59537a6cd0ad05858565b2a51942e278",
-    "head_semantics": "PR #44 merge commit observed before opening the publication predeployment-readiness pull request",
-    "open_pull_requests": [],
+    "head_semantics": "PR #44 merge commit observed before opening draft publication predeployment-readiness PR #45",
+    "open_pull_requests": [
+      45
+    ],
     "claim_boundary": "This is a time-bounded observation. Resolve the live main head, PR state, reviews, CI, workflow runs, and Azure reality whenever this file is read."
   },
   "authored_change": {
     "change_id": "publication-predeployment-readiness",
     "branch": "feat/publication-predeployment-readiness",
-    "pull_request": null,
+    "pull_request": 45,
     "write_owner": "This ChatGPT conversation — bounded repository-only predeployment-readiness PR explicitly authorized by Anthony Edgar with 'Proceed with predeployment-readiness PR'",
     "scope": "Add a manually dispatched read-only readiness workflow, deterministic evidence assessor, regression tests, runbook, and reconciled project state. The workflow may later capture current CAD retail prices, regional Storage quota, applicable policy and deny assignments, current collector identity, execution-principal RBAC declarations, Provider validation, and exact Provider and ProviderNoRbac What-If. This repository increment does not authenticate to Azure, dispatch a workflow, grant permissions, deploy resources, invoke VM Run Command, publish a report, or change frontend source.",
     "authority": "repository_only_publication_readiness_workflow",
@@ -46,8 +48,8 @@
       "project validation, all unit tests, and Bicep lint/build pass on the exact PR head",
       "the final PR diff remains limited to the six declared paths"
     ],
-    "failure_behavior": "Keep the readiness PR draft, inspect the exact validation, test, or review finding, patch only the six declared paths, and do not dispatch workflows, authenticate to Azure, grant permissions, invoke guest commands, or mutate resources.",
-    "rollback": "Close the readiness PR without merge or revert its repository-only commits. No Azure, runtime, RBAC, Storage, policy, quota, VM, publication, or frontend rollback applies because this increment performs no external mutation."
+    "failure_behavior": "Keep PR #45 draft, inspect the exact validation, test, or review finding, patch only the six declared paths, and do not dispatch workflows, authenticate to Azure, grant permissions, invoke guest commands, or mutate resources.",
+    "rollback": "Close PR #45 without merge or revert its repository-only commits. No Azure, runtime, RBAC, Storage, policy, quota, VM, publication, or frontend rollback applies because this increment performs no external mutation."
   },
   "bounded_authority_grants": [
     {
@@ -74,7 +76,7 @@
         "az deployment group what-if"
       ],
       "state_semantics": "bounded_exception_to_false_defaults",
-      "claim_boundary": "This grant authorizes Azure reads and ProviderNoRbac planning only. It does not authorize the publication execution workflow, the proposed readiness workflow, deployment, RBAC changes, report publication, endpoint configuration, guest commands, or any Azure mutation."
+      "claim_boundary": "This grant authorizes Azure reads and ProviderNoRbac planning only. It does not authorize the publication execution workflow, proposed readiness workflow, deployment, RBAC changes, report publication, endpoint configuration, guest commands, or any Azure mutation."
     }
   ],
   "completed_increments": [
@@ -213,8 +215,8 @@
       "claim_boundary": "Current planner evidence is machine-pinned. No readiness workflow execution, publication workflow dispatch, Azure authentication for execution, permission grant, deployment, or browser proof is established."
     },
     "publication_predeployment_readiness": {
-      "status": "repository_only_proposal_pending_pull_request_ci_and_review",
-      "reviewed_pull_request": null,
+      "status": "draft_pr45_pending_final_exact_head_ci_and_review",
+      "reviewed_pull_request": 45,
       "independent_organizational_approval": false,
       "claim_boundary": "Read-only readiness workflow proposal only. Merge, dispatch, Azure authentication, evidence freshness, permissions, and Azure mutation remain separately unauthorized or unproven."
     }
@@ -237,7 +239,7 @@
     "dispatch_authorized": false,
     "azure_authentication_authorized": false,
     "azure_mutations_authorized": false,
-    "rule": "Defaults remain fail-closed. The merged execution workflow is repository state, not authority; the proposed readiness workflow has no dispatch or Azure-authentication grant; only the separate bounded read-only planner grant is active."
+    "rule": "Defaults remain fail-closed. The merged execution workflow is repository state, not authority; draft PR #45 creates no readiness dispatch or Azure-authentication grant; only the separate bounded read-only planner grant is active."
   },
   "live_state_resolution": {
     "repository_head": "Query the live GitHub default branch at read time.",
