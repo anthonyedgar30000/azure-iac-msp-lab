@@ -1,7 +1,7 @@
 targetScope = 'resourceGroup'
 
 param prefix string
-param environment string
+param deploymentEnvironment string
 param location string
 param tags object
 param functionAppName string
@@ -9,7 +9,7 @@ param backendTransactionUrl string
 param allowedOrigins array
 param logAnalyticsWorkspaceId string
 
-var resourceSuffix = '${prefix}-${environment}'
+var resourceSuffix = '${prefix}-${deploymentEnvironment}'
 var functionStorageName = take('st${uniqueString(resourceGroup().id, functionAppName)}', 24)
 var functionPlanName = 'plan-${functionAppName}'
 var appInsightsName = 'appi-demo-api-${resourceSuffix}'
