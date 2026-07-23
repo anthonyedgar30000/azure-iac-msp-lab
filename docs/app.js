@@ -1,6 +1,7 @@
 const state = {
   report: null,
   reportMetadata: null,
+  demoApiUrl: '',
   completedSteps: new Set(),
 };
 
@@ -99,8 +100,22 @@ function validatePublicEnvelope(envelope) {
   return envelope;
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url, { cache: 'no-store' });
+function validateDemoApiResponse(payload) {
+  if (!payload || payload.schema_version !== 'servicetracer.demo-api-response.v1') {
+    throw new Error('Unsupported demo API response schema');
+  }
+  if (!payload.generated_at || !payload.source) {
+    throw new Error('Demo API response is missing provenance metadata');
+  }
+  validateHandoffReport(payload.report);
+  if (!Array.isArray(payload.transactions) || payload.transactions.length === 0) {
+    throw new Error('Demo API response does not contain transactions');
+  }
+  return payload;
+}
+
+async function fetchJson(url, options = {}) {
+  const response = await fetch(url, { cache: 'no-store', ...options });
   if (!response.ok) {
     throw new Error(`${url} returned HTTP ${response.status}`);
   }
@@ -118,6 +133,7 @@ async function loadSourceConfiguration() {
     console.warn('Could not load report-source.json; using local fallback.', error);
     return {
       live_report_url: '',
+      live_demo_api_url: '',
       fallback_report_url: 'technician-handoff-report.json',
     };
   }
@@ -147,6 +163,23 @@ function setLiveReport(envelope, sourceUrl) {
   setIncidentState(stale ? 'Live report is stale' : 'Awaiting analysis', stale);
 }
 
+function setApiReport(payload, sourceUrl) {
+  state.report = payload.report;
+  state.reportMetadata = {
+    mode: 'api',
+    stale: false,
+    sourceUrl,
+    generatedAt: payload.generated_at,
+    source: payload.source,
+  };
+  const sourceId = payload.source.id || 'Azure demo API';
+  elements.reportSourceName.textContent = 'Azure demo API — live transactions';
+  elements.reportSourceDetail.textContent = (
+    `${sourceId} · generated ${formatTimestamp(payload.generated_at)} · ${payload.transactions.length} correlated transactions`
+  );
+  setIncidentState('Live Azure evidence captured');
+}
+
 function setFallbackReport(report, fallbackUrl, liveError = null) {
   state.report = validateHandoffReport(report);
   state.reportMetadata = {
@@ -156,8 +189,8 @@ function setFallbackReport(report, fallbackUrl, liveError = null) {
   };
   elements.reportSourceName.textContent = 'Controlled demo fixture';
   elements.reportSourceDetail.textContent = liveError
-    ? 'The live Azure report was unavailable; using the committed bounded fixture.'
-    : 'No live endpoint is configured; using the committed bounded fixture.';
+    ? 'The live Azure source was unavailable; using the controlled fixture.'
+    : 'No live source has completed yet; using the controlled fixture.';
   setIncidentState('Awaiting analysis');
 }
 
@@ -235,13 +268,27 @@ function populateReport() {
   elements.workflowPanel.classList.remove('is-hidden');
 }
 
+async function requestLiveDemoReport() {
+  if (!state.demoApiUrl) {
+    return null;
+  }
+  const payload = await fetchJson(state.demoApiUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ attempts: 20 }),
+  });
+  return validateDemoApiResponse(payload);
+}
+
 async function runAnalysis() {
   elements.runButton.disabled = true;
-  elements.runButton.textContent = 'Analyzing evidence…';
+  elements.runButton.textContent = state.demoApiUrl
+    ? 'Running Azure transactions…'
+    : 'Analyzing controlled evidence…';
   setIncidentState('Analysis running');
 
   setNodeState(elements.loadBalancerNode, 'analyzing');
-  await delay(550);
+  await delay(350);
   setNodeState(elements.loadBalancerNode, 'healthy');
   elements.loadBalancerState.textContent = 'Probe healthy';
   elements.loadBalancerBadge.textContent = 'Listener responds';
@@ -250,13 +297,26 @@ async function runAnalysis() {
 
   setNodeState(elements.vpn01Node, 'analyzing');
   setNodeState(elements.vpn02Node, 'analyzing');
-  await delay(650);
 
+  let apiError = null;
+  if (state.demoApiUrl) {
+    try {
+      const payload = await requestLiveDemoReport();
+      setApiReport(payload, state.demoApiUrl);
+    } catch (error) {
+      apiError = error;
+      console.error('Could not run the live Azure demo API; using the controlled fixture.', error);
+      elements.reportSourceName.textContent = 'Controlled demo fixture — API unavailable';
+      elements.reportSourceDetail.textContent = 'The live Azure API failed; using the controlled fixture.';
+    }
+  }
+
+  await delay(350);
   populateReport();
   setNodeState(elements.vpn01Node, 'healthy');
   setNodeState(elements.vpn02Node, 'failed');
 
-  elements.runButton.textContent = 'Analysis complete';
+  elements.runButton.textContent = apiError ? 'Fixture analysis complete' : 'Analysis complete';
   elements.result.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -294,7 +354,9 @@ function resetDemo() {
 async function loadReport() {
   const config = await loadSourceConfiguration();
   const queryReportUrl = new URLSearchParams(window.location.search).get('report');
+  const queryApiUrl = new URLSearchParams(window.location.search).get('api');
   const liveReportUrl = queryReportUrl || config.live_report_url;
+  state.demoApiUrl = queryApiUrl || config.live_demo_api_url || '';
   let liveError = null;
 
   if (liveReportUrl) {
@@ -313,6 +375,9 @@ async function loadReport() {
     const fallbackUrl = config.fallback_report_url || 'technician-handoff-report.json';
     const report = await fetchJson(fallbackUrl);
     setFallbackReport(report, fallbackUrl, liveError);
+    if (state.demoApiUrl) {
+      elements.reportSourceDetail.textContent = 'Live Azure API configured; the controlled fixture remains the fallback.';
+    }
     resetDemo();
   } catch (error) {
     console.error('Could not load fallback report:', error);
@@ -320,7 +385,7 @@ async function loadReport() {
     elements.runButton.disabled = true;
     elements.runButton.textContent = 'Report unavailable';
     elements.reportSourceName.textContent = 'Report unavailable';
-    elements.reportSourceDetail.textContent = 'Neither the live report nor the committed fallback could be loaded.';
+    elements.reportSourceDetail.textContent = 'Neither the live source nor the committed fallback could be loaded.';
     setIncidentState('Report unavailable', true);
     elements.evidenceSummary.textContent = 'Serve this folder over HTTP, such as through GitHub Pages.';
   }

@@ -1,0 +1,299 @@
+name: Demo backends and API
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Bounded demo-backend/API operation'
+        required: true
+        type: choice
+        options: [what-if, deploy, verify]
+      reviewed_commit:
+        description: 'Exact reviewed commit containing this scoped workflow'
+        required: true
+        type: string
+      environment:
+        description: 'Lab environment'
+        required: true
+        default: dev
+        type: choice
+        options: [dev, test]
+      resource_group:
+        description: 'Existing ServiceTracer resource group'
+        required: true
+        default: rg-servicetracer-dev-westus2
+        type: string
+      location:
+        description: 'Expected Azure region'
+        required: true
+        default: westus2
+        type: string
+      prefix:
+        description: 'Bicep resource-name prefix'
+        required: true
+        default: mst
+        type: string
+      backend_vm_size:
+        description: 'VM size for each synthetic VPN backend'
+        required: true
+        default: Standard_B1s
+        type: string
+      function_app_name:
+        description: 'Globally unique demo API Function App name'
+        required: true
+        default: func-st-demo-mst-dev-aeg30000
+        type: string
+      allowed_origin:
+        description: 'Exact browser origin allowed by Function CORS'
+        required: true
+        default: https://anthonyedgar30000.github.io
+        type: string
+      confirmation:
+        description: 'Enter DEMO-BACKEND-API:<operation>:<resource-group>:<function-app-name>'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: demo-backend-api-${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+  ARTIFACT_DIR: demo-backend-api-evidence
+
+jobs:
+  scoped-demo:
+    name: ${{ inputs.operation }} demo backends and API
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 60
+    steps:
+      - name: Check out exact reviewed repository state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.reviewed_commit }}
+
+      - name: Validate bounded scope and authority
+        env:
+          OPERATION: ${{ inputs.operation }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          BACKEND_VM_SIZE: ${{ inputs.backend_vm_size }}
+          FUNCTION_APP_NAME: ${{ inputs.function_app_name }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          ADMIN_SSH_PUBLIC_KEY: ${{ secrets.COLLECTOR_ADMIN_SSH_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          [[ "$OPERATION" =~ ^(what-if|deploy|verify)$ ]]
+          [[ "$REVIEWED_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$(git rev-parse HEAD)" == "$REVIEWED_COMMIT" ]]
+          [[ "$LAB_ENVIRONMENT" =~ ^(dev|test)$ ]]
+          [[ "$RESOURCE_GROUP" =~ ^rg-servicetracer-(dev|test)(-[a-z0-9-]+)?$ ]]
+          [[ "$LOCATION" =~ ^[a-z0-9]+$ ]]
+          [[ "$PREFIX" =~ ^[a-z0-9]{2,12}$ ]]
+          [[ "$BACKEND_VM_SIZE" =~ ^Standard_[A-Za-z0-9_]+$ ]]
+          [[ "$FUNCTION_APP_NAME" =~ ^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$ ]]
+          [[ "$ALLOWED_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]
+          expected="DEMO-BACKEND-API:${OPERATION}:${RESOURCE_GROUP}:${FUNCTION_APP_NAME}"
+          [[ "$CONFIRMATION" == "$expected" ]] || {
+            echo "Confirmation must exactly equal: $expected" >&2
+            exit 1
+          }
+          if [[ "$OPERATION" == 'what-if' || "$OPERATION" == 'deploy' ]]; then
+            [[ "$ADMIN_SSH_PUBLIC_KEY" == ssh-* ]] || {
+              echo 'The azure-lab environment must provide COLLECTOR_ADMIN_SSH_PUBLIC_KEY.' >&2
+              exit 1
+            }
+          fi
+          jq -n \
+            --arg operation "$OPERATION" \
+            --arg reviewed_commit "$REVIEWED_COMMIT" \
+            --arg resource_group "$RESOURCE_GROUP" \
+            --arg location "$LOCATION" \
+            --arg environment "$LAB_ENVIRONMENT" \
+            --arg prefix "$PREFIX" \
+            --arg backend_vm_size "$BACKEND_VM_SIZE" \
+            --arg function_app_name "$FUNCTION_APP_NAME" \
+            --arg allowed_origin "$ALLOWED_ORIGIN" \
+            '{operation:$operation,reviewed_commit:$reviewed_commit,resource_group:$resource_group,location:$location,environment:$environment,prefix:$prefix,backend_vm_size:$backend_vm_size,function_app_name:$function_app_name,allowed_origin:$allowed_origin,azure_authentication_authorized:true,azure_mutations_authorized:($operation=="deploy"),collector_mutation_authorized:false}' \
+            > "$ARTIFACT_DIR/request.json"
+
+      - name: Run scoped repository tests before Azure login
+        run: |
+          set -euo pipefail
+          python -m unittest infra.tests.test_demo_backend_api -v
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Capture existing shared infrastructure
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          suffix="${PREFIX}-${LAB_ENVIRONMENT}"
+          az account show --query '{subscriptionId:id,subscriptionName:name,tenantId:tenantId,user:user}' --output json > "$ARTIFACT_DIR/azure-context.json"
+          az group show --name "$RESOURCE_GROUP" --output json > "$ARTIFACT_DIR/resource-group.json"
+          [[ "$(jq -r '.location' "$ARTIFACT_DIR/resource-group.json")" == "$LOCATION" ]]
+          [[ "$(jq -r '.tags.workload // empty' "$ARTIFACT_DIR/resource-group.json")" == 'azure-iac-msp-lab' ]]
+          az network vnet show --resource-group "$RESOURCE_GROUP" --name "vnet-onprem-sim-${suffix}" --output json > "$ARTIFACT_DIR/existing-vnet.json"
+          az network vnet subnet show --resource-group "$RESOURCE_GROUP" --vnet-name "vnet-onprem-sim-${suffix}" --name snet-edge --output json > "$ARTIFACT_DIR/existing-edge-subnet.json"
+          az network lb show --resource-group "$RESOURCE_GROUP" --name "lb-remote-access-${suffix}" --output json > "$ARTIFACT_DIR/existing-load-balancer.json"
+          az network public-ip show --resource-group "$RESOURCE_GROUP" --name "pip-remote-access-${suffix}" --output json > "$ARTIFACT_DIR/existing-public-ip.json"
+          az monitor log-analytics workspace show --resource-group "$RESOURCE_GROUP" --workspace-name "law-${suffix}" --output json > "$ARTIFACT_DIR/existing-log-analytics.json"
+
+      - name: Validate and capture exact ARM What-If
+        if: inputs.operation == 'what-if' || inputs.operation == 'deploy'
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          BACKEND_VM_SIZE: ${{ inputs.backend_vm_size }}
+          FUNCTION_APP_NAME: ${{ inputs.function_app_name }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+          ADMIN_SSH_PUBLIC_KEY: ${{ secrets.COLLECTOR_ADMIN_SSH_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          az deployment group validate \
+            --resource-group "$RESOURCE_GROUP" \
+            --template-file infra/demo-backend-api.bicep \
+            --parameters prefix="$PREFIX" environment="$LAB_ENVIRONMENT" location="$LOCATION" backendVmSize="$BACKEND_VM_SIZE" functionAppName="$FUNCTION_APP_NAME" allowedOrigins="[\"$ALLOWED_ORIGIN\"]" adminSshPublicKey="$ADMIN_SSH_PUBLIC_KEY" \
+            --output json > "$ARTIFACT_DIR/arm-validation.json"
+          az deployment group what-if \
+            --resource-group "$RESOURCE_GROUP" \
+            --template-file infra/demo-backend-api.bicep \
+            --parameters prefix="$PREFIX" environment="$LAB_ENVIRONMENT" location="$LOCATION" backendVmSize="$BACKEND_VM_SIZE" functionAppName="$FUNCTION_APP_NAME" allowedOrigins="[\"$ALLOWED_ORIGIN\"]" adminSshPublicKey="$ADMIN_SSH_PUBLIC_KEY" \
+            --result-format FullResourcePayloads \
+            --output json > "$ARTIFACT_DIR/arm-what-if.json"
+          python infra/scripts/assert_demo_backend_api_what_if.py \
+            --input "$ARTIFACT_DIR/arm-what-if.json" \
+            --output "$ARTIFACT_DIR/what-if-assessment.json"
+
+      - name: Deploy scoped demo infrastructure
+        if: inputs.operation == 'deploy'
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          BACKEND_VM_SIZE: ${{ inputs.backend_vm_size }}
+          FUNCTION_APP_NAME: ${{ inputs.function_app_name }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+          ADMIN_SSH_PUBLIC_KEY: ${{ secrets.COLLECTOR_ADMIN_SSH_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          az deployment group create \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "demo-backend-api-${LAB_ENVIRONMENT}" \
+            --template-file infra/demo-backend-api.bicep \
+            --parameters prefix="$PREFIX" environment="$LAB_ENVIRONMENT" location="$LOCATION" backendVmSize="$BACKEND_VM_SIZE" functionAppName="$FUNCTION_APP_NAME" allowedOrigins="[\"$ALLOWED_ORIGIN\"]" adminSshPublicKey="$ADMIN_SSH_PUBLIC_KEY" \
+            --output json > "$ARTIFACT_DIR/deployment-result.json"
+          (
+            cd demo_api
+            zip -qr ../demo-api.zip .
+          )
+          az functionapp deployment source config-zip \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$FUNCTION_APP_NAME" \
+            --src demo-api.zip \
+            --build-remote true \
+            --output json > "$ARTIFACT_DIR/function-code-deployment.json"
+
+      - name: Verify listener, API, and frontend contract
+        if: inputs.operation == 'deploy' || inputs.operation == 'verify'
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          FUNCTION_APP_NAME: ${{ inputs.function_app_name }}
+        run: |
+          set -euo pipefail
+          suffix="${PREFIX}-${LAB_ENVIRONMENT}"
+          az vm list --resource-group "$RESOURCE_GROUP" --show-details --output json > "$ARTIFACT_DIR/current-vms.json"
+          jq -e --arg one "vm-vpn01-${suffix}" --arg two "vm-vpn02-${suffix}" '
+            ([.[] | select(.name==$one and .provisioningState=="Succeeded")] | length)==1 and
+            ([.[] | select(.name==$two and .provisioningState=="Succeeded")] | length)==1
+          ' "$ARTIFACT_DIR/current-vms.json" > /dev/null
+          hostname="$(az functionapp show --resource-group "$RESOURCE_GROUP" --name "$FUNCTION_APP_NAME" --query defaultHostName --output tsv)"
+          health_url="https://${hostname}/api/health"
+          run_url="https://${hostname}/api/demo/run"
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error "$health_url" -o "$ARTIFACT_DIR/api-health.json"; then
+              break
+            fi
+            sleep 10
+          done
+          jq -e '.status=="healthy" and .backend_target_configured==true' "$ARTIFACT_DIR/api-health.json" > /dev/null
+          curl --fail --silent --show-error \
+            --request POST \
+            --header 'Content-Type: application/json' \
+            --data '{"attempts":20}' \
+            "$run_url" > "$ARTIFACT_DIR/api-run.json"
+          jq -e '
+            .schema_version=="servicetracer.demo-api-response.v1" and
+            .report.status=="technician_investigation_required" and
+            .report.incident.attempts==20 and
+            .report.incident.successful_attempts>0 and
+            .report.incident.failed_attempts>0 and
+            .report.localization.backend_attempt_counts["VPN-01"]>0 and
+            .report.localization.backend_attempt_counts["VPN-02"]>0 and
+            .report.localization.backend_failure_rates["VPN-02"] > .report.localization.backend_failure_rates["VPN-01"] and
+            .report.investigation_boundary.exact_root_cause_claimed==false
+          ' "$ARTIFACT_DIR/api-run.json" > /dev/null
+          jq -n --arg health_url "$health_url" --arg run_url "$run_url" '{health_url:$health_url,run_url:$run_url,verified:true}' > "$ARTIFACT_DIR/endpoints.json"
+
+      - name: Write evidence manifest
+        if: always()
+        run: |
+          set -euo pipefail
+          if [[ -d "$ARTIFACT_DIR" ]]; then
+            find "$ARTIFACT_DIR" -type f ! -name artifact-manifest.sha256 -print0 \
+              | sort -z \
+              | xargs -0 -r sha256sum \
+              > "$ARTIFACT_DIR/artifact-manifest.sha256"
+          fi
+
+      - name: Write scoped workflow summary
+        if: always()
+        env:
+          OPERATION: ${{ inputs.operation }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          FUNCTION_APP_NAME: ${{ inputs.function_app_name }}
+        run: |
+          {
+            echo '## Demo backends and API'
+            echo
+            echo "- Operation: \`$OPERATION\`"
+            echo "- Reviewed commit: \`$REVIEWED_COMMIT\`"
+            echo "- Resource group: \`$RESOURCE_GROUP\`"
+            echo "- Function App: \`$FUNCTION_APP_NAME\`"
+            echo '- Scope excludes the existing collector VM and report-publication resources.'
+            echo '- Detailed non-secret evidence is attached as a workflow artifact.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload scoped evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-backend-api-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
