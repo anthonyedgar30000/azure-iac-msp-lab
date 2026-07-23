@@ -118,6 +118,7 @@ jobs:
           python -m unittest \
             infra.tests.test_demo_backend_api \
             infra.tests.test_collector_demo_api \
+            infra.tests.test_collector_demo_api_load_balancer \
             infra.tests.test_collector_demo_api_readiness \
             -v
 
@@ -137,6 +138,18 @@ jobs:
         run: |
           set -euo pipefail
           suffix="${PREFIX}-${LAB_ENVIRONMENT}"
+          capture_json() {
+            local output="$1"
+            shift
+            if "$@" --output json > "$output" 2>/dev/null; then
+              return 0
+            fi
+            jq -n '{status:"not_present"}' > "$output"
+          }
+          status_of() {
+            jq -r 'if .status=="not_present" then "not_present" else "observed_existing" end' "$1"
+          }
+
           az account show --query '{subscriptionId:id,subscriptionName:name,tenantId:tenantId,user:user}' --output json > "$ARTIFACT_DIR/azure-context.json"
           az group show --name "$RESOURCE_GROUP" --output json > "$ARTIFACT_DIR/resource-group.json"
           [[ "$(jq -r '.location' "$ARTIFACT_DIR/resource-group.json")" == "$LOCATION" ]]
@@ -154,12 +167,44 @@ jobs:
           jq -e --arg lb "/loadBalancers/lb-remote-access-${suffix}/frontendIPConfigurations/" '.ipConfiguration.id | contains($lb)' "$ARTIFACT_DIR/remote-access-public-ip.json" > /dev/null
           jq -e '.ipAddress != null and .ipAddress != "" and .provisioningState=="Succeeded"' "$ARTIFACT_DIR/remote-access-public-ip.json" > /dev/null
 
-          if az network public-ip show --resource-group "$RESOURCE_GROUP" --name "pip-st-demo-api-${suffix}" --output json > "$ARTIFACT_DIR/existing-demo-api-public-ip.json" 2>/dev/null; then
-            jq -n '{status:"observed_existing"}' > "$ARTIFACT_DIR/demo-api-public-ip-state.json"
-          else
-            jq -n '{status:"not_present"}' > "$ARTIFACT_DIR/existing-demo-api-public-ip.json"
-            jq -n '{status:"not_present"}' > "$ARTIFACT_DIR/demo-api-public-ip-state.json"
-          fi
+          capture_json "$ARTIFACT_DIR/existing-demo-api-public-ip.json" \
+            az network public-ip show --resource-group "$RESOURCE_GROUP" --name "pip-st-demo-api-${suffix}"
+          capture_json "$ARTIFACT_DIR/existing-demo-api-load-balancer.json" \
+            az network lb show --resource-group "$RESOURCE_GROUP" --name "lb-st-demo-api-${suffix}"
+          capture_json "$ARTIFACT_DIR/existing-demo-api-http-nsg-rule.json" \
+            az network nsg rule show --resource-group "$RESOURCE_GROUP" --nsg-name "nsg-operations-${suffix}" --name Allow-Demo-API-HTTP-From-Internet
+          capture_json "$ARTIFACT_DIR/existing-demo-api-https-nsg-rule.json" \
+            az network nsg rule show --resource-group "$RESOURCE_GROUP" --nsg-name "nsg-operations-${suffix}" --name Allow-Demo-API-HTTPS-From-Internet
+          capture_json "$ARTIFACT_DIR/existing-demo-api-vm-extension.json" \
+            az vm extension show --resource-group "$RESOURCE_GROUP" --vm-name "vm-stcollector-${suffix}" --name servicetracer-demo-api
+
+          capture_json "$ARTIFACT_DIR/legacy-demo-api-lb-frontend.json" \
+            az network lb frontend-ip show --resource-group "$RESOURCE_GROUP" --lb-name "lb-remote-access-${suffix}" --name fe-public-st-demo-api
+          capture_json "$ARTIFACT_DIR/legacy-demo-api-lb-backend-pool.json" \
+            az network lb address-pool show --resource-group "$RESOURCE_GROUP" --lb-name "lb-remote-access-${suffix}" --name be-st-demo-api
+          capture_json "$ARTIFACT_DIR/legacy-demo-api-lb-probe.json" \
+            az network lb probe show --resource-group "$RESOURCE_GROUP" --lb-name "lb-remote-access-${suffix}" --name probe-tcp-80-st-demo-api
+          capture_json "$ARTIFACT_DIR/legacy-demo-api-lb-http-rule.json" \
+            az network lb rule show --resource-group "$RESOURCE_GROUP" --lb-name "lb-remote-access-${suffix}" --name rule-st-demo-api-http
+          capture_json "$ARTIFACT_DIR/legacy-demo-api-lb-https-rule.json" \
+            az network lb rule show --resource-group "$RESOURCE_GROUP" --lb-name "lb-remote-access-${suffix}" --name rule-st-demo-api-https
+
+          public_ip_status="$(status_of "$ARTIFACT_DIR/existing-demo-api-public-ip.json")"
+          jq -n --arg status "$public_ip_status" '{status:$status}' > "$ARTIFACT_DIR/demo-api-public-ip-state.json"
+
+          jq -n \
+            --arg frontend "$(status_of "$ARTIFACT_DIR/legacy-demo-api-lb-frontend.json")" \
+            --arg backend_pool "$(status_of "$ARTIFACT_DIR/legacy-demo-api-lb-backend-pool.json")" \
+            --arg probe "$(status_of "$ARTIFACT_DIR/legacy-demo-api-lb-probe.json")" \
+            --arg http_rule "$(status_of "$ARTIFACT_DIR/legacy-demo-api-lb-http-rule.json")" \
+            --arg https_rule "$(status_of "$ARTIFACT_DIR/legacy-demo-api-lb-https-rule.json")" \
+            --arg public_ip "$public_ip_status" \
+            --arg load_balancer "$(status_of "$ARTIFACT_DIR/existing-demo-api-load-balancer.json")" \
+            --arg http_nsg_rule "$(status_of "$ARTIFACT_DIR/existing-demo-api-http-nsg-rule.json")" \
+            --arg https_nsg_rule "$(status_of "$ARTIFACT_DIR/existing-demo-api-https-nsg-rule.json")" \
+            --arg vm_extension "$(status_of "$ARTIFACT_DIR/existing-demo-api-vm-extension.json")" \
+            '{schema_version:"servicetracer.collector-demo-api-ingress-state.v1",legacy_remote_load_balancer_children:{frontend:$frontend,backend_pool:$backend_pool,probe:$probe,http_rule:$http_rule,https_rule:$https_rule},dedicated_target_resources:{public_ip:$public_ip,load_balancer:$load_balancer,http_nsg_rule:$http_nsg_rule,https_nsg_rule:$https_nsg_rule,vm_extension:$vm_extension}}' \
+            > "$ARTIFACT_DIR/collector-demo-api-ingress-state.json"
 
           az network list-usages --location "$LOCATION" --output json > "$ARTIFACT_DIR/network-usage.json"
           az lock list --resource-group "$RESOURCE_GROUP" --output json > "$ARTIFACT_DIR/resource-locks.json"
@@ -182,6 +227,7 @@ jobs:
             --resource-locks "$ARTIFACT_DIR/resource-locks.json" \
             --demo-api-public-ip-state "$ARTIFACT_DIR/demo-api-public-ip-state.json" \
             --prior-demo-api-resources "$ARTIFACT_DIR/prior-demo-api-resources.json" \
+            --ingress-state "$ARTIFACT_DIR/collector-demo-api-ingress-state.json" \
             --dns-label "$DNS_LABEL" \
             --location "$LOCATION" \
             --expected-private-ip '10.20.40.10' \
@@ -206,7 +252,7 @@ jobs:
           virtual_network_id="${collector_subnet_id%/subnets/*}"
           collector_vm_name="$(jq -r '.name' "$ARTIFACT_DIR/collector-vm.json")"
           operations_nsg_name="$(jq -r '.name' "$ARTIFACT_DIR/operations-nsg.json")"
-          load_balancer_name="$(jq -r '.name' "$ARTIFACT_DIR/edge-load-balancer.json")"
+          remote_access_load_balancer_name="$(jq -r '.name' "$ARTIFACT_DIR/edge-load-balancer.json")"
           remote_access_ip="$(jq -r '.ipAddress' "$ARTIFACT_DIR/remote-access-public-ip.json")"
           collector_source_repository="$(jq -r '.properties.parameters.collectorSourceRepository.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
           existing_collector_source_ref="$(jq -r '.properties.parameters.collectorSourceRef.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
@@ -215,7 +261,7 @@ jobs:
 
           [[ "$collector_vm_name" == "vm-stcollector-${suffix}" ]]
           [[ "$operations_nsg_name" == "nsg-operations-${suffix}" ]]
-          [[ "$load_balancer_name" == "lb-remote-access-${suffix}" ]]
+          [[ "$remote_access_load_balancer_name" == "lb-remote-access-${suffix}" ]]
           [[ "$virtual_network_id" == */virtualNetworks/vnet-onprem-sim-${suffix} ]]
 
           jq -n \
@@ -223,13 +269,13 @@ jobs:
             --arg virtual_network_id "$virtual_network_id" \
             --arg collector_vm_name "$collector_vm_name" \
             --arg operations_nsg_name "$operations_nsg_name" \
-            --arg load_balancer_name "$load_balancer_name" \
+            --arg remote_access_load_balancer_name "$remote_access_load_balancer_name" \
             --arg backend_transaction_url "$backend_transaction_url" \
             --arg collector_source_repository "$collector_source_repository" \
             --arg existing_collector_source_ref "$existing_collector_source_ref" \
             --arg deployment_source_ref "$REVIEWED_COMMIT" \
             --arg installer_uri "$installer_uri" \
-            '{collector_private_ip:$collector_private_ip,virtual_network_id:$virtual_network_id,collector_vm_name:$collector_vm_name,operations_nsg_name:$operations_nsg_name,load_balancer_name:$load_balancer_name,backend_transaction_url:$backend_transaction_url,collector_source_repository:$collector_source_repository,existing_collector_source_ref:$existing_collector_source_ref,deployment_source_ref:$deployment_source_ref,installer_uri:$installer_uri}' \
+            '{collector_private_ip:$collector_private_ip,virtual_network_id:$virtual_network_id,collector_vm_name:$collector_vm_name,operations_nsg_name:$operations_nsg_name,remote_access_load_balancer_name:$remote_access_load_balancer_name,backend_transaction_url:$backend_transaction_url,collector_source_repository:$collector_source_repository,existing_collector_source_ref:$existing_collector_source_ref,deployment_source_ref:$deployment_source_ref,installer_uri:$installer_uri}' \
             > "$ARTIFACT_DIR/effective-collector-parameters.json"
 
           parameters=(
@@ -237,7 +283,6 @@ jobs:
             environment="$LAB_ENVIRONMENT"
             location="$LOCATION"
             virtualNetworkId="$virtual_network_id"
-            loadBalancerName="$load_balancer_name"
             operationsNsgName="$operations_nsg_name"
             collectorVmName="$collector_vm_name"
             collectorPrivateIpAddress="$collector_private_ip"
@@ -267,7 +312,9 @@ jobs:
             --input "$ARTIFACT_DIR/arm-what-if.json" \
             --output "$ARTIFACT_DIR/what-if-assessment.json" \
             --suffix "$suffix" \
-            --private-ip "$collector_private_ip"
+            --private-ip "$collector_private_ip" \
+            --virtual-network-id "$virtual_network_id" \
+            --dns-label "$DNS_LABEL"
 
       - name: Deploy collector-hosted demo API
         if: inputs.operation == 'deploy'
@@ -284,7 +331,6 @@ jobs:
           virtual_network_id="$(jq -r '.virtual_network_id' "$ARTIFACT_DIR/effective-collector-parameters.json")"
           collector_vm_name="$(jq -r '.collector_vm_name' "$ARTIFACT_DIR/effective-collector-parameters.json")"
           operations_nsg_name="$(jq -r '.operations_nsg_name' "$ARTIFACT_DIR/effective-collector-parameters.json")"
-          load_balancer_name="$(jq -r '.load_balancer_name' "$ARTIFACT_DIR/effective-collector-parameters.json")"
           backend_transaction_url="$(jq -r '.backend_transaction_url' "$ARTIFACT_DIR/effective-collector-parameters.json")"
           collector_source_repository="$(jq -r '.collector_source_repository' "$ARTIFACT_DIR/effective-collector-parameters.json")"
           deployment_source_ref="$(jq -r '.deployment_source_ref' "$ARTIFACT_DIR/effective-collector-parameters.json")"
@@ -299,7 +345,6 @@ jobs:
               environment="$LAB_ENVIRONMENT" \
               location="$LOCATION" \
               virtualNetworkId="$virtual_network_id" \
-              loadBalancerName="$load_balancer_name" \
               operationsNsgName="$operations_nsg_name" \
               collectorVmName="$collector_vm_name" \
               collectorPrivateIpAddress="$collector_private_ip" \
@@ -310,6 +355,52 @@ jobs:
               sourceRef="$deployment_source_ref" \
               installerUri="$installer_uri" \
             --output json > "$ARTIFACT_DIR/deployment-result.json"
+
+      - name: Capture post-deploy target state and ARM operations
+        if: always() && inputs.operation == 'deploy'
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          suffix="${PREFIX}-${LAB_ENVIRONMENT}"
+          capture_json() {
+            local output="$1"
+            shift
+            if "$@" --output json > "$output" 2>/dev/null; then
+              return 0
+            fi
+            jq -n '{status:"not_present_or_not_observable"}' > "$output"
+          }
+          capture_json "$ARTIFACT_DIR/post-deploy-parent-deployment.json" \
+            az deployment group show --resource-group "$RESOURCE_GROUP" --name "collector-demo-api-${LAB_ENVIRONMENT}"
+          capture_json "$ARTIFACT_DIR/post-deploy-parent-operations.json" \
+            az deployment operation group list --resource-group "$RESOURCE_GROUP" --name "collector-demo-api-${LAB_ENVIRONMENT}"
+          capture_json "$ARTIFACT_DIR/post-deploy-nested-deployment.json" \
+            az deployment group show --resource-group "$RESOURCE_GROUP" --name "collector-demo-api-resources-${LAB_ENVIRONMENT}"
+          capture_json "$ARTIFACT_DIR/post-deploy-nested-operations.json" \
+            az deployment operation group list --resource-group "$RESOURCE_GROUP" --name "collector-demo-api-resources-${LAB_ENVIRONMENT}"
+          capture_json "$ARTIFACT_DIR/post-deploy-demo-api-public-ip.json" \
+            az network public-ip show --resource-group "$RESOURCE_GROUP" --name "pip-st-demo-api-${suffix}"
+          capture_json "$ARTIFACT_DIR/post-deploy-demo-api-load-balancer.json" \
+            az network lb show --resource-group "$RESOURCE_GROUP" --name "lb-st-demo-api-${suffix}"
+          capture_json "$ARTIFACT_DIR/post-deploy-demo-api-http-nsg-rule.json" \
+            az network nsg rule show --resource-group "$RESOURCE_GROUP" --nsg-name "nsg-operations-${suffix}" --name Allow-Demo-API-HTTP-From-Internet
+          capture_json "$ARTIFACT_DIR/post-deploy-demo-api-https-nsg-rule.json" \
+            az network nsg rule show --resource-group "$RESOURCE_GROUP" --nsg-name "nsg-operations-${suffix}" --name Allow-Demo-API-HTTPS-From-Internet
+          capture_json "$ARTIFACT_DIR/post-deploy-demo-api-vm-extension.json" \
+            az vm extension show --resource-group "$RESOURCE_GROUP" --vm-name "vm-stcollector-${suffix}" --name servicetracer-demo-api
+          capture_json "$ARTIFACT_DIR/post-deploy-legacy-lb-frontend.json" \
+            az network lb frontend-ip show --resource-group "$RESOURCE_GROUP" --lb-name "lb-remote-access-${suffix}" --name fe-public-st-demo-api
+          capture_json "$ARTIFACT_DIR/post-deploy-legacy-lb-backend-pool.json" \
+            az network lb address-pool show --resource-group "$RESOURCE_GROUP" --lb-name "lb-remote-access-${suffix}" --name be-st-demo-api
+          capture_json "$ARTIFACT_DIR/post-deploy-legacy-lb-probe.json" \
+            az network lb probe show --resource-group "$RESOURCE_GROUP" --lb-name "lb-remote-access-${suffix}" --name probe-tcp-80-st-demo-api
+          capture_json "$ARTIFACT_DIR/post-deploy-legacy-lb-http-rule.json" \
+            az network lb rule show --resource-group "$RESOURCE_GROUP" --lb-name "lb-remote-access-${suffix}" --name rule-st-demo-api-http
+          capture_json "$ARTIFACT_DIR/post-deploy-legacy-lb-https-rule.json" \
+            az network lb rule show --resource-group "$RESOURCE_GROUP" --lb-name "lb-remote-access-${suffix}" --name rule-st-demo-api-https
 
       - name: Verify public TLS, API, and frontend contract
         if: inputs.operation == 'deploy' || inputs.operation == 'verify'
@@ -369,7 +460,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$ARTIFACT_DIR"
-          find "$ARTIFACT_DIR" -maxdepth 1 -type f ! -name evidence-manifest.json -print0 \
+          find "$ARTIFACT_DIR" -maxdepth 1 -type f ! -name evidence-manifest.json ! -name sha256sums.txt -print0 \
             | sort -z \
             | xargs -0 -r sha256sum \
             | awk '{print $1 "  " $2}' > "$ARTIFACT_DIR/sha256sums.txt"
@@ -395,10 +486,10 @@ jobs:
             echo "- Operation: \`$OPERATION\`"
             echo "- Resource group: \`$RESOURCE_GROUP\`"
             echo "- DNS label: \`$DNS_LABEL\`"
-            echo '- The deployment uses a dedicated Bicep root that references the existing VM, VNet, load balancer, and NSG without redeclaring base infrastructure.'
-            echo '- Microsoft.Web/App Service is excluded from this deployment path.'
-            echo '- Public-IP quota evidence preserves raw Azure values, JSON types, normalized counts, and remaining headroom.'
-            echo '- Existing Function/App Service leftovers are ignored by this path and require a separate cleanup decision.'
+            echo '- The deployment uses a dedicated Standard Load Balancer and never writes demo child resources into the existing remote-access load balancer.'
+            echo '- The collector VM and VNet remain existing referenced resources; Microsoft.Web/App Service remains excluded.'
+            echo '- Readiness blocks any legacy remote-load-balancer child residue and records reusable partial target resources separately.'
+            echo '- Deploy attempts always capture parent/nested ARM operations and post-deploy target inventory, including failures.'
             echo '- Detailed non-secret evidence is attached as a workflow artifact.'
           } >> "$GITHUB_STEP_SUMMARY"
 
