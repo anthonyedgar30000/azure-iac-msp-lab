@@ -4,62 +4,43 @@
   "updated_on": "2026-07-23",
   "last_substantive_baseline": {
     "branch": "main",
-    "commit": "590176f890f590759bb9d9fe518314295c8bad6c",
-    "pull_request": 45,
-    "title": "Add read-only publication predeployment readiness",
-    "qualification": "merged_readiness_workflow_exact_head_ci_passed_not_dispatched_no_azure_mutation",
-    "claim_boundary": "This baseline proves PR #45 was merged and the read-only readiness workflow is present in the repository. It does not prove readiness dispatch, demo backend deployment, API deployment, listener verification, frontend API use, report publication, or collector replacement."
+    "commit": "dcc4f75fc051484ba2f6ef633dc92ef80adae224",
+    "pull_request": 46,
+    "title": "Deploy demo backends and connect frontend API",
+    "qualification": "merged_repository_implementation_exact_head_ci_passed_not_dispatched_not_deployed",
+    "claim_boundary": "This baseline proves PR #46 was merged and its scoped demo-backend/API workflow and implementation are present on main. It does not prove workflow dispatch, current Azure inventory, scoped What-If, deployment, listener health, API health, frontend live rendering, report publication, or collector replacement."
   },
   "repository_observation": {
     "observed_on": "2026-07-23",
     "source": "live_github",
-    "main_head": "590176f890f590759bb9d9fe518314295c8bad6c",
-    "head_semantics": "PR #45 merge commit observed before opening scoped demo-backend/API PR #46",
-    "open_pull_requests": [
-      46
-    ],
-    "claim_boundary": "This is a time-bounded repository observation. Resolve live main, pull requests, CI, and Azure state whenever this file is read."
+    "main_head": "dcc4f75fc051484ba2f6ef633dc92ef80adae224",
+    "head_semantics": "PR #46 merge commit observed on main before opening this repository-state reconciliation increment",
+    "open_pull_requests": [],
+    "claim_boundary": "This is a time-bounded repository observation made before this reconciliation pull request was opened. Resolve live main, pull requests, CI, and Azure state whenever this file is read."
   },
   "authored_change": {
-    "change_id": "demo-backends-api-frontend",
-    "branch": "feat/demo-backends-api",
-    "pull_request": 46,
-    "write_owner": "This ChatGPT conversation — bounded repository implementation authorized by Anthony Edgar with 'Proceed' after correcting scope to demo backends, a service listener, and a frontend-connected API",
-    "scope": "Add a collector-independent Bicep entrypoint for the two synthetic VPN backends and a public Azure Function API, package the Python API, connect the GitHub Pages Run incident analysis action to real correlated Azure transactions with controlled fallback, add scoped What-If/deploy/verify automation, tests, documentation, and current project state. No workflow is dispatched and no Azure mutation is performed by this repository increment.",
-    "authority": "repository_only_demo_backend_api_implementation",
+    "change_id": "reconcile-pr46-merge-state",
+    "branch": "agent/reconcile-pr46-merge-state",
+    "pull_request": null,
+    "write_owner": "This ChatGPT conversation — bounded repository-state reconciliation authorized by Anthony Edgar with 'Proceed'",
+    "scope": "Reconcile only .project/active-work.json and .project/handoffs/current-state.md to the observed merge of PR #46, the absence of open pull requests before branch creation, and the continuing absence of scoped demo deployment or verification evidence.",
+    "authority": "repository_only_project_state_reconciliation",
     "state_semantics": "declaration_not_live_status",
     "permitted_paths": [
-      ".github/workflows/ci.yml",
-      ".github/workflows/demo-backend-api.yml",
       ".project/active-work.json",
-      ".project/handoffs/current-state.md",
-      "demo_api/.funcignore",
-      "demo_api/core.py",
-      "demo_api/function_app.py",
-      "demo_api/host.json",
-      "demo_api/requirements.txt",
-      "docs/app.js",
-      "docs/report-source.json",
-      "docs/runbooks/demo-backend-api.md",
-      "infra/demo-backend-api.bicep",
-      "infra/modules/demo_api.bicep",
-      "infra/scripts/assert_demo_backend_api_what_if.py",
-      "infra/tests/test_demo_backend_api.py"
+      ".project/handoffs/current-state.md"
     ],
     "verification_criteria": [
-      "the scoped Bicep entrypoint references the existing VNet, edge subnet, load balancer, public IP, and Log Analytics workspace without declaring the collector",
-      "the two existing synthetic backend contracts remain VPN-01 healthy and VPN-02 radius-timeout on HTTPS 443",
-      "the Function API exposes GET /api/health and POST /api/demo/run and does not accept a caller-controlled target URL",
-      "attempt counts are bounded to 2 through 50 and expected backend HTTP 503 bodies are preserved as transaction evidence",
-      "the API response preserves exact_root_cause_claimed false and technician-owned diagnosis",
-      "the frontend invokes the live API from the Run incident analysis button and clearly falls back to the committed fixture when unavailable",
-      "the deployment workflow is exact-commit bound, excludes resolve_vm_plan.sh and the collector, and requires exact typed confirmation",
-      "What-If rejects Modify, Delete, Replace, unexpected creates, and changes to shared network, observability, or collector resources",
-      "project validation, all infrastructure tests, main Bicep, and scoped Bicep lint/build pass on the exact PR head",
-      "the final diff remains limited to the declared paths"
+      "the last substantive baseline records PR #46 and merge commit dcc4f75fc051484ba2f6ef633dc92ef80adae224",
+      "the repository observation records no open pull requests before this reconciliation branch was created",
+      "PR #46 is recorded as merged with exact-head CI run 29990625589 successful",
+      "the demo-backend/API workflow is recorded as present on main but not dispatched",
+      "Azure deployment, RBAC mutation, listener verification, API verification, and frontend live verification remain false",
+      "the final diff is limited to the two declared .project paths",
+      ".project/validate.py passes in CI"
     ],
-    "failure_behavior": "Keep PR #46 draft, inspect the exact test or Bicep failure, patch only declared paths, and do not dispatch the workflow or mutate Azure.",
-    "rollback": "Close PR #46 without merge or revert its repository commits. No Azure cleanup applies because this increment does not dispatch or deploy."
+    "failure_behavior": "Keep the reconciliation pull request draft, inspect project-state validation or scope failures, patch only the two declared paths, and do not dispatch any workflow or access or mutate Azure.",
+    "rollback": "Close the reconciliation pull request without merge or revert its repository commits. No Azure cleanup applies because this increment changes project state only."
   },
   "bounded_authority_grants": [
     {
@@ -86,7 +67,7 @@
         "az deployment group what-if"
       ],
       "state_semantics": "bounded_exception_to_false_defaults",
-      "claim_boundary": "This grant authorizes Azure reads and ProviderNoRbac planning only. It does not authorize PR #46's demo-backend/API workflow, deployment, collector changes, RBAC changes, report publication, guest commands, or any Azure mutation."
+      "claim_boundary": "This grant authorizes Azure reads and ProviderNoRbac planning only. It does not authorize the demo-backend/API workflow, deployment, collector changes, RBAC changes, report publication, guest commands, or any Azure mutation."
     }
   ],
   "completed_increments": [
@@ -166,6 +147,20 @@
       "owner_account_technical_review_recorded": true,
       "independent_organizational_approval": false,
       "qualification": "readiness_workflow_merged_repository_verified_not_dispatched_no_azure_action"
+    },
+    {
+      "pull_request": 46,
+      "title": "Deploy demo backends and connect frontend API",
+      "source_head": "e8358d090c79f1ba8752323e054693a779e7db51",
+      "merge_commit": "dcc4f75fc051484ba2f6ef633dc92ef80adae224",
+      "merged_at": "2026-07-23T13:28:14Z",
+      "exact_head_ci": {
+        "run_id": 29990625589,
+        "conclusion": "success"
+      },
+      "owner_account_technical_review_recorded": true,
+      "independent_organizational_approval": false,
+      "qualification": "demo_backend_api_repository_implementation_merged_verified_not_dispatched_not_deployed"
     }
   ],
   "latest_scope_observation": {
@@ -260,10 +255,14 @@
       "claim_boundary": "The read-only readiness workflow is present on main. It has not been dispatched and establishes no current readiness evidence or Azure authority."
     },
     "pr46_demo_backends_api": {
-      "status": "draft_repository_implementation_pending_final_exact_head_review_and_merge_decision",
+      "status": "merged_repository_implementation_exact_head_ci_passed_not_dispatched",
       "reviewed_pull_request": 46,
+      "source_head": "e8358d090c79f1ba8752323e054693a779e7db51",
+      "merge_commit": "dcc4f75fc051484ba2f6ef633dc92ef80adae224",
+      "exact_head_ci_run_id": 29990625589,
+      "review_account": "pull_request_owner",
       "independent_organizational_approval": false,
-      "claim_boundary": "Repository implementation only. No scoped What-If, deployment, backend listener verification, API verification, frontend live rendering, or Azure mutation is established."
+      "claim_boundary": "The repository implementation and scoped workflow are present on main. No scoped What-If, deployment, backend listener verification, API verification, frontend live rendering, or Azure mutation is established."
     }
   },
   "deployment_state": {
@@ -271,7 +270,7 @@
     "publication_workflow_dispatch_observed": false,
     "publication_readiness_workflow_present_on_main": true,
     "publication_readiness_dispatch_observed": false,
-    "demo_backend_api_workflow_present_on_main": false,
+    "demo_backend_api_workflow_present_on_main": true,
     "demo_backend_api_dispatch_observed": false,
     "azure_deployment_observed": false,
     "rbac_mutation_observed": false,
@@ -289,7 +288,7 @@
     "dispatch_authorized": false,
     "azure_authentication_authorized": false,
     "azure_mutations_authorized": false,
-    "rule": "Repository implementation authority does not authorize workflow dispatch, Azure authentication, backend or API deployment, collector changes, or any other Azure mutation. The separate historical publication-planner grant remains the only active bounded Azure-read exception."
+    "rule": "Repository-state reconciliation authority does not authorize workflow dispatch, Azure authentication, backend or API deployment, collector changes, report publication, or any Azure mutation. The separate historical publication-planner grant remains the only active bounded Azure-read exception."
   },
   "live_state_resolution": {
     "repository_head": "Query the live GitHub default branch at read time.",
