@@ -134,6 +134,49 @@ class DemoBackendApiTests(unittest.TestCase):
         self.assertEqual(result["creates"], 2)
         self.assertFalse(result["deployment_authorized"])
 
+    def test_pretty_what_if_parser_accepts_expected_changes(self):
+        payload = self.classifier.parse_pretty_what_if(
+            """Resource and property changes are indicated with these symbols:
+  + Create
+  = Nochange
+  * Ignore
+
+  + Microsoft.Web/sites/func-demo [2024-04-01]
+  = Microsoft.Compute/virtualMachines/vm-vpn01-mst-dev [2024-07-01]
+  * Microsoft.Network/loadBalancers/lb-remote-access-mst-dev
+
+Resource changes: 1 to create, 1 no change, 1 to ignore.
+"""
+        )
+        result = self.classifier.classify(payload)
+        self.assertEqual(result["creates"], 1)
+        self.assertEqual(result["create_types"], {"Microsoft.Web/sites": 1})
+        self.assertFalse(result["deployment_authorized"])
+
+    def test_pretty_what_if_parser_preserves_modify_blocker(self):
+        payload = self.classifier.parse_pretty_what_if(
+            """Resource and property changes are indicated with these symbols:
+  + Create
+  ~ Modify
+
+  + Microsoft.Web/sites/func-demo [2024-04-01]
+  ~ Microsoft.Network/networkInterfaces/nic-vpn01-mst-dev [2024-05-01]
+
+Resource changes: 1 to create, 1 to modify.
+"""
+        )
+        with self.assertRaises(SystemExit) as context:
+            self.classifier.classify(payload)
+        self.assertIn("nic-vpn01-mst-dev", str(context.exception))
+
+    def test_pretty_what_if_parser_fails_on_summary_mismatch(self):
+        with self.assertRaises(SystemExit):
+            self.classifier.parse_pretty_what_if(
+                """  + Microsoft.Web/sites/func-demo [2024-04-01]
+Resource changes: 2 to create.
+"""
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
