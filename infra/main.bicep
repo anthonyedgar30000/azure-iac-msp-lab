@@ -66,7 +66,7 @@ param collectorSourceRepository string = 'https://github.com/anthonyedgar30000/a
 @description('Branch, tag, or commit installed by collector cloud-init. Pin a commit for a repeatable deployment.')
 param collectorSourceRef string = 'main'
 
-@description('Expose the bounded demo API through the existing collector VM instead of Microsoft.Web.')
+@description('Expose the bounded demo API through the existing collector VM and load balancer.')
 param deployCollectorDemoApi bool = false
 
 @description('Globally unique DNS label used for the collector-hosted demo API public endpoint.')
@@ -155,7 +155,6 @@ module operationsCollector './modules/operations_collector_vm.bicep' = if (deplo
     environment: environment
     location: location
     operationsSubnetId: network.outputs.subnetIds.operations
-    operationsNsgName: 'nsg-operations-${resourceSuffix}'
     tags: commonTags
     privateIpAddress: collectorPrivateIpAddress
     adminUsername: collectorAdminUsername
@@ -165,14 +164,31 @@ module operationsCollector './modules/operations_collector_vm.bicep' = if (deplo
     collectorPort: collectorPort
     collectorSourceRepository: collectorSourceRepository
     collectorSourceRef: collectorSourceRef
-    deployCollectorDemoApi: deployCollectorDemoApiResources
-    demoApiDnsLabel: collectorDemoApiDnsLabel
-    demoApiAllowedOrigin: collectorDemoApiAllowedOrigin
-    demoApiBackendTransactionUrl: 'https://${edgeLoadBalancer.outputs.publicIpAddress}/transaction'
-    demoApiSourceRepository: collectorSourceRepository
-    demoApiSourceRef: collectorDemoApiSourceRef
-    demoApiInstallerUri: collectorDemoApiInstallerUri
   }
+}
+
+module collectorDemoApi './modules/collector_demo_api.bicep' = if (deployCollectorDemoApiResources) {
+  name: 'collector-demo-api-${environment}'
+  params: {
+    prefix: prefix
+    environment: environment
+    location: location
+    tags: commonTags
+    virtualNetworkId: network.outputs.onPremVirtualNetworkId
+    loadBalancerName: 'lb-remote-access-${resourceSuffix}'
+    operationsNsgName: 'nsg-operations-${resourceSuffix}'
+    collectorVmName: 'vm-stcollector-${resourceSuffix}'
+    collectorPrivateIpAddress: collectorPrivateIpAddress
+    dnsLabel: collectorDemoApiDnsLabel
+    allowedOrigin: collectorDemoApiAllowedOrigin
+    backendTransactionUrl: 'https://${edgeLoadBalancer.outputs.publicIpAddress}/transaction'
+    sourceRepository: collectorSourceRepository
+    sourceRef: collectorDemoApiSourceRef
+    installerUri: collectorDemoApiInstallerUri
+  }
+  dependsOn: [
+    operationsCollector
+  ]
 }
 
 module reportPublication './modules/report_publication.bicep' = if (deployReportPublicationResources) {
@@ -205,10 +221,10 @@ output operationsCollectorPrincipalId string = deployOperationsCollector ? opera
 output operationsCollectorEndpoint string = deployOperationsCollector ? operationsCollector.outputs.collectorEndpoint : ''
 output operationsCollectorEvidenceDiskId string = deployOperationsCollector ? operationsCollector.outputs.evidenceDiskId : ''
 output collectorDemoApiDeploymentEnabled bool = deployCollectorDemoApiResources
-output collectorDemoApiPublicIpId string = deployCollectorDemoApiResources ? operationsCollector.outputs.collectorDemoApiPublicIpId : ''
-output collectorDemoApiFqdn string = deployCollectorDemoApiResources ? operationsCollector.outputs.collectorDemoApiFqdn : ''
-output collectorDemoApiHealthUrl string = deployCollectorDemoApiResources ? operationsCollector.outputs.collectorDemoApiHealthUrl : ''
-output collectorDemoApiRunUrl string = deployCollectorDemoApiResources ? operationsCollector.outputs.collectorDemoApiRunUrl : ''
+output collectorDemoApiPublicIpId string = deployCollectorDemoApiResources ? collectorDemoApi.outputs.publicIpId : ''
+output collectorDemoApiFqdn string = deployCollectorDemoApiResources ? collectorDemoApi.outputs.fqdn : ''
+output collectorDemoApiHealthUrl string = deployCollectorDemoApiResources ? collectorDemoApi.outputs.healthUrl : ''
+output collectorDemoApiRunUrl string = deployCollectorDemoApiResources ? collectorDemoApi.outputs.runUrl : ''
 output publicReportEndpointDeploymentEnabled bool = deployReportPublicationResources
 output publicReportStorageAccountName string = deployReportPublicationResources ? reportPublication.outputs.storageAccountName : ''
 output publicReportUrl string = deployReportPublicationResources ? reportPublication.outputs.publicReportUrl : ''
