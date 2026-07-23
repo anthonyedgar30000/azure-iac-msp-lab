@@ -66,7 +66,7 @@ param collectorSourceRepository string = 'https://github.com/anthonyedgar30000/a
 @description('Branch, tag, or commit installed by collector cloud-init. Pin a commit for a repeatable deployment.')
 param collectorSourceRef string = 'main'
 
-@description('Expose the bounded demo API through the existing collector VM and load balancer.')
+@description('Expose the bounded demo API through the existing collector VM and a dedicated load balancer.')
 param deployCollectorDemoApi bool = false
 
 @description('Globally unique DNS label used for the collector-hosted demo API public endpoint.')
@@ -175,7 +175,6 @@ module collectorDemoApi './modules/collector_demo_api.bicep' = if (deployCollect
     location: location
     tags: commonTags
     virtualNetworkId: network.outputs.onPremVirtualNetworkId
-    loadBalancerName: 'lb-remote-access-${resourceSuffix}'
     operationsNsgName: 'nsg-operations-${resourceSuffix}'
     collectorVmName: 'vm-stcollector-${resourceSuffix}'
     collectorPrivateIpAddress: collectorPrivateIpAddress
