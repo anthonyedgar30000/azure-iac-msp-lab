@@ -130,7 +130,7 @@ jobs:
       - name: Run scoped repository tests before Azure login
         run: |
           set -euo pipefail
-          python -m unittest infra.tests.test_demo_backend_api -v
+          python -m unittest infra.tests.test_demo_backend_api infra.tests.test_demo_planning_context -v
 
       - name: Log in to Azure with workload identity federation
         uses: azure/login@v2
@@ -157,6 +157,100 @@ jobs:
           az network lb show --resource-group "$RESOURCE_GROUP" --name "lb-remote-access-${suffix}" --output json > "$ARTIFACT_DIR/existing-load-balancer.json"
           az network public-ip show --resource-group "$RESOURCE_GROUP" --name "pip-remote-access-${suffix}" --output json > "$ARTIFACT_DIR/existing-public-ip.json"
           az monitor log-analytics workspace show --resource-group "$RESOURCE_GROUP" --workspace-name "law-${suffix}" --output json > "$ARTIFACT_DIR/existing-log-analytics.json"
+
+      - name: Capture read-only planning context
+        if: inputs.operation == 'what-if' || inputs.operation == 'deploy'
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          BACKEND_VM_SIZE: ${{ inputs.backend_vm_size }}
+        run: |
+          set -euo pipefail
+          rg_id="$(jq -r '.id' "$ARTIFACT_DIR/resource-group.json")"
+          principal_hint="$(jq -r '.user.name // empty' "$ARTIFACT_DIR/azure-context.json")"
+
+          az vm list-usage \
+            --location "$LOCATION" \
+            --output json \
+            > "$ARTIFACT_DIR/regional-compute-usage.json"
+
+          az vm list-skus \
+            --location "$LOCATION" \
+            --size "$BACKEND_VM_SIZE" \
+            --resource-type virtualMachines \
+            --all \
+            --output json \
+            > "$ARTIFACT_DIR/backend-vm-skus.json"
+
+          if ! az policy assignment list \
+            --scope "$rg_id" \
+            --disable-scope-strict-match true \
+            --query '[].{name:name,displayName:displayName,scope:scope,enforcementMode:enforcementMode,definitionVersion:definitionVersion,latestDefinitionVersion:latestDefinitionVersion,effectiveDefinitionVersion:effectiveDefinitionVersion}' \
+            --output json \
+            > "$ARTIFACT_DIR/policy-assignments.json"; then
+            jq -n '{status:"not_observable",reason:"The workflow identity could not enumerate applicable policy assignments."}' \
+              > "$ARTIFACT_DIR/policy-assignments.json"
+          fi
+
+          if [[ -n "$principal_hint" ]] && az role assignment list \
+            --assignee "$principal_hint" \
+            --scope "$rg_id" \
+            --include-inherited \
+            --all \
+            --fill-principal-name false \
+            --query '[].{roleDefinitionName:roleDefinitionName,scope:scope,condition:condition,conditionVersion:conditionVersion}' \
+            --output json \
+            > "$ARTIFACT_DIR/workflow-role-assignments.json"; then
+            :
+          else
+            jq -n '{status:"not_observable",reason:"The workflow principal or its scoped role assignments could not be resolved without publishing principal identity data."}' \
+              > "$ARTIFACT_DIR/workflow-role-assignments.json"
+          fi
+
+          deny_url="${rg_id}/providers/Microsoft.Authorization/denyAssignments?api-version=2022-04-01&\$filter=atScope()"
+          if ! az rest \
+            --method get \
+            --url "$deny_url" \
+            --query 'value[].{name:name,scope:properties.scope,doNotApplyToChildScopes:properties.doNotApplyToChildScopes,permissions:properties.permissions}' \
+            --output json \
+            > "$ARTIFACT_DIR/deny-assignments.json"; then
+            jq -n '{status:"not_observable",reason:"The workflow identity could not enumerate applicable deny assignments."}' \
+              > "$ARTIFACT_DIR/deny-assignments.json"
+          fi
+
+          if ! az lock list \
+            --resource-group "$RESOURCE_GROUP" \
+            --query '[].{name:name,level:level,scope:id}' \
+            --output json \
+            > "$ARTIFACT_DIR/resource-locks.json"; then
+            jq -n '{status:"not_observable",reason:"Resource-group locks could not be enumerated."}' \
+              > "$ARTIFACT_DIR/resource-locks.json"
+          fi
+
+          if ! curl --fail --silent --show-error --get \
+            'https://prices.azure.com/api/retail/prices' \
+            --data-urlencode "currencyCode='CAD'" \
+            --data-urlencode "\$filter=armRegionName eq '$LOCATION' and armSkuName eq '$BACKEND_VM_SIZE' and priceType eq 'Consumption'" \
+            --output "$ARTIFACT_DIR/retail-prices.json"; then
+            jq -n '{status:"not_observable",reason:"The unauthenticated Azure Retail Prices API could not be queried."}' \
+              > "$ARTIFACT_DIR/retail-prices.json"
+          fi
+
+          python infra/scripts/assess_demo_planning_context.py \
+            --azure-context "$ARTIFACT_DIR/azure-context.json" \
+            --resource-group-json "$ARTIFACT_DIR/resource-group.json" \
+            --compute-usage "$ARTIFACT_DIR/regional-compute-usage.json" \
+            --vm-skus "$ARTIFACT_DIR/backend-vm-skus.json" \
+            --policy-assignments "$ARTIFACT_DIR/policy-assignments.json" \
+            --role-assignments "$ARTIFACT_DIR/workflow-role-assignments.json" \
+            --deny-assignments "$ARTIFACT_DIR/deny-assignments.json" \
+            --resource-locks "$ARTIFACT_DIR/resource-locks.json" \
+            --retail-prices "$ARTIFACT_DIR/retail-prices.json" \
+            --resource-group "$RESOURCE_GROUP" \
+            --location "$LOCATION" \
+            --backend-vm-size "$BACKEND_VM_SIZE" \
+            --backend-vm-count 2 \
+            --output "$ARTIFACT_DIR/planning-context-assessment.json"
 
       - name: Validate and capture exact ARM What-If
         if: inputs.operation == 'what-if' || inputs.operation == 'deploy'
@@ -286,6 +380,8 @@ jobs:
             echo "- Resource group: \`$RESOURCE_GROUP\`"
             echo "- Function App: \`$FUNCTION_APP_NAME\`"
             echo '- Scope excludes the existing collector VM and report-publication resources.'
+            echo '- What-If and deploy operations capture quota, SKU, policy, scoped RBAC, deny-assignment, lock, and CAD retail-price evidence.'
+            echo '- Remaining subscription credit stays explicitly not observable until a separate verified billing evidence path exists.'
             echo '- Detailed non-secret evidence is attached as a workflow artifact.'
           } >> "$GITHUB_STEP_SUMMARY"
 
