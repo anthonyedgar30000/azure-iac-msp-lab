@@ -15,14 +15,14 @@ The existing operations collector remains outside this increment.
 
 ## Live repository baseline
 
-Observed on `2026-07-23` before opening the scoped implementation pull request:
+Observed on `2026-07-23` for draft PR #46:
 
 - repository: `anthonyedgar30000/azure-iac-msp-lab`;
 - default branch: `main`;
 - live `main` head: `590176f890f590759bb9d9fe518314295c8bad6c`;
 - latest merged pull request: PR #45, **Add read-only publication predeployment readiness**;
-- no open pull requests were observed before branch creation;
 - active branch: `feat/demo-backends-api`;
+- active draft pull request: PR #46, **Deploy demo backends and connect frontend API**;
 - no workflow dispatch or Azure mutation is authorized by this repository increment.
 
 Live GitHub, exact-head CI, and fresh scoped Azure evidence remain authoritative.
@@ -136,7 +136,7 @@ The Function disables certificate verification only for the fixed synthetic back
 
 ## Frontend contract
 
-`docs/report-source.json` now provides a default `live_demo_api_url`. The frontend also accepts an `?api=` override.
+`docs/report-source.json` provides a default `live_demo_api_url`. The frontend also accepts an `?api=` override.
 
 When **Run incident analysis** is selected:
 
@@ -249,14 +249,15 @@ Current state:
 
 ```text
 repository_implementation_authored = true
-pull_request_merged                = false
-scoped_workflow_dispatched         = false
-Azure_authentication_authorized    = false
-Azure_mutation_authorized          = false
-backend_or_API_deployed            = false
-frontend_live_verified             = false
+PR46_open_draft                   = true
+PR46_merged                       = false
+scoped_workflow_dispatched        = false
+Azure_authentication_authorized   = false
+Azure_mutation_authorized         = false
+backend_or_API_deployed           = false
+frontend_live_verified            = false
 ```
 
-Repository rollback is closing the pull request or reverting its commits. There is no Azure cleanup for this repository-only increment.
+Repository rollback is closing PR #46 or reverting its commits. There is no Azure cleanup for this repository-only increment.
 
 After an authorized deployment, cleanup must remove only the two backend VMs/NICs/disks/availability set and the Function plan/app/runtime Storage/Application Insights resources identified by deployment outputs. Shared network, load balancer, public IP, Log Analytics, collector, and report-publication resources must remain unchanged and be re-verified.
