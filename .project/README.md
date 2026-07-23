@@ -1,100 +1,122 @@
 # Workflow observability
 
-This directory is the shared operational state for humans and AI-assisted work on the repository. Git, pull requests, CI, and deployment evidence remain authoritative; these files preserve bounded declarations and time-stamped observations so their meaning can be reconstructed across conversations.
-
-The ChatGPT project **HELIX — Governed Agent Engineering** is the umbrella conversational workspace. Within it, **ServiceTracer — Governed Azure Operations Lab** is the bounded repository workstream represented by this repository. Chat context organizes reasoning and handoffs; GitHub and `.project/` preserve implementation and coordination evidence, while fresh Azure evidence determines deployed and operational state.
+This directory preserves governed project memory for humans and AI-assisted work. GitHub, CI, workflow artifacts, and Azure remain the live authorities. `.project/` stores durable declarations, promoted evidence, authority boundaries, and curated history so their meaning survives across conversations.
 
 ## Read order before changing the project
 
-1. Read `active-work.json` for the last substantive baseline, the latest repository observation, the authored-change declaration, authority boundaries, and live-state resolution rules.
-2. Read `workstream-catalog.json` to place the work in one of the six canonical ServiceTracer streams and preserve its claim boundary.
-3. Read `environment-state.json` to distinguish implemented, deployed, and verified facts.
-4. Read the latest entry in `deployment-history.jsonl`.
-5. Read the relevant file in `handoffs/`.
-6. Query live GitHub branch, pull-request, and CI state before writing.
-7. Query fresh authenticated Azure state before making deployed, cost, quota, RBAC, guest-health, rollback, or recovery claims.
+1. Read `active-work.json` for the accepted substantive baseline, latest promoted repository event, declared repository capabilities, authority defaults, promoted operational evidence, and live-resolution rules.
+2. Read `repository-events.jsonl` for curated merge events. It is durable history, not an exhaustive mirror of GitHub.
+3. Read `workstream-catalog.json` to place the work in one of the six canonical ServiceTracer streams.
+4. Read `environment-state.json` and the latest entry in `deployment-history.jsonl`.
+5. Read `handoffs/current-state.md`.
+6. Query live GitHub for the current default-branch head, branches, open pull requests, reviews, threads, mergeability, and exact-head CI.
+7. Query fresh authenticated Azure state before making deployment, cost, quota, RBAC, guest-health, rollback, recovery, or service-validation claims.
 
-## Canonical ServiceTracer workstreams
+## Repository-state model
 
-1. Architecture and design decisions
-2. Azure resource plan and IaC
-3. Deployment evidence and screenshots
-4. Cost, health, and configuration telemetry
-5. ServiceTracer findings and reports
-6. Portfolio/demo narrative
+`active-work.json` uses `project.active-work.v3`.
 
-`workstream-catalog.json` defines each stream's purpose, primary repository paths, and evidence boundary. A bounded implementation branch may touch more than one stream only when its declared objective and permitted file scope make that overlap explicit.
-
-## Repository-state semantics
-
-`active-work.json` uses `project.active-work.v2`.
-
-The model deliberately separates:
+The model separates durable memory from live state:
 
 ```text
 last_substantive_baseline
-!= repository_observation.main_head
+!= latest_promoted_repository_event
 != current_repository_head
+
+durable_history
+!= live_status
 ```
 
-- `last_substantive_baseline` is the most recent accepted commit that materially changed the governed design or implementation.
-- `repository_observation.main_head` is a time-bounded GitHub observation captured before or during the authored change.
-- `current_repository_head` is never predicted or stored as a self-updating truth. Query live GitHub whenever the file is read.
-- Coordination-only merge commits may advance the repository head without changing the last substantive baseline.
+- `last_substantive_baseline` is the latest promoted event that materially changed the governed implementation.
+- `latest_promoted_repository_event` is the newest GitHub event intentionally copied into durable project memory.
+- Neither field claims to be the current GitHub head.
+- `repository-events.jsonl` is curated and non-exhaustive. Missing a newer GitHub event means “not yet promoted,” not “the event did not happen.”
+- The current head, active branch, open pull requests, pull-request status, and current CI status are query-only facts.
 
-A pull request cannot predict the SHA of the merge commit that will contain its own state update. The schema therefore forbids the retired self-referential fields `trusted_baseline`, `workstreams`, `known_open_pull_requests`, and `next_bounded_operation`.
-
-## Authored-change declaration
-
-`authored_change` describes the branch's ownership, scope, authority, permitted paths, verification criteria, failure behavior, and rollback behavior. It is a durable declaration of how the change was governed, **not** a live status record.
-
-Its required semantic marker is:
+The schema and validator reject persisted live-status fields such as:
 
 ```text
-state_semantics = declaration_not_live_status
+repository_observation
+main_head
+open_pull_requests
+active_branch
+active_pull_request
+current_repository_head
+current_branch
+current_pull_request
 ```
 
-The pull request number may be null before the PR is opened and a positive integer afterward. Merge, closure, CI, and review state must still be resolved from live GitHub.
+This prevents a pull request from merging a document that immediately and falsely says its own branch or pull request is still active.
 
-## Bounded authority grants
+## Work ownership
 
-`authority_defaults` remain fail-closed. A workflow, dispatch, Azure authentication, or Azure mutation is unauthorized unless a narrowly scoped entry in `bounded_authority_grants` explicitly records the exception.
+Active write ownership is resolved from live Git and GitHub at the beginning of every increment. It is not persisted as timeless project truth.
 
-A bounded grant must identify:
+A pull-request description carries the branch-specific declaration while the PR is open:
 
-- one workflow path and one operation;
-- the human authorization source and date;
-- whether the active workflow, dispatch, and Azure authentication are allowed;
-- whether Azure mutations are allowed;
-- the protected environment, exact-commit rule, and typed confirmation;
-- permitted operations and a claim boundary.
+- objective and permitted paths;
+- authority and identity boundaries;
+- dependencies, network path, and security controls;
+- cost implications;
+- validation commands and expected outputs;
+- failure, rollback, cleanup, and evidence requirements.
 
-The semantic marker is:
+After merge, those facts remain available in GitHub history. No follow-up “reconcile the reconciliation” PR is required merely to clear the old active branch or PR.
 
 ```text
-state_semantics = bounded_exception_to_false_defaults
+PR_body_describes_open_change
+!= merged_project_live_status
 ```
 
-A read-only grant may authorize OIDC login, resource inventory, ARM validation, and What-If while keeping `azure_mutations_authorized = false`. Such a grant never implies deployment, RBAC changes, guest commands, report publication, or endpoint configuration.
+## Repository events
+
+`repository-events.jsonl` records selected durable GitHub events, currently pull-request merges. Each event carries:
+
+- unique event ID;
+- repository and pull-request identity;
+- title, source head when available, and merge commit;
+- merge time and exact-head CI when available;
+- qualification, evidence source, and claim boundary.
+
+The ledger may be updated during a later substantive increment or by a separately governed post-merge automation. It is not required to predict or immediately record the merge commit of the pull request that edits it.
 
 ```text
-azure_authenticated
-!= azure_mutation_authorized
-
-what_if_completed
-!= deployment_succeeded
+event_not_promoted_yet
+!= event_did_not_happen
 ```
+
+## Authority
+
+`authority_defaults` are fail-closed. Workflow dispatch, Azure authentication, guest commands, and Azure mutations are unauthorized unless a narrowly scoped `bounded_authority_grants` entry and current human instruction explicitly permit them.
+
+A read-only grant may allow OIDC login, inventory, ARM validation, and What-If while keeping mutations prohibited.
+
+```text
+azure_authenticated != azure_mutation_authorized
+what_if_completed != deployment_succeeded
+```
+
+## Repository versus runtime
+
+Repository capability declarations establish versioned implementation only.
+
+```text
+workflow_present != workflow_dispatched
+IaC_declared != Azure_deployed
+deployment_succeeded != service_validated
+resource_exists != securely_configured
+```
+
+`deployment_state` contains only promoted evidence. A false value means no qualifying evidence has been promoted into repository state; it does not replace a fresh Azure query.
 
 ## Write rules
 
-- One bounded change owns writes to one feature branch.
-- Other conversations may review that branch, but must not independently modify it.
-- A new implementation scope gets a new branch and authored-change declaration.
-- Every branch declares its objective, permitted paths, verification criteria, failure behavior, and rollback behavior.
-- Environment claims require a status, evidence source, and last-observed date.
-- `implemented`, `ci_verified`, `deployed`, and `operationally_verified` are different states.
-- Moving a conversation between ChatGPT projects changes conversational context only; it never changes Git, CI, Azure, or execution authority.
-- Never store secrets, bearer tokens, private keys, SAS tokens, or customer evidence here.
+- One bounded feature branch owns one increment.
+- Resolve live GitHub and Azure state before proposing or writing.
+- Do not persist current branch, current PR, current head, or current CI as self-updating truth.
+- Preserve repository history without presenting it as current runtime state.
+- Never expose secrets, tokens, private keys, SAS values, customer evidence, or unredacted protected artifacts.
+- Moving a conversation between ChatGPT projects changes conversational context only; it changes neither GitHub nor Azure authority.
 
 Run the structural check locally with:
 
