@@ -1,7 +1,7 @@
 {
   "schema_version": "project.environment-state.v1",
   "project": "ServiceTracer — Governed Azure Operations Lab",
-  "updated_on": "2026-07-21",
+  "updated_on": "2026-07-23",
   "facts": [
     {
       "fact_id": "operations-collector-vm-size-current",
@@ -106,6 +106,38 @@
       "last_observed_on": "2026-07-21",
       "source": "Workflow run 29856203054 and sanitized review docs/reviews/collector-replacement-plan-2026-07-21.md",
       "notes": "Evidence quality review passed for control-plane inventory. Replacement authorization remains withheld pending guest verification, recovery-point proof, NIC handling, security review, cost controls, and explicit human approval."
+    },
+    {
+      "fact_id": "collector-demo-api-hosting-model",
+      "value": "GitHub Pages to dedicated Azure public IP and second frontend on the existing Standard Load Balancer, forwarding to the private collector at 10.20.40.10 where Nginx terminates TLS and proxies to a loopback-only Python API",
+      "status": "repository_implemented_ci_verified_not_deployed",
+      "last_observed_on": "2026-07-23",
+      "source": "Merged PR #53 and collector-hosted workflow definition",
+      "notes": "Microsoft.Web/App Service is retired from the active path. Repository implementation does not prove public IP creation, load-balancer changes, TLS issuance, API health, or frontend operation."
+    },
+    {
+      "fact_id": "collector-public-ip-quota-headroom",
+      "value": "Public IP Addresses usage 1 of limit 3 in West US 2; normalized remaining headroom 2",
+      "status": "azure_control_plane_observed_time_bounded",
+      "last_observed_on": "2026-07-23",
+      "source": "Collector-hosted demo API run 30036614088, artifact 8575518507",
+      "notes": "Azure CLI serialized currentValue and limit as strings. PR #54 repairs parsing, but a fresh dispatch is required because quota and inventory can change."
+    },
+    {
+      "fact_id": "legacy-app-service-demo-partial-resources",
+      "value": "Application Insights appi-demo-api-mst-dev and Function storage account storfxczr3fewce were observed after the failed Microsoft.Web deployment",
+      "status": "partial_azure_mutation_observed_cleanup_pending_separate_authority",
+      "last_observed_on": "2026-07-23",
+      "source": "Demo backend API run 30029515018 attempts 1 and 2",
+      "notes": "The App Service plan and Function App were not established. This fact records partial state; it does not authorize deletion."
+    },
+    {
+      "fact_id": "collector-demo-api-service-validation",
+      "value": "Not established",
+      "status": "fresh_what_if_deploy_and_verify_required",
+      "last_observed_on": "2026-07-23",
+      "source": "Collector-hosted demo API run 30036614088 and merged PR #54",
+      "notes": "The last collector-hosted run stopped before ARM validation and What-If. No public endpoint, TLS, API health, twenty transactions, CORS, or frontend rendering has been verified."
     }
   ]
 }
