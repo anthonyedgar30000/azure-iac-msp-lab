@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import importlib.util
 from pathlib import Path
 import py_compile
@@ -19,6 +20,26 @@ WORKFLOW_PATH = (
 )
 SCRIPT = SCRIPT_PATH.read_text(encoding="utf-8")
 WORKFLOW = WORKFLOW_PATH.read_text(encoding="utf-8")
+
+
+def literal_command_lists(source: str) -> list[str]:
+    commands: list[str] = []
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or not node.args:
+            continue
+        first = node.args[0]
+        if not isinstance(first, (ast.List, ast.Tuple)):
+            continue
+        tokens: list[str] = []
+        for element in first.elts:
+            if isinstance(element, ast.Constant) and isinstance(element.value, str):
+                tokens.append(element.value)
+            else:
+                break
+        if tokens and tokens[0] == "az":
+            commands.append(" ".join(tokens))
+    return commands
 
 
 class ExistingCollectorReportPublicationReadinessTests(unittest.TestCase):
@@ -61,8 +82,7 @@ class ExistingCollectorReportPublicationReadinessTests(unittest.TestCase):
             self.assertIn(expected, WORKFLOW)
 
     def test_workflow_and_script_have_no_mutation_commands(self) -> None:
-        combined = WORKFLOW + "\n" + SCRIPT
-        for prohibited in (
+        forbidden = (
             "az deployment group create",
             "az role assignment create",
             "az role assignment delete",
@@ -75,8 +95,39 @@ class ExistingCollectorReportPublicationReadinessTests(unittest.TestCase):
             "az policy assignment create",
             "az policy assignment delete",
             "az quota update",
-        ):
-            self.assertNotIn(prohibited, combined)
+        )
+        for prohibited in forbidden:
+            self.assertNotIn(prohibited, WORKFLOW)
+            self.assertNotIn(prohibited, SCRIPT)
+
+        extracted = literal_command_lists(SCRIPT)
+        self.assertGreater(len(extracted), 8)
+        for command in extracted:
+            for prohibited in forbidden:
+                self.assertFalse(
+                    command.startswith(prohibited),
+                    f"Forbidden command was assembled as tokens: {command}",
+                )
+
+    def test_only_expected_azure_command_families_are_assembled(self) -> None:
+        allowed_prefixes = (
+            "az account show",
+            "az account get-access-token",
+            "az group show",
+            "az vm show",
+            "az storage account list",
+            "az rest",
+            "az policy assignment list",
+            "az role assignment list",
+            "az role definition list",
+            "az deployment group validate",
+            "az deployment group what-if",
+        )
+        for command in literal_command_lists(SCRIPT):
+            self.assertTrue(
+                command.startswith(allowed_prefixes),
+                f"Unexpected Azure command family: {command}",
+            )
 
     def test_workflow_captures_required_read_only_evidence(self) -> None:
         for expected in (
