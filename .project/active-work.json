@@ -14,14 +14,14 @@
     "observed_on": "2026-07-23",
     "source": "live_github",
     "main_head": "590176f890f590759bb9d9fe518314295c8bad6c",
-    "head_semantics": "PR #45 merge commit observed before opening the scoped demo-backend/API implementation pull request",
-    "open_pull_requests": [],
+    "head_semantics": "PR #45 merge commit observed before opening scoped demo-backend/API PR #46",
+    "open_pull_requests": [46],
     "claim_boundary": "This is a time-bounded repository observation. Resolve live main, pull requests, CI, and Azure state whenever this file is read."
   },
   "authored_change": {
     "change_id": "demo-backends-api-frontend",
     "branch": "feat/demo-backends-api",
-    "pull_request": null,
+    "pull_request": 46,
     "write_owner": "This ChatGPT conversation — bounded repository implementation authorized by Anthony Edgar with 'Proceed' after correcting scope to demo backends, a service listener, and a frontend-connected API",
     "scope": "Add a collector-independent Bicep entrypoint for the two synthetic VPN backends and a public Azure Function API, package the Python API, connect the GitHub Pages Run incident analysis action to real correlated Azure transactions with controlled fallback, add scoped What-If/deploy/verify automation, tests, documentation, and current project state. No workflow is dispatched and no Azure mutation is performed by this repository increment.",
     "authority": "repository_only_demo_backend_api_implementation",
@@ -56,8 +56,8 @@
       "project validation, all infrastructure tests, main Bicep, and scoped Bicep lint/build pass on the exact PR head",
       "the final diff remains limited to the declared paths"
     ],
-    "failure_behavior": "Keep the pull request draft, inspect the exact test or Bicep failure, patch only declared paths, and do not dispatch the workflow or mutate Azure.",
-    "rollback": "Close the pull request without merge or revert its repository commits. No Azure cleanup applies because this increment does not dispatch or deploy."
+    "failure_behavior": "Keep PR #46 draft, inspect the exact test or Bicep failure, patch only declared paths, and do not dispatch the workflow or mutate Azure.",
+    "rollback": "Close PR #46 without merge or revert its repository commits. No Azure cleanup applies because this increment does not dispatch or deploy."
   },
   "latest_scope_observation": {
     "workflow_run_id": 29985391850,
