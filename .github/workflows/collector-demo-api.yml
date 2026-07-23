@@ -122,7 +122,11 @@ jobs:
       - name: Run repository tests before Azure login
         run: |
           set -euo pipefail
-          python -m unittest infra.tests.test_demo_backend_api infra.tests.test_collector_demo_api -v
+          python -m unittest \
+            infra.tests.test_demo_backend_api \
+            infra.tests.test_collector_demo_api \
+            infra.tests.test_collector_demo_api_readiness \
+            -v
 
       - name: Log in to Azure with workload identity federation
         uses: azure/login@v2
@@ -168,96 +172,23 @@ jobs:
       - name: Enforce collector-hosted deployment readiness
         if: inputs.operation == 'what-if' || inputs.operation == 'deploy'
         env:
-          PREFIX: ${{ inputs.prefix }}
-          LAB_ENVIRONMENT: ${{ inputs.environment }}
           DNS_LABEL: ${{ inputs.dns_label }}
           LOCATION: ${{ inputs.location }}
         run: |
           set -euo pipefail
-          suffix="${PREFIX}-${LAB_ENVIRONMENT}"
-          python - <<'PY'
-          import json
-          import os
-          import re
-          from pathlib import Path
-
-          root = Path(os.environ['ARTIFACT_DIR'])
-          vm = json.loads((root / 'collector-vm.json').read_text(encoding='utf-8'))
-          nic = json.loads((root / 'collector-nic.json').read_text(encoding='utf-8'))
-          module = json.loads((root / 'collector-module-deployment.json').read_text(encoding='utf-8'))
-          usage = json.loads((root / 'network-usage.json').read_text(encoding='utf-8'))
-          locks = json.loads((root / 'resource-locks.json').read_text(encoding='utf-8'))
-          pip_state = json.loads((root / 'demo-api-public-ip-state.json').read_text(encoding='utf-8'))
-
-          blockers = []
-          limitations = []
-          if vm.get('provisioningState') != 'Succeeded':
-              blockers.append('collector_vm_not_succeeded')
-          if vm.get('powerState') not in {'VM running', 'VM deallocated'}:
-              blockers.append('collector_vm_power_state_unexpected')
-
-          configs = nic.get('ipConfigurations') or []
-          if len(configs) != 1:
-              blockers.append('collector_nic_primary_configuration_ambiguous')
-          private_ip = configs[0].get('privateIPAddress') if configs else None
-          if private_ip != '10.20.40.10':
-              blockers.append('collector_private_ip_drift')
-
-          parameters = module.get('properties', {}).get('parameters', {})
-          required_parameters = {
-              'adminUsername', 'dataDiskSizeGb', 'collectorPort',
-              'collectorSourceRepository', 'collectorSourceRef'
-          }
-          missing = sorted(name for name in required_parameters if not parameters.get(name, {}).get('value'))
-          if missing:
-              blockers.append('collector_module_parameters_missing:' + ','.join(missing))
-
-          if any(item.get('level') == 'ReadOnly' for item in locks if isinstance(item, dict)):
-              blockers.append('resource_group_read_only_lock_present')
-
-          if pip_state.get('status') != 'observed_existing':
-              def norm(value):
-                  return re.sub(r'[^a-z0-9]', '', str(value).lower())
-              candidates = []
-              for item in usage if isinstance(usage, list) else []:
-                  name = item.get('name', {}) if isinstance(item, dict) else {}
-                  values = {norm(name.get('value')), norm(name.get('localizedValue'))}
-                  if any(value in {'publicipaddresses', 'publicipaddress'} for value in values):
-                      candidates.append(item)
-              if not candidates:
-                  blockers.append('public_ip_quota_not_observable')
-              else:
-                  current = candidates[0].get('currentValue')
-                  limit = candidates[0].get('limit')
-                  if not isinstance(current, (int, float)) or not isinstance(limit, (int, float)):
-                      blockers.append('public_ip_quota_invalid')
-                  elif limit - current < 1:
-                      blockers.append('public_ip_quota_insufficient')
-
-          prior = json.loads((root / 'prior-demo-api-resources.json').read_text(encoding='utf-8'))
-          if prior:
-              limitations.append('previous_app_service_attempt_left_resources_for_separate_cleanup_review')
-
-          assessment = {
-              'schema_version': 'servicetracer.collector-demo-api-readiness.v1',
-              'collector_vm_name': vm.get('name'),
-              'collector_vm_size': vm.get('hardwareProfile', {}).get('vmSize'),
-              'collector_private_ip': private_ip,
-              'dns_label': os.environ['DNS_LABEL'],
-              'location': os.environ['LOCATION'],
-              'blockers': blockers,
-              'limitations': limitations,
-              'deployment_decision_ready': not blockers,
-              'microsoft_web_required': False,
-              'deployment_authorized': False,
-              'azure_mutations_performed': False,
-          }
-          (root / 'readiness-assessment.json').write_text(
-              json.dumps(assessment, indent=2, sort_keys=True) + '\n', encoding='utf-8'
-          )
-          if blockers:
-              raise SystemExit('Collector demo API readiness blockers: ' + ', '.join(blockers))
-          PY
+          python infra/scripts/assess_collector_demo_api_readiness.py \
+            --collector-vm "$ARTIFACT_DIR/collector-vm.json" \
+            --collector-nic "$ARTIFACT_DIR/collector-nic.json" \
+            --collector-module-deployment "$ARTIFACT_DIR/collector-module-deployment.json" \
+            --network-usage "$ARTIFACT_DIR/network-usage.json" \
+            --resource-locks "$ARTIFACT_DIR/resource-locks.json" \
+            --demo-api-public-ip-state "$ARTIFACT_DIR/demo-api-public-ip-state.json" \
+            --prior-demo-api-resources "$ARTIFACT_DIR/prior-demo-api-resources.json" \
+            --dns-label "$DNS_LABEL" \
+            --location "$LOCATION" \
+            --expected-private-ip '10.20.40.10' \
+            --output "$ARTIFACT_DIR/readiness-assessment.json"
+          jq -e '.deployment_decision_ready==true and .public_ip_quota.sufficient==true' "$ARTIFACT_DIR/readiness-assessment.json" > /dev/null
 
       - name: Validate and capture exact ARM What-If
         if: inputs.operation == 'what-if' || inputs.operation == 'deploy'
@@ -280,6 +211,17 @@ jobs:
           collector_port="$(jq -r '.properties.parameters.collectorPort.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
           collector_source_repository="$(jq -r '.properties.parameters.collectorSourceRepository.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
           collector_source_ref="$(jq -r '.properties.parameters.collectorSourceRef.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
+
+          jq -n \
+            --arg collector_private_ip "$collector_private_ip" \
+            --arg collector_vm_size "$collector_vm_size" \
+            --arg collector_admin_username "$collector_admin_username" \
+            --arg collector_data_disk_size "$collector_data_disk_size" \
+            --arg collector_port "$collector_port" \
+            --arg collector_source_repository "$collector_source_repository" \
+            --arg collector_source_ref "$collector_source_ref" \
+            '{collector_private_ip:$collector_private_ip,collector_vm_size:$collector_vm_size,collector_admin_username:$collector_admin_username,collector_data_disk_size_gb:($collector_data_disk_size|tonumber),collector_port:($collector_port|tonumber),collector_source_repository:$collector_source_repository,collector_source_ref:$collector_source_ref}' \
+            > "$ARTIFACT_DIR/effective-collector-parameters.json"
 
           parameters=(
             prefix="$PREFIX"
@@ -321,17 +263,6 @@ jobs:
             --output "$ARTIFACT_DIR/what-if-assessment.json" \
             --suffix "$suffix" \
             --private-ip "$collector_private_ip"
-
-          jq -n \
-            --arg collector_private_ip "$collector_private_ip" \
-            --arg collector_vm_size "$collector_vm_size" \
-            --arg collector_admin_username "$collector_admin_username" \
-            --arg collector_data_disk_size "$collector_data_disk_size" \
-            --arg collector_port "$collector_port" \
-            --arg collector_source_repository "$collector_source_repository" \
-            --arg collector_source_ref "$collector_source_ref" \
-            '{collector_private_ip:$collector_private_ip,collector_vm_size:$collector_vm_size,collector_admin_username:$collector_admin_username,collector_data_disk_size_gb:($collector_data_disk_size|tonumber),collector_port:($collector_port|tonumber),collector_source_repository:$collector_source_repository,collector_source_ref:$collector_source_ref}' \
-            > "$ARTIFACT_DIR/effective-collector-parameters.json"
 
       - name: Deploy collector-hosted demo API
         if: inputs.operation == 'deploy'
@@ -383,6 +314,7 @@ jobs:
         if: inputs.operation == 'deploy' || inputs.operation == 'verify'
         env:
           RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
           PREFIX: ${{ inputs.prefix }}
           LAB_ENVIRONMENT: ${{ inputs.environment }}
           DNS_LABEL: ${{ inputs.dns_label }}
@@ -392,7 +324,7 @@ jobs:
           suffix="${PREFIX}-${LAB_ENVIRONMENT}"
           az network public-ip show --resource-group "$RESOURCE_GROUP" --name "pip-st-demo-api-${suffix}" --output json > "$ARTIFACT_DIR/demo-api-public-ip.json"
           fqdn="$(jq -r '.dnsSettings.fqdn' "$ARTIFACT_DIR/demo-api-public-ip.json")"
-          [[ "$fqdn" == "${DNS_LABEL}.westus2.cloudapp.azure.com" ]]
+          [[ "$fqdn" == "${DNS_LABEL}.${LOCATION}.cloudapp.azure.com" ]]
           health_url="https://${fqdn}/api/health"
           run_url="https://${fqdn}/api/demo/run"
 
@@ -463,6 +395,7 @@ jobs:
             echo "- Resource group: \`$RESOURCE_GROUP\`"
             echo "- DNS label: \`$DNS_LABEL\`"
             echo '- Microsoft.Web/App Service is excluded from this deployment path.'
+            echo '- Public-IP quota evidence preserves raw Azure values, JSON types, normalized counts, and remaining headroom.'
             echo '- The existing collector remains the compute host; only its bounded API exposure and extension are in scope.'
             echo '- Existing Function/App Service leftovers require a separate cleanup decision.'
             echo '- Detailed non-secret evidence is attached as a workflow artifact.'
