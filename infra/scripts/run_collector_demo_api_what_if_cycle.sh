@@ -151,6 +151,14 @@ fi
 
 dispatched_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 confirmation="COLLECTOR-DEMO-API:what-if:${RESOURCE_GROUP}:${DNS_LABEL}"
+preexisting_run_ids="$(gh run list \
+  --repo "$REPOSITORY" \
+  --workflow "$WORKFLOW_FILE" \
+  --event workflow_dispatch \
+  --branch "$DEFAULT_BRANCH" \
+  --limit 50 \
+  --json databaseId \
+  | jq '[.[].databaseId]')"
 
 gh workflow run "$WORKFLOW_FILE" \
   --repo "$REPOSITORY" \
@@ -174,15 +182,37 @@ for _ in $(seq 1 "$RUN_DISCOVERY_ATTEMPTS"); do
     --branch "$DEFAULT_BRANCH" \
     --limit 20 \
     --json databaseId,headSha,createdAt,status,conclusion,url)"
-  run_id="$(jq -r \
-    --arg sha "$REVIEWED_COMMIT" \
+  candidate_count="$(jq \
+    --argjson before "$preexisting_run_ids" \
     --arg started "$dispatched_at" \
-    '[.[] | select(.headSha == $sha and .createdAt >= $started)] | sort_by(.createdAt) | last | .databaseId // empty' \
+    '[.[] | select(.createdAt >= $started and (.databaseId as $id | ($before | index($id)) == null))] | length' \
+    <<<"$runs_json")"
+  if ((candidate_count > 1)); then
+    fail 'multiple new workflow runs appeared after dispatch; ownership is ambiguous' 21
+  fi
+  run_id="$(jq -r \
+    --argjson before "$preexisting_run_ids" \
+    --arg started "$dispatched_at" \
+    '[.[] | select(.createdAt >= $started and (.databaseId as $id | ($before | index($id)) == null))] | first | .databaseId // empty' \
     <<<"$runs_json")"
   [[ -n "$run_id" ]] && break
   sleep "$POLL_INTERVAL_SECONDS"
 done
 [[ -n "$run_id" ]] || fail 'dispatched workflow run could not be identified' 21
+
+identified_run="$(gh run view "$run_id" --repo "$REPOSITORY" --json headSha,status,url)"
+identified_head="$(jq -r '.headSha' <<<"$identified_run")"
+if [[ "$identified_head" != "$REVIEWED_COMMIT" ]]; then
+  gh run cancel "$run_id" --repo "$REPOSITORY" >/dev/null 2>&1 || true
+  transition="$SANITIZED_EVIDENCE_ROOT/stale-dispatched-run-${run_id}.json"
+  write_local_transition \
+    'sync_with_reality' \
+    'stale_or_uncertain_state' \
+    "dispatched run ${run_id} resolved head ${identified_head}, not reviewed commit ${REVIEWED_COMMIT}; cancellation requested" \
+    "$transition"
+  cp "$transition" "$STATE_ROOT/latest-transition.json"
+  exit 24
+fi
 
 raw_run_dir="$RAW_EVIDENCE_ROOT/$run_id"
 sanitized_run_dir="$SANITIZED_EVIDENCE_ROOT/$run_id"
