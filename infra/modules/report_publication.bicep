@@ -6,7 +6,7 @@ param location string
 param tags object
 param collectorPrincipalId string
 
-@description('Browser origins permitted to fetch the public report through CORS.')
+@description('Browser origins permitted to fetch the public report through Blob-service CORS.')
 @minLength(1)
 param allowedOrigins array
 
@@ -30,7 +30,7 @@ resource reportStorage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   kind: 'StorageV2'
   properties: {
     accessTier: 'Hot'
-    allowBlobPublicAccess: false
+    allowBlobPublicAccess: true
     allowCrossTenantReplication: false
     allowSharedKeyAccess: false
     defaultToOAuthAuthentication: true
@@ -96,6 +96,14 @@ resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2023-05-01'
   }
 }
 
+resource publicReportContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobService
+  name: '$web'
+  properties: {
+    publicAccess: 'Blob'
+  }
+}
+
 resource collectorReportWriter 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(reportStorage.id, collectorPrincipalId, blobDataContributorRoleDefinitionId)
   scope: reportStorage
@@ -107,6 +115,8 @@ resource collectorReportWriter 'Microsoft.Authorization/roleAssignments@2022-04-
 }
 
 output storageAccountName string = reportStorage.name
+output blobEndpoint string = reportStorage.properties.primaryEndpoints.blob
 output staticWebsiteEndpoint string = reportStorage.properties.primaryEndpoints.web
-output publicReportUrl string = '${reportStorage.properties.primaryEndpoints.web}reports/technician-handoff-report.json'
+output publicReportContainerName string = publicReportContainer.name
+output publicReportUrl string = '${reportStorage.properties.primaryEndpoints.blob}$web/reports/technician-handoff-report.json'
 output collectorWriterRoleAssignmentId string = collectorReportWriter.id
