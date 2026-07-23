@@ -16,14 +16,20 @@ DEV = (INFRA / "main.dev.bicepparam").read_text(encoding="utf-8")
 class ReportPublicationInfrastructureTests(unittest.TestCase):
     def test_endpoint_is_dedicated_and_uses_secure_write_authentication(self) -> None:
         self.assertIn("kind: 'StorageV2'", MODULE)
-        self.assertIn("allowBlobPublicAccess: false", MODULE)
+        self.assertIn("allowBlobPublicAccess: true", MODULE)
         self.assertIn("allowSharedKeyAccess: false", MODULE)
         self.assertIn("defaultToOAuthAuthentication: true", MODULE)
         self.assertIn("minimumTlsVersion: 'TLS1_2'", MODULE)
         self.assertIn("supportsHttpsTrafficOnly: true", MODULE)
 
-    def test_static_endpoint_has_bounded_browser_access(self) -> None:
-        self.assertIn("staticWebsite", MODULE)
+    def test_blob_endpoint_has_bounded_browser_access(self) -> None:
+        self.assertIn(
+            "Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01",
+            MODULE,
+        )
+        self.assertIn("name: '$web'", MODULE)
+        self.assertIn("publicAccess: 'Blob'", MODULE)
+        self.assertNotIn("publicAccess: 'Container'", MODULE)
         self.assertIn("allowedOrigins: allowedOrigins", MODULE)
         self.assertIn("'GET'", MODULE)
         self.assertIn("'HEAD'", MODULE)
@@ -31,6 +37,15 @@ class ReportPublicationInfrastructureTests(unittest.TestCase):
         self.assertNotIn("allowedOrigins: [\n            '*'", MODULE)
         self.assertIn("isVersioningEnabled: true", MODULE)
         self.assertIn("deleteRetentionPolicy", MODULE)
+
+    def test_public_url_uses_blob_service_not_static_website_endpoint(self) -> None:
+        self.assertIn("output blobEndpoint string", MODULE)
+        self.assertIn("reportStorage.properties.primaryEndpoints.blob", MODULE)
+        self.assertIn("$web/reports/technician-handoff-report.json", MODULE)
+        self.assertNotIn(
+            "output publicReportUrl string = '${reportStorage.properties.primaryEndpoints.web}",
+            MODULE,
+        )
 
     def test_collector_identity_receives_blob_data_role(self) -> None:
         self.assertIn("collectorPrincipalId", MODULE)
