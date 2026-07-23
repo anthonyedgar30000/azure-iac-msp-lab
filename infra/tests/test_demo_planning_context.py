@@ -7,7 +7,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 ASSESSOR = ROOT / "infra" / "scripts" / "assess_demo_planning_context.py"
-WORKFLOW = ROOT / ".github" / "workflows" / "demo-backend-api.yml"
+WORKFLOW = ROOT / ".github" / "workflows" / "collector-demo-api.yml"
 
 
 def load_module(path: Path, name: str):
@@ -159,20 +159,22 @@ class DemoPlanningContextTests(unittest.TestCase):
         self.assertIn("workflow_identity_role_assignments_not_observable", assessment["limitations"])
         self.assertIn("deny_assignments_not_observable", assessment["limitations"])
 
-    def test_workflow_declares_read_only_preflight_evidence(self):
+    def test_workflow_declares_collector_hosting_preflight_evidence(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         for expected in (
-            "az vm list-usage",
-            "az vm list-skus",
-            "az policy assignment list",
-            "az role assignment list",
-            "Microsoft.Authorization/denyAssignments",
+            "az vm show",
+            "az network nic show",
+            "az network nsg show",
+            "az deployment group show",
+            "az network list-usages",
             "az lock list",
-            "prices.azure.com/api/retail/prices",
-            "assess_demo_planning_context.py",
+            "prior-demo-api-resources.json",
+            "readiness-assessment.json",
+            "assert_collector_demo_api_what_if.py",
         ):
             self.assertIn(expected, workflow)
-        self.assertIn("azure_mutations_authorized:($operation==\"deploy\")", workflow)
+        self.assertIn('azure_mutations_authorized:($operation=="deploy")', workflow)
+        self.assertIn("microsoft_web_authorized:false", workflow)
 
 
 if __name__ == "__main__":
