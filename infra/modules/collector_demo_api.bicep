@@ -29,6 +29,7 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
   location: location
   sku: {
     name: 'Standard'
+    tier: 'Regional'
   }
   tags: union(tags, {
     component: 'collector-hosted-demo-api'
@@ -37,6 +38,9 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
   properties: {
     publicIPAllocationMethod: 'Static'
     publicIPAddressVersion: 'IPv4'
+    ddosSettings: {
+      protectionMode: 'VirtualNetworkInherited'
+    }
     dnsSettings: {
       domainNameLabel: dnsLabel
     }
