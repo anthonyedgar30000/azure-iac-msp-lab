@@ -4,54 +4,52 @@
   "updated_on": "2026-07-23",
   "last_substantive_baseline": {
     "branch": "main",
-    "commit": "19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92",
-    "pull_request": 40,
-    "title": "Use ProviderNoRbac for read-only ARM planning",
-    "qualification": "merged_provider_no_rbac_planner_repair_followed_by_successful_read_only_run_29965079470_not_deployed",
-    "claim_boundary": "This baseline proves the read-only planner completed current-state inventory, ProviderNoRbac validation, and What-If against the architecture at commit 19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92. It does not authorize Azure mutation, prove current pricing or quota, deploy report Storage, publish a report, or prove frontend live-data ingestion."
+    "commit": "d181c48bf718c65015f83e04e1bbf9a7bcf152f4",
+    "pull_request": 42,
+    "title": "Use Blob endpoint for browser report CORS",
+    "qualification": "merged_blob_endpoint_architecture_exact_head_ci_passed_then_successful_read_only_four_create_plan_29974111656_not_deployed",
+    "claim_boundary": "This baseline proves the Blob-endpoint repository architecture and a successful read-only four-create Azure plan. It does not prove current pricing, effective role-assignment write permission, deployment, managed-identity publication, browser rendering, or a committed live frontend source."
   },
   "repository_observation": {
     "observed_on": "2026-07-23",
     "source": "live_github",
-    "main_head": "19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92",
-    "head_semantics": "PR #40 merge commit observed before the Blob-endpoint browser-CORS repair branch was opened",
+    "main_head": "d181c48bf718c65015f83e04e1bbf9a7bcf152f4",
+    "head_semantics": "PR #42 merge commit observed before resetting and repairing PR #41 onto current main",
     "open_pull_requests": [
       41
     ],
-    "claim_boundary": "This is time-bounded external evidence. PR #42 was created after this observation. Resolve current head, pull requests, CI, and review state from live GitHub whenever this file is read."
+    "claim_boundary": "This is a time-bounded observation. Resolve the live main head, PR state, reviews, CI, and Azure reality whenever this file is read."
   },
   "authored_change": {
-    "change_id": "blob-endpoint-browser-cors",
-    "branch": "fix/blob-endpoint-browser-cors",
-    "pull_request": 42,
-    "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — bounded Blob-endpoint browser-CORS architecture repair explicitly authorized by Anthony Edgar with 'Proceed'",
-    "scope": "Correct the public-report browser path from the Azure Storage static-website endpoint to the Blob service endpoint. Enable anonymous Blob access only on the dedicated sanitized-output account, declare the $web container with Blob-only public access, preserve managed-identity OAuth writes and exact-origin Blob-service CORS, update tests and documentation, and invalidate the prior three-create planner artifact for execution. No Azure authentication, deployment, Storage mutation, RBAC mutation, VM command, report publication, frontend source change, or workflow dispatch is permitted.",
-    "authority": "repository_only_browser_endpoint_architecture_repair",
+    "change_id": "promote-four-create-live-report-publication",
+    "branch": "feat/promote-live-report-publication",
+    "pull_request": 41,
+    "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — bounded PR #41 repair explicitly authorized by Anthony Edgar with 'Proceed'",
+    "scope": "Rebase the publication execution proposal onto PR #42's merged Blob-endpoint architecture, pin successful read-only planner run 29974111656 and its artifact digest, enforce the exact four-create Storage/Blob/$web/RBAC allowlist, verify Blob-only anonymous reads and managed-identity writes, preserve rollback and protected-resource boundaries, and reconcile project state. This repository-only repair does not authenticate to Azure, grant permissions, dispatch the workflow, deploy resources, run guest commands, publish a report, or change the frontend source.",
+    "authority": "repository_only_execution_workflow_promotion_repair",
     "state_semantics": "declaration_not_live_status",
     "permitted_paths": [
-      "infra/modules/report_publication.bicep",
-      "infra/report-publication-existing-collector.bicep",
-      "infra/tests/test_report_publication.py",
+      ".github/workflows/existing-collector-report-publication.yml",
+      "infra/scripts/verify_existing_collector_publication_plan.py",
+      "infra/scripts/execute_existing_collector_report_publication.sh",
       "infra/tests/test_existing_collector_report_publication.py",
-      "docs/designs/existing-collector-public-report.md",
-      "docs/collector-vm.md",
-      "docs/implementation-status.md",
+      "docs/runbooks/existing-collector-report-publication.md",
       ".project/active-work.json",
       ".project/handoffs/current-state.md"
     ],
     "verification_criteria": [
-      "publicReportUrl uses the Azure Blob service endpoint and the $web object path rather than primaryEndpoints.web",
-      "the dedicated sanitized-output account enables allowBlobPublicAccess while shared-key authorization remains disabled and OAuth remains the default write path",
-      "the explicit $web container resource uses publicAccess Blob and never Container",
-      "Blob-service CORS remains restricted to the reviewed HTTPS origin and GET, HEAD, and OPTIONS",
-      "versioning, seven-day delete retention, and Storage-scoped collector Blob Data Contributor remain declared",
-      "documentation states that CORS is not authentication and anonymous read applies only to sanitized public output",
-      "the successful three-create planner artifact is marked superseded for execution and a fresh four-create plan is required after merge",
-      "project validation, all unit tests, and Bicep lint/build pass for the exact pull-request head",
-      "the final diff remains limited to the nine declared paths"
+      "PR #41 is based on current main commit d181c48bf718c65015f83e04e1bbf9a7bcf152f4 with no merge conflict",
+      "workflow defaults pin planner run 29974111656, commit d181c48bf718c65015f83e04e1bbf9a7bcf152f4, and artifact digest faed857cbd230e55b206ca6ab05adeeca75c98a9a48b0dc43bb04293cde09333",
+      "planner verification accepts exactly one Storage account, Blob service, $web Blob-only container, and Storage-scoped collector role assignment",
+      "Provider execution What-If rejects Modify, Delete, Replace, extra Create, and protected infrastructure changes",
+      "postdeployment verification requires Blob endpoint output, account anonymous Blob allowance, disabled shared-key writes, exact CORS, versioning, retention, $web publicAccess Blob, and exact current-principal role scope",
+      "publisher preflight occurs before deployment and managed-identity publication occurs only after the bounded resources exist",
+      "automatic rollback is armed before the single deployment and can remove only the matching role and dedicated report Storage account",
+      "project validation, all infrastructure tests, ServiceTracer tests, and Bicep lint/build pass on the exact PR head",
+      "the final PR diff remains limited to the seven declared paths"
     ],
-    "failure_behavior": "Keep PR #42 draft, inspect the exact failing test or CI job, patch only the declared paths, and obtain fresh exact-head CI. Do not weaken the sanitized-output boundary, broaden public access to Container, introduce wildcard CORS, enable shared-key writes, modify PR #41, grant Azure permissions, or perform Azure actions.",
-    "rollback": "Close PR #42 without merge or revert its repository-only commits. No Azure rollback or cleanup applies because this increment performs no Azure authentication or Azure mutation."
+    "failure_behavior": "Keep PR #41 draft, inspect the exact failing test or review finding, patch only declared paths, and obtain fresh exact-head CI. Do not dispatch the workflow, grant Azure permissions, weaken the four-create allowlist, broaden anonymous access to Container, enable shared-key writes, introduce wildcard CORS, or touch collector/network resources.",
+    "rollback": "Close PR #41 without merge or reset its branch to main. No Azure rollback applies because this repair performs no Azure authentication or mutation."
   },
   "bounded_authority_grants": [
     {
@@ -64,7 +62,7 @@
       "azure_mutations_authorized": false,
       "authorized_by": "Anthony Edgar",
       "authorized_on": "2026-07-22",
-      "authorization_source": "Explicit user instruction 'Proceed' after the read-only Azure planning boundary was stated",
+      "authorization_source": "Explicit user instruction after the read-only Azure planning boundary was stated",
       "protected_environment": "azure-lab",
       "required_commit_semantics": "exact_40_character_reviewed_commit_checked_out_and_verified",
       "required_confirmation": "PLAN-PUBLICATION:<resource-group>:vm-stcollector-<prefix>-<environment>",
@@ -78,144 +76,96 @@
         "az deployment group what-if"
       ],
       "state_semantics": "bounded_exception_to_false_defaults",
-      "claim_boundary": "This grant authorizes authentication and dispatch only for current-state inventory, ProviderNoRbac ARM validation, and What-If. It does not authorize deployment, role changes, report publication, endpoint configuration, guest commands, or any Azure resource mutation."
+      "claim_boundary": "This grant authorizes Azure reads and ProviderNoRbac planning only. It does not authorize deployment, RBAC changes, report publication, endpoint configuration, guest commands, or any Azure mutation."
     }
   ],
   "completed_increments": [
     {
-      "pull_request": 32,
-      "title": "Add fail-closed collector recovery evidence schemas",
-      "merge_commit": "777ec83b8a447f01904d5f891795ebcb6ab7abaf",
-      "qualification": "merged_exact_head_ci_passed_evidence_quality_changes_required_later_resolved_by_pr34"
-    },
-    {
-      "pull_request": 34,
-      "title": "Remediate PR32 evidence-quality findings",
-      "merge_commit": "36010582460b393c0667e274144d9700e78721bf",
-      "qualification": "repository_design_remediation_exact_head_ci_passed_owner_account_review_accepted_not_independent_not_operationally_verified"
-    },
-    {
-      "pull_request": 35,
-      "title": "Reconcile PR34 merge and project state",
-      "merge_commit": "a115b4cb0f3a3edbefd5171201c07bd144b7bf72",
-      "qualification": "coordination_only_exact_head_ci_passed_owner_account_review_not_independent"
-    },
-    {
-      "pull_request": 36,
-      "title": "Eliminate self-referential project state",
-      "merge_commit": "e6dcb9a2cf1ba05620a294137fea5e21f8dba1ed",
-      "qualification": "coordination_model_exact_head_ci_passed_owner_account_review_not_independent"
-    },
-    {
       "pull_request": 37,
       "title": "Decouple live report publication from collector compute",
       "merge_commit": "54466651f291e271e5da542ea0afb38679ca6ca9",
-      "qualification": "repository_design_and_read_only_planning_path_exact_head_ci_passed_owner_account_review_not_independent_not_deployed"
+      "qualification": "repository_design_and_read_only_planning_path_not_deployed"
     },
     {
       "pull_request": 38,
       "title": "Promote read-only report publication planner",
       "merge_commit": "e379064b7ee8b6a1a8b7731d31dedef1bca19e6f",
-      "qualification": "read_only_workflow_promoted_exact_head_ci_passed_owner_account_review_not_independent_first_dispatch_failed_safely"
+      "qualification": "read_only_workflow_promoted_first_dispatch_failed_safely"
     },
     {
       "pull_request": 39,
       "title": "Repair read-only planner RBAC evidence capture",
       "merge_commit": "3b035171e274819cb9590e32ac2ff752455d4387",
-      "qualification": "repository_repair_exact_head_and_post_merge_ci_passed_owner_account_review_not_independent_second_dispatch_completed_inventory_then_failed_safely_at_provider_validation"
+      "qualification": "rbac_evidence_repair_second_dispatch_reached_provider_validation"
     },
     {
       "pull_request": 40,
       "title": "Use ProviderNoRbac for read-only ARM planning",
       "merge_commit": "19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92",
-      "qualification": "merged_provider_no_rbac_planner_repair_successful_read_only_run_29965079470_not_deployed"
-    }
-  ],
-  "resolved_repository_items": [
-    {
-      "pull_request": 31,
-      "title": "Define collector recovery evidence schemas",
-      "state": "closed_unmerged",
-      "resolution": "superseded_by_pr34_bounded_remediation",
-      "closed_on": "2026-07-22",
-      "claim_boundary": "Historical branch only; not repository authority."
+      "qualification": "provider_no_rbac_repair_then_successful_old_architecture_plan"
     },
     {
-      "pull_request": 33,
-      "title": "Repair collector recovery evidence review findings",
-      "state": "closed_unmerged",
-      "resolution": "superseded_by_merged_pr34_after_parallel_branch_divergence",
-      "closed_on": "2026-07-22",
-      "claim_boundary": "Historical branch only; not repository authority."
+      "pull_request": 42,
+      "title": "Use Blob endpoint for browser report CORS",
+      "merge_commit": "d181c48bf718c65015f83e04e1bbf9a7bcf152f4",
+      "qualification": "blob_endpoint_architecture_merged_then_successful_four_create_read_only_plan"
     }
   ],
   "latest_observed_planner_attempt": {
-    "run_id": 29965079470,
-    "commit": "19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92",
-    "artifact": "existing-collector-report-publication-plan-29965079470-1",
-    "artifact_sha256": "0f0ba512d1c61acc3149cb11c33e66ad7218cc1391f6b32f2fa1176459c2be10",
-    "observed_on": "2026-07-22",
-    "status": "completed_read_only_against_superseded_static_website_endpoint_architecture",
+    "run_id": 29974111656,
+    "commit": "d181c48bf718c65015f83e04e1bbf9a7bcf152f4",
+    "artifact": "existing-collector-report-publication-plan-29974111656-1",
+    "artifact_sha256": "faed857cbd230e55b206ca6ab05adeeca75c98a9a48b0dc43bb04293cde09333",
+    "observed_on": "2026-07-23",
+    "status": "completed_read_only_current_blob_endpoint_architecture",
     "proven": [
-      "exact reviewed merge commit checkout succeeded",
-      "bounded authority validation and static read-only tests succeeded",
-      "Azure OIDC login succeeded",
-      "resource group and current collector identity observations were captured",
-      "no tagged report Storage account existed",
-      "no visible collector publication role assignment existed",
-      "ProviderNoRbac ARM validation completed",
-      "ProviderNoRbac ARM What-If completed with 21 Ignore and exactly three old-architecture Create changes",
+      "exact reviewed commit checkout and bounded authority validation succeeded",
+      "Azure OIDC login and current resource-group and collector inventory succeeded",
+      "no tagged report Storage account or visible collector publication role existed",
+      "ProviderNoRbac validation succeeded",
+      "What-If contained 21 Ignore and exactly four Create changes",
+      "the creates were one Storage account, one Blob service, one $web Blob-only container, and one Storage-scoped collector role assignment",
+      "zero Modify, Delete, and Replace changes were present",
       "no Azure mutation was authorized or performed"
     ],
     "unproven": [
-      "fresh four-create What-If for the Blob-endpoint architecture",
-      "current pricing and quota",
-      "effective execution identity permission",
-      "report endpoint deployment",
-      "account and $web anonymous-read behavior",
+      "current Storage pricing, quota, and policy allowance",
+      "effective execution identity roleAssignments/write permission",
+      "collector publisher availability at execution time",
+      "publication-resource deployment",
       "managed-identity publication",
       "Blob endpoint CORS response",
-      "frontend live-data ingestion"
-    ],
-    "supersession": "The plan evaluated the static-website public URL and did not include an explicit $web container access resource. It is protected historical evidence and must not authorize deployment after PR #42 changes the architecture."
+      "browser rendering and committed live frontend source"
+    ]
   },
   "latest_promoted_evidence": {
-    "event_id": "existing-collector-report-publication-plan-29965079470",
+    "event_id": "existing-collector-report-publication-plan-29974111656",
     "workflow": "Existing collector report publication plan",
-    "run_id": 29965079470,
-    "commit": "19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92",
-    "artifact": "existing-collector-report-publication-plan-29965079470-1",
-    "artifact_sha256": "0f0ba512d1c61acc3149cb11c33e66ad7218cc1391f6b32f2fa1176459c2be10",
-    "observed_on": "2026-07-22",
-    "status": "completed_read_only_superseded_for_execution_by_blob_endpoint_repair",
+    "run_id": 29974111656,
+    "commit": "d181c48bf718c65015f83e04e1bbf9a7bcf152f4",
+    "artifact": "existing-collector-report-publication-plan-29974111656-1",
+    "artifact_sha256": "faed857cbd230e55b206ca6ab05adeeca75c98a9a48b0dc43bb04293cde09333",
+    "observed_on": "2026-07-23",
+    "status": "completed_read_only_current_four_create_architecture",
     "azure_mutations_authorized": false,
     "azure_mutations_performed": false,
-    "freshness_boundary": "This is the latest successfully completed report-publication plan but it evaluates the pre-repair architecture. A fresh plan against the exact merged PR #42 commit is required before proposing or authorizing deployment."
+    "freshness_boundary": "This is current planning evidence for main commit d181c48bf718c65015f83e04e1bbf9a7bcf152f4. Re-resolve Azure state, cost, quota, permissions, collector identity, publisher availability, and exact Provider What-If immediately before any separately authorized deployment."
   },
   "review_state": {
-    "pr40_provider_no_rbac_repair": {
-      "status": "merged_then_read_only_planner_completed_successfully",
-      "reviewed_pull_request": 40,
-      "merge_commit": "19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92",
-      "workflow_run_id": 29965079470,
+    "pr42_blob_endpoint_repair": {
+      "status": "merged_and_read_only_four_create_plan_completed",
+      "reviewed_pull_request": 42,
+      "merge_commit": "d181c48bf718c65015f83e04e1bbf9a7bcf152f4",
+      "planner_run_id": 29974111656,
       "review_account": "pull_request_owner",
       "independent_organizational_approval": false,
-      "claim_boundary": "Planner reliability and read-only Azure evidence only; not deployment permission, mutation authority, publication, or browser proof."
+      "claim_boundary": "Architecture and read-only plan only; not Azure execution or browser proof."
     },
     "pr41_publication_execution_promotion": {
-      "status": "draft_changes_required_browser_endpoint_architecture_invalidated",
+      "status": "draft_repaired_onto_current_main_pending_exact_head_ci_and_review",
       "reviewed_pull_request": 41,
-      "reviewed_head": "b7ade47ef4f54a3a281f7da3b370cdec42a1a9a8",
-      "reviewed_ci_run_id": 29971264215,
-      "review_account": "pull_request_owner",
       "independent_organizational_approval": false,
-      "claim_boundary": "Exact-head CI passed, but the workflow was pinned to the superseded three-create plan and static-website endpoint architecture. It must remain draft and be rebased or repinned after a fresh four-create plan."
-    },
-    "pr42_blob_endpoint_repair": {
-      "status": "draft_authored_change_pending_exact_head_ci_and_review",
-      "reviewed_pull_request": 42,
-      "independent_organizational_approval": false,
-      "claim_boundary": "Repository-only architecture repair. No Azure action or merge is authorized by this state record."
+      "claim_boundary": "Repository-only executable workflow proposal. Merge and Azure dispatch remain separately unauthorized."
     }
   },
   "authority_defaults": {
@@ -223,11 +173,11 @@
     "dispatch_authorized": false,
     "azure_authentication_authorized": false,
     "azure_mutations_authorized": false,
-    "rule": "Defaults remain fail-closed. The validated read-only planning grant is a narrow exception for Azure reads and ProviderNoRbac planning only. Draft PRs do not create execution authority."
+    "rule": "Defaults remain fail-closed. The active read-only planning grant is the only Azure authentication exception; draft PR #41 creates no deployment authority."
   },
   "live_state_resolution": {
     "repository_head": "Query the live GitHub default branch at read time.",
-    "pull_requests": "Query live open pull requests, draft status, reviews, and mergeability at read time.",
+    "pull_requests": "Query live PR head, draft state, mergeability, reviews, threads, and exact-head CI.",
     "ci": "Query workflow runs and jobs for the exact commit under evaluation.",
     "azure": "Use fresh authenticated Azure evidence; repository declarations and historical artifacts are insufficient.",
     "canonical_distinction": "last_substantive_baseline != current_repository_head"
