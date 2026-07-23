@@ -56,7 +56,8 @@ var commonTags = {
 }
 
 module collectorDemoApi './modules/collector_demo_api.bicep' = {
-  name: 'collector-demo-api-${environment}'
+  // Keep this nested deployment name distinct from the parent CLI deployment name.
+  name: 'collector-demo-api-resources-${environment}'
   params: {
     prefix: prefix
     environment: environment
