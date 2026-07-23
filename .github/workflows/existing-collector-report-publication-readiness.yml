@@ -1,0 +1,249 @@
+name: Existing collector report publication readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      resource_group:
+        description: 'Existing bounded ServiceTracer resource group'
+        required: true
+        default: rg-servicetracer-dev-westus2
+        type: string
+      location:
+        description: 'Expected Azure region'
+        required: true
+        default: westus2
+        type: string
+      prefix:
+        description: 'Bicep resource-name prefix'
+        required: true
+        default: mst
+        type: string
+      environment:
+        description: 'Lab environment'
+        required: true
+        default: dev
+        type: choice
+        options: [dev, test]
+      allowed_origin:
+        description: 'Exact HTTPS browser origin permitted by Blob CORS'
+        required: true
+        default: https://anthonyedgar30000.github.io
+        type: string
+      maximum_monthly_cost_cad:
+        description: 'Maximum reviewed monthly cost ceiling in CAD; maximum 10.00'
+        required: true
+        default: '10.00'
+        type: string
+      planner_run_id:
+        description: 'Pinned successful read-only publication planner run'
+        required: true
+        default: '29979955391'
+        type: string
+      planner_commit:
+        description: 'Exact commit evaluated by the pinned planner'
+        required: true
+        default: c3a17f8765fc7b9e43ef5f92a490ee43246ef35e
+        type: string
+      planner_artifact_digest:
+        description: 'Pinned planner artifact SHA-256'
+        required: true
+        default: sha256:cb2b3ec7f9563d376e0ac4bae4e089af03a506ee272573445bf6510b946712bc
+        type: string
+      reviewed_commit:
+        description: 'Exact 40-character reviewed commit containing this readiness workflow'
+        required: true
+        type: string
+      confirmation:
+        description: 'Enter READINESS-PUBLICATION:<resource-group>:vm-stcollector-<prefix>-<environment>'
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+concurrency:
+  group: existing-collector-report-publication-readiness-${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+  ARTIFACT_DIR: existing-collector-report-publication-readiness-evidence
+
+jobs:
+  readiness:
+    name: Capture publication readiness without Azure mutation
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 45
+    steps:
+      - name: Check out exact reviewed repository state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.reviewed_commit }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate bounded read-only readiness authority
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+          MAXIMUM_MONTHLY_COST_CAD: ${{ inputs.maximum_monthly_cost_cad }}
+          PLANNER_RUN_ID: ${{ inputs.planner_run_id }}
+          PLANNER_COMMIT: ${{ inputs.planner_commit }}
+          PLANNER_ARTIFACT_DIGEST: ${{ inputs.planner_artifact_digest }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          [[ "$RESOURCE_GROUP" =~ ^rg-servicetracer-(dev|test)(-[a-z0-9-]+)?$ ]]
+          [[ "$LOCATION" =~ ^[a-z0-9]+$ ]]
+          [[ "$PREFIX" =~ ^[a-z0-9]{2,12}$ ]]
+          [[ "$LAB_ENVIRONMENT" =~ ^(dev|test)$ ]]
+          [[ "$ALLOWED_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]
+          [[ "$MAXIMUM_MONTHLY_COST_CAD" =~ ^[0-9]+([.][0-9]{1,2})?$ ]]
+          awk -v amount="$MAXIMUM_MONTHLY_COST_CAD" 'BEGIN { exit !(amount <= 10.00) }'
+          [[ "$PLANNER_RUN_ID" == '29979955391' ]]
+          [[ "$PLANNER_COMMIT" == 'c3a17f8765fc7b9e43ef5f92a490ee43246ef35e' ]]
+          [[ "$PLANNER_ARTIFACT_DIGEST" == 'sha256:cb2b3ec7f9563d376e0ac4bae4e089af03a506ee272573445bf6510b946712bc' ]]
+          [[ "$REVIEWED_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$(git rev-parse HEAD)" == "$REVIEWED_COMMIT" ]]
+          collector_vm="vm-stcollector-${PREFIX}-${LAB_ENVIRONMENT}"
+          expected="READINESS-PUBLICATION:${RESOURCE_GROUP}:${collector_vm}"
+          [[ "$CONFIRMATION" == "$expected" ]] || {
+            echo "Confirmation must exactly equal: $expected" >&2
+            exit 1
+          }
+          jq -n \
+            --arg reviewed_commit "$REVIEWED_COMMIT" \
+            --arg planner_run_id "$PLANNER_RUN_ID" \
+            --arg planner_commit "$PLANNER_COMMIT" \
+            --arg planner_artifact_digest "$PLANNER_ARTIFACT_DIGEST" \
+            --arg resource_group "$RESOURCE_GROUP" \
+            --arg location "$LOCATION" \
+            --arg collector_vm "$collector_vm" \
+            --arg allowed_origin "$ALLOWED_ORIGIN" \
+            --arg maximum_monthly_cost_cad "$MAXIMUM_MONTHLY_COST_CAD" \
+            '{operation:"existing_collector_report_publication_readiness",reviewed_commit:$reviewed_commit,planner_run_id:($planner_run_id|tonumber),planner_commit:$planner_commit,planner_artifact_digest:$planner_artifact_digest,resource_group:$resource_group,location:$location,collector_vm:$collector_vm,allowed_origin:$allowed_origin,maximum_monthly_cost_cad:($maximum_monthly_cost_cad|tonumber),azure_authentication_authorized:true,azure_mutations_authorized:false,vm_run_command_authorized:false,deployment_authorized:false}' \
+            > "$ARTIFACT_DIR/request.json"
+
+      - name: Prove readiness workflow and assessor are read-only before Azure login
+        run: |
+          set -euo pipefail
+          python .project/validate.py
+          python -m unittest infra.tests.test_existing_collector_report_publication_readiness
+          python -m py_compile infra/scripts/assess_existing_collector_publication_readiness.py
+
+      - name: Download and verify the pinned planner artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLANNER_RUN_ID: ${{ inputs.planner_run_id }}
+          PLANNER_COMMIT: ${{ inputs.planner_commit }}
+          PLANNER_ARTIFACT_DIGEST: ${{ inputs.planner_artifact_digest }}
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+        run: |
+          set -euo pipefail
+          collector_vm="vm-stcollector-${PREFIX}-${LAB_ENVIRONMENT}"
+          plan_dir="$ARTIFACT_DIR/planner-evidence"
+          mkdir -p "$plan_dir"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PLANNER_RUN_ID}" > "$ARTIFACT_DIR/planner-run.json"
+          jq -e --arg sha "$PLANNER_COMMIT" '.status == "completed" and .conclusion == "success" and .head_sha == $sha' "$ARTIFACT_DIR/planner-run.json" >/dev/null
+          artifact_name="existing-collector-report-publication-plan-${PLANNER_RUN_ID}-1"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PLANNER_RUN_ID}/artifacts" > "$ARTIFACT_DIR/planner-artifacts.json"
+          artifact_id="$(jq -r --arg name "$artifact_name" '.artifacts[] | select(.name == $name and .expired == false) | .id' "$ARTIFACT_DIR/planner-artifacts.json")"
+          artifact_digest="$(jq -r --arg name "$artifact_name" '.artifacts[] | select(.name == $name and .expired == false) | .digest' "$ARTIFACT_DIR/planner-artifacts.json")"
+          [[ -n "$artifact_id" && "$artifact_digest" == "$PLANNER_ARTIFACT_DIGEST" ]]
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > "$ARTIFACT_DIR/planner-artifact.zip"
+          echo "${PLANNER_ARTIFACT_DIGEST#sha256:}  $ARTIFACT_DIR/planner-artifact.zip" | sha256sum -c -
+          unzip -q "$ARTIFACT_DIR/planner-artifact.zip" -d "$plan_dir"
+          python infra/scripts/verify_existing_collector_publication_plan.py \
+            --artifact-dir "$plan_dir" \
+            --expected-run-id "$PLANNER_RUN_ID" \
+            --expected-commit "$PLANNER_COMMIT" \
+            --expected-resource-group "$RESOURCE_GROUP" \
+            --expected-location "$LOCATION" \
+            --expected-prefix "$PREFIX" \
+            --expected-environment "$LAB_ENVIRONMENT" \
+            --expected-allowed-origin "$ALLOWED_ORIGIN" \
+            --expected-collector-vm "$collector_vm" \
+            --output "$ARTIFACT_DIR/planner-verification.json"
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Capture current cost, quota, policy, identity, permission, and What-If evidence
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+          MAXIMUM_MONTHLY_COST_CAD: ${{ inputs.maximum_monthly_cost_cad }}
+        run: |
+          set -euo pipefail
+          python infra/scripts/assess_existing_collector_publication_readiness.py \
+            --resource-group "$RESOURCE_GROUP" \
+            --location "$LOCATION" \
+            --prefix "$PREFIX" \
+            --environment "$LAB_ENVIRONMENT" \
+            --allowed-origin "$ALLOWED_ORIGIN" \
+            --maximum-monthly-cost-cad "$MAXIMUM_MONTHLY_COST_CAD" \
+            --plan-verification "$ARTIFACT_DIR/planner-verification.json" \
+            --plan-parameters "$ARTIFACT_DIR/planner-evidence/deployment-parameters.json" \
+            --artifact-dir "$ARTIFACT_DIR/readiness"
+
+      - name: Write readiness summary
+        if: always()
+        run: |
+          {
+            echo '## Existing collector publication readiness'
+            echo
+            echo '- Azure mutations authorized: `false`'
+            echo '- Azure mutations performed: `false`'
+            echo '- VM Run Command authorized: `false`'
+            if [[ -s "$ARTIFACT_DIR/readiness/readiness-summary.json" ]]; then
+              ready="$(jq -r '.ready_for_separate_deployment_decision' "$ARTIFACT_DIR/readiness/readiness-summary.json")"
+              echo "- Ready for separate deployment decision: \`$ready\`"
+              echo '- Blocking checks:'
+              jq -r '.blocking_checks[]? | "  - `" + . + "`"' "$ARTIFACT_DIR/readiness/readiness-summary.json"
+            else
+              echo '- Readiness evidence capture did not complete.'
+            fi
+            echo '- Readiness does not authorize workflow dispatch or Azure mutation.'
+            echo '- Publisher guest preflight remains an execution-time gate because VM Run Command is outside this workflow.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Write portable evidence manifest
+        if: always()
+        run: |
+          set -euo pipefail
+          find "$ARTIFACT_DIR" -type f ! -name artifact-manifest.sha256 -printf '%P\0' \
+            | sort -z \
+            | while IFS= read -r -d '' relative; do
+                sha256sum "$ARTIFACT_DIR/$relative" | sed "s#  $ARTIFACT_DIR/#  #"
+              done > "$ARTIFACT_DIR/artifact-manifest.sha256"
+
+      - name: Upload protected non-secret readiness evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: existing-collector-report-publication-readiness-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
