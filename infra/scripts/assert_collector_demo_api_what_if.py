@@ -17,7 +17,13 @@ FORBIDDEN_PROVIDER_FRAGMENTS = (
     "/providers/Microsoft.Insights/components/",
 )
 PASSIVE_CHANGE_TYPES = {"Ignore", "NoChange"}
-TARGET_CHANGE_TYPES = {"Create", "NoChange"}
+DEFAULT_TARGET_CHANGE_TYPES = {"Create", "NoChange"}
+PUBLIC_IP_RECONCILIATION = {
+    "path": "tags.exposure",
+    "propertyChangeType": "Modify",
+    "before": "load-balanced-public-https",
+    "after": "dedicated-load-balanced-public-https",
+}
 
 
 def _load_json(path: Path) -> Any:
@@ -72,6 +78,20 @@ def _validate_public_ip(item: dict[str, Any], *, dns_label: str) -> None:
     dns_settings = properties.get("dnsSettings")
     if not isinstance(dns_settings, dict) or dns_settings.get("domainNameLabel") != dns_label:
         raise SystemExit("Collector API public IP DNS label differs from the bounded request")
+
+
+def _validate_public_ip_reconciliation(item: dict[str, Any]) -> None:
+    delta = item.get("delta")
+    if not isinstance(delta, list) or len(delta) != 1:
+        raise SystemExit("Collector API public IP Modify must contain exactly one approved delta")
+    change = delta[0]
+    if not isinstance(change, dict):
+        raise SystemExit("Collector API public IP delta must be an object")
+    observed = {key: change.get(key) for key in PUBLIC_IP_RECONCILIATION}
+    if observed != PUBLIC_IP_RECONCILIATION:
+        raise SystemExit("Collector API public IP Modify leaves the bounded exposure-tag reconciliation")
+    if change.get("children") not in (None, []):
+        raise SystemExit("Collector API public IP reconciliation must not contain nested changes")
 
 
 def _validate_dedicated_load_balancer(
@@ -214,14 +234,16 @@ def classify(
             + ", ".join(active_managed_provider_changes)
         )
 
+    public_ip_suffix = f"/publicIPAddresses/pip-st-demo-api-{suffix}"
     target_suffixes = {
-        f"/publicIPAddresses/pip-st-demo-api-{suffix}": "Microsoft.Network/publicIPAddresses",
+        public_ip_suffix: "Microsoft.Network/publicIPAddresses",
         f"/loadBalancers/lb-st-demo-api-{suffix}": "Microsoft.Network/loadBalancers",
         "/securityRules/Allow-Demo-API-HTTP-From-Internet": "Microsoft.Network/networkSecurityGroups/securityRules",
         "/securityRules/Allow-Demo-API-HTTPS-From-Internet": "Microsoft.Network/networkSecurityGroups/securityRules",
         f"/virtualMachines/vm-stcollector-{suffix}/extensions/servicetracer-demo-api": "Microsoft.Compute/virtualMachines/extensions",
     }
     matched_targets: dict[str, str] = {}
+    approved_reconciliations: list[str] = []
     unexpected_creates: list[str] = []
     seen_resource_ids: set[str] = set()
 
@@ -238,7 +260,10 @@ def classify(
             None,
         )
         if matched_suffix is not None:
-            if change_type not in TARGET_CHANGE_TYPES:
+            allowed_change_types = set(DEFAULT_TARGET_CHANGE_TYPES)
+            if matched_suffix == public_ip_suffix:
+                allowed_change_types.add("Modify")
+            if change_type not in allowed_change_types:
                 raise SystemExit(f"Target resource has an unapproved change type {change_type}: {resource_id}")
             expected_type = target_suffixes[matched_suffix]
             if _resource_type(item) != expected_type:
@@ -250,6 +275,9 @@ def classify(
                 virtual_network_id=virtual_network_id,
                 dns_label=dns_label,
             )
+            if change_type == "Modify":
+                _validate_public_ip_reconciliation(item)
+                approved_reconciliations.append(resource_id)
             matched_targets[matched_suffix] = change_type
         elif change_type == "Create":
             resource_type = _resource_type(item)
@@ -265,10 +293,12 @@ def classify(
     if missing_targets:
         raise SystemExit("What-If omitted required collector API targets: " + ", ".join(missing_targets))
 
+    approved_reconciliation_ids = {resource_id.lower() for resource_id in approved_reconciliations}
     forbidden = [
         str(item.get("resourceId") or item.get("changeType"))
         for item in changes
         if item.get("changeType") not in {"Create", "Ignore", "NoChange"}
+        and str(item.get("resourceId") or "").lower() not in approved_reconciliation_ids
     ]
     if forbidden:
         raise SystemExit(
@@ -283,6 +313,7 @@ def classify(
         "total_changes": len(changes),
         "creates": len(creates),
         "target_resource_states": matched_targets,
+        "approved_reconciliations": approved_reconciliations,
         "ignored_managed_leftovers": ignored_managed_leftovers,
         "collector_nic_modifications": [],
         "collector_vm_modifications": [],
