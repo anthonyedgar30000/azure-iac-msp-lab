@@ -1,184 +1,262 @@
 # Current project handoff
 
-## Live repository reality
+## Corrected workstream
 
-Observed on `2026-07-23` before opening PR #45:
+The active goal is the interactive ServiceTracer Azure demo—not collector replacement and not public-report publication.
+
+```text
+GitHub Pages frontend
+→ Azure Function demo API
+→ existing public Load Balancer TCP 443
+→ VPN-01 healthy listener / VPN-02 simulated RADIUS-timeout listener
+```
+
+The existing operations collector remains outside this increment.
+
+## Live repository baseline
+
+Observed on `2026-07-23` before opening the scoped implementation pull request:
 
 - repository: `anthonyedgar30000/azure-iac-msp-lab`;
 - default branch: `main`;
-- live `main` head: `e77d5e9c59537a6cd0ad05858565b2a51942e278`;
-- latest merged pull request: PR #44, **Repin live publication to planner run 29979955391**;
-- no open pull requests were observed before PR #45 was created;
-- the mutation-capable publication workflow is present on `main` and pinned to the current verified planner artifact;
-- no post-merge CI status was attached to merge commit `e77d5e9...`; PR #44 exact-head CI passed before merge.
+- live `main` head: `590176f890f590759bb9d9fe518314295c8bad6c`;
+- latest merged pull request: PR #45, **Add read-only publication predeployment readiness**;
+- no open pull requests were observed before branch creation;
+- active branch: `feat/demo-backends-api`;
+- no workflow dispatch or Azure mutation is authorized by this repository increment.
 
-Active repository-only increment:
+Live GitHub, exact-head CI, and fresh scoped Azure evidence remain authoritative.
 
-- branch: `feat/publication-predeployment-readiness`;
-- draft pull request: PR #45, **Add read-only publication predeployment readiness**;
-- authority: add a read-only predeployment-readiness workflow and supporting evidence controls only.
+## Scope correction from the failed broad lifecycle run
 
-Live GitHub, exact-head CI, and fresh Azure evidence remain authoritative.
-
-## Current planner evidence
-
-Planner run `29979955391` completed successfully against exact commit `c3a17f8765fc7b9e43ef5f92a490ee43246ef35e`.
+Uploaded workflow logs for run `29985391850` showed an attempted broad **Azure lab lifecycle** deploy with:
 
 ```text
-artifact: existing-collector-report-publication-plan-29979955391-1
-digest:   sha256:cb2b3ec7f9563d376e0ac4bae4e089af03a506ee272573445bf6510b946712bc
+deploy_demo_backends          = false
+deploy_public_report_endpoint = false
 ```
 
-The downloaded artifact and all 13 internal manifest entries verified. The plan proved:
-
-- resource group and collector inventory succeeded;
-- the collector retained the reviewed system-assigned principal;
-- no report Storage account or visible publication role existed;
-- ProviderNoRbac validation succeeded;
-- What-If contained 21 `Ignore`, exactly four `Create`, and zero `Modify`, `Delete`, or `Replace` changes;
-- the four creates were one Standard LRS Storage account, one Blob service, one `$web` Blob-only container, and one Storage-scoped Storage Blob Data Contributor assignment;
-- no Azure mutation was authorized or performed.
+The run authenticated to Azure and performed reads, then stopped before Bicep What-If because the existing collector VM image differs from the current repository declaration. No collector replacement, backend deployment, API deployment, report deployment, or other Bicep mutation occurred.
 
 ```text
-planner_evidence_verified
-!= current_cost_verified
-!= current_quota_verified
-!= effective_execution_permission_verified
-!= deployment_authorized
+broad_lifecycle_collector_drift
+!= blocker_for_collector_independent_demo_scope
 ```
 
-## Merged execution workflow
+The new workflow does not call `resolve_vm_plan.sh`, does not declare `deployOperationsCollector`, and does not manage `vm-stcollector-mst-dev`.
 
-The execution workflow on `main` is pinned to:
+## Existing dependencies
 
-```text
-planner_run_id: 29979955391
-planner_commit: c3a17f8765fc7b9e43ef5f92a490ee43246ef35e
-planner_artifact_digest: sha256:cb2b3ec7f9563d376e0ac4bae4e089af03a506ee272573445bf6510b946712bc
-```
+The scoped template treats the following live resources as dependencies rather than ownership targets:
 
-It has not been dispatched. No Azure execution login, Provider execution validation, Storage creation, role assignment, VM Run Command, report publication, Blob response, or browser rendering has been observed.
+- resource group `rg-servicetracer-dev-westus2` in `westus2`;
+- VNet `vnet-onprem-sim-mst-dev`;
+- edge subnet `snet-edge`;
+- public load balancer `lb-remote-access-mst-dev`;
+- backend pool `be-vpn-gateways`;
+- public IP `pip-remote-access-mst-dev`;
+- Log Analytics workspace `law-mst-dev`.
 
-## Draft PR #45
+The workflow inventories these resources before planning or deployment. Missing or mismatched dependencies fail closed.
+
+## Repository implementation
 
 Declared paths:
 
-- `.github/workflows/existing-collector-report-publication-readiness.yml`;
-- `infra/scripts/assess_existing_collector_publication_readiness.py`;
-- `infra/tests/test_existing_collector_report_publication_readiness.py`;
-- `docs/runbooks/existing-collector-report-publication-readiness.md`;
+- `.github/workflows/ci.yml`;
+- `.github/workflows/demo-backend-api.yml`;
 - `.project/active-work.json`;
-- `.project/handoffs/current-state.md`.
+- `.project/handoffs/current-state.md`;
+- `demo_api/.funcignore`;
+- `demo_api/core.py`;
+- `demo_api/function_app.py`;
+- `demo_api/host.json`;
+- `demo_api/requirements.txt`;
+- `docs/app.js`;
+- `docs/report-source.json`;
+- `docs/runbooks/demo-backend-api.md`;
+- `infra/demo-backend-api.bicep`;
+- `infra/modules/demo_api.bicep`;
+- `infra/scripts/assert_demo_backend_api_what_if.py`;
+- `infra/tests/test_demo_backend_api.py`.
 
-The workflow is manually dispatched, uses exact reviewed-commit checkout, requires protected `azure-lab` OIDC, and requires:
+The implementation adds:
 
-```text
-READINESS-PUBLICATION:<resource-group>:vm-stcollector-<prefix>-<environment>
-```
+1. a collector-independent Bicep entrypoint;
+2. the existing two-backend synthetic listener module;
+3. a Linux Consumption Azure Function and runtime Storage account;
+4. workspace-based Application Insights;
+5. a bounded Python API;
+6. frontend invocation with controlled fixture fallback;
+7. scoped What-If/deploy/verify automation;
+8. regression tests and a runbook.
 
-It pins the same planner run, commit, artifact digest, ZIP digest, internal manifest, current collector principal, and exact four-create classifier used by the execution workflow.
+## Backend listener contract
 
-## Read-only evidence contract
-
-The readiness workflow may capture:
-
-1. current Azure account, resource group, and collector state;
-2. all visible Storage accounts and the deterministic report-account absence check;
-3. subscription-specific `StorageAccounts` current usage and regional limit from the Storage resource provider;
-4. applicable Azure Policy assignments and visible deny assignments at resource-group scope;
-5. the OIDC execution principal from the management token's locally decoded `oid` claim without persisting the token;
-6. direct, group, and inherited role assignments and their role definitions;
-7. whether an applicable role declaration grants `Microsoft.Authorization/roleAssignments/write` at the future report Storage scope;
-8. the complete CAD Azure Retail Prices response for West US 2 Storage consumption meters plus SHA-256 digest;
-9. a conservative deterministic cost estimate with explicit assumptions and CAD 2.00 contingency;
-10. default Provider validation;
-11. exact Provider and ProviderNoRbac What-If evidence;
-12. a blocker list and readiness classification.
-
-The workflow and assessor contain no command that deploys resources, creates or deletes RBAC, changes quota or policy, invokes VM Run Command, publishes a report, or changes the frontend source.
-
-The readiness regression test parses assembled Azure CLI command arrays in the Python abstract syntax tree and restricts them to the reviewed read-only command families. It does not rely only on substring matching.
-
-## Cost model
-
-The estimate uses the highest matching current Blob LRS retail meter for each required category:
+Both VMs run the existing HTTPS listener on port `443`:
 
 ```text
-10 GB-month stored
-100,000 writes/month
-1,000,000 reads/month
-100,000 other operations/month
-10 GB retrieval/month
-CAD 2.00 uncaptured-cost contingency
+GET /healthz
+GET /transaction?correlation_id=<uuid>
 ```
 
-Missing required meters fail readiness closed. The estimate is deliberately conservative retail planning evidence, not a bill, quotation, negotiated rate, tax calculation, or actual cost. The artifact preserves each selected meter for human review.
+- `VPN-01` returns a successful synthetic transaction;
+- `VPN-02` returns HTTP `503` with the simulated `radius_response_timeout` boundary;
+- the load-balancer probe remains shallow TCP, so both listeners can be probe-healthy while user-function outcomes differ.
 
-## Permission and policy boundary
+## API contract
 
-The role-declaration evaluator supports the Provider result but does not supersede it.
+The Azure Function exposes:
 
 ```text
-role_definition_contains_action
-!= effective_permission
+GET  /api/health
+POST /api/demo/run
 ```
 
-Deny assignments, Azure Policy, conditions, propagation, and runtime authorization can still block deployment. Default Provider validation and exact Provider What-If remain the current effective checks.
+Example request:
 
-The current planning identity was previously observed with Contributor, so `roleAssignments/write` is expected to remain a blocker unless a separately reviewed, narrowly scoped execution role exists. Do not grant subscription-wide Owner merely to make readiness green.
+```json
+{
+  "attempts": 20
+}
+```
 
-## Publisher boundary
+Controls:
 
-Publisher guest preflight is deliberately not run by readiness:
+- attempts are limited to 2–50;
+- the caller cannot supply a target URL;
+- the backend target is deployment configuration only;
+- every attempt receives a new correlation ID;
+- expected HTTP `503` bodies are retained as transaction evidence;
+- the response schema is `servicetracer.demo-api-response.v1`;
+- `exact_root_cause_claimed` remains `false`;
+- device-specific diagnosis and repair remain technician-owned.
+
+The Function disables certificate verification only for the fixed synthetic backend target because backend cloud-init generates short-lived self-signed certificates. The browser uses the Azure Function platform hostname and platform TLS.
+
+## Frontend contract
+
+`docs/report-source.json` now provides a default `live_demo_api_url`. The frontend also accepts an `?api=` override.
+
+When **Run incident analysis** is selected:
+
+1. the browser posts 20 attempts to the Function;
+2. the Function runs correlated transactions through the public load balancer;
+3. the result is validated and rendered;
+4. when the API is unavailable, the committed fixture remains usable and the fallback is stated explicitly.
 
 ```text
-publisher_preflight_status = not_run_by_design_requires_execution_authority
+frontend_animation
+→ live_API_invocation
+→ actual_Azure_transactions
+→ bounded_localization
 ```
 
-VM Run Command is outside the read-only workflow. The execution workflow performs publisher preflight before its single bounded deployment.
-
-## Authority state
+## Network and security path
 
 ```text
-readiness_workflow_authored
-!= readiness_workflow_merged
-!= readiness_dispatch_authorized
-!= Azure_authentication_authorized_for_readiness
-!= publication_dispatch_authorized
-!= Azure_mutation_authorized
+Internet browser
+→ HTTPS Azure Function endpoint
+→ fixed HTTPS load-balancer public IP target
+→ TCP 443 backend pool
+→ VPN-01 or VPN-02
 ```
 
-Current classifications:
+Security controls:
 
-- PR #44 merged: **true**;
-- execution workflow pinned to planner run `29979955391`: **true**;
-- execution workflow dispatched: **false**;
-- draft PR #45 open: **true**;
-- proposed readiness workflow present on `main`: **false**;
-- readiness workflow dispatched: **false**;
-- Azure mutation authorized: **false**;
-- Azure deployment observed: **false**;
-- RBAC mutation observed: **false**;
-- managed-identity publication observed: **false**;
-- browser rendering verified: **false**.
+- Function HTTPS-only and TLS 1.2 minimum;
+- exact GitHub Pages CORS origin;
+- FTP disabled;
+- no caller-controlled proxy target;
+- bounded request size by attempt count;
+- backend VMs retain Trusted Launch, SSH key authentication, and systemd hardening;
+- no new RBAC assignment is required by this design;
+- no collector or report-publication resource is declared.
 
-## PR verification gates
+```text
+CORS_allowed
+!= authenticated_API
+```
 
-Before PR #45 can merge:
+The anonymous API is intentionally a bounded public demo endpoint. It exposes synthetic transactions only and must not accept customer data, arbitrary URLs, secrets, raw evidence, or privileged actions.
 
-1. `.project/validate.py` must pass;
-2. the complete unit-test suite must pass;
-3. Bicep lint/build must pass;
-4. the readiness-specific tests must prove the workflow and script are non-mutating;
-5. Python compilation and pure cost/RBAC unit tests must pass;
-6. the final diff must remain limited to the six declared paths;
-7. exact-head technical review must distinguish owner-account review from independent approval;
-8. explicit merge authorization is required.
+## Cost implications
 
-After merge, a separate explicit read-only dispatch decision is required. A successful readiness run still does not authorize the mutation-capable publication workflow.
+The dominant recurring cost is two continuously running `Standard_B1s` Linux VMs. Additional resources are a Consumption Function, Standard LRS runtime Storage, and Application Insights using the existing capped Log Analytics workspace.
 
-## Failure and rollback
+Current West US 2 CAD pricing and the subscription's remaining credit are not yet captured for this exact scope.
 
-A repository failure keeps PR #45 draft and limits repairs to the six declared paths.
+```text
+retail_estimate != actual_cost
+student_credit_available != zero_cost
+```
 
-There is no Azure rollback because neither this PR nor the proposed workflow performs Azure mutation. Repository rollback is closing PR #45 or reverting its commits.
+## Scoped workflow
+
+After merge, use **Actions → Demo backends and API**.
+
+Read-only planning confirmation:
+
+```text
+DEMO-BACKEND-API:what-if:rg-servicetracer-dev-westus2:func-st-demo-mst-dev-aeg30000
+```
+
+A later deployment, only after separate explicit Azure-mutation authorization, uses:
+
+```text
+DEMO-BACKEND-API:deploy:rg-servicetracer-dev-westus2:func-st-demo-mst-dev-aeg30000
+```
+
+The What-If classifier rejects:
+
+- `Modify`, `Delete`, and `Replace`;
+- unexpected resource types;
+- changes to the existing VNet, load balancer, public IP, Log Analytics workspace, or collector VM.
+
+## Required proof
+
+Repository proof:
+
+- `.project/validate.py` passes;
+- all ServiceTracer and infrastructure tests pass;
+- `infra/main.bicep` still lints/builds;
+- `infra/demo-backend-api.bicep` lints/builds;
+- final diff is restricted to declared paths.
+
+Operational proof after a separately authorized deployment:
+
+- both backend VMs are provisioned;
+- both listener services are active;
+- Function health is `healthy`;
+- a 20-attempt run observes both backends;
+- successful and failed transactions are present;
+- VPN-02 has the greater failure rate;
+- exact root cause remains unclaimed;
+- GitHub Pages renders the live API result.
+
+```text
+resource_exists
+!= listener_verified
+listener_verified
+!= API_verified
+API_verified
+!= frontend_verified
+```
+
+## Authority and rollback
+
+Current state:
+
+```text
+repository_implementation_authored = true
+pull_request_merged                = false
+scoped_workflow_dispatched         = false
+Azure_authentication_authorized    = false
+Azure_mutation_authorized          = false
+backend_or_API_deployed            = false
+frontend_live_verified             = false
+```
+
+Repository rollback is closing the pull request or reverting its commits. There is no Azure cleanup for this repository-only increment.
+
+After an authorized deployment, cleanup must remove only the two backend VMs/NICs/disks/availability set and the Function plan/app/runtime Storage/Application Insights resources identified by deployment outputs. Shared network, load balancer, public IP, Log Analytics, collector, and report-publication resources must remain unchanged and be re-verified.
