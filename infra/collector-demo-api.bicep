@@ -18,9 +18,6 @@ param location string = resourceGroup().location
 @description('Existing virtual network resource ID containing the private collector.')
 param virtualNetworkId string
 
-@description('Existing Standard Load Balancer name used for public ingress.')
-param loadBalancerName string
-
 @description('Existing operations NSG name applied to the collector subnet or NIC.')
 param operationsNsgName string
 
@@ -64,7 +61,6 @@ module collectorDemoApi './modules/collector_demo_api.bicep' = {
     location: location
     tags: commonTags
     virtualNetworkId: virtualNetworkId
-    loadBalancerName: loadBalancerName
     operationsNsgName: operationsNsgName
     collectorVmName: collectorVmName
     collectorPrivateIpAddress: collectorPrivateIpAddress
@@ -78,6 +74,7 @@ module collectorDemoApi './modules/collector_demo_api.bicep' = {
 }
 
 output publicIpId string = collectorDemoApi.outputs.publicIpId
+output loadBalancerId string = collectorDemoApi.outputs.loadBalancerId
 output fqdn string = collectorDemoApi.outputs.fqdn
 output healthUrl string = collectorDemoApi.outputs.healthUrl
 output runUrl string = collectorDemoApi.outputs.runUrl
