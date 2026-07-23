@@ -7,15 +7,17 @@
     "commit": "590176f890f590759bb9d9fe518314295c8bad6c",
     "pull_request": 45,
     "title": "Add read-only publication predeployment readiness",
-    "qualification": "merged_repository_controls_exact_head_ci_passed_no_demo_backend_or_api_deployment",
-    "claim_boundary": "This baseline proves the readiness workflow was merged. It does not prove demo backend deployment, API deployment, listener verification, frontend API use, report publication, or collector replacement."
+    "qualification": "merged_readiness_workflow_exact_head_ci_passed_not_dispatched_no_azure_mutation",
+    "claim_boundary": "This baseline proves PR #45 was merged and the read-only readiness workflow is present in the repository. It does not prove readiness dispatch, demo backend deployment, API deployment, listener verification, frontend API use, report publication, or collector replacement."
   },
   "repository_observation": {
     "observed_on": "2026-07-23",
     "source": "live_github",
     "main_head": "590176f890f590759bb9d9fe518314295c8bad6c",
     "head_semantics": "PR #45 merge commit observed before opening scoped demo-backend/API PR #46",
-    "open_pull_requests": [46],
+    "open_pull_requests": [
+      46
+    ],
     "claim_boundary": "This is a time-bounded repository observation. Resolve live main, pull requests, CI, and Azure state whenever this file is read."
   },
   "authored_change": {
@@ -87,6 +89,85 @@
       "claim_boundary": "This grant authorizes Azure reads and ProviderNoRbac planning only. It does not authorize PR #46's demo-backend/API workflow, deployment, collector changes, RBAC changes, report publication, guest commands, or any Azure mutation."
     }
   ],
+  "completed_increments": [
+    {
+      "pull_request": 37,
+      "title": "Decouple live report publication from collector compute",
+      "merge_commit": "54466651f291e271e5da542ea0afb38679ca6ca9",
+      "qualification": "repository_design_and_read_only_planning_path_not_deployed"
+    },
+    {
+      "pull_request": 38,
+      "title": "Promote read-only report publication planner",
+      "merge_commit": "e379064b7ee8b6a1a8b7731d31dedef1bca19e6f",
+      "qualification": "read_only_workflow_promoted_first_dispatch_failed_safely"
+    },
+    {
+      "pull_request": 39,
+      "title": "Repair read-only planner RBAC evidence capture",
+      "merge_commit": "3b035171e274819cb9590e32ac2ff752455d4387",
+      "qualification": "rbac_evidence_repair_second_dispatch_reached_provider_validation"
+    },
+    {
+      "pull_request": 40,
+      "title": "Use ProviderNoRbac for read-only ARM planning",
+      "merge_commit": "19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92",
+      "qualification": "provider_no_rbac_repair_then_successful_old_architecture_plan"
+    },
+    {
+      "pull_request": 42,
+      "title": "Use Blob endpoint for browser report CORS",
+      "merge_commit": "d181c48bf718c65015f83e04e1bbf9a7bcf152f4",
+      "qualification": "blob_endpoint_architecture_merged_then_successful_four_create_read_only_plan"
+    },
+    {
+      "pull_request": 41,
+      "title": "Promote bounded live report publication",
+      "source_head": "722dfcf99c367880147c9fd2f183d54d4d960f56",
+      "merge_commit": "c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
+      "merged_at": "2026-07-23T03:20:47Z",
+      "exact_head_ci": {
+        "run_id": 29976628311,
+        "conclusion": "success"
+      },
+      "owner_account_technical_review_recorded": true,
+      "independent_organizational_approval": false,
+      "qualification": "execution_workflow_merged_repository_verified_not_dispatched_not_deployed"
+    },
+    {
+      "pull_request": 43,
+      "title": "chore: reconcile merged publication project state",
+      "merge_commit": "2d5ad327e45d430105f72eaaf678fe7331464db4",
+      "qualification": "project_state_reconciled_repository_only_no_azure_action"
+    },
+    {
+      "pull_request": 44,
+      "title": "Repin live publication to planner run 29979955391",
+      "source_head": "13dc2be58aa3d16898aa220ac3eb6b451c512318",
+      "merge_commit": "e77d5e9c59537a6cd0ad05858565b2a51942e278",
+      "merged_at": "2026-07-23T05:24:35Z",
+      "exact_head_ci": {
+        "run_id": 29981661611,
+        "conclusion": "success"
+      },
+      "owner_account_technical_review_recorded": true,
+      "independent_organizational_approval": false,
+      "qualification": "current_planner_evidence_pinned_repository_verified_not_dispatched_not_deployed"
+    },
+    {
+      "pull_request": 45,
+      "title": "Add read-only publication predeployment readiness",
+      "source_head": "c216d806ade110bc2e2631197d80ee48ca34ff21",
+      "merge_commit": "590176f890f590759bb9d9fe518314295c8bad6c",
+      "exact_head_ci": {
+        "run_id": 29984051077,
+        "conclusion": "success"
+      },
+      "owner_account_technical_review_recorded": true,
+      "independent_organizational_approval": false,
+      "qualification": "readiness_workflow_merged_repository_verified_not_dispatched_no_azure_action"
+    }
+  ],
   "latest_scope_observation": {
     "workflow_run_id": 29985391850,
     "workflow": "Azure lab lifecycle",
@@ -95,6 +176,34 @@
     "deploy_public_report_endpoint": false,
     "result": "blocked_before_what_if_by_collector_image_drift",
     "interpretation": "The run targeted the full collector-owning lifecycle scope rather than the demo-backend/API scope. It performed Azure login and reads but no Bicep deployment, backend deployment, API deployment, report deployment, or collector replacement."
+  },
+  "latest_observed_planner_attempt": {
+    "run_id": 29979955391,
+    "commit": "c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
+    "artifact": "existing-collector-report-publication-plan-29979955391-1",
+    "artifact_sha256": "cb2b3ec7f9563d376e0ac4bae4e089af03a506ee272573445bf6510b946712bc",
+    "observed_on": "2026-07-23",
+    "status": "completed_read_only_current_blob_endpoint_architecture",
+    "proven": [
+      "exact reviewed-commit checkout and bounded read-only authority validation succeeded",
+      "Azure OIDC login and current resource-group and collector inventory succeeded",
+      "no tagged report Storage account or visible collector publication role existed",
+      "ProviderNoRbac validation succeeded",
+      "What-If contained 21 Ignore and exactly four Create changes",
+      "the creates were one Storage account, one Blob service, one $web Blob-only container, and one Storage-scoped collector role assignment",
+      "zero Modify, Delete, and Replace changes were present",
+      "GitHub artifact digest and all 13 internal evidence-file hashes verified",
+      "no Azure mutation was authorized or performed"
+    ],
+    "unproven": [
+      "current Storage pricing, quota, and policy allowance",
+      "effective execution identity roleAssignments/write permission",
+      "current collector identity and publisher availability at execution time",
+      "publication-resource deployment",
+      "managed-identity publication",
+      "Blob endpoint CORS response",
+      "browser rendering and committed live frontend source"
+    ]
   },
   "latest_promoted_evidence": {
     "event_id": "existing-collector-report-publication-plan-29979955391",
@@ -108,6 +217,72 @@
     "azure_mutations_authorized": false,
     "azure_mutations_performed": false,
     "freshness_boundary": "This evidence applies to the separate public-report publication architecture and does not establish current demo-backend/API state. Fresh scoped Azure inventory and What-If are required before any demo deployment."
+  },
+  "review_state": {
+    "pr41_publication_execution_promotion": {
+      "status": "merged_repository_workflow_present_not_dispatched",
+      "reviewed_pull_request": 41,
+      "source_head": "722dfcf99c367880147c9fd2f183d54d4d960f56",
+      "merge_commit": "c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
+      "exact_head_ci_run_id": 29976628311,
+      "technical_review_ids": [
+        4760496795,
+        4760497152
+      ],
+      "review_account": "pull_request_owner",
+      "independent_organizational_approval": false,
+      "claim_boundary": "Repository promotion is merged. No publication workflow execution, Azure deployment, RBAC mutation, managed-identity publication, Blob/browser proof, or manual repair is established."
+    },
+    "pr44_publication_planner_repin": {
+      "status": "merged_current_plan_pin_present_not_dispatched",
+      "reviewed_pull_request": 44,
+      "source_head": "13dc2be58aa3d16898aa220ac3eb6b451c512318",
+      "merge_commit": "e77d5e9c59537a6cd0ad05858565b2a51942e278",
+      "exact_head_ci_run_id": 29981661611,
+      "technical_review_ids": [
+        4760976546
+      ],
+      "review_account": "pull_request_owner",
+      "independent_organizational_approval": false,
+      "claim_boundary": "Current planner evidence is machine-pinned. No publication workflow dispatch, Azure authentication for execution, permission grant, deployment, or browser proof is established."
+    },
+    "pr45_publication_predeployment_readiness": {
+      "status": "merged_readiness_workflow_present_not_dispatched",
+      "reviewed_pull_request": 45,
+      "source_head": "c216d806ade110bc2e2631197d80ee48ca34ff21",
+      "merge_commit": "590176f890f590759bb9d9fe518314295c8bad6c",
+      "exact_head_ci_run_id": 29984051077,
+      "technical_review_ids": [
+        4761240934
+      ],
+      "review_account": "pull_request_owner",
+      "independent_organizational_approval": false,
+      "claim_boundary": "The read-only readiness workflow is present on main. It has not been dispatched and establishes no current readiness evidence or Azure authority."
+    },
+    "pr46_demo_backends_api": {
+      "status": "draft_repository_implementation_pending_final_exact_head_review_and_merge_decision",
+      "reviewed_pull_request": 46,
+      "independent_organizational_approval": false,
+      "claim_boundary": "Repository implementation only. No scoped What-If, deployment, backend listener verification, API verification, frontend live rendering, or Azure mutation is established."
+    }
+  },
+  "deployment_state": {
+    "publication_workflow_present_on_main": true,
+    "publication_workflow_dispatch_observed": false,
+    "publication_readiness_workflow_present_on_main": true,
+    "publication_readiness_dispatch_observed": false,
+    "demo_backend_api_workflow_present_on_main": false,
+    "demo_backend_api_dispatch_observed": false,
+    "azure_deployment_observed": false,
+    "rbac_mutation_observed": false,
+    "demo_backends_deployed": false,
+    "demo_backend_listeners_verified": false,
+    "demo_api_deployed": false,
+    "demo_api_verified": false,
+    "managed_identity_publication_observed": false,
+    "blob_endpoint_verified": false,
+    "browser_rendering_verified": false,
+    "operationally_verified": false
   },
   "authority_defaults": {
     "active_workflow_present": false,
