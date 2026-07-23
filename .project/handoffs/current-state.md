@@ -111,6 +111,8 @@ The older bounded grant for the read-only planner remains distinct from the publ
 
 Branch: `chore/reconcile-publication-merge-state`
 
+Pull request: draft PR #43.
+
 Temporary owner: this ChatGPT conversation, explicitly authorized by Anthony Edgar with `Proceed`.
 
 Objective: reconcile project-state and handoff documentation to the live PR #41 merge.
@@ -137,4 +139,4 @@ Before any publication workflow dispatch:
 
 ## Safest next step
 
-Complete exact-head CI and review for this two-file reconciliation pull request. Do not dispatch the publication workflow or authenticate to Azure as part of reconciliation.
+Complete exact-head CI and review for draft PR #43. Do not dispatch the publication workflow or authenticate to Azure as part of reconciliation.
