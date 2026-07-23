@@ -66,7 +66,7 @@ Keep the other defaults unless current architecture evidence requires a separate
 
 The workflow queries the official Azure Retail Prices API in CAD for Storage consumption meters in `westus2`. It saves the complete response and its SHA-256 digest.
 
-The deterministic estimate selects the highest matching Hot LRS Blob price found for each category:
+The deterministic estimate selects the highest matching Blob LRS price found for each category:
 
 - data stored;
 - write operations;
@@ -85,7 +85,7 @@ The model assumes:
 CAD 2.00 contingency for uncaptured small charges
 ```
 
-Selecting the highest matching meter is intentionally conservative. Missing or ambiguous required meters fail the cost check closed. The result is a retail-rate planning estimate, not a bill, negotiated price, tax calculation, Microsoft quotation, or actual-cost measurement.
+Selecting the highest matching Blob LRS meter is intentionally conservative and can overestimate the planned Hot Standard LRS workload. The artifact preserves the selected rows for human review. Missing required meters fail the cost check closed. The result is a retail-rate planning estimate, not a bill, negotiated price, tax calculation, Microsoft quotation, or actual-cost measurement.
 
 ## Quota evidence
 
