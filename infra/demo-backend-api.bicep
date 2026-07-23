@@ -93,7 +93,7 @@ module demoApi './modules/demo_api.bicep' = {
   name: 'demo-api-${environment}'
   params: {
     prefix: prefix
-    environment: environment
+    deploymentEnvironment: environment
     location: location
     tags: commonTags
     functionAppName: functionAppName
