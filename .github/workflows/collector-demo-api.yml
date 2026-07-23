@@ -1,0 +1,478 @@
+name: Collector-hosted demo API
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Bounded collector-hosted demo API operation'
+        required: true
+        type: choice
+        options: [what-if, deploy, verify]
+      reviewed_commit:
+        description: 'Exact reviewed commit containing this workflow and installer'
+        required: true
+        type: string
+      environment:
+        description: 'Lab environment'
+        required: true
+        default: dev
+        type: choice
+        options: [dev, test]
+      resource_group:
+        description: 'Existing ServiceTracer resource group'
+        required: true
+        default: rg-servicetracer-dev-westus2
+        type: string
+      location:
+        description: 'Expected Azure region'
+        required: true
+        default: westus2
+        type: string
+      prefix:
+        description: 'Bicep resource-name prefix'
+        required: true
+        default: mst
+        type: string
+      dns_label:
+        description: 'Globally unique Azure public-IP DNS label'
+        required: true
+        default: st-demo-api-aeg30000
+        type: string
+      allowed_origin:
+        description: 'Exact browser origin allowed by CORS'
+        required: true
+        default: https://anthonyedgar30000.github.io
+        type: string
+      confirmation:
+        description: 'Enter COLLECTOR-DEMO-API:<operation>:<resource-group>:<dns-label>'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: collector-demo-api-${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+  ARTIFACT_DIR: collector-demo-api-evidence
+
+jobs:
+  collector-demo-api:
+    name: ${{ inputs.operation }} collector-hosted demo API
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 90
+    steps:
+      - name: Check out exact reviewed repository state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.reviewed_commit }}
+
+      - name: Validate bounded scope and authority
+        env:
+          OPERATION: ${{ inputs.operation }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          DNS_LABEL: ${{ inputs.dns_label }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          ADMIN_SSH_PUBLIC_KEY: ${{ secrets.COLLECTOR_ADMIN_SSH_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          [[ "$OPERATION" =~ ^(what-if|deploy|verify)$ ]]
+          [[ "$REVIEWED_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$(git rev-parse HEAD)" == "$REVIEWED_COMMIT" ]]
+          [[ "$LAB_ENVIRONMENT" =~ ^(dev|test)$ ]]
+          [[ "$RESOURCE_GROUP" =~ ^rg-servicetracer-(dev|test)(-[a-z0-9-]+)?$ ]]
+          [[ "$LOCATION" =~ ^[a-z0-9]+$ ]]
+          [[ "$PREFIX" =~ ^[a-z0-9]{2,12}$ ]]
+          [[ "$DNS_LABEL" =~ ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$ ]]
+          [[ "$ALLOWED_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]
+          expected="COLLECTOR-DEMO-API:${OPERATION}:${RESOURCE_GROUP}:${DNS_LABEL}"
+          [[ "$CONFIRMATION" == "$expected" ]] || {
+            echo "Confirmation must exactly equal: $expected" >&2
+            exit 1
+          }
+          if [[ "$OPERATION" == 'what-if' || "$OPERATION" == 'deploy' ]]; then
+            [[ "$ADMIN_SSH_PUBLIC_KEY" == ssh-* ]] || {
+              echo 'The azure-lab environment must provide COLLECTOR_ADMIN_SSH_PUBLIC_KEY.' >&2
+              exit 1
+            }
+          fi
+          jq -n \
+            --arg operation "$OPERATION" \
+            --arg reviewed_commit "$REVIEWED_COMMIT" \
+            --arg resource_group "$RESOURCE_GROUP" \
+            --arg location "$LOCATION" \
+            --arg environment "$LAB_ENVIRONMENT" \
+            --arg prefix "$PREFIX" \
+            --arg dns_label "$DNS_LABEL" \
+            --arg allowed_origin "$ALLOWED_ORIGIN" \
+            '{schema_version:"servicetracer.collector-demo-api-request.v1",operation:$operation,reviewed_commit:$reviewed_commit,resource_group:$resource_group,location:$location,environment:$environment,prefix:$prefix,dns_label:$dns_label,allowed_origin:$allowed_origin,azure_authentication_authorized:true,azure_mutations_authorized:($operation=="deploy"),collector_configuration_mutation_authorized:($operation=="deploy"),microsoft_web_authorized:false}' \
+            > "$ARTIFACT_DIR/request.json"
+
+      - name: Run repository tests before Azure login
+        run: |
+          set -euo pipefail
+          python -m unittest infra.tests.test_demo_backend_api infra.tests.test_collector_demo_api -v
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Capture current collector and dependency state
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          suffix="${PREFIX}-${LAB_ENVIRONMENT}"
+          az account show --query '{subscriptionId:id,subscriptionName:name,tenantId:tenantId,user:user}' --output json > "$ARTIFACT_DIR/azure-context.json"
+          az group show --name "$RESOURCE_GROUP" --output json > "$ARTIFACT_DIR/resource-group.json"
+          [[ "$(jq -r '.location' "$ARTIFACT_DIR/resource-group.json")" == "$LOCATION" ]]
+          [[ "$(jq -r '.tags.workload // empty' "$ARTIFACT_DIR/resource-group.json")" == 'azure-iac-msp-lab' ]]
+
+          az vm show --resource-group "$RESOURCE_GROUP" --name "vm-stcollector-${suffix}" --show-details --output json > "$ARTIFACT_DIR/collector-vm.json"
+          jq -e '.provisioningState=="Succeeded"' "$ARTIFACT_DIR/collector-vm.json" > /dev/null
+          az network nic show --resource-group "$RESOURCE_GROUP" --name "nic-stcollector-${suffix}" --output json > "$ARTIFACT_DIR/collector-nic.json"
+          az network nsg show --resource-group "$RESOURCE_GROUP" --name "nsg-operations-${suffix}" --output json > "$ARTIFACT_DIR/operations-nsg.json"
+          az network public-ip show --resource-group "$RESOURCE_GROUP" --name "pip-remote-access-${suffix}" --output json > "$ARTIFACT_DIR/remote-access-public-ip.json"
+          az deployment group show --resource-group "$RESOURCE_GROUP" --name "operations-collector-${LAB_ENVIRONMENT}" --output json > "$ARTIFACT_DIR/collector-module-deployment.json"
+
+          if az network public-ip show --resource-group "$RESOURCE_GROUP" --name "pip-st-demo-api-${suffix}" --output json > "$ARTIFACT_DIR/existing-demo-api-public-ip.json" 2>/dev/null; then
+            jq -n '{status:"observed_existing"}' > "$ARTIFACT_DIR/demo-api-public-ip-state.json"
+          else
+            jq -n '{status:"not_present"}' > "$ARTIFACT_DIR/existing-demo-api-public-ip.json"
+            jq -n '{status:"not_present"}' > "$ARTIFACT_DIR/demo-api-public-ip-state.json"
+          fi
+
+          az network list-usages --location "$LOCATION" --output json > "$ARTIFACT_DIR/network-usage.json"
+          az lock list --resource-group "$RESOURCE_GROUP" --output json > "$ARTIFACT_DIR/resource-locks.json"
+          az resource list --resource-group "$RESOURCE_GROUP" \
+            --query "[?contains(name, 'demo-api') || starts_with(type, 'Microsoft.Web/') || type=='Microsoft.Insights/components'].{name:name,type:type,id:id,location:location,tags:tags}" \
+            --output json > "$ARTIFACT_DIR/prior-demo-api-resources.json"
+
+      - name: Enforce collector-hosted deployment readiness
+        if: inputs.operation == 'what-if' || inputs.operation == 'deploy'
+        env:
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          DNS_LABEL: ${{ inputs.dns_label }}
+          LOCATION: ${{ inputs.location }}
+        run: |
+          set -euo pipefail
+          suffix="${PREFIX}-${LAB_ENVIRONMENT}"
+          python - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          root = Path(os.environ['ARTIFACT_DIR'])
+          vm = json.loads((root / 'collector-vm.json').read_text(encoding='utf-8'))
+          nic = json.loads((root / 'collector-nic.json').read_text(encoding='utf-8'))
+          module = json.loads((root / 'collector-module-deployment.json').read_text(encoding='utf-8'))
+          usage = json.loads((root / 'network-usage.json').read_text(encoding='utf-8'))
+          locks = json.loads((root / 'resource-locks.json').read_text(encoding='utf-8'))
+          pip_state = json.loads((root / 'demo-api-public-ip-state.json').read_text(encoding='utf-8'))
+
+          blockers = []
+          limitations = []
+          if vm.get('provisioningState') != 'Succeeded':
+              blockers.append('collector_vm_not_succeeded')
+          if vm.get('powerState') not in {'VM running', 'VM deallocated'}:
+              blockers.append('collector_vm_power_state_unexpected')
+
+          configs = nic.get('ipConfigurations') or []
+          if len(configs) != 1:
+              blockers.append('collector_nic_primary_configuration_ambiguous')
+          private_ip = configs[0].get('privateIPAddress') if configs else None
+          if private_ip != '10.20.40.10':
+              blockers.append('collector_private_ip_drift')
+
+          parameters = module.get('properties', {}).get('parameters', {})
+          required_parameters = {
+              'adminUsername', 'dataDiskSizeGb', 'collectorPort',
+              'collectorSourceRepository', 'collectorSourceRef'
+          }
+          missing = sorted(name for name in required_parameters if not parameters.get(name, {}).get('value'))
+          if missing:
+              blockers.append('collector_module_parameters_missing:' + ','.join(missing))
+
+          if any(item.get('level') == 'ReadOnly' for item in locks if isinstance(item, dict)):
+              blockers.append('resource_group_read_only_lock_present')
+
+          if pip_state.get('status') != 'observed_existing':
+              def norm(value):
+                  return re.sub(r'[^a-z0-9]', '', str(value).lower())
+              candidates = []
+              for item in usage if isinstance(usage, list) else []:
+                  name = item.get('name', {}) if isinstance(item, dict) else {}
+                  values = {norm(name.get('value')), norm(name.get('localizedValue'))}
+                  if any(value in {'publicipaddresses', 'publicipaddress'} for value in values):
+                      candidates.append(item)
+              if not candidates:
+                  blockers.append('public_ip_quota_not_observable')
+              else:
+                  current = candidates[0].get('currentValue')
+                  limit = candidates[0].get('limit')
+                  if not isinstance(current, (int, float)) or not isinstance(limit, (int, float)):
+                      blockers.append('public_ip_quota_invalid')
+                  elif limit - current < 1:
+                      blockers.append('public_ip_quota_insufficient')
+
+          prior = json.loads((root / 'prior-demo-api-resources.json').read_text(encoding='utf-8'))
+          if prior:
+              limitations.append('previous_app_service_attempt_left_resources_for_separate_cleanup_review')
+
+          assessment = {
+              'schema_version': 'servicetracer.collector-demo-api-readiness.v1',
+              'collector_vm_name': vm.get('name'),
+              'collector_vm_size': vm.get('hardwareProfile', {}).get('vmSize'),
+              'collector_private_ip': private_ip,
+              'dns_label': os.environ['DNS_LABEL'],
+              'location': os.environ['LOCATION'],
+              'blockers': blockers,
+              'limitations': limitations,
+              'deployment_decision_ready': not blockers,
+              'microsoft_web_required': False,
+              'deployment_authorized': False,
+              'azure_mutations_performed': False,
+          }
+          (root / 'readiness-assessment.json').write_text(
+              json.dumps(assessment, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          if blockers:
+              raise SystemExit('Collector demo API readiness blockers: ' + ', '.join(blockers))
+          PY
+
+      - name: Validate and capture exact ARM What-If
+        if: inputs.operation == 'what-if' || inputs.operation == 'deploy'
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          DNS_LABEL: ${{ inputs.dns_label }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          ADMIN_SSH_PUBLIC_KEY: ${{ secrets.COLLECTOR_ADMIN_SSH_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          suffix="${PREFIX}-${LAB_ENVIRONMENT}"
+          collector_private_ip="$(jq -r '.ipConfigurations[0].privateIPAddress' "$ARTIFACT_DIR/collector-nic.json")"
+          collector_vm_size="$(jq -r '.hardwareProfile.vmSize' "$ARTIFACT_DIR/collector-vm.json")"
+          collector_admin_username="$(jq -r '.properties.parameters.adminUsername.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
+          collector_data_disk_size="$(jq -r '.properties.parameters.dataDiskSizeGb.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
+          collector_port="$(jq -r '.properties.parameters.collectorPort.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
+          collector_source_repository="$(jq -r '.properties.parameters.collectorSourceRepository.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
+          collector_source_ref="$(jq -r '.properties.parameters.collectorSourceRef.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
+
+          parameters=(
+            prefix="$PREFIX"
+            environment="$LAB_ENVIRONMENT"
+            location="$LOCATION"
+            deployDemoBackends=false
+            deployOperationsCollector=true
+            collectorPrivateIpAddress="$collector_private_ip"
+            collectorAdminUsername="$collector_admin_username"
+            collectorAdminSshPublicKey="$ADMIN_SSH_PUBLIC_KEY"
+            collectorVmSize="$collector_vm_size"
+            collectorDataDiskSizeGb="$collector_data_disk_size"
+            collectorPort="$collector_port"
+            collectorSourceRepository="$collector_source_repository"
+            collectorSourceRef="$collector_source_ref"
+            deployCollectorDemoApi=true
+            collectorDemoApiDnsLabel="$DNS_LABEL"
+            collectorDemoApiAllowedOrigin="$ALLOWED_ORIGIN"
+            collectorDemoApiSourceRef="$REVIEWED_COMMIT"
+            deployPublicReportEndpoint=false
+          )
+
+          az deployment group validate \
+            --resource-group "$RESOURCE_GROUP" \
+            --template-file infra/main.bicep \
+            --parameters "${parameters[@]}" \
+            --output json > "$ARTIFACT_DIR/arm-validation.json"
+
+          az deployment group what-if \
+            --resource-group "$RESOURCE_GROUP" \
+            --template-file infra/main.bicep \
+            --parameters "${parameters[@]}" \
+            --result-format FullResourcePayloads \
+            --no-pretty-print \
+            --output json > "$ARTIFACT_DIR/arm-what-if.json"
+
+          python infra/scripts/assert_collector_demo_api_what_if.py \
+            --input "$ARTIFACT_DIR/arm-what-if.json" \
+            --output "$ARTIFACT_DIR/what-if-assessment.json" \
+            --suffix "$suffix" \
+            --private-ip "$collector_private_ip"
+
+          jq -n \
+            --arg collector_private_ip "$collector_private_ip" \
+            --arg collector_vm_size "$collector_vm_size" \
+            --arg collector_admin_username "$collector_admin_username" \
+            --arg collector_data_disk_size "$collector_data_disk_size" \
+            --arg collector_port "$collector_port" \
+            --arg collector_source_repository "$collector_source_repository" \
+            --arg collector_source_ref "$collector_source_ref" \
+            '{collector_private_ip:$collector_private_ip,collector_vm_size:$collector_vm_size,collector_admin_username:$collector_admin_username,collector_data_disk_size_gb:($collector_data_disk_size|tonumber),collector_port:($collector_port|tonumber),collector_source_repository:$collector_source_repository,collector_source_ref:$collector_source_ref}' \
+            > "$ARTIFACT_DIR/effective-collector-parameters.json"
+
+      - name: Deploy collector-hosted demo API
+        if: inputs.operation == 'deploy'
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          DNS_LABEL: ${{ inputs.dns_label }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          ADMIN_SSH_PUBLIC_KEY: ${{ secrets.COLLECTOR_ADMIN_SSH_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          collector_private_ip="$(jq -r '.collector_private_ip' "$ARTIFACT_DIR/effective-collector-parameters.json")"
+          collector_vm_size="$(jq -r '.collector_vm_size' "$ARTIFACT_DIR/effective-collector-parameters.json")"
+          collector_admin_username="$(jq -r '.collector_admin_username' "$ARTIFACT_DIR/effective-collector-parameters.json")"
+          collector_data_disk_size="$(jq -r '.collector_data_disk_size_gb' "$ARTIFACT_DIR/effective-collector-parameters.json")"
+          collector_port="$(jq -r '.collector_port' "$ARTIFACT_DIR/effective-collector-parameters.json")"
+          collector_source_repository="$(jq -r '.collector_source_repository' "$ARTIFACT_DIR/effective-collector-parameters.json")"
+          collector_source_ref="$(jq -r '.collector_source_ref' "$ARTIFACT_DIR/effective-collector-parameters.json")"
+
+          az deployment group create \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "collector-demo-api-${LAB_ENVIRONMENT}" \
+            --template-file infra/main.bicep \
+            --parameters \
+              prefix="$PREFIX" \
+              environment="$LAB_ENVIRONMENT" \
+              location="$LOCATION" \
+              deployDemoBackends=false \
+              deployOperationsCollector=true \
+              collectorPrivateIpAddress="$collector_private_ip" \
+              collectorAdminUsername="$collector_admin_username" \
+              collectorAdminSshPublicKey="$ADMIN_SSH_PUBLIC_KEY" \
+              collectorVmSize="$collector_vm_size" \
+              collectorDataDiskSizeGb="$collector_data_disk_size" \
+              collectorPort="$collector_port" \
+              collectorSourceRepository="$collector_source_repository" \
+              collectorSourceRef="$collector_source_ref" \
+              deployCollectorDemoApi=true \
+              collectorDemoApiDnsLabel="$DNS_LABEL" \
+              collectorDemoApiAllowedOrigin="$ALLOWED_ORIGIN" \
+              collectorDemoApiSourceRef="$REVIEWED_COMMIT" \
+              deployPublicReportEndpoint=false \
+            --output json > "$ARTIFACT_DIR/deployment-result.json"
+
+      - name: Verify public TLS, API, and frontend contract
+        if: inputs.operation == 'deploy' || inputs.operation == 'verify'
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          DNS_LABEL: ${{ inputs.dns_label }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+        run: |
+          set -euo pipefail
+          suffix="${PREFIX}-${LAB_ENVIRONMENT}"
+          az network public-ip show --resource-group "$RESOURCE_GROUP" --name "pip-st-demo-api-${suffix}" --output json > "$ARTIFACT_DIR/demo-api-public-ip.json"
+          fqdn="$(jq -r '.dnsSettings.fqdn' "$ARTIFACT_DIR/demo-api-public-ip.json")"
+          [[ "$fqdn" == "${DNS_LABEL}.westus2.cloudapp.azure.com" ]]
+          health_url="https://${fqdn}/api/health"
+          run_url="https://${fqdn}/api/demo/run"
+
+          for _ in $(seq 1 30); do
+            if curl --fail --silent --show-error "$health_url" > "$ARTIFACT_DIR/api-health.json"; then
+              break
+            fi
+            sleep 10
+          done
+          jq -e '.status=="healthy" and .backend_target_configured==true and .hosting_model=="collector_vm_systemd"' "$ARTIFACT_DIR/api-health.json" > /dev/null
+
+          curl --fail --silent --show-error \
+            --request POST \
+            --header 'Content-Type: application/json' \
+            --header "Origin: ${ALLOWED_ORIGIN}" \
+            --data '{"attempts":20}' \
+            "$run_url" > "$ARTIFACT_DIR/api-run.json"
+          jq -e '.schema_version=="servicetracer.demo-api-response.v1" and (.transactions|length)==20 and .report.investigation_boundary.exact_root_cause_claimed==false' "$ARTIFACT_DIR/api-run.json" > /dev/null
+
+          curl --fail --silent --show-error \
+            --request OPTIONS \
+            --header "Origin: ${ALLOWED_ORIGIN}" \
+            --header 'Access-Control-Request-Method: POST' \
+            --dump-header "$ARTIFACT_DIR/cors-headers.txt" \
+            --output /dev/null \
+            "$run_url"
+          grep -Eiq "^access-control-allow-origin: ${ALLOWED_ORIGIN}\r?$" "$ARTIFACT_DIR/cors-headers.txt"
+
+          jq -n \
+            --arg fqdn "$fqdn" \
+            --arg health_url "$health_url" \
+            --arg run_url "$run_url" \
+            '{schema_version:"servicetracer.collector-demo-api-verification.v1",fqdn:$fqdn,health_url:$health_url,run_url:$run_url,tls_verified:true,health_verified:true,twenty_correlated_transactions_verified:true,cors_verified:true,service_validated:true}' \
+            > "$ARTIFACT_DIR/verification.json"
+
+      - name: Write evidence manifest
+        if: always()
+        env:
+          OPERATION: ${{ inputs.operation }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          find "$ARTIFACT_DIR" -maxdepth 1 -type f ! -name evidence-manifest.json -print0 \
+            | sort -z \
+            | xargs -0 -r sha256sum \
+            | awk '{print $1 "  " $2}' > "$ARTIFACT_DIR/sha256sums.txt"
+          jq -n \
+            --arg operation "$OPERATION" \
+            --arg reviewed_commit "$REVIEWED_COMMIT" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --rawfile sums "$ARTIFACT_DIR/sha256sums.txt" \
+            '{schema_version:"servicetracer.collector-demo-api-evidence.v1",operation:$operation,reviewed_commit:$reviewed_commit,run_id:$run_id,run_attempt:$run_attempt,generated_at:$generated_at,sha256sums:$sums}' \
+            > "$ARTIFACT_DIR/evidence-manifest.json"
+
+      - name: Write scoped workflow summary
+        if: always()
+        env:
+          OPERATION: ${{ inputs.operation }}
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          DNS_LABEL: ${{ inputs.dns_label }}
+        run: |
+          {
+            echo '## Collector-hosted demo API'
+            echo "- Operation: \`$OPERATION\`"
+            echo "- Resource group: \`$RESOURCE_GROUP\`"
+            echo "- DNS label: \`$DNS_LABEL\`"
+            echo '- Microsoft.Web/App Service is excluded from this deployment path.'
+            echo '- The existing collector remains the compute host; only its bounded API exposure and extension are in scope.'
+            echo '- Existing Function/App Service leftovers require a separate cleanup decision.'
+            echo '- Detailed non-secret evidence is attached as a workflow artifact.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload scoped evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: collector-demo-api-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
