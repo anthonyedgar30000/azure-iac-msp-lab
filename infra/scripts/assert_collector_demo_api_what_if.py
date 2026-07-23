@@ -60,7 +60,7 @@ def classify(
         f"/publicIPAddresses/pip-st-demo-api-{suffix}",
         "/frontendIPConfigurations/fe-public-st-demo-api",
         "/backendAddressPools/be-st-demo-api",
-        "/probes/probe-tcp-443-st-demo-api",
+        "/probes/probe-tcp-80-st-demo-api",
         "/loadBalancingRules/rule-st-demo-api-http",
         "/loadBalancingRules/rule-st-demo-api-https",
         "/securityRules/Allow-Demo-API-HTTP-From-Internet",
