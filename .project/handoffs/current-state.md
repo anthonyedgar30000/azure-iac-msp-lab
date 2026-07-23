@@ -4,183 +4,150 @@
 
 - Project: **ServiceTracer — Governed Azure Operations Lab**.
 - Default branch: `main`.
-- `main` observed before this repair branch opened: `19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92`, the PR #40 merge commit.
-- Open pull requests observed before branch creation: draft PR #41 only.
-- Architecture-repair branch: `fix/blob-endpoint-browser-cors`.
-- Draft architecture-repair pull request: #42.
-- Live GitHub and fresh Azure evidence remain authoritative; this handoff is time-bounded.
+- Current substantive baseline: PR #42 merge commit `d181c48bf718c65015f83e04e1bbf9a7bcf152f4`.
+- Active repository-only increment: draft PR #41 on `feat/promote-live-report-publication`.
+- PR #41 was reset onto current `main` rather than mechanically merging its obsolete static-website branch history.
+- Live GitHub, exact-head CI, and fresh Azure evidence remain authoritative.
 
-## Successful read-only planning evidence
+## Current read-only Azure evidence
 
-The existing-collector publication planner completed successfully as run `29965079470` against exact commit `19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92`.
+Existing collector report publication plan run `29974111656` completed successfully against exact commit `d181c48bf718c65015f83e04e1bbf9a7bcf152f4`.
 
-The run proved:
-
-- exact reviewed-commit checkout and bounded authority validation succeeded;
-- GitHub OIDC login to the intended Azure context succeeded;
-- the expected resource group, region, and existing collector were reached;
-- the collector had a current system-assigned identity and `Succeeded` provisioning state;
-- no tagged report Storage account existed;
-- no visible collector publication role assignment existed;
-- ProviderNoRbac validation completed;
-- What-If completed with 21 `Ignore` and exactly three old-architecture `Create` changes;
-- current price evidence remained unresolved and deployment remained blocked;
-- no Azure mutation was authorized or performed;
-- artifact `existing-collector-report-publication-plan-29965079470-1` was uploaded with digest `0f0ba512d1c61acc3149cb11c33e66ad7218cc1391f6b32f2fa1176459c2be10`.
-
-The successful plan evaluated the pre-repair architecture. It remains protected historical evidence but cannot authorize the revised deployment.
+Evidence artifact:
 
 ```text
-successful_old_plan
-!= current_architecture_plan
-!= deployment_authority
+existing-collector-report-publication-plan-29974111656-1
+sha256:faed857cbd230e55b206ca6ab05adeeca75c98a9a48b0dc43bb04293cde09333
 ```
 
-## Defect discovered during PR #41 review
+The plan proved:
 
-Draft PR #41 promoted an execution workflow that expected the browser to fetch the report from Azure Storage's static-website endpoint while relying on Blob-service CORS.
-
-The static-website endpoint does not apply Blob-service CORS. A deployment could therefore create resources and publish successfully, then fail browser/CORS verification and trigger rollback.
-
-PR #41 exact-head CI passed, but CI success did not validate that Azure product-boundary assumption.
+- exact reviewed-commit checkout and bounded read-only authority validation;
+- Azure OIDC login to the intended context;
+- the expected resource group, region, existing collector, and current system-assigned principal;
+- no tagged report Storage account;
+- no visible collector report-writer assignment;
+- ProviderNoRbac validation success;
+- 25 What-If entries: 21 `Ignore`, exactly four `Create`, zero `Modify`, zero `Delete`, and zero `Replace`;
+- the four creates were one Standard LRS Storage account, one Blob service, one `$web` container with `publicAccess: Blob`, and one Storage-scoped Storage Blob Data Contributor assignment;
+- no Azure mutation was authorized or performed.
 
 ```text
-CI_passed
-!= browser_architecture_valid
+successful_read_only_plan
+!= current_price_verified
+!= execution_permission_verified
+!= deployment_authorized
 ```
 
-PR #41 remains draft and changes-required. It must not be merged or dispatched against the old three-create planner artifact.
+## Active PR #41 repair
 
-## Authored repair
+PR #41 promotes a manually dispatched execution workflow. The repair is repository-only and was explicitly authorized by Anthony Edgar with `Proceed`.
 
-- Change: `blob-endpoint-browser-cors`.
-- Authority: repository-only browser endpoint architecture correction.
-- Pull request: #42.
-- Azure authentication authorized by this repair: **false**.
-- Azure mutations authorized by this repair: **false**.
+Declared paths:
 
-Permitted paths:
-
-- `infra/modules/report_publication.bicep`;
-- `infra/report-publication-existing-collector.bicep`;
-- `infra/tests/test_report_publication.py`;
+- `.github/workflows/existing-collector-report-publication.yml`;
+- `infra/scripts/verify_existing_collector_publication_plan.py`;
+- `infra/scripts/execute_existing_collector_report_publication.sh`;
 - `infra/tests/test_existing_collector_report_publication.py`;
-- `docs/designs/existing-collector-public-report.md`;
-- `docs/collector-vm.md`;
-- `docs/implementation-status.md`;
+- `docs/runbooks/existing-collector-report-publication.md`;
 - `.project/active-work.json`;
 - `.project/handoffs/current-state.md`.
 
-No workflow dispatch, Azure permission change, Storage deployment, RBAC mutation, VM Run Command, report publication, collector modification, frontend source update, or cost approval is in scope.
+No Azure login, permission grant, workflow dispatch, deployment, role change, VM Run Command, report publication, or frontend source update is authorized by this repair.
 
-## Corrected architecture
+## Promoted execution contract
+
+The workflow is pinned to:
 
 ```text
-real Azure transactions and metrics
-        ↓
-ServiceTracer deterministic analysis
-        ↓
-sanitized servicetracer.public-report.v1 envelope
-        ↓
-existing collector managed identity
-        ↓ OAuth write
-$web/reports/technician-handoff-report.json
-        ↓ anonymous Blob-only read
-https://<account>.blob.core.windows.net/$web/reports/technician-handoff-report.json
-        ↓ exact-origin Blob-service CORS
-GitHub Pages operator console
+planner_run_id: 29974111656
+planner_commit: d181c48bf718c65015f83e04e1bbf9a7bcf152f4
+planner_artifact_digest: sha256:faed857cbd230e55b206ca6ab05adeeca75c98a9a48b0dc43bb04293cde09333
 ```
 
-Repository declarations now require:
+The dispatch requires:
 
-- a dedicated Standard LRS sanitized-output Storage account;
-- `allowBlobPublicAccess: true` only on that dedicated account;
-- shared-key authorization disabled;
-- OAuth as the default write path;
-- exact-origin Blob CORS restricted to `GET`, `HEAD`, and `OPTIONS`;
-- `$web` declared with `publicAccess: Blob`, not `Container`;
-- Blob versioning and seven-day delete retention;
-- Storage-scoped Storage Blob Data Contributor for the current collector principal;
-- `publicReportUrl` built from `primaryEndpoints.blob`, not `primaryEndpoints.web`.
+- the exact merged workflow commit;
+- protected `azure-lab` environment approval;
+- current price evidence ID and bounded CAD estimate;
+- maximum monthly ceiling no greater than CAD 10.00;
+- exact confirmation `PUBLISH:<resource-group>:vm-stcollector-<prefix>-<environment>:29974111656`;
+- separate explicit Azure-mutation authorization.
 
-CORS is not authentication. The sanitized report object is intentionally public by URL. Blob-only access permits object reads without anonymous container enumeration.
+## Execution order and fail-closed gates
+
+1. Verify exact reviewed commit, bounded inputs, cost evidence, and typed confirmation.
+2. Run project validation, infrastructure tests, shell syntax checks, and verifier compilation before Azure login.
+3. Download the exact planner artifact and verify GitHub digest, ZIP digest, internal manifest, clean initial state, ProviderNoRbac validation, and exact four-create What-If.
+4. Authenticate through GitHub OIDC.
+5. Re-resolve tenant/subscription context, resource-group tags and region, collector state and principal, publisher executable, backend VM state, and empty report-Storage state.
+6. Run default `Provider` validation and a fresh exact four-create What-If. Missing `roleAssignments/write`, drift, extra resources, or protected-resource changes stop before deployment.
+7. Arm rollback, then run one deployment of `infra/report-publication-existing-collector.bicep`.
+8. Verify TLS 1.2, HTTPS, OAuth-default writes, shared-key disabled, account anonymous Blob allowance, exact CORS, versioning, seven-day retention, `$web` Blob-only access, Blob endpoint output, and current-principal Storage role.
+9. Capture real `DipAvailability` metrics and real frontend transactions.
+10. Run deterministic ServiceTracer analysis and sanitizer projection.
+11. Publish through the existing collector managed identity using bounded VM Run Command.
+12. Fetch the Blob URL with the reviewed `Origin` and verify schema, source, freshness, CORS, and report-content equality.
+13. Produce the GitHub Pages `?report=` test URL and upload protected evidence.
+
+## Security and network boundary
 
 ```text
 allowBlobPublicAccess = true
 + $web publicAccess = Blob
 + dedicated sanitized-output account
+!= anonymous container enumeration
 != raw evidence public
-!= container enumeration allowed
 ```
 
-Raw evidence, credentials, private addresses, customer-sensitive identifiers, unrestricted user content, and unsupported root-cause claims are prohibited from the publication account.
+CORS is not authentication. The sanitized report is intentionally public by object URL. Raw evidence, credentials, tokens, private endpoints, customer identifiers, and exact-root-cause claims are prohibited from the account.
 
-## Revised planning boundary
+No browser-to-collector route is introduced. No VNet, NSG, public IP, load balancer, backend, collector VM, NIC, disk, image, extension, or Log Analytics resource may change.
 
-After PR #42 merges, manually rerun the existing read-only planner against the exact merge commit.
+## Identity and permission boundary
 
-The expected reviewed creation set is:
+- The existing read-only planning principal remains least-privileged and must not receive RBAC administrator permissions merely for planning.
+- The later execution identity needs normal resource deployment rights plus narrowly scoped `Microsoft.Authorization/roleAssignments/write`.
+- Do not grant subscription-wide Owner.
+- The collector receives only Storage Blob Data Contributor at the dedicated report Storage account.
+- A changed collector principal is a stop condition.
 
-1. one Storage account;
-2. one Blob service configuration;
-3. one `$web` container access resource;
-4. one Storage-scoped role assignment for the current collector principal.
+## Failure and rollback
 
-Any `Modify`, `Delete`, `Replace`, protected Compute/Network/Log Analytics change, unexpected role scope, wildcard CORS, Container-level anonymous access, or additional Storage resource is a blocker.
+Before deployment, failures exit without creating publication resources.
 
-```text
-fresh_four_create_plan_passed
-!= current_price_verified
-!= role_assignment_write_permission
-!= Azure_mutation_authorized
-```
+After rollback is armed, a failure attempts to delete only:
 
-## Identity, network, security, cost, and quota boundaries
+1. the matching current-collector Storage Blob Data Contributor assignment;
+2. the dedicated report Storage account, including its Blob service and `$web` container.
 
-- The read-only planner remains Contributor and must not receive RBAC-administrator permission merely to plan.
-- A later execution identity needs separately reviewed minimum Storage deployment and `roleAssignments/write` permissions at the intended scope.
-- The collector writer remains system-assigned managed identity plus Storage-scoped Blob Data Contributor.
-- No browser-to-collector network path is introduced.
-- No load-balancer, VNet, NSG, public IP, backend, collector VM, NIC, disk, image, extension, or Log Analytics change is permitted by this increment.
-- CAD 10 remains only a planning ceiling, not a quotation or actual-cost fact.
-- Current West US 2 price, quota, policy allowance, retention cost, request cost, and actual cost remain unresolved.
+Rollback verifies account absence and records that collector compute and network were unchanged. Rollback failure is an operational incident requiring Activity Log and resource-state inspection.
 
-## Validation required before merge
+## Remaining gates
 
-1. validate `.project` state;
-2. run all unit tests;
-3. lint and build Bicep, including `infra/report-publication-existing-collector.bicep`;
-4. inspect every exact-head CI job and any uploaded test evidence;
-5. confirm the final diff is limited to the nine declared paths;
-6. inspect the complete Bicep resource graph and output URL;
-7. record an owner-account technical review, explicitly not independent organizational approval;
-8. mark PR #42 ready only when exact-head CI and review are clean;
-9. obtain explicit merge authorization.
+Before PR #41 can merge:
 
-Green CI alone does not prove Azure behavior. Fresh Azure planning remains a post-merge gate.
+1. exact-head project validation and all unit tests must pass;
+2. Bicep lint/build must pass;
+3. the PR must be conflict-free and exactly seven files different from `main`;
+4. workflow, verifier, executor, rollback, and claim boundaries require technical review;
+5. PR #41 must be marked ready only after review is clean;
+6. explicit merge authorization is required.
 
-## Failure, rollback, and cleanup
+After merge:
 
-If CI or review fails, keep PR #42 draft, patch only the declared files, and obtain fresh exact-head CI. Do not broaden anonymous access to `Container`, introduce wildcard CORS, enable shared-key writes, weaken report sanitization, modify PR #41, or perform Azure actions.
-
-Repository rollback is closing PR #42 or reverting its commits. No Azure rollback or cleanup applies because this repair performs no Azure action.
-
-## Next gate
-
-After PR #42 merges:
-
-1. dispatch the read-only planner against the exact merge commit;
-2. inspect the complete artifact and revised four-create What-If;
-3. obtain fresh cost, quota, policy, and execution-permission evidence;
-4. rebase or repin draft PR #41 to the new planner run and digest;
-5. re-review PR #41's execution and rollback logic;
-6. obtain separate explicit merge and later dispatch authorization.
+1. obtain current West US 2 pricing, quota, and policy evidence;
+2. establish the minimum effective deployment/RBAC permission at the reviewed scope;
+3. confirm publisher preflight and current collector identity;
+4. obtain separate explicit Azure-mutation dispatch authorization;
+5. run the workflow and inspect the complete evidence artifact;
+6. open the generated frontend test URL and prove browser rendering;
+7. commit the verified Blob URL to `docs/report-source.json` in a later repository-only PR.
 
 ```text
-architecture_repaired
-!= architecture_merged
-!= fresh_plan_succeeded
-!= PR41_repaired
+workflow_repaired
+!= workflow_merged
+!= dispatch_authorized
 != endpoint_deployed
-!= frontend_live_data_proven
+!= browser_live_data_proven
 ```
