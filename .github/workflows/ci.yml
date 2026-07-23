@@ -153,10 +153,21 @@ jobs:
         uses: azure/CLI@v2
         with:
           inlineScript: |
-            az bicep install
-            az bicep version
-            az bicep lint --file infra/main.bicep
-            az bicep build --file infra/main.bicep --outfile /tmp/main.json
-            az bicep build-params --file infra/main.dev.bicepparam --outfile /tmp/main.parameters.json
-            az bicep lint --file infra/demo-backend-api.bicep
-            az bicep build --file infra/demo-backend-api.bicep --outfile /tmp/demo-backend-api.json
+            set -o pipefail
+            {
+              az bicep install
+              az bicep version
+              az bicep lint --file infra/main.bicep
+              az bicep build --file infra/main.bicep --outfile /tmp/main.json
+              az bicep build-params --file infra/main.dev.bicepparam --outfile /tmp/main.parameters.json
+              az bicep lint --file infra/demo-backend-api.bicep
+              az bicep build --file infra/demo-backend-api.bicep --outfile /tmp/demo-backend-api.json
+            } 2>&1 | tee "$GITHUB_WORKSPACE/bicep-validation.log"
+
+      - name: Upload Bicep validation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bicep-validation-log
+          path: bicep-validation.log
+          if-no-files-found: error
