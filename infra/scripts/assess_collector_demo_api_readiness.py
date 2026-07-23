@@ -17,6 +17,20 @@ REQUIRED_COLLECTOR_PARAMETERS = {
     "collectorSourceRepository",
     "collectorSourceRef",
 }
+LEGACY_REMOTE_LB_KEYS = {
+    "frontend",
+    "backend_pool",
+    "probe",
+    "http_rule",
+    "https_rule",
+}
+DEDICATED_TARGET_KEYS = {
+    "public_ip",
+    "load_balancer",
+    "http_nsg_rule",
+    "https_nsg_rule",
+    "vm_extension",
+}
 
 
 def _load_json(path: Path) -> Any:
@@ -51,15 +65,12 @@ def _json_type(value: Any) -> str:
 def _parse_nonnegative_count(value: Any) -> int | None:
     if isinstance(value, bool) or value is None:
         return None
-
     if isinstance(value, int):
         return value if value >= 0 else None
-
     if isinstance(value, float):
         if not math.isfinite(value) or value < 0 or not value.is_integer():
             return None
         return int(value)
-
     if isinstance(value, str):
         text = value.strip()
         if not text:
@@ -71,14 +82,12 @@ def _parse_nonnegative_count(value: Any) -> int | None:
         if not parsed.is_finite() or parsed < 0 or parsed != parsed.to_integral_value():
             return None
         return int(parsed)
-
     return None
 
 
 def _find_public_ip_quota(network_usage: Any) -> dict[str, Any] | None:
     if not isinstance(network_usage, list):
         return None
-
     matches: list[dict[str, Any]] = []
     for item in network_usage:
         if not isinstance(item, dict):
@@ -92,8 +101,24 @@ def _find_public_ip_quota(network_usage: Any) -> dict[str, Any] | None:
         }
         if candidates & PUBLIC_IP_QUOTA_NAMES:
             matches.append(item)
-
     return matches[0] if len(matches) == 1 else None
+
+
+def _state_map(value: Any, key: str, expected: set[str], blockers: list[str]) -> dict[str, str]:
+    root = value if isinstance(value, dict) else {}
+    raw = root.get(key)
+    if not isinstance(raw, dict) or set(raw) != expected:
+        blockers.append(f"{key}_state_not_observable")
+        return {name: "unknown" for name in sorted(expected)}
+    result: dict[str, str] = {}
+    for name in expected:
+        status = raw.get(name)
+        if status not in {"not_present", "observed_existing"}:
+            blockers.append(f"{key}_{name}_state_invalid")
+            result[name] = "unknown"
+        else:
+            result[name] = status
+    return result
 
 
 def assess_collector_demo_api_readiness(
@@ -105,6 +130,7 @@ def assess_collector_demo_api_readiness(
     resource_locks: Any,
     demo_api_public_ip_state: Any,
     prior_demo_api_resources: Any,
+    ingress_state: Any,
     dns_label: str,
     location: str,
     expected_private_ip: str,
@@ -149,6 +175,15 @@ def assess_collector_demo_api_readiness(
         for item in locks
     ):
         blockers.append("resource_group_read_only_lock_present")
+
+    legacy_state = _state_map(ingress_state, "legacy_remote_load_balancer_children", LEGACY_REMOTE_LB_KEYS, blockers)
+    dedicated_state = _state_map(ingress_state, "dedicated_target_resources", DEDICATED_TARGET_KEYS, blockers)
+    legacy_residue = sorted(name for name, status in legacy_state.items() if status == "observed_existing")
+    if legacy_residue:
+        blockers.append("legacy_remote_load_balancer_child_residue_present:" + ",".join(legacy_residue))
+    existing_targets = sorted(name for name, status in dedicated_state.items() if status == "observed_existing")
+    if existing_targets:
+        limitations.append("prior_failed_deploy_left_target_resources_for_reconciliation:" + ",".join(existing_targets))
 
     quota_evidence: dict[str, Any]
     if pip_state.get("status") == "observed_existing":
@@ -205,6 +240,11 @@ def assess_collector_demo_api_readiness(
         "collector_private_ip": private_ip,
         "dns_label": dns_label,
         "location": location,
+        "ingress_strategy": "dedicated_standard_load_balancer",
+        "ingress_state": {
+            "legacy_remote_load_balancer_children": legacy_state,
+            "dedicated_target_resources": dedicated_state,
+        },
         "public_ip_quota": quota_evidence,
         "blockers": blockers,
         "limitations": limitations,
@@ -226,6 +266,7 @@ def main() -> int:
     parser.add_argument("--resource-locks", required=True)
     parser.add_argument("--demo-api-public-ip-state", required=True)
     parser.add_argument("--prior-demo-api-resources", required=True)
+    parser.add_argument("--ingress-state", required=True)
     parser.add_argument("--dns-label", required=True)
     parser.add_argument("--location", required=True)
     parser.add_argument("--expected-private-ip", required=True)
@@ -240,6 +281,7 @@ def main() -> int:
         resource_locks=_load_json(Path(args.resource_locks)),
         demo_api_public_ip_state=_load_json(Path(args.demo_api_public_ip_state)),
         prior_demo_api_resources=_load_json(Path(args.prior_demo_api_resources)),
+        ingress_state=_load_json(Path(args.ingress_state)),
         dns_label=args.dns_label,
         location=args.location,
         expected_private_ip=args.expected_private_ip,
