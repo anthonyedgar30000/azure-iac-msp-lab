@@ -66,6 +66,18 @@ param collectorSourceRepository string = 'https://github.com/anthonyedgar30000/a
 @description('Branch, tag, or commit installed by collector cloud-init. Pin a commit for a repeatable deployment.')
 param collectorSourceRef string = 'main'
 
+@description('Expose the bounded demo API through the existing collector VM and load balancer.')
+param deployCollectorDemoApi bool = false
+
+@description('Globally unique DNS label used for the collector-hosted demo API public endpoint.')
+param collectorDemoApiDnsLabel string = 'st-demo-api-aeg30000'
+
+@description('Exact browser origin allowed by the collector-hosted demo API.')
+param collectorDemoApiAllowedOrigin string = 'https://anthonyedgar30000.github.io'
+
+@description('Exact reviewed commit installed by the collector-hosted demo API extension.')
+param collectorDemoApiSourceRef string = collectorSourceRef
+
 @description('Deploy the dedicated public report endpoint and grant the collector managed identity write access. Requires deployOperationsCollector=true.')
 param deployPublicReportEndpoint bool = false
 
@@ -82,6 +94,9 @@ var commonTags = {
   purpose: 'servicetracer-demo'
 }
 var deployReportPublicationResources = deployPublicReportEndpoint && deployOperationsCollector
+var deployCollectorDemoApiResources = deployCollectorDemoApi && deployOperationsCollector
+var resourceSuffix = '${prefix}-${environment}'
+var collectorDemoApiInstallerUri = 'https://raw.githubusercontent.com/anthonyedgar30000/azure-iac-msp-lab/${collectorDemoApiSourceRef}/infra/scripts/install_collector_demo_api.sh'
 
 module network './modules/network.bicep' = {
   name: 'network-${environment}'
@@ -152,6 +167,30 @@ module operationsCollector './modules/operations_collector_vm.bicep' = if (deplo
   }
 }
 
+module collectorDemoApi './modules/collector_demo_api.bicep' = if (deployCollectorDemoApiResources) {
+  name: 'collector-demo-api-${environment}'
+  params: {
+    prefix: prefix
+    environment: environment
+    location: location
+    tags: commonTags
+    virtualNetworkId: network.outputs.onPremVirtualNetworkId
+    loadBalancerName: 'lb-remote-access-${resourceSuffix}'
+    operationsNsgName: 'nsg-operations-${resourceSuffix}'
+    collectorVmName: 'vm-stcollector-${resourceSuffix}'
+    collectorPrivateIpAddress: collectorPrivateIpAddress
+    dnsLabel: collectorDemoApiDnsLabel
+    allowedOrigin: collectorDemoApiAllowedOrigin
+    backendTransactionUrl: 'https://${edgeLoadBalancer.outputs.publicIpAddress}/transaction'
+    sourceRepository: collectorSourceRepository
+    sourceRef: collectorDemoApiSourceRef
+    installerUri: collectorDemoApiInstallerUri
+  }
+  dependsOn: [
+    operationsCollector
+  ]
+}
+
 module reportPublication './modules/report_publication.bicep' = if (deployReportPublicationResources) {
   name: 'report-publication-${environment}'
   params: {
@@ -169,6 +208,7 @@ output remoteUserVirtualNetworkId string = network.outputs.remoteUserVirtualNetw
 output subnetIds object = network.outputs.subnetIds
 output loadBalancerId string = edgeLoadBalancer.outputs.loadBalancerId
 output loadBalancerPublicIpAddressId string = edgeLoadBalancer.outputs.publicIpAddressId
+output loadBalancerPublicIpAddress string = edgeLoadBalancer.outputs.publicIpAddress
 output loadBalancerBackendPoolId string = edgeLoadBalancer.outputs.backendPoolId
 output loadBalancerHealthProbe object = edgeLoadBalancer.outputs.healthProbe
 output demoBackendsDeploymentEnabled bool = deployDemoBackends
@@ -180,6 +220,11 @@ output operationsCollectorVmId string = deployOperationsCollector ? operationsCo
 output operationsCollectorPrincipalId string = deployOperationsCollector ? operationsCollector.outputs.collectorPrincipalId : ''
 output operationsCollectorEndpoint string = deployOperationsCollector ? operationsCollector.outputs.collectorEndpoint : ''
 output operationsCollectorEvidenceDiskId string = deployOperationsCollector ? operationsCollector.outputs.evidenceDiskId : ''
+output collectorDemoApiDeploymentEnabled bool = deployCollectorDemoApiResources
+output collectorDemoApiPublicIpId string = deployCollectorDemoApiResources ? collectorDemoApi.outputs.publicIpId : ''
+output collectorDemoApiFqdn string = deployCollectorDemoApiResources ? collectorDemoApi.outputs.fqdn : ''
+output collectorDemoApiHealthUrl string = deployCollectorDemoApiResources ? collectorDemoApi.outputs.healthUrl : ''
+output collectorDemoApiRunUrl string = deployCollectorDemoApiResources ? collectorDemoApi.outputs.runUrl : ''
 output publicReportEndpointDeploymentEnabled bool = deployReportPublicationResources
 output publicReportStorageAccountName string = deployReportPublicationResources ? reportPublication.outputs.storageAccountName : ''
 output publicReportUrl string = deployReportPublicationResources ? reportPublication.outputs.publicReportUrl : ''

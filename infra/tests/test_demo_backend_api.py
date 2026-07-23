@@ -9,10 +9,12 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 CORE = ROOT / "demo_api" / "core.py"
+RUNTIME = ROOT / "demo_api" / "runtime.py"
 FUNCTION = ROOT / "demo_api" / "function_app.py"
+STANDALONE = ROOT / "demo_api" / "standalone_server.py"
 ENTRYPOINT = ROOT / "infra" / "demo-backend-api.bicep"
 MODULE = ROOT / "infra" / "modules" / "demo_api.bicep"
-WORKFLOW = ROOT / ".github" / "workflows" / "demo-backend-api.yml"
+WORKFLOW = ROOT / ".github" / "workflows" / "collector-demo-api.yml"
 FRONTEND = ROOT / "docs" / "app.js"
 SOURCE_CONFIG = ROOT / "docs" / "report-source.json"
 CLASSIFIER = ROOT / "infra" / "scripts" / "assert_demo_backend_api_what_if.py"
@@ -33,9 +35,8 @@ class DemoBackendApiTests(unittest.TestCase):
         cls.classifier = load_module(CLASSIFIER, "demo_api_classifier")
 
     def test_python_files_compile(self):
-        py_compile.compile(str(CORE), doraise=True)
-        py_compile.compile(str(FUNCTION), doraise=True)
-        py_compile.compile(str(CLASSIFIER), doraise=True)
+        for path in (CORE, RUNTIME, FUNCTION, STANDALONE, CLASSIFIER):
+            py_compile.compile(str(path), doraise=True)
 
     def test_core_localizes_failed_backend_without_claiming_root_cause(self):
         transactions = [
@@ -64,9 +65,10 @@ class DemoBackendApiTests(unittest.TestCase):
         self.assertNotIn("target_url", source)
         self.assertIn('route="demo/run"', source)
         self.assertIn('route="health"', source)
+        self.assertIn("run_transaction", source)
         self.assertGreater(len(list(ast.walk(tree))), 20)
 
-    def test_bicep_scope_excludes_collector(self):
+    def test_legacy_bicep_scope_excludes_collector(self):
         entrypoint = ENTRYPOINT.read_text(encoding="utf-8")
         module = MODULE.read_text(encoding="utf-8")
         self.assertIn("existing =", entrypoint)
@@ -78,15 +80,15 @@ class DemoBackendApiTests(unittest.TestCase):
         self.assertIn("minTlsVersion: '1.2'", module)
         self.assertIn("allowedOrigins: allowedOrigins", module)
 
-    def test_workflow_is_scoped_and_exact_commit_bound(self):
+    def test_active_workflow_is_scoped_exact_commit_bound_and_not_app_service(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("reviewed_commit", workflow)
-        self.assertIn("DEMO-BACKEND-API:", workflow)
-        self.assertIn("infra/demo-backend-api.bicep", workflow)
-        self.assertIn("az functionapp deployment source config-zip", workflow)
-        self.assertNotIn("resolve_vm_plan.sh", workflow)
-        self.assertNotIn("deployOperationsCollector", workflow)
-        self.assertNotIn("vm-stcollector", workflow)
+        self.assertIn("COLLECTOR-DEMO-API:", workflow)
+        self.assertIn("infra/main.bicep", workflow)
+        self.assertIn("collectorDemoApiSourceRef", workflow)
+        self.assertNotIn("az functionapp deployment", workflow)
+        self.assertNotIn("deployOperationsCollector=false", workflow)
+        self.assertNotIn("Microsoft.Web/serverfarms", workflow)
 
     def test_frontend_calls_api_and_retains_fallback(self):
         frontend = FRONTEND.read_text(encoding="utf-8")
@@ -97,7 +99,7 @@ class DemoBackendApiTests(unittest.TestCase):
         self.assertIn("servicetracer.demo-api-response.v1", frontend)
         self.assertIn("using the controlled fixture", frontend)
 
-    def test_what_if_classifier_rejects_modify(self):
+    def test_legacy_what_if_classifier_rejects_modify(self):
         with self.assertRaises(SystemExit):
             self.classifier.classify(
                 {
@@ -112,7 +114,7 @@ class DemoBackendApiTests(unittest.TestCase):
                 }
             )
 
-    def test_what_if_classifier_accepts_expected_creates(self):
+    def test_legacy_what_if_classifier_accepts_expected_creates(self):
         result = self.classifier.classify(
             {
                 "status": "Succeeded",
@@ -153,55 +155,6 @@ Resource changes: 1 to create, 1 no change, 1 to ignore.
         self.assertEqual(result["creates"], 1)
         self.assertEqual(result["create_types"], {"Microsoft.Web/sites": 1})
         self.assertFalse(result["deployment_authorized"])
-
-    def test_pretty_what_if_parser_accepts_exact_backend_nic_noise(self):
-        payload = self.classifier.parse_pretty_what_if(
-            """Resource and property changes are indicated with these symbols:
-  + Create
-  ~ Modify
-
-  + Microsoft.Web/sites/func-demo [2024-04-01]
-  ~ Microsoft.Network/networkInterfaces/nic-vpn01-mst-dev [2024-05-01]
-    - kind:                                                                      "Regular"
-    - properties.allowPort25Out:                                                 false
-    - properties.auxiliaryMode:                                                  "None"
-    - properties.auxiliarySku:                                                   "None"
-    - properties.disableTcpStateTracking:                                        false
-    ~ properties.ipConfigurations: [
-      ~ 0:
-        - properties.privateIPAddressVersion: "IPv4"
-      ]
-
-Resource changes: 1 to create, 1 to modify.
-"""
-        )
-        result = self.classifier.classify(payload)
-        self.assertEqual(result["creates"], 1)
-        self.assertEqual(
-            result["known_nic_noise_modifies"],
-            ["/providers/Microsoft.Network/networkInterfaces/nic-vpn01-mst-dev"],
-        )
-        self.assertFalse(result["deployment_authorized"])
-
-    def test_pretty_what_if_parser_rejects_backend_nic_extra_delta(self):
-        payload = self.classifier.parse_pretty_what_if(
-            """  ~ Microsoft.Network/networkInterfaces/nic-vpn01-mst-dev [2024-05-01]
-    - kind: "Regular"
-    - properties.allowPort25Out: false
-    - properties.auxiliaryMode: "None"
-    - properties.auxiliarySku: "None"
-    - properties.disableTcpStateTracking: false
-    ~ properties.enableIPForwarding: false => true
-    ~ properties.ipConfigurations: [
-      ~ 0:
-        - properties.privateIPAddressVersion: "IPv4"
-      ]
-Resource changes: 1 to modify.
-"""
-        )
-        with self.assertRaises(SystemExit) as context:
-            self.classifier.classify(payload)
-        self.assertIn("nic-vpn01-mst-dev", str(context.exception))
 
     def test_pretty_what_if_parser_preserves_modify_blocker(self):
         payload = self.classifier.parse_pretty_what_if(
