@@ -353,9 +353,8 @@ function resetDemo() {
 
 async function loadReport() {
   const config = await loadSourceConfiguration();
-  const query = new URLSearchParams(window.location.search);
-  const queryReportUrl = query.get('report');
-  const queryApiUrl = query.get('api');
+  const queryReportUrl = new URLSearchParams(window.location.search).get('report');
+  const queryApiUrl = new URLSearchParams(window.location.search).get('api');
   const liveReportUrl = queryReportUrl || config.live_report_url;
   state.demoApiUrl = queryApiUrl || config.live_demo_api_url || '';
   let liveError = null;
