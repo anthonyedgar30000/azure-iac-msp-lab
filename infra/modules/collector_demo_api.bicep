@@ -19,7 +19,7 @@ param installerUri string
 var resourceSuffix = '${prefix}-${environment}'
 var frontendName = 'fe-public-st-demo-api'
 var backendPoolName = 'be-st-demo-api'
-var probeName = 'probe-tcp-443-st-demo-api'
+var probeName = 'probe-tcp-80-st-demo-api'
 
 resource publicIp 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
   name: 'pip-st-demo-api-${resourceSuffix}'
@@ -75,12 +75,14 @@ resource apiBackendPool 'Microsoft.Network/loadBalancers/backendAddressPools@202
   }
 }
 
+// Probe port 80 so the backend becomes reachable for ACME HTTP-01 before TLS exists.
+// Nginx keeps port 80 available and redirects normal traffic to HTTPS after issuance.
 resource apiProbe 'Microsoft.Network/loadBalancers/probes@2024-05-01' = {
   parent: loadBalancer
   name: probeName
   properties: {
     protocol: 'Tcp'
-    port: 443
+    port: 80
     intervalInSeconds: 5
     numberOfProbes: 2
   }
