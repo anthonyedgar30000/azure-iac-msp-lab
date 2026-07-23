@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 import py_compile
 import subprocess
@@ -25,6 +26,87 @@ class ExistingCollectorReportPublicationTests(unittest.TestCase):
             capture_output=True,
             text=True,
         )
+
+    def test_plan_verifier_classifies_exact_four_create_architecture(self) -> None:
+        spec = importlib.util.spec_from_file_location(
+            "publication_plan_verifier", PLAN_VERIFIER_PATH
+        )
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        storage_id = "/subscriptions/example/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/streportexample"
+        principal = "684dcdd6-d61e-4a2e-9f3c-63a5648e76fc"
+        origin = "https://anthonyedgar30000.github.io"
+        payload = {
+            "status": "Succeeded",
+            "error": None,
+            "changes": [
+                {
+                    "changeType": "Create",
+                    "resourceId": storage_id,
+                    "after": {
+                        "type": "Microsoft.Storage/storageAccounts",
+                        "kind": "StorageV2",
+                        "sku": {"name": "Standard_LRS"},
+                        "properties": {
+                            "allowBlobPublicAccess": True,
+                            "allowSharedKeyAccess": False,
+                            "defaultToOAuthAuthentication": True,
+                            "minimumTlsVersion": "TLS1_2",
+                            "publicNetworkAccess": "Enabled",
+                            "supportsHttpsTrafficOnly": True,
+                        },
+                    },
+                },
+                {
+                    "changeType": "Create",
+                    "resourceId": f"{storage_id}/blobServices/default",
+                    "after": {
+                        "type": "Microsoft.Storage/storageAccounts/blobServices",
+                        "properties": {
+                            "cors": {
+                                "corsRules": [
+                                    {
+                                        "allowedOrigins": [origin],
+                                        "allowedMethods": ["GET", "HEAD", "OPTIONS"],
+                                    }
+                                ]
+                            },
+                            "isVersioningEnabled": True,
+                            "deleteRetentionPolicy": {"enabled": True, "days": 7},
+                        },
+                    },
+                },
+                {
+                    "changeType": "Create",
+                    "resourceId": f"{storage_id}/blobServices/default/containers/$web",
+                    "after": {
+                        "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+                        "properties": {"publicAccess": "Blob"},
+                    },
+                },
+                {
+                    "changeType": "Create",
+                    "resourceId": f"{storage_id}/providers/Microsoft.Authorization/roleAssignments/example",
+                    "after": {
+                        "type": "Microsoft.Authorization/roleAssignments",
+                        "properties": {
+                            "principalId": principal,
+                            "roleDefinitionId": "/subscriptions/example/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe",
+                        },
+                    },
+                },
+            ],
+        }
+        creates, classified_storage_id = module.classify_what_if(
+            payload,
+            expected_origin=origin,
+            expected_collector_principal=principal,
+        )
+        self.assertEqual(len(creates), 4)
+        self.assertEqual(classified_storage_id, storage_id)
 
 
 if __name__ == "__main__":
