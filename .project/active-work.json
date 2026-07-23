@@ -4,52 +4,45 @@
   "updated_on": "2026-07-23",
   "last_substantive_baseline": {
     "branch": "main",
-    "commit": "d181c48bf718c65015f83e04e1bbf9a7bcf152f4",
-    "pull_request": 42,
-    "title": "Use Blob endpoint for browser report CORS",
-    "qualification": "merged_blob_endpoint_architecture_exact_head_ci_passed_then_successful_read_only_four_create_plan_29974111656_not_deployed",
-    "claim_boundary": "This baseline proves the Blob-endpoint repository architecture and a successful read-only four-create Azure plan. It does not prove current pricing, effective role-assignment write permission, deployment, managed-identity publication, browser rendering, or a committed live frontend source."
+    "commit": "c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
+    "pull_request": 41,
+    "title": "Promote bounded live report publication",
+    "qualification": "merged_execution_workflow_exact_head_ci_passed_owner_account_technical_review_recorded_not_dispatched_not_deployed",
+    "claim_boundary": "This baseline proves the bounded publication execution workflow and supporting repository controls were merged. It does not prove workflow dispatch, current pricing, effective role-assignment write permission, deployment, managed-identity publication, Blob response, browser rendering, or a committed live frontend source."
   },
   "repository_observation": {
     "observed_on": "2026-07-23",
     "source": "live_github",
-    "main_head": "d181c48bf718c65015f83e04e1bbf9a7bcf152f4",
-    "head_semantics": "PR #42 merge commit observed before resetting and repairing PR #41 onto current main",
+    "main_head": "c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
+    "head_semantics": "PR #41 merge commit observed before opening documentation-only reconciliation PR #43",
     "open_pull_requests": [
-      41
+      43
     ],
-    "claim_boundary": "This is a time-bounded observation. Resolve the live main head, PR state, reviews, CI, and Azure reality whenever this file is read."
+    "claim_boundary": "This is a time-bounded observation. Resolve the live main head, PR state, reviews, CI, workflow runs, and Azure reality whenever this file is read."
   },
   "authored_change": {
-    "change_id": "promote-four-create-live-report-publication",
-    "branch": "feat/promote-live-report-publication",
-    "pull_request": 41,
-    "write_owner": "ChatGPT conversation: Azure IaC MSP Lab — bounded PR #41 repair explicitly authorized by Anthony Edgar with 'Proceed'",
-    "scope": "Rebase the publication execution proposal onto PR #42's merged Blob-endpoint architecture, pin successful read-only planner run 29974111656 and its artifact digest, enforce the exact four-create Storage/Blob/$web/RBAC allowlist, verify Blob-only anonymous reads and managed-identity writes, preserve rollback and protected-resource boundaries, and reconcile project state. This repository-only repair does not authenticate to Azure, grant permissions, dispatch the workflow, deploy resources, run guest commands, publish a report, or change the frontend source.",
-    "authority": "repository_only_execution_workflow_promotion_repair",
+    "change_id": "reconcile-publication-merge-state",
+    "branch": "chore/reconcile-publication-merge-state",
+    "pull_request": 43,
+    "write_owner": "This ChatGPT conversation — bounded Azure IaC project-state reconciliation explicitly authorized by Anthony Edgar with 'Proceed'",
+    "scope": "Reconcile .project state and the current handoff to the live PR #41 merge. This documentation-only change does not modify workflows, scripts, infrastructure, Azure resources, permissions, deployments, runtime systems, or frontend source.",
+    "authority": "repository_only_project_state_reconciliation",
     "state_semantics": "declaration_not_live_status",
     "permitted_paths": [
-      ".github/workflows/existing-collector-report-publication.yml",
-      "infra/scripts/verify_existing_collector_publication_plan.py",
-      "infra/scripts/execute_existing_collector_report_publication.sh",
-      "infra/tests/test_existing_collector_report_publication.py",
-      "docs/runbooks/existing-collector-report-publication.md",
       ".project/active-work.json",
       ".project/handoffs/current-state.md"
     ],
     "verification_criteria": [
-      "PR #41 is based on current main commit d181c48bf718c65015f83e04e1bbf9a7bcf152f4 with no merge conflict",
-      "workflow defaults pin planner run 29974111656, commit d181c48bf718c65015f83e04e1bbf9a7bcf152f4, and artifact digest faed857cbd230e55b206ca6ab05adeeca75c98a9a48b0dc43bb04293cde09333",
-      "planner verification accepts exactly one Storage account, Blob service, $web Blob-only container, and Storage-scoped collector role assignment",
-      "Provider execution What-If rejects Modify, Delete, Replace, extra Create, and protected infrastructure changes",
-      "postdeployment verification requires Blob endpoint output, account anonymous Blob allowance, disabled shared-key writes, exact CORS, versioning, retention, $web publicAccess Blob, and exact current-principal role scope",
-      "publisher preflight occurs before deployment and managed-identity publication occurs only after the bounded resources exist",
-      "automatic rollback is armed before the single deployment and can remove only the matching role and dedicated report Storage account",
-      "project validation, all infrastructure tests, ServiceTracer tests, and Bicep lint/build pass on the exact PR head",
-      "the final PR diff remains limited to the seven declared paths"
+      "live main head is recorded as c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
+      "PR #41 is recorded as merged and its source head 722dfcf99c367880147c9fd2f183d54d4d960f56 is preserved in review state",
+      "exact-head CI run 29976628311 and both successful jobs are preserved",
+      "owner-account technical review is distinguished from independent organizational approval",
+      "the execution workflow is described as present on main but not dispatched or operationally verified",
+      "Azure deployment, RBAC mutation, report publication, manual repair, and browser verification remain false or unobserved",
+      "the final PR diff remains limited to the two declared paths"
     ],
-    "failure_behavior": "Keep PR #41 draft, inspect the exact failing test or review finding, patch only declared paths, and obtain fresh exact-head CI. Do not dispatch the workflow, grant Azure permissions, weaken the four-create allowlist, broaden anonymous access to Container, enable shared-key writes, introduce wildcard CORS, or touch collector/network resources.",
-    "rollback": "Close PR #41 without merge or reset its branch to main. No Azure rollback applies because this repair performs no Azure authentication or mutation."
+    "failure_behavior": "Keep PR #43 draft, inspect the exact validation or review finding, patch only the two declared paths, and do not dispatch workflows or authenticate to Azure.",
+    "rollback": "Close PR #43 without merge. No Azure, workflow, deployment, runtime, or frontend rollback applies because reconciliation performs no external mutation."
   },
   "bounded_authority_grants": [
     {
@@ -76,7 +69,7 @@
         "az deployment group what-if"
       ],
       "state_semantics": "bounded_exception_to_false_defaults",
-      "claim_boundary": "This grant authorizes Azure reads and ProviderNoRbac planning only. It does not authorize deployment, RBAC changes, report publication, endpoint configuration, guest commands, or any Azure mutation."
+      "claim_boundary": "This grant authorizes Azure reads and ProviderNoRbac planning only. It does not authorize the merged publication execution workflow, deployment, RBAC changes, report publication, endpoint configuration, guest commands, or any Azure mutation."
     }
   ],
   "completed_increments": [
@@ -109,6 +102,20 @@
       "title": "Use Blob endpoint for browser report CORS",
       "merge_commit": "d181c48bf718c65015f83e04e1bbf9a7bcf152f4",
       "qualification": "blob_endpoint_architecture_merged_then_successful_four_create_read_only_plan"
+    },
+    {
+      "pull_request": 41,
+      "title": "Promote bounded live report publication",
+      "source_head": "722dfcf99c367880147c9fd2f183d54d4d960f56",
+      "merge_commit": "c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
+      "merged_at": "2026-07-23T03:20:47Z",
+      "exact_head_ci": {
+        "run_id": 29976628311,
+        "conclusion": "success"
+      },
+      "owner_account_technical_review_recorded": true,
+      "independent_organizational_approval": false,
+      "qualification": "execution_workflow_merged_repository_verified_not_dispatched_not_deployed"
     }
   ],
   "latest_observed_planner_attempt": {
@@ -131,7 +138,7 @@
     "unproven": [
       "current Storage pricing, quota, and policy allowance",
       "effective execution identity roleAssignments/write permission",
-      "collector publisher availability at execution time",
+      "current collector identity and publisher availability",
       "publication-resource deployment",
       "managed-identity publication",
       "Blob endpoint CORS response",
@@ -149,7 +156,7 @@
     "status": "completed_read_only_current_four_create_architecture",
     "azure_mutations_authorized": false,
     "azure_mutations_performed": false,
-    "freshness_boundary": "This is current planning evidence for main commit d181c48bf718c65015f83e04e1bbf9a7bcf152f4. Re-resolve Azure state, cost, quota, permissions, collector identity, publisher availability, and exact Provider What-If immediately before any separately authorized deployment."
+    "freshness_boundary": "This is historical read-only planning evidence for commit d181c48bf718c65015f83e04e1bbf9a7bcf152f4. Re-resolve Azure state, cost, quota, permissions, collector identity, publisher availability, and exact Provider What-If immediately before any separately authorized deployment."
   },
   "review_state": {
     "pr42_blob_endpoint_repair": {
@@ -162,18 +169,37 @@
       "claim_boundary": "Architecture and read-only plan only; not Azure execution or browser proof."
     },
     "pr41_publication_execution_promotion": {
-      "status": "draft_repaired_onto_current_main_pending_exact_head_ci_and_review",
+      "status": "merged_repository_workflow_present_not_dispatched",
       "reviewed_pull_request": 41,
+      "source_head": "722dfcf99c367880147c9fd2f183d54d4d960f56",
+      "merge_commit": "c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
+      "exact_head_ci_run_id": 29976628311,
+      "technical_review_ids": [
+        4760496795,
+        4760497152
+      ],
+      "review_account": "pull_request_owner",
       "independent_organizational_approval": false,
-      "claim_boundary": "Repository-only executable workflow proposal. Merge and Azure dispatch remain separately unauthorized."
+      "claim_boundary": "Repository promotion is merged. No publication workflow run, Azure deployment, RBAC mutation, managed-identity publication, Blob/browser proof, or manual repair is established."
     }
+  },
+  "deployment_state": {
+    "repository_workflow_merged": true,
+    "workflow_dispatch_observed": false,
+    "azure_deployment_observed": false,
+    "rbac_mutation_observed": false,
+    "managed_identity_publication_observed": false,
+    "manual_repair_observed": false,
+    "blob_endpoint_verified": false,
+    "browser_rendering_verified": false,
+    "operationally_verified": false
   },
   "authority_defaults": {
     "active_workflow_present": false,
     "dispatch_authorized": false,
     "azure_authentication_authorized": false,
     "azure_mutations_authorized": false,
-    "rule": "Defaults remain fail-closed. The active read-only planning grant is the only Azure authentication exception; draft PR #41 creates no deployment authority."
+    "rule": "Defaults remain fail-closed. The merged execution workflow is repository state, not authority; only the separate bounded read-only planning grant is an Azure-authentication exception."
   },
   "live_state_resolution": {
     "repository_head": "Query the live GitHub default branch at read time.",
