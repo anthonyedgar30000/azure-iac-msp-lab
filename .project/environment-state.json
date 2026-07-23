@@ -46,10 +46,10 @@
     {
       "fact_id": "azure-probe-scope-backends",
       "value": "Two private Ubuntu backend VMs behind the Standard Public Load Balancer",
-      "status": "implemented_and_ci_verified_deployment_not_confirmed",
-      "last_observed_on": "2026-07-21",
-      "source": "Merged pull request 14",
-      "notes": "Live Azure proof remains a separately governed lifecycle operation."
+      "status": "azure_control_plane_observed_service_unverified",
+      "last_observed_on": "2026-07-23",
+      "source": "Demo backend API run 30029515018 attempts 1 and 2",
+      "notes": "Later Azure control-plane and What-If evidence observed the backend VMs after the failed deployment attempt. This supersedes the July 21 deployment-not-confirmed status. Listener health, synthetic transaction behavior, API integration, and operational readiness remain unverified."
     },
     {
       "fact_id": "azure-planning-workflow",
