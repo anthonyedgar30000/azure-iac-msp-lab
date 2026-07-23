@@ -1,0 +1,286 @@
+name: Existing collector report publication
+
+on:
+  workflow_dispatch:
+    inputs:
+      resource_group:
+        description: 'Existing bounded ServiceTracer resource group'
+        required: true
+        default: rg-servicetracer-dev-westus2
+        type: string
+      location:
+        description: 'Expected Azure region'
+        required: true
+        default: westus2
+        type: string
+      prefix:
+        description: 'Bicep resource-name prefix'
+        required: true
+        default: mst
+        type: string
+      environment:
+        description: 'Lab environment'
+        required: true
+        default: dev
+        type: choice
+        options: [dev, test]
+      allowed_origin:
+        description: 'Exact HTTPS browser origin permitted by Blob-service CORS'
+        required: true
+        default: https://anthonyedgar30000.github.io
+        type: string
+      frontend_url:
+        description: 'GitHub Pages console URL used for the live query-string proof'
+        required: true
+        default: https://anthonyedgar30000.github.io/azure-iac-msp-lab/
+        type: string
+      planner_run_id:
+        description: 'Successful read-only publication planner run'
+        required: true
+        default: '29974111656'
+        type: string
+      planner_commit:
+        description: 'Exact commit evaluated by the successful planner'
+        required: true
+        default: d181c48bf718c65015f83e04e1bbf9a7bcf152f4
+        type: string
+      planner_artifact_digest:
+        description: 'GitHub artifact SHA-256 for the successful planner evidence'
+        required: true
+        default: sha256:faed857cbd230e55b206ca6ab05adeeca75c98a9a48b0dc43bb04293cde09333
+        type: string
+      reviewed_commit:
+        description: 'Exact reviewed commit containing this execution workflow'
+        required: true
+        type: string
+      current_price_evidence_id:
+        description: 'Human-reviewed current West US 2 Storage price evidence identifier'
+        required: true
+        type: string
+      estimated_monthly_cost_cad:
+        description: 'Reviewed bounded monthly estimate in CAD'
+        required: true
+        type: string
+      maximum_monthly_cost_cad:
+        description: 'Approved monthly cost ceiling in CAD; maximum 10.00'
+        required: true
+        default: '10.00'
+        type: string
+      attempts:
+        description: 'Maximum distinct frontend flows used to observe both backends'
+        required: true
+        default: '30'
+        type: string
+      confirmation:
+        description: 'Enter PUBLISH:<resource-group>:vm-stcollector-<prefix>-<environment>:<planner-run-id>'
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+concurrency:
+  group: existing-collector-report-publication-${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+  ARTIFACT_DIR: existing-collector-publication-evidence
+
+jobs:
+  publish-live-integration:
+    name: Deploy, publish, verify, or roll back the live report path
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 90
+    steps:
+      - name: Check out exact reviewed execution state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.reviewed_commit }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate exact mutation authority, cost evidence, and typed confirmation
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+          FRONTEND_URL: ${{ inputs.frontend_url }}
+          PLANNER_RUN_ID: ${{ inputs.planner_run_id }}
+          PLANNER_COMMIT: ${{ inputs.planner_commit }}
+          PLANNER_ARTIFACT_DIGEST: ${{ inputs.planner_artifact_digest }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          CURRENT_PRICE_EVIDENCE_ID: ${{ inputs.current_price_evidence_id }}
+          ESTIMATED_MONTHLY_COST_CAD: ${{ inputs.estimated_monthly_cost_cad }}
+          MAXIMUM_MONTHLY_COST_CAD: ${{ inputs.maximum_monthly_cost_cad }}
+          ATTEMPTS: ${{ inputs.attempts }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          [[ "$RESOURCE_GROUP" =~ ^rg-servicetracer-(dev|test)(-[a-z0-9-]+)?$ ]]
+          [[ "$LOCATION" =~ ^[a-z0-9]+$ ]]
+          [[ "$PREFIX" =~ ^[a-z0-9]{2,12}$ ]]
+          [[ "$LAB_ENVIRONMENT" =~ ^(dev|test)$ ]]
+          [[ "$ALLOWED_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]
+          [[ "$FRONTEND_URL" =~ ^https://[A-Za-z0-9./_-]+$ ]]
+          [[ "$PLANNER_RUN_ID" =~ ^[0-9]+$ ]]
+          [[ "$PLANNER_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$PLANNER_ARTIFACT_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          [[ "$PLANNER_RUN_ID" == '29974111656' ]]
+          [[ "$PLANNER_COMMIT" == 'd181c48bf718c65015f83e04e1bbf9a7bcf152f4' ]]
+          [[ "$PLANNER_ARTIFACT_DIGEST" == 'sha256:faed857cbd230e55b206ca6ab05adeeca75c98a9a48b0dc43bb04293cde09333' ]]
+          [[ "$REVIEWED_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$(git rev-parse HEAD)" == "$REVIEWED_COMMIT" ]]
+          [[ "$CURRENT_PRICE_EVIDENCE_ID" =~ ^[A-Za-z0-9._:/-]{8,200}$ ]]
+          [[ "$ESTIMATED_MONTHLY_COST_CAD" =~ ^[0-9]+([.][0-9]{1,2})?$ ]]
+          [[ "$MAXIMUM_MONTHLY_COST_CAD" =~ ^[0-9]+([.][0-9]{1,2})?$ ]]
+          [[ "$ATTEMPTS" =~ ^[0-9]+$ ]]
+          ((ATTEMPTS >= 2 && ATTEMPTS <= 100))
+          awk -v estimate="$ESTIMATED_MONTHLY_COST_CAD" -v ceiling="$MAXIMUM_MONTHLY_COST_CAD" 'BEGIN { exit !(ceiling <= 10.00 && estimate <= ceiling) }'
+          collector_vm="vm-stcollector-${PREFIX}-${LAB_ENVIRONMENT}"
+          expected="PUBLISH:${RESOURCE_GROUP}:${collector_vm}:${PLANNER_RUN_ID}"
+          [[ "$CONFIRMATION" == "$expected" ]] || {
+            echo "Confirmation must exactly equal: $expected" >&2
+            exit 1
+          }
+          jq -n \
+            --arg reviewed_commit "$REVIEWED_COMMIT" \
+            --arg planner_run_id "$PLANNER_RUN_ID" \
+            --arg planner_commit "$PLANNER_COMMIT" \
+            --arg planner_artifact_digest "$PLANNER_ARTIFACT_DIGEST" \
+            --arg resource_group "$RESOURCE_GROUP" \
+            --arg location "$LOCATION" \
+            --arg collector_vm "$collector_vm" \
+            --arg allowed_origin "$ALLOWED_ORIGIN" \
+            --arg frontend_url "$FRONTEND_URL" \
+            --arg current_price_evidence_id "$CURRENT_PRICE_EVIDENCE_ID" \
+            --arg estimated_monthly_cost_cad "$ESTIMATED_MONTHLY_COST_CAD" \
+            --arg maximum_monthly_cost_cad "$MAXIMUM_MONTHLY_COST_CAD" \
+            '{operation:"existing_collector_report_publication",reviewed_commit:$reviewed_commit,planner_run_id:($planner_run_id|tonumber),planner_commit:$planner_commit,planner_artifact_digest:$planner_artifact_digest,resource_group:$resource_group,location:$location,collector_vm:$collector_vm,allowed_origin:$allowed_origin,frontend_url:$frontend_url,current_price_evidence_id:$current_price_evidence_id,estimated_monthly_cost_cad:($estimated_monthly_cost_cad|tonumber),maximum_monthly_cost_cad:($maximum_monthly_cost_cad|tonumber),azure_authentication_authorized:true,azure_mutations_authorized:true,mutation_scope:["one dedicated report Storage account","one Blob service configuration","one $web container Blob-only access configuration","one current-collector Storage Blob Data Contributor assignment","two bounded VM Run Command guest executions: publisher preflight and managed-identity publication"],protected_resources:["collector VM resource configuration","collector NIC","collector disks","load balancer","backend VMs","VNets","NSGs","public IP","Log Analytics"]}' \
+            > "$ARTIFACT_DIR/request.json"
+
+      - name: Prove promoted workflow and execution guards before Azure login
+        run: |
+          set -euo pipefail
+          python .project/validate.py
+          python -m unittest infra.tests.test_existing_collector_report_publication
+          bash -n infra/scripts/execute_existing_collector_report_publication.sh
+          python -m py_compile infra/scripts/verify_existing_collector_publication_plan.py
+
+      - name: Download and verify the pinned successful planner artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLANNER_RUN_ID: ${{ inputs.planner_run_id }}
+          PLANNER_COMMIT: ${{ inputs.planner_commit }}
+          PLANNER_ARTIFACT_DIGEST: ${{ inputs.planner_artifact_digest }}
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+        run: |
+          set -euo pipefail
+          collector_vm="vm-stcollector-${PREFIX}-${LAB_ENVIRONMENT}"
+          plan_dir="$ARTIFACT_DIR/planner-evidence"
+          mkdir -p "$plan_dir"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PLANNER_RUN_ID}" > "$ARTIFACT_DIR/planner-run.json"
+          jq -e --arg sha "$PLANNER_COMMIT" '.status == "completed" and .conclusion == "success" and .head_sha == $sha' "$ARTIFACT_DIR/planner-run.json" >/dev/null
+          artifact_name="existing-collector-report-publication-plan-${PLANNER_RUN_ID}-1"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PLANNER_RUN_ID}/artifacts" > "$ARTIFACT_DIR/planner-artifacts.json"
+          artifact_id="$(jq -r --arg name "$artifact_name" '.artifacts[] | select(.name == $name and .expired == false) | .id' "$ARTIFACT_DIR/planner-artifacts.json")"
+          artifact_digest="$(jq -r --arg name "$artifact_name" '.artifacts[] | select(.name == $name and .expired == false) | .digest' "$ARTIFACT_DIR/planner-artifacts.json")"
+          [[ -n "$artifact_id" && "$artifact_digest" == "$PLANNER_ARTIFACT_DIGEST" ]]
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > "$ARTIFACT_DIR/planner-artifact.zip"
+          echo "${PLANNER_ARTIFACT_DIGEST#sha256:}  $ARTIFACT_DIR/planner-artifact.zip" | sha256sum -c -
+          unzip -q "$ARTIFACT_DIR/planner-artifact.zip" -d "$plan_dir"
+          python infra/scripts/verify_existing_collector_publication_plan.py \
+            --artifact-dir "$plan_dir" \
+            --expected-run-id "$PLANNER_RUN_ID" \
+            --expected-commit "$PLANNER_COMMIT" \
+            --expected-resource-group "$RESOURCE_GROUP" \
+            --expected-location "$LOCATION" \
+            --expected-prefix "$PREFIX" \
+            --expected-environment "$LAB_ENVIRONMENT" \
+            --expected-allowed-origin "$ALLOWED_ORIGIN" \
+            --expected-collector-vm "$collector_vm" \
+            --output "$ARTIFACT_DIR/planner-verification.json"
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Execute bounded deployment, live proof, and automatic rollback on failure
+        id: execute
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+          FRONTEND_URL: ${{ inputs.frontend_url }}
+          ATTEMPTS: ${{ inputs.attempts }}
+        run: |
+          set -euo pipefail
+          chmod +x infra/scripts/execute_existing_collector_report_publication.sh
+          infra/scripts/execute_existing_collector_report_publication.sh \
+            --resource-group "$RESOURCE_GROUP" \
+            --location "$LOCATION" \
+            --prefix "$PREFIX" \
+            --environment "$LAB_ENVIRONMENT" \
+            --allowed-origin "$ALLOWED_ORIGIN" \
+            --frontend-url "$FRONTEND_URL" \
+            --plan-verification "$ARTIFACT_DIR/planner-verification.json" \
+            --plan-parameters "$ARTIFACT_DIR/planner-evidence/deployment-parameters.json" \
+            --artifact-dir "$ARTIFACT_DIR/execution" \
+            --attempts "$ATTEMPTS" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Write execution summary
+        if: always()
+        env:
+          PUBLIC_REPORT_URL: ${{ steps.execute.outputs.public_report_url }}
+          FRONTEND_TEST_URL: ${{ steps.execute.outputs.frontend_test_url }}
+        run: |
+          {
+            echo '## Existing collector live-report publication'
+            echo
+            if [[ -n "$PUBLIC_REPORT_URL" ]]; then
+              echo "- Public report URL: \`$PUBLIC_REPORT_URL\`"
+              echo "- Frontend live test URL: \`$FRONTEND_TEST_URL\`"
+              echo '- Live Azure metrics, real frontend transactions, deterministic analysis, collector managed-identity publication, Blob endpoint fetch, schema, freshness, CORS, and content equality passed.'
+              echo '- Browser rendering and the committed default frontend source remain separate verification and repository gates.'
+            else
+              echo '- The live path did not complete. The execution script attempted bounded rollback of only the new role assignment and report Storage account.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Write portable evidence manifest
+        if: always()
+        run: |
+          set -euo pipefail
+          find "$ARTIFACT_DIR" -type f ! -name artifact-manifest.sha256 -printf '%P\0' \
+            | sort -z \
+            | while IFS= read -r -d '' relative; do
+                sha256sum "$ARTIFACT_DIR/$relative" | sed "s#  $ARTIFACT_DIR/#  #"
+              done > "$ARTIFACT_DIR/artifact-manifest.sha256"
+
+      - name: Upload protected publication evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: existing-collector-report-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
