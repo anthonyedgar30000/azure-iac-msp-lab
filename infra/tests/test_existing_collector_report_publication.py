@@ -31,15 +31,19 @@ class ExistingCollectorReportPublicationTests(unittest.TestCase):
         self.assertNotIn("Microsoft.Network/networkInterfaces", TEMPLATE)
         self.assertNotIn("deployOperationsCollector", TEMPLATE)
 
-    def test_template_exports_the_browser_endpoint_and_role_assignment(self) -> None:
+    def test_template_exports_browser_blob_endpoint_and_role_assignment(self) -> None:
         for expected in (
             "output storageAccountName string",
+            "output blobEndpoint string",
             "output staticWebsiteEndpoint string",
+            "output publicReportContainerName string",
             "output publicReportUrl string",
             "output collectorWriterRoleAssignmentId string",
         ):
             self.assertIn(expected, TEMPLATE)
-        self.assertIn("reports/technician-handoff-report.json", MODULE)
+        self.assertIn("primaryEndpoints.blob", MODULE)
+        self.assertIn("$web/reports/technician-handoff-report.json", MODULE)
+        self.assertIn("publicAccess: 'Blob'", MODULE)
         self.assertIn("scope: reportStorage", MODULE)
 
     def test_planner_has_valid_shell_syntax(self) -> None:
