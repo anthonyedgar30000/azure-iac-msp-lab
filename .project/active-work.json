@@ -4,174 +4,69 @@
   "updated_on": "2026-07-23",
   "last_substantive_baseline": {
     "branch": "main",
-    "commit": "e77d5e9c59537a6cd0ad05858565b2a51942e278",
-    "pull_request": 44,
-    "title": "Repin live publication to planner run 29979955391",
-    "qualification": "merged_planner_repin_exact_head_ci_passed_not_dispatched_not_deployed",
-    "claim_boundary": "This baseline proves the merged execution workflow is pinned to verified planner run 29979955391. It does not prove current price, quota, policy, effective role-assignment write permission, execution dispatch, deployment, managed-identity publication, Blob response, browser rendering, or a committed live frontend source."
+    "commit": "590176f890f590759bb9d9fe518314295c8bad6c",
+    "pull_request": 45,
+    "title": "Add read-only publication predeployment readiness",
+    "qualification": "merged_repository_controls_exact_head_ci_passed_no_demo_backend_or_api_deployment",
+    "claim_boundary": "This baseline proves the readiness workflow was merged. It does not prove demo backend deployment, API deployment, listener verification, frontend API use, report publication, or collector replacement."
   },
   "repository_observation": {
     "observed_on": "2026-07-23",
     "source": "live_github",
-    "main_head": "e77d5e9c59537a6cd0ad05858565b2a51942e278",
-    "head_semantics": "PR #44 merge commit observed before opening draft publication predeployment-readiness PR #45",
-    "open_pull_requests": [
-      45
-    ],
-    "claim_boundary": "This is a time-bounded observation. Resolve the live main head, PR state, reviews, CI, workflow runs, and Azure reality whenever this file is read."
+    "main_head": "590176f890f590759bb9d9fe518314295c8bad6c",
+    "head_semantics": "PR #45 merge commit observed before opening the scoped demo-backend/API implementation pull request",
+    "open_pull_requests": [],
+    "claim_boundary": "This is a time-bounded repository observation. Resolve live main, pull requests, CI, and Azure state whenever this file is read."
   },
   "authored_change": {
-    "change_id": "publication-predeployment-readiness",
-    "branch": "feat/publication-predeployment-readiness",
-    "pull_request": 45,
-    "write_owner": "This ChatGPT conversation — bounded repository-only predeployment-readiness PR explicitly authorized by Anthony Edgar with 'Proceed with predeployment-readiness PR'",
-    "scope": "Add a manually dispatched read-only readiness workflow, deterministic evidence assessor, regression tests, runbook, and reconciled project state. The workflow may later capture current CAD retail prices, regional Storage quota, applicable policy and deny assignments, current collector identity, execution-principal RBAC declarations, Provider validation, and exact Provider and ProviderNoRbac What-If. This repository increment does not authenticate to Azure, dispatch a workflow, grant permissions, deploy resources, invoke VM Run Command, publish a report, or change frontend source.",
-    "authority": "repository_only_publication_readiness_workflow",
+    "change_id": "demo-backends-api-frontend",
+    "branch": "feat/demo-backends-api",
+    "pull_request": null,
+    "write_owner": "This ChatGPT conversation — bounded repository implementation authorized by Anthony Edgar with 'Proceed' after correcting scope to demo backends, a service listener, and a frontend-connected API",
+    "scope": "Add a collector-independent Bicep entrypoint for the two synthetic VPN backends and a public Azure Function API, package the Python API, connect the GitHub Pages Run incident analysis action to real correlated Azure transactions with controlled fallback, add scoped What-If/deploy/verify automation, tests, documentation, and current project state. No workflow is dispatched and no Azure mutation is performed by this repository increment.",
+    "authority": "repository_only_demo_backend_api_implementation",
     "state_semantics": "declaration_not_live_status",
     "permitted_paths": [
-      ".github/workflows/existing-collector-report-publication-readiness.yml",
-      "infra/scripts/assess_existing_collector_publication_readiness.py",
-      "infra/tests/test_existing_collector_report_publication_readiness.py",
-      "docs/runbooks/existing-collector-report-publication-readiness.md",
+      ".github/workflows/ci.yml",
+      ".github/workflows/demo-backend-api.yml",
       ".project/active-work.json",
-      ".project/handoffs/current-state.md"
+      ".project/handoffs/current-state.md",
+      "demo_api/.funcignore",
+      "demo_api/core.py",
+      "demo_api/function_app.py",
+      "demo_api/host.json",
+      "demo_api/requirements.txt",
+      "docs/app.js",
+      "docs/report-source.json",
+      "docs/runbooks/demo-backend-api.md",
+      "infra/demo-backend-api.bicep",
+      "infra/modules/demo_api.bicep",
+      "infra/scripts/assert_demo_backend_api_what_if.py",
+      "infra/tests/test_demo_backend_api.py"
     ],
     "verification_criteria": [
-      "readiness workflow is manual and protected by exact reviewed-commit checkout and typed READINESS-PUBLICATION confirmation",
-      "workflow pins planner run 29979955391, commit c3a17f8765fc7b9e43ef5f92a490ee43246ef35e, and artifact digest cb2b3ec7f9563d376e0ac4bae4e089af03a506ee272573445bf6510b946712bc",
-      "workflow and assessor contain no deployment create, RBAC mutation, Storage mutation, VM Run Command, quota update, policy mutation, or deletion command",
-      "assessor captures the complete CAD Storage retail-price response and digest and computes an explicit conservative estimate or fails cost readiness closed",
-      "assessor captures subscription-specific westus2 StorageAccounts current usage and limit",
-      "assessor captures applicable policy assignments, deny assignments, current collector identity, execution-principal role declarations, Provider validation, and exact four-create Provider and ProviderNoRbac What-If evidence",
-      "publisher guest preflight is explicitly deferred because VM Run Command is outside the read-only workflow",
-      "readiness output preserves deployment_authorized false and azure_mutations_performed false",
-      "project validation, all unit tests, and Bicep lint/build pass on the exact PR head",
-      "the final PR diff remains limited to the six declared paths"
+      "the scoped Bicep entrypoint references the existing VNet, edge subnet, load balancer, public IP, and Log Analytics workspace without declaring the collector",
+      "the two existing synthetic backend contracts remain VPN-01 healthy and VPN-02 radius-timeout on HTTPS 443",
+      "the Function API exposes GET /api/health and POST /api/demo/run and does not accept a caller-controlled target URL",
+      "attempt counts are bounded to 2 through 50 and expected backend HTTP 503 bodies are preserved as transaction evidence",
+      "the API response preserves exact_root_cause_claimed false and technician-owned diagnosis",
+      "the frontend invokes the live API from the Run incident analysis button and clearly falls back to the committed fixture when unavailable",
+      "the deployment workflow is exact-commit bound, excludes resolve_vm_plan.sh and the collector, and requires exact typed confirmation",
+      "What-If rejects Modify, Delete, Replace, unexpected creates, and changes to shared network, observability, or collector resources",
+      "project validation, all infrastructure tests, main Bicep, and scoped Bicep lint/build pass on the exact PR head",
+      "the final diff remains limited to the declared paths"
     ],
-    "failure_behavior": "Keep PR #45 draft, inspect the exact validation, test, or review finding, patch only the six declared paths, and do not dispatch workflows, authenticate to Azure, grant permissions, invoke guest commands, or mutate resources.",
-    "rollback": "Close PR #45 without merge or revert its repository-only commits. No Azure, runtime, RBAC, Storage, policy, quota, VM, publication, or frontend rollback applies because this increment performs no external mutation."
+    "failure_behavior": "Keep the pull request draft, inspect the exact test or Bicep failure, patch only declared paths, and do not dispatch the workflow or mutate Azure.",
+    "rollback": "Close the pull request without merge or revert its repository commits. No Azure cleanup applies because this increment does not dispatch or deploy."
   },
-  "bounded_authority_grants": [
-    {
-      "grant_id": "existing-collector-report-publication-read-only-plan",
-      "workflow_path": ".github/workflows/existing-collector-report-publication-plan.yml",
-      "operation": "read_only_azure_planning",
-      "active_workflow_authorized": true,
-      "dispatch_authorized": true,
-      "azure_authentication_authorized": true,
-      "azure_mutations_authorized": false,
-      "authorized_by": "Anthony Edgar",
-      "authorized_on": "2026-07-22",
-      "authorization_source": "Explicit user instruction after the read-only Azure planning boundary was stated",
-      "protected_environment": "azure-lab",
-      "required_commit_semantics": "exact_40_character_reviewed_commit_checked_out_and_verified",
-      "required_confirmation": "PLAN-PUBLICATION:<resource-group>:vm-stcollector-<prefix>-<environment>",
-      "permitted_azure_operations": [
-        "az account show",
-        "az group show",
-        "az vm show",
-        "az storage account list",
-        "az role assignment list",
-        "az deployment group validate",
-        "az deployment group what-if"
-      ],
-      "state_semantics": "bounded_exception_to_false_defaults",
-      "claim_boundary": "This grant authorizes Azure reads and ProviderNoRbac planning only. It does not authorize the publication execution workflow, proposed readiness workflow, deployment, RBAC changes, report publication, endpoint configuration, guest commands, or any Azure mutation."
-    }
-  ],
-  "completed_increments": [
-    {
-      "pull_request": 37,
-      "title": "Decouple live report publication from collector compute",
-      "merge_commit": "54466651f291e271e5da542ea0afb38679ca6ca9",
-      "qualification": "repository_design_and_read_only_planning_path_not_deployed"
-    },
-    {
-      "pull_request": 38,
-      "title": "Promote read-only report publication planner",
-      "merge_commit": "e379064b7ee8b6a1a8b7731d31dedef1bca19e6f",
-      "qualification": "read_only_workflow_promoted_first_dispatch_failed_safely"
-    },
-    {
-      "pull_request": 39,
-      "title": "Repair read-only planner RBAC evidence capture",
-      "merge_commit": "3b035171e274819cb9590e32ac2ff752455d4387",
-      "qualification": "rbac_evidence_repair_second_dispatch_reached_provider_validation"
-    },
-    {
-      "pull_request": 40,
-      "title": "Use ProviderNoRbac for read-only ARM planning",
-      "merge_commit": "19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92",
-      "qualification": "provider_no_rbac_repair_then_successful_old_architecture_plan"
-    },
-    {
-      "pull_request": 42,
-      "title": "Use Blob endpoint for browser report CORS",
-      "merge_commit": "d181c48bf718c65015f83e04e1bbf9a7bcf152f4",
-      "qualification": "blob_endpoint_architecture_merged_then_successful_four_create_read_only_plan"
-    },
-    {
-      "pull_request": 41,
-      "title": "Promote bounded live report publication",
-      "source_head": "722dfcf99c367880147c9fd2f183d54d4d960f56",
-      "merge_commit": "c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
-      "merged_at": "2026-07-23T03:20:47Z",
-      "exact_head_ci": {
-        "run_id": 29976628311,
-        "conclusion": "success"
-      },
-      "owner_account_technical_review_recorded": true,
-      "independent_organizational_approval": false,
-      "qualification": "execution_workflow_merged_repository_verified_not_dispatched_not_deployed"
-    },
-    {
-      "pull_request": 43,
-      "title": "chore: reconcile merged publication project state",
-      "merge_commit": "2d5ad327e45d430105f72eaaf678fe7331464db4",
-      "qualification": "project_state_reconciled_repository_only_no_azure_action"
-    },
-    {
-      "pull_request": 44,
-      "title": "Repin live publication to planner run 29979955391",
-      "source_head": "13dc2be58aa3d16898aa220ac3eb6b451c512318",
-      "merge_commit": "e77d5e9c59537a6cd0ad05858565b2a51942e278",
-      "merged_at": "2026-07-23T05:24:35Z",
-      "exact_head_ci": {
-        "run_id": 29981661611,
-        "conclusion": "success"
-      },
-      "owner_account_technical_review_recorded": true,
-      "independent_organizational_approval": false,
-      "qualification": "current_planner_evidence_pinned_repository_verified_not_dispatched_not_deployed"
-    }
-  ],
-  "latest_observed_planner_attempt": {
-    "run_id": 29979955391,
-    "commit": "c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
-    "artifact": "existing-collector-report-publication-plan-29979955391-1",
-    "artifact_sha256": "cb2b3ec7f9563d376e0ac4bae4e089af03a506ee272573445bf6510b946712bc",
-    "observed_on": "2026-07-23",
-    "status": "completed_read_only_current_blob_endpoint_architecture",
-    "proven": [
-      "exact reviewed-commit checkout and bounded read-only authority validation succeeded",
-      "Azure OIDC login and current resource-group and collector inventory succeeded",
-      "no tagged report Storage account or visible collector publication role existed",
-      "ProviderNoRbac validation succeeded",
-      "What-If contained 21 Ignore and exactly four Create changes",
-      "the creates were one Storage account, one Blob service, one $web Blob-only container, and one Storage-scoped collector role assignment",
-      "zero Modify, Delete, and Replace changes were present",
-      "GitHub artifact digest and all 13 internal evidence-file hashes verified",
-      "no Azure mutation was authorized or performed"
-    ],
-    "unproven": [
-      "current Storage pricing, quota, and policy allowance",
-      "effective execution identity roleAssignments/write permission",
-      "current collector identity and publisher availability at execution time",
-      "publication-resource deployment",
-      "managed-identity publication",
-      "Blob endpoint CORS response",
-      "browser rendering and committed live frontend source"
-    ]
+  "latest_scope_observation": {
+    "workflow_run_id": 29985391850,
+    "workflow": "Azure lab lifecycle",
+    "requested_operation": "deploy",
+    "deploy_demo_backends": false,
+    "deploy_public_report_endpoint": false,
+    "result": "blocked_before_what_if_by_collector_image_drift",
+    "interpretation": "The run targeted the full collector-owning lifecycle scope rather than the demo-backend/API scope. It performed Azure login and reads but no Bicep deployment, backend deployment, API deployment, report deployment, or collector replacement."
   },
   "latest_promoted_evidence": {
     "event_id": "existing-collector-report-publication-plan-29979955391",
@@ -181,71 +76,23 @@
     "artifact": "existing-collector-report-publication-plan-29979955391-1",
     "artifact_sha256": "cb2b3ec7f9563d376e0ac4bae4e089af03a506ee272573445bf6510b946712bc",
     "observed_on": "2026-07-23",
-    "status": "completed_read_only_current_four_create_architecture",
+    "status": "completed_read_only_publication_architecture_evidence_separate_from_current_demo_api_workstream",
     "azure_mutations_authorized": false,
     "azure_mutations_performed": false,
-    "freshness_boundary": "This planner evidence is current for the merged execution-workflow commit c3a17f8765fc7b9e43ef5f92a490ee43246ef35e and unchanged Bicep through main commit e77d5e9c59537a6cd0ad05858565b2a51942e278. Re-resolve Azure state, cost, quota, policy, permissions, collector identity, publisher availability, and exact Provider What-If immediately before any separately authorized deployment."
-  },
-  "review_state": {
-    "pr41_publication_execution_promotion": {
-      "status": "merged_repository_workflow_present_not_dispatched",
-      "reviewed_pull_request": 41,
-      "source_head": "722dfcf99c367880147c9fd2f183d54d4d960f56",
-      "merge_commit": "c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
-      "exact_head_ci_run_id": 29976628311,
-      "technical_review_ids": [
-        4760496795,
-        4760497152
-      ],
-      "review_account": "pull_request_owner",
-      "independent_organizational_approval": false,
-      "claim_boundary": "Repository promotion is merged. No publication workflow execution, Azure deployment, RBAC mutation, managed-identity publication, Blob/browser proof, or manual repair is established."
-    },
-    "pr44_publication_planner_repin": {
-      "status": "merged_current_plan_pin_present_not_dispatched",
-      "reviewed_pull_request": 44,
-      "source_head": "13dc2be58aa3d16898aa220ac3eb6b451c512318",
-      "merge_commit": "e77d5e9c59537a6cd0ad05858565b2a51942e278",
-      "exact_head_ci_run_id": 29981661611,
-      "technical_review_ids": [
-        4760976546
-      ],
-      "review_account": "pull_request_owner",
-      "independent_organizational_approval": false,
-      "claim_boundary": "Current planner evidence is machine-pinned. No readiness workflow execution, publication workflow dispatch, Azure authentication for execution, permission grant, deployment, or browser proof is established."
-    },
-    "publication_predeployment_readiness": {
-      "status": "draft_pr45_pending_final_exact_head_ci_and_review",
-      "reviewed_pull_request": 45,
-      "independent_organizational_approval": false,
-      "claim_boundary": "Read-only readiness workflow proposal only. Merge, dispatch, Azure authentication, evidence freshness, permissions, and Azure mutation remain separately unauthorized or unproven."
-    }
-  },
-  "deployment_state": {
-    "repository_workflow_merged": true,
-    "workflow_dispatch_observed": false,
-    "readiness_workflow_present_on_main": false,
-    "readiness_workflow_dispatch_observed": false,
-    "azure_deployment_observed": false,
-    "rbac_mutation_observed": false,
-    "managed_identity_publication_observed": false,
-    "manual_repair_observed": false,
-    "blob_endpoint_verified": false,
-    "browser_rendering_verified": false,
-    "operationally_verified": false
+    "freshness_boundary": "This evidence applies to the separate public-report publication architecture and does not establish current demo-backend/API state. Fresh scoped Azure inventory and What-If are required before any demo deployment."
   },
   "authority_defaults": {
     "active_workflow_present": false,
     "dispatch_authorized": false,
     "azure_authentication_authorized": false,
     "azure_mutations_authorized": false,
-    "rule": "Defaults remain fail-closed. The merged execution workflow is repository state, not authority; draft PR #45 creates no readiness dispatch or Azure-authentication grant; only the separate bounded read-only planner grant is active."
+    "rule": "Repository implementation authority does not authorize workflow dispatch, Azure authentication, backend or API deployment, collector changes, or any other Azure mutation."
   },
   "live_state_resolution": {
     "repository_head": "Query the live GitHub default branch at read time.",
     "pull_requests": "Query live PR head, draft state, mergeability, reviews, threads, and exact-head CI.",
     "ci": "Query workflow runs and jobs for the exact commit under evaluation.",
-    "azure": "Use fresh authenticated Azure evidence; repository declarations and historical artifacts are insufficient.",
+    "azure": "Use fresh scoped Azure inventory and What-If; repository declarations and the failed broad lifecycle run are insufficient.",
     "canonical_distinction": "last_substantive_baseline != current_repository_head"
   }
 }
