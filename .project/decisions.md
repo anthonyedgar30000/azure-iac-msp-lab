@@ -1,47 +1,93 @@
 # Workflow decisions
 
-## Git is the coordination authority
+## Authority precedence
 
-Chat history is useful context, but the repository, pull requests, CI results, and recorded deployment evidence decide the current project state.
+Chat history supports continuity, but current GitHub state, exact-head CI, repository declarations, protected workflow artifacts, and fresh Azure evidence determine implementation and runtime truth.
 
-## Branch ownership
+```text
+conversation_context != repository_authority
+repository_declaration != deployed_reality
+promoted_evidence != current_reality
+```
 
-A bounded workstream has one write-owning branch. Another conversation may inspect, test, or review that branch, but it must not independently push competing changes to it. Parallel implementation requires a separate branch and an explicit entry in `active-work.json`.
+## Live repository state is query-only
+
+Current `main`, active branches, open pull requests, write ownership, review state, mergeability, and CI must be queried from Git and GitHub.
+
+They must not be persisted as self-updating truth inside merged project files.
+
+A pull-request description carries the transient branch objective, permitted paths, authority, verification criteria, failure behavior, rollback, and cleanup while the PR is open.
+
+## Durable repository state
+
+`.project/active-work.json` preserves:
+
+- the last substantive accepted baseline;
+- the latest promoted repository event;
+- versioned repository capabilities;
+- bounded authority grants;
+- promoted evidence;
+- fail-closed authority defaults;
+- rules for resolving live state.
+
+`.project/repository-events.jsonl` is curated, non-exhaustive history. Absence from that log does not prove that an event did not happen.
 
 ## State vocabulary
 
 - **proposed**: discussed or documented only.
 - **implemented**: present in a branch or `main`.
-- **ci_verified**: automated checks passed against the implementation.
-- **deployed**: resources or software were applied to an environment.
-- **operationally_verified**: runtime evidence demonstrates the intended behavior.
-- **manual_drift**: runtime changes exist that are not yet reproduced by the trusted deployment path.
+- **ci_verified**: automated checks passed for the exact implementation.
+- **deployed**: resources or software were applied.
+- **operationally_verified**: runtime evidence proves the intended behavior.
+- **manual_drift**: runtime changes exist outside the trusted deployment path.
+- **superseded**: newer evidence or implementation replaces the claim while preserving its history.
 
-Never collapse these states into a single word such as “done.”
+Never collapse these into “done.”
 
 ## Environment facts
 
-A fact must identify its value, status, evidence source, and last-observed date. When evidence conflicts, retain both claims and mark the conflict instead of silently selecting one.
+Every environment fact identifies:
+
+- value;
+- status;
+- evidence source;
+- observation time;
+- claim boundary or limitation.
+
+Conflicting evidence is retained and classified rather than silently overwritten.
+
+## Human authority
+
+A recommendation, CI result, accepted What-If, or persistence control message cannot grant new authority.
+
+```text
+recommended_control_message != workflow_dispatch_authorized
+accepted_What-If != Azure_mutation_authorized
+cleanup_required != cleanup_authorized
+```
+
+Authority remains fail-closed unless a current human instruction and exact workflow contract grant a bounded exception.
 
 ## Handoffs
 
-Before a workstream changes conversations or owners, update its handoff with:
+A durable handoff records architecture, promoted evidence, unresolved gates, failure and rollback behavior, and the safe next decision boundary.
 
-- branch and pull request;
-- bounded purpose;
-- completed verification;
-- deployment state;
-- unresolved risks;
-- next authorized action.
+It does not claim that a branch or pull request remains active after merge.
 
 ## Safety boundary
 
-Workflow observability contains metadata only. It must never contain Azure credentials, SSH private keys, bearer tokens, SAS tokens, raw customer evidence, or other secrets.
+Project state must not contain Azure credentials, SSH private keys, bearer tokens, SAS tokens, exact private identity values, raw customer evidence, or other secrets.
 
-## Replacement execution promotion
+Protected artifacts retain detailed operational evidence; committed state contains only bounded, sanitized claims.
 
-A collector replacement workflow must not become active merely because its design and tests exist. The candidate remains outside `.github/workflows`, fails closed, and records Azure mutations as unauthorized.
+## Replacement execution
 
-Promotion requires a separate pull request after rollback, preflight evidence, recovery verification, NIC preservation, identity/RBAC restoration, cost controls, cleanup, and independent review are resolved. Moving the candidate into `.github/workflows`, adding Azure authentication, or adding mutation commands are separate authority-changing acts.
+Collector replacement remains inactive until recovery-point proof, isolated boot rehearsal, NIC handling, identity and RBAC restoration, cost controls, cleanup ownership, and independent review are resolved.
 
-The generated `REPLACE:` phrase is reference data only. It does not authorize dispatch or execution.
+The generated `REPLACE:` phrase is reference data only.
+
+## Frontend endpoint promotion
+
+A live report or demo API URL must not be committed merely because its intended DNS name is known.
+
+Promote a live URL only after Azure existence, TLS, API or report behavior, CORS, provenance, freshness, and browser rendering are verified. Query-string overrides are the bounded pre-promotion test path.
