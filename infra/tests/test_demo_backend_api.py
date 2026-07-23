@@ -132,6 +132,7 @@ class DemoBackendApiTests(unittest.TestCase):
             }
         )
         self.assertEqual(result["creates"], 2)
+        self.assertEqual(result["known_nic_noise_modifies"], [])
         self.assertFalse(result["deployment_authorized"])
 
     def test_pretty_what_if_parser_accepts_expected_changes(self):
@@ -152,6 +153,55 @@ Resource changes: 1 to create, 1 no change, 1 to ignore.
         self.assertEqual(result["creates"], 1)
         self.assertEqual(result["create_types"], {"Microsoft.Web/sites": 1})
         self.assertFalse(result["deployment_authorized"])
+
+    def test_pretty_what_if_parser_accepts_exact_backend_nic_noise(self):
+        payload = self.classifier.parse_pretty_what_if(
+            """Resource and property changes are indicated with these symbols:
+  + Create
+  ~ Modify
+
+  + Microsoft.Web/sites/func-demo [2024-04-01]
+  ~ Microsoft.Network/networkInterfaces/nic-vpn01-mst-dev [2024-05-01]
+    - kind:                                                                      "Regular"
+    - properties.allowPort25Out:                                                 false
+    - properties.auxiliaryMode:                                                  "None"
+    - properties.auxiliarySku:                                                   "None"
+    - properties.disableTcpStateTracking:                                        false
+    ~ properties.ipConfigurations: [
+      ~ 0:
+        - properties.privateIPAddressVersion: "IPv4"
+      ]
+
+Resource changes: 1 to create, 1 to modify.
+"""
+        )
+        result = self.classifier.classify(payload)
+        self.assertEqual(result["creates"], 1)
+        self.assertEqual(
+            result["known_nic_noise_modifies"],
+            ["/providers/Microsoft.Network/networkInterfaces/nic-vpn01-mst-dev"],
+        )
+        self.assertFalse(result["deployment_authorized"])
+
+    def test_pretty_what_if_parser_rejects_backend_nic_extra_delta(self):
+        payload = self.classifier.parse_pretty_what_if(
+            """  ~ Microsoft.Network/networkInterfaces/nic-vpn01-mst-dev [2024-05-01]
+    - kind: "Regular"
+    - properties.allowPort25Out: false
+    - properties.auxiliaryMode: "None"
+    - properties.auxiliarySku: "None"
+    - properties.disableTcpStateTracking: false
+    ~ properties.enableIPForwarding: false => true
+    ~ properties.ipConfigurations: [
+      ~ 0:
+        - properties.privateIPAddressVersion: "IPv4"
+      ]
+Resource changes: 1 to modify.
+"""
+        )
+        with self.assertRaises(SystemExit) as context:
+            self.classifier.classify(payload)
+        self.assertIn("nic-vpn01-mst-dev", str(context.exception))
 
     def test_pretty_what_if_parser_preserves_modify_blocker(self):
         payload = self.classifier.parse_pretty_what_if(

@@ -29,6 +29,11 @@ _RESOURCE_LINE = re.compile(
     r"(?P<resource>[A-Za-z0-9.]+/[^\s\[]+)"
     r"(?:\s+\[[^\]]+\])?\s*$"
 )
+_DELTA_LINE = re.compile(r"^\s+(?P<symbol>[+\-~])\s+(?P<path>[^:]+):")
+_BACKEND_NIC_ID = re.compile(
+    r"/providers/Microsoft\.Network/networkInterfaces/nic-vpn0[12]-[a-z0-9-]+$",
+    re.IGNORECASE,
+)
 _SYMBOL_TO_CHANGE_TYPE = {
     "+": "Create",
     "-": "Delete",
@@ -46,6 +51,18 @@ _SUMMARY_TOKEN_TO_CHANGE_TYPE = {
     "ignore": "Ignore",
     "no effect": "NoEffect",
 }
+_KNOWN_NIC_NOISE_REQUIRED = {
+    "- kind",
+    "- properties.allowPort25Out",
+    "- properties.auxiliaryMode",
+    "- properties.auxiliarySku",
+    "- properties.disableTcpStateTracking",
+    "- properties.privateIPAddressVersion",
+}
+_KNOWN_NIC_NOISE_STRUCTURAL = {
+    "~ properties.ipConfigurations",
+    "~ 0",
+}
 
 
 def _resource_type(resource_path: str) -> str:
@@ -58,23 +75,35 @@ def _resource_type(resource_path: str) -> str:
 def parse_pretty_what_if(text: str) -> dict[str, Any]:
     changes: list[dict[str, Any]] = []
     summary_line: str | None = None
+    current_item: dict[str, Any] | None = None
 
     for line in text.splitlines():
         if line.startswith("Resource changes:"):
             summary_line = line
+            current_item = None
             continue
-        match = _RESOURCE_LINE.match(line)
-        if not match:
+
+        resource_match = _RESOURCE_LINE.match(line)
+        if resource_match:
+            resource_path = resource_match.group("resource")
+            change_type = _SYMBOL_TO_CHANGE_TYPE[resource_match.group("symbol")]
+            item: dict[str, Any] = {
+                "changeType": change_type,
+                "resourceId": f"/providers/{resource_path}",
+            }
+            if change_type == "Create":
+                item["after"] = {"type": _resource_type(resource_path)}
+            if change_type == "Modify":
+                item["prettyDeltaMarkers"] = []
+            changes.append(item)
+            current_item = item
             continue
-        resource_path = match.group("resource")
-        change_type = _SYMBOL_TO_CHANGE_TYPE[match.group("symbol")]
-        item: dict[str, Any] = {
-            "changeType": change_type,
-            "resourceId": f"/providers/{resource_path}",
-        }
-        if change_type == "Create":
-            item["after"] = {"type": _resource_type(resource_path)}
-        changes.append(item)
+
+        if current_item and current_item.get("changeType") == "Modify":
+            delta_match = _DELTA_LINE.match(line)
+            if delta_match:
+                marker = f"{delta_match.group('symbol')} {delta_match.group('path').strip()}"
+                current_item["prettyDeltaMarkers"].append(marker)
 
     if summary_line is None:
         raise SystemExit("ARM What-If text is missing the resource-change summary")
@@ -114,6 +143,20 @@ def load_what_if(path: Path) -> Any:
         return parse_pretty_what_if(text)
 
 
+def _is_known_backend_nic_what_if_noise(item: dict[str, Any]) -> bool:
+    if item.get("changeType") != "Modify":
+        return False
+    resource_id = str(item.get("resourceId") or "")
+    if not _BACKEND_NIC_ID.search(resource_id):
+        return False
+    raw_markers = item.get("prettyDeltaMarkers")
+    if not isinstance(raw_markers, list):
+        return False
+    markers = {str(marker) for marker in raw_markers}
+    allowed = _KNOWN_NIC_NOISE_REQUIRED | _KNOWN_NIC_NOISE_STRUCTURAL
+    return _KNOWN_NIC_NOISE_REQUIRED.issubset(markers) and markers.issubset(allowed)
+
+
 def classify(payload: dict[str, Any]) -> dict[str, Any]:
     if payload.get("status") != "Succeeded" or payload.get("error") is not None:
         raise SystemExit("ARM What-If did not complete successfully")
@@ -121,10 +164,17 @@ def classify(payload: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(changes, list):
         raise SystemExit("ARM What-If changes must be an array")
 
+    known_nic_noise = [
+        item
+        for item in changes
+        if isinstance(item, dict) and _is_known_backend_nic_what_if_noise(item)
+    ]
+    known_nic_noise_ids = {id(item) for item in known_nic_noise}
     forbidden = [
         item
         for item in changes
         if item.get("changeType") not in {"Create", "Ignore", "NoChange"}
+        and id(item) not in known_nic_noise_ids
     ]
     if forbidden:
         raise SystemExit(
@@ -162,10 +212,11 @@ def classify(payload: dict[str, Any]) -> dict[str, Any]:
         create_types[resource_type] = create_types.get(resource_type, 0) + 1
 
     return {
-        "status": "accepted_create_or_no_change_only",
+        "status": "accepted_expected_creates_and_known_nic_noise_only",
         "total_changes": len(changes),
         "creates": len(creates),
         "create_types": create_types,
+        "known_nic_noise_modifies": [str(item.get("resourceId")) for item in known_nic_noise],
         "forbidden_change_types": [],
         "protected_existing_changes": [],
         "deployment_authorized": False,
