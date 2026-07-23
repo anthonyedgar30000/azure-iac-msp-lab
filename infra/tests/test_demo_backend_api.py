@@ -7,6 +7,7 @@ from pathlib import Path
 import py_compile
 import unittest
 
+
 ROOT = Path(__file__).resolve().parents[2]
 CORE = ROOT / "demo_api" / "core.py"
 RUNTIME = ROOT / "demo_api" / "runtime.py"
@@ -84,10 +85,12 @@ class DemoBackendApiTests(unittest.TestCase):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("reviewed_commit", workflow)
         self.assertIn("COLLECTOR-DEMO-API:", workflow)
-        self.assertIn("infra/main.bicep", workflow)
-        self.assertIn("collectorDemoApiSourceRef", workflow)
+        self.assertIn("infra/collector-demo-api.bicep", workflow)
+        self.assertIn('sourceRef="$REVIEWED_COMMIT"', workflow)
+        self.assertNotIn("infra/main.bicep", workflow)
+        self.assertNotIn("deployOperationsCollector=true", workflow)
+        self.assertNotIn("COLLECTOR_ADMIN_SSH_PUBLIC_KEY", workflow)
         self.assertNotIn("az functionapp deployment", workflow)
-        self.assertNotIn("deployOperationsCollector=false", workflow)
         self.assertNotIn("Microsoft.Web/serverfarms", workflow)
 
     def test_frontend_calls_api_and_retains_fallback(self):

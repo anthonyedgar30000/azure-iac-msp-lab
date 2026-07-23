@@ -162,6 +162,8 @@ jobs:
               az bicep build-params --file infra/main.dev.bicepparam --outfile /tmp/main.parameters.json
               az bicep lint --file infra/demo-backend-api.bicep
               az bicep build --file infra/demo-backend-api.bicep --outfile /tmp/demo-backend-api.json
+              az bicep lint --file infra/collector-demo-api.bicep
+              az bicep build --file infra/collector-demo-api.bicep --outfile /tmp/collector-demo-api.json
             } 2>&1 | tee "$GITHUB_WORKSPACE/bicep-validation.log"
 
       - name: Upload Bicep validation log
