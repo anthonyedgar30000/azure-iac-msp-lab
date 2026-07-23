@@ -5,7 +5,6 @@ param environment string
 param location string
 param tags object
 param virtualNetworkId string
-param loadBalancerName string
 param operationsNsgName string
 param collectorVmName string
 param collectorPrivateIpAddress string
@@ -17,19 +16,23 @@ param sourceRef string
 param installerUri string
 
 var resourceSuffix = '${prefix}-${environment}'
+var publicIpName = 'pip-st-demo-api-${resourceSuffix}'
+var loadBalancerName = 'lb-st-demo-api-${resourceSuffix}'
 var frontendName = 'fe-public-st-demo-api'
 var backendPoolName = 'be-st-demo-api'
 var probeName = 'probe-tcp-80-st-demo-api'
+var httpRuleName = 'rule-st-demo-api-http'
+var httpsRuleName = 'rule-st-demo-api-https'
 
 resource publicIp 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
-  name: 'pip-st-demo-api-${resourceSuffix}'
+  name: publicIpName
   location: location
   sku: {
     name: 'Standard'
   }
   tags: union(tags, {
     component: 'collector-hosted-demo-api'
-    exposure: 'load-balanced-public-https'
+    exposure: 'dedicated-load-balanced-public-https'
   })
   properties: {
     publicIPAllocationMethod: 'Static'
@@ -40,99 +43,108 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
   }
 }
 
-resource loadBalancer 'Microsoft.Network/loadBalancers@2024-05-01' existing = {
+// Keep the demo API ingress isolated from the existing remote-access load balancer.
+// The complete load-balancer resource is deployed atomically so Azure does not receive
+// unsupported standalone PUT requests for frontend, pool, probe, or rule child resources.
+resource demoApiLoadBalancer 'Microsoft.Network/loadBalancers@2024-05-01' = {
   name: loadBalancerName
-}
-
-resource apiFrontend 'Microsoft.Network/loadBalancers/frontendIPConfigurations@2024-05-01' = {
-  parent: loadBalancer
-  name: frontendName
-  properties: {
-    publicIPAddress: {
-      id: publicIp.id
-    }
+  location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
   }
-}
-
-resource apiBackendPool 'Microsoft.Network/loadBalancers/backendAddressPools@2024-05-01' = {
-  parent: loadBalancer
-  name: backendPoolName
+  tags: union(tags, {
+    component: 'collector-hosted-demo-api-load-balancer'
+    exposure: 'public-https'
+  })
   properties: {
-    virtualNetwork: {
-      id: virtualNetworkId
-    }
-    loadBalancerBackendAddresses: [
+    frontendIPConfigurations: [
       {
-        name: 'collector'
+        name: frontendName
         properties: {
-          ipAddress: collectorPrivateIpAddress
-          virtualNetwork: {
-            id: virtualNetworkId
+          publicIPAddress: {
+            id: publicIp.id
           }
         }
       }
     ]
-  }
-}
-
-// Probe port 80 so the backend becomes reachable for ACME HTTP-01 before TLS exists.
-// Nginx keeps port 80 available and redirects normal traffic to HTTPS after issuance.
-resource apiProbe 'Microsoft.Network/loadBalancers/probes@2024-05-01' = {
-  parent: loadBalancer
-  name: probeName
-  properties: {
-    protocol: 'Tcp'
-    port: 80
-    intervalInSeconds: 5
-    numberOfProbes: 2
-  }
-}
-
-resource apiHttpRule 'Microsoft.Network/loadBalancers/loadBalancingRules@2024-05-01' = {
-  parent: loadBalancer
-  name: 'rule-st-demo-api-http'
-  properties: {
-    frontendIPConfiguration: {
-      id: apiFrontend.id
-    }
-    backendAddressPool: {
-      id: apiBackendPool.id
-    }
-    probe: {
-      id: apiProbe.id
-    }
-    protocol: 'Tcp'
-    frontendPort: 80
-    backendPort: 80
-    enableFloatingIP: false
-    idleTimeoutInMinutes: 4
-    loadDistribution: 'Default'
-    disableOutboundSnat: true
-    enableTcpReset: true
-  }
-}
-
-resource apiHttpsRule 'Microsoft.Network/loadBalancers/loadBalancingRules@2024-05-01' = {
-  parent: loadBalancer
-  name: 'rule-st-demo-api-https'
-  properties: {
-    frontendIPConfiguration: {
-      id: apiFrontend.id
-    }
-    backendAddressPool: {
-      id: apiBackendPool.id
-    }
-    probe: {
-      id: apiProbe.id
-    }
-    protocol: 'Tcp'
-    frontendPort: 443
-    backendPort: 443
-    enableFloatingIP: false
-    idleTimeoutInMinutes: 4
-    loadDistribution: 'Default'
-    disableOutboundSnat: true
-    enableTcpReset: true
+    backendAddressPools: [
+      {
+        name: backendPoolName
+        properties: {
+          loadBalancerBackendAddresses: [
+            {
+              name: 'collector'
+              properties: {
+                ipAddress: collectorPrivateIpAddress
+                // IP-based pools must set the virtual network at either pool or address
+                // level, never both. Use the address level for this single proven target.
+                virtualNetwork: {
+                  id: virtualNetworkId
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+    probes: [
+      {
+        name: probeName
+        properties: {
+          protocol: 'Tcp'
+          port: 80
+          intervalInSeconds: 5
+          numberOfProbes: 2
+        }
+      }
+    ]
+    loadBalancingRules: [
+      {
+        name: httpRuleName
+        properties: {
+          frontendIPConfiguration: {
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancerName, frontendName)
+          }
+          backendAddressPool: {
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, backendPoolName)
+          }
+          probe: {
+            id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerName, probeName)
+          }
+          protocol: 'Tcp'
+          frontendPort: 80
+          backendPort: 80
+          enableFloatingIP: false
+          idleTimeoutInMinutes: 4
+          loadDistribution: 'Default'
+          disableOutboundSnat: true
+          enableTcpReset: true
+        }
+      }
+      {
+        name: httpsRuleName
+        properties: {
+          frontendIPConfiguration: {
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancerName, frontendName)
+          }
+          backendAddressPool: {
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, backendPoolName)
+          }
+          probe: {
+            id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerName, probeName)
+          }
+          protocol: 'Tcp'
+          frontendPort: 443
+          backendPort: 443
+          enableFloatingIP: false
+          idleTimeoutInMinutes: 4
+          loadDistribution: 'Default'
+          disableOutboundSnat: true
+          enableTcpReset: true
+        }
+      }
+    ]
   }
 }
 
@@ -191,14 +203,14 @@ resource demoApiExtension 'Microsoft.Compute/virtualMachines/extensions@2024-07-
     }
   }
   dependsOn: [
-    apiHttpRule
-    apiHttpsRule
+    demoApiLoadBalancer
     allowDemoApiHttp
     allowDemoApiHttps
   ]
 }
 
 output publicIpId string = publicIp.id
+output loadBalancerId string = demoApiLoadBalancer.id
 output fqdn string = publicIp.properties.dnsSettings.fqdn
 output healthUrl string = 'https://${publicIp.properties.dnsSettings.fqdn}/api/health'
 output runUrl string = 'https://${publicIp.properties.dnsSettings.fqdn}/api/demo/run'
