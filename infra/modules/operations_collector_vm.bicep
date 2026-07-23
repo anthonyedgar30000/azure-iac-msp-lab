@@ -4,6 +4,7 @@ param prefix string
 param environment string
 param location string
 param operationsSubnetId string
+param operationsNsgName string
 param tags object
 
 @description('Private IPv4 address assigned to the collector NIC.')
@@ -34,6 +35,27 @@ param collectorSourceRepository string
 @description('Branch, tag, or commit fetched during bootstrap. Pin a commit for repeatable deployments.')
 param collectorSourceRef string
 
+@description('Expose the bounded demo API through Nginx on this existing collector VM.')
+param deployCollectorDemoApi bool = false
+
+@description('Globally unique DNS label for the collector-hosted demo API public IP.')
+param demoApiDnsLabel string = ''
+
+@description('Exact GitHub Pages origin allowed by the demo API CORS policy.')
+param demoApiAllowedOrigin string = 'https://anthonyedgar30000.github.io'
+
+@description('Fixed synthetic backend transaction endpoint called by the demo API.')
+param demoApiBackendTransactionUrl string = ''
+
+@description('Public repository installed for the collector-hosted demo API.')
+param demoApiSourceRepository string = collectorSourceRepository
+
+@description('Exact reviewed commit installed for the collector-hosted demo API.')
+param demoApiSourceRef string = collectorSourceRef
+
+@description('Exact raw URL for the reviewed demo API installer script.')
+param demoApiInstallerUri string = ''
+
 var resourceSuffix = '${prefix}-${environment}'
 var collectorName = 'vm-stcollector-${resourceSuffix}'
 var collectorComputerName = 'stcollector-${environment}'
@@ -44,6 +66,25 @@ var bootstrapWithRef = replace(bootstrapWithRepository, '__COLLECTOR_SOURCE_REF_
 var bootstrapWithPort = replace(bootstrapWithRef, '__COLLECTOR_PORT__', string(collectorPort))
 var bootstrapWithPrivateIp = replace(bootstrapWithPort, '__COLLECTOR_PRIVATE_IP__', privateIpAddress)
 var renderedBootstrap = replace(bootstrapWithPrivateIp, '__COLLECTOR_CERTIFICATE_NAME__', collectorComputerName)
+
+resource demoApiPublicIp 'Microsoft.Network/publicIPAddresses@2024-05-01' = if (deployCollectorDemoApi) {
+  name: 'pip-st-demo-api-${resourceSuffix}'
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  tags: union(tags, {
+    component: 'collector-hosted-demo-api'
+    exposure: 'public-https'
+  })
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    publicIPAddressVersion: 'IPv4'
+    dnsSettings: {
+      domainNameLabel: demoApiDnsLabel
+    }
+  }
+}
 
 resource collectorNic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
   name: 'nic-stcollector-${resourceSuffix}'
@@ -61,6 +102,9 @@ resource collectorNic 'Microsoft.Network/networkInterfaces@2024-05-01' = {
           subnet: {
             id: operationsSubnetId
           }
+          publicIPAddress: deployCollectorDemoApi ? {
+            id: demoApiPublicIp.id
+          } : null
         }
       }
     ]
@@ -171,6 +215,63 @@ resource collectorVm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   }
 }
 
+resource operationsNsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' existing = {
+  name: operationsNsgName
+}
+
+resource allowDemoApiHttp 'Microsoft.Network/networkSecurityGroups/securityRules@2024-05-01' = if (deployCollectorDemoApi) {
+  parent: operationsNsg
+  name: 'Allow-Demo-API-HTTP-From-Internet'
+  properties: {
+    priority: 140
+    access: 'Allow'
+    direction: 'Inbound'
+    protocol: 'Tcp'
+    sourcePortRange: '*'
+    destinationPortRange: '80'
+    sourceAddressPrefix: 'Internet'
+    destinationAddressPrefix: privateIpAddress
+  }
+}
+
+resource allowDemoApiHttps 'Microsoft.Network/networkSecurityGroups/securityRules@2024-05-01' = if (deployCollectorDemoApi) {
+  parent: operationsNsg
+  name: 'Allow-Demo-API-HTTPS-From-Internet'
+  properties: {
+    priority: 150
+    access: 'Allow'
+    direction: 'Inbound'
+    protocol: 'Tcp'
+    sourcePortRange: '*'
+    destinationPortRange: '443'
+    sourceAddressPrefix: 'Internet'
+    destinationAddressPrefix: privateIpAddress
+  }
+}
+
+resource demoApiExtension 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' = if (deployCollectorDemoApi) {
+  parent: collectorVm
+  name: 'servicetracer-demo-api'
+  location: location
+  properties: {
+    publisher: 'Microsoft.Azure.Extensions'
+    type: 'CustomScript'
+    typeHandlerVersion: '2.1'
+    autoUpgradeMinorVersion: true
+    protectedSettings: {
+      fileUris: [
+        demoApiInstallerUri
+      ]
+      commandToExecute: 'bash install_collector_demo_api.sh ${demoApiSourceRepository} ${demoApiSourceRef} ${demoApiPublicIp.properties.dnsSettings.fqdn} ${demoApiBackendTransactionUrl} ${demoApiAllowedOrigin}'
+    }
+  }
+  dependsOn: [
+    collectorNic
+    allowDemoApiHttp
+    allowDemoApiHttps
+  ]
+}
+
 output collectorVmId string = collectorVm.id
 output collectorPrincipalId string = collectorVm.identity.principalId
 output collectorNicId string = collectorNic.id
@@ -182,3 +283,8 @@ output collectorSource object = {
   reference: collectorSourceRef
 }
 output collectorDesiredImage object = collectorImage
+output collectorDemoApiEnabled bool = deployCollectorDemoApi
+output collectorDemoApiPublicIpId string = deployCollectorDemoApi ? demoApiPublicIp.id : ''
+output collectorDemoApiFqdn string = deployCollectorDemoApi ? demoApiPublicIp.properties.dnsSettings.fqdn : ''
+output collectorDemoApiHealthUrl string = deployCollectorDemoApi ? 'https://${demoApiPublicIp.properties.dnsSettings.fqdn}/api/health' : ''
+output collectorDemoApiRunUrl string = deployCollectorDemoApi ? 'https://${demoApiPublicIp.properties.dnsSettings.fqdn}/api/demo/run' : ''
