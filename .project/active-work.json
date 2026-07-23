@@ -4,45 +4,49 @@
   "updated_on": "2026-07-23",
   "last_substantive_baseline": {
     "branch": "main",
-    "commit": "c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
-    "pull_request": 41,
-    "title": "Promote bounded live report publication",
-    "qualification": "merged_execution_workflow_exact_head_ci_passed_owner_account_technical_review_recorded_not_dispatched_not_deployed",
-    "claim_boundary": "This baseline proves the bounded publication execution workflow and supporting repository controls were merged. It does not prove workflow dispatch, current pricing, effective role-assignment write permission, deployment, managed-identity publication, Blob response, browser rendering, or a committed live frontend source."
+    "commit": "2d5ad327e45d430105f72eaaf678fe7331464db4",
+    "pull_request": 43,
+    "title": "chore: reconcile merged publication project state",
+    "qualification": "merged_project_state_reconciliation_exact_head_ci_passed_no_azure_action",
+    "claim_boundary": "This baseline reconciles repository-native project state to the merged publication workflow. It does not prove workflow dispatch, current pricing, effective role-assignment write permission, deployment, managed-identity publication, Blob response, browser rendering, or a committed live frontend source."
   },
   "repository_observation": {
     "observed_on": "2026-07-23",
     "source": "live_github",
-    "main_head": "c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
-    "head_semantics": "PR #41 merge commit observed before opening documentation-only reconciliation PR #43",
+    "main_head": "2d5ad327e45d430105f72eaaf678fe7331464db4",
+    "head_semantics": "PR #43 merge commit observed before opening planner-repin PR #44",
     "open_pull_requests": [
-      43
+      44
     ],
     "claim_boundary": "This is a time-bounded observation. Resolve the live main head, PR state, reviews, CI, workflow runs, and Azure reality whenever this file is read."
   },
   "authored_change": {
-    "change_id": "reconcile-publication-merge-state",
-    "branch": "chore/reconcile-publication-merge-state",
-    "pull_request": 43,
-    "write_owner": "This ChatGPT conversation — bounded Azure IaC project-state reconciliation explicitly authorized by Anthony Edgar with 'Proceed'",
-    "scope": "Reconcile .project state and the current handoff to the live PR #41 merge. This documentation-only change does not modify workflows, scripts, infrastructure, Azure resources, permissions, deployments, runtime systems, or frontend source.",
-    "authority": "repository_only_project_state_reconciliation",
+    "change_id": "repin-publication-plan-29979955391",
+    "branch": "chore/repin-publication-plan-29979955391",
+    "pull_request": 44,
+    "write_owner": "This ChatGPT conversation — bounded planner-repin pull request explicitly authorized by Anthony Edgar with 'Proceed'",
+    "scope": "Repin the merged publication execution workflow, regression test, and runbook to successful read-only planner run 29979955391, evaluated commit c3a17f8765fc7b9e43ef5f92a490ee43246ef35e, and artifact digest cb2b3ec7f9563d376e0ac4bae4e089af03a506ee272573445bf6510b946712bc. Reconcile project state without changing Bicep, executor behavior, Azure permissions, Azure resources, runtime systems, or frontend source.",
+    "authority": "repository_only_publication_planner_repin",
     "state_semantics": "declaration_not_live_status",
     "permitted_paths": [
+      ".github/workflows/existing-collector-report-publication.yml",
+      "infra/tests/test_existing_collector_report_publication.py",
+      "docs/runbooks/existing-collector-report-publication.md",
       ".project/active-work.json",
       ".project/handoffs/current-state.md"
     ],
     "verification_criteria": [
-      "live main head is recorded as c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
-      "PR #41 is recorded as merged and its source head 722dfcf99c367880147c9fd2f183d54d4d960f56 is preserved in review state",
-      "exact-head CI run 29976628311 and both successful jobs are preserved",
-      "owner-account technical review is distinguished from independent organizational approval",
-      "the execution workflow is described as present on main but not dispatched or operationally verified",
-      "Azure deployment, RBAC mutation, report publication, manual repair, and browser verification remain false or unobserved",
-      "the final PR diff remains limited to the two declared paths"
+      "workflow defaults and exact fail-closed comparisons pin planner run 29979955391",
+      "workflow pins planner commit c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
+      "workflow pins artifact digest cb2b3ec7f9563d376e0ac4bae4e089af03a506ee272573445bf6510b946712bc",
+      "regression tests require the current planner evidence and reject the superseded run and digest",
+      "runbook dispatch inputs and confirmation phrase use planner run 29979955391",
+      "Bicep, executor, rollback, public-access, CORS, collector, network, and frontend files remain unchanged",
+      "project validation, all unit tests, and Bicep lint/build pass on the exact PR head",
+      "the final PR diff remains limited to the five declared paths"
     ],
-    "failure_behavior": "Keep PR #43 draft, inspect the exact validation or review finding, patch only the two declared paths, and do not dispatch workflows or authenticate to Azure.",
-    "rollback": "Close PR #43 without merge. No Azure, workflow, deployment, runtime, or frontend rollback applies because reconciliation performs no external mutation."
+    "failure_behavior": "Keep PR #44 draft, inspect the exact validation or review finding, patch only the five declared paths, and do not dispatch workflows, authenticate to Azure, grant permissions, or mutate resources.",
+    "rollback": "Close PR #44 without merge or revert its repository-only commits. No Azure, workflow-run, runtime, RBAC, Storage, or frontend rollback applies because this increment performs no external mutation."
   },
   "bounded_authority_grants": [
     {
@@ -116,13 +120,19 @@
       "owner_account_technical_review_recorded": true,
       "independent_organizational_approval": false,
       "qualification": "execution_workflow_merged_repository_verified_not_dispatched_not_deployed"
+    },
+    {
+      "pull_request": 43,
+      "title": "chore: reconcile merged publication project state",
+      "merge_commit": "2d5ad327e45d430105f72eaaf678fe7331464db4",
+      "qualification": "project_state_reconciled_repository_only_no_azure_action"
     }
   ],
   "latest_observed_planner_attempt": {
-    "run_id": 29974111656,
-    "commit": "d181c48bf718c65015f83e04e1bbf9a7bcf152f4",
-    "artifact": "existing-collector-report-publication-plan-29974111656-1",
-    "artifact_sha256": "faed857cbd230e55b206ca6ab05adeeca75c98a9a48b0dc43bb04293cde09333",
+    "run_id": 29979955391,
+    "commit": "c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
+    "artifact": "existing-collector-report-publication-plan-29979955391-1",
+    "artifact_sha256": "cb2b3ec7f9563d376e0ac4bae4e089af03a506ee272573445bf6510b946712bc",
     "observed_on": "2026-07-23",
     "status": "completed_read_only_current_blob_endpoint_architecture",
     "proven": [
@@ -133,12 +143,13 @@
       "What-If contained 21 Ignore and exactly four Create changes",
       "the creates were one Storage account, one Blob service, one $web Blob-only container, and one Storage-scoped collector role assignment",
       "zero Modify, Delete, and Replace changes were present",
+      "GitHub artifact digest and all 13 internal evidence-file hashes verified",
       "no Azure mutation was authorized or performed"
     ],
     "unproven": [
       "current Storage pricing, quota, and policy allowance",
       "effective execution identity roleAssignments/write permission",
-      "current collector identity and publisher availability",
+      "current collector identity and publisher availability at execution time",
       "publication-resource deployment",
       "managed-identity publication",
       "Blob endpoint CORS response",
@@ -146,28 +157,19 @@
     ]
   },
   "latest_promoted_evidence": {
-    "event_id": "existing-collector-report-publication-plan-29974111656",
+    "event_id": "existing-collector-report-publication-plan-29979955391",
     "workflow": "Existing collector report publication plan",
-    "run_id": 29974111656,
-    "commit": "d181c48bf718c65015f83e04e1bbf9a7bcf152f4",
-    "artifact": "existing-collector-report-publication-plan-29974111656-1",
-    "artifact_sha256": "faed857cbd230e55b206ca6ab05adeeca75c98a9a48b0dc43bb04293cde09333",
+    "run_id": 29979955391,
+    "commit": "c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
+    "artifact": "existing-collector-report-publication-plan-29979955391-1",
+    "artifact_sha256": "cb2b3ec7f9563d376e0ac4bae4e089af03a506ee272573445bf6510b946712bc",
     "observed_on": "2026-07-23",
     "status": "completed_read_only_current_four_create_architecture",
     "azure_mutations_authorized": false,
     "azure_mutations_performed": false,
-    "freshness_boundary": "This is historical read-only planning evidence for commit d181c48bf718c65015f83e04e1bbf9a7bcf152f4. Re-resolve Azure state, cost, quota, permissions, collector identity, publisher availability, and exact Provider What-If immediately before any separately authorized deployment."
+    "freshness_boundary": "This planner evidence is current for the merged execution-workflow commit c3a17f8765fc7b9e43ef5f92a490ee43246ef35e and unchanged Bicep through main commit 2d5ad327e45d430105f72eaaf678fe7331464db4. Re-resolve Azure state, cost, quota, permissions, collector identity, publisher availability, and exact Provider What-If immediately before any separately authorized deployment."
   },
   "review_state": {
-    "pr42_blob_endpoint_repair": {
-      "status": "merged_and_read_only_four_create_plan_completed",
-      "reviewed_pull_request": 42,
-      "merge_commit": "d181c48bf718c65015f83e04e1bbf9a7bcf152f4",
-      "planner_run_id": 29974111656,
-      "review_account": "pull_request_owner",
-      "independent_organizational_approval": false,
-      "claim_boundary": "Architecture and read-only plan only; not Azure execution or browser proof."
-    },
     "pr41_publication_execution_promotion": {
       "status": "merged_repository_workflow_present_not_dispatched",
       "reviewed_pull_request": 41,
@@ -180,7 +182,13 @@
       ],
       "review_account": "pull_request_owner",
       "independent_organizational_approval": false,
-      "claim_boundary": "Repository promotion is merged. No publication workflow run, Azure deployment, RBAC mutation, managed-identity publication, Blob/browser proof, or manual repair is established."
+      "claim_boundary": "Repository promotion is merged. No publication workflow execution, Azure deployment, RBAC mutation, managed-identity publication, Blob/browser proof, or manual repair is established."
+    },
+    "pr44_publication_planner_repin": {
+      "status": "draft_repository_only_pending_exact_head_ci_and_review",
+      "reviewed_pull_request": 44,
+      "independent_organizational_approval": false,
+      "claim_boundary": "Planner evidence pin only. Merge, workflow dispatch, Azure authentication, permissions, and Azure mutation remain separately unauthorized."
     }
   },
   "deployment_state": {

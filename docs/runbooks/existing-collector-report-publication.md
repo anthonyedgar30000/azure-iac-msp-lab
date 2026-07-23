@@ -20,10 +20,12 @@ This increment does not replace, redeploy, restart, resize, reimage, or reconfig
 
 The executable workflow is pinned to the successful read-only plan:
 
-- planner run: `29974111656`;
-- evaluated repository commit: `d181c48bf718c65015f83e04e1bbf9a7bcf152f4`;
-- artifact: `existing-collector-report-publication-plan-29974111656-1`;
-- artifact SHA-256: `faed857cbd230e55b206ca6ab05adeeca75c98a9a48b0dc43bb04293cde09333`.
+- planner run: `29979955391`;
+- evaluated repository commit: `c3a17f8765fc7b9e43ef5f92a490ee43246ef35e`;
+- artifact: `existing-collector-report-publication-plan-29979955391-1`;
+- artifact SHA-256: `cb2b3ec7f9563d376e0ac4bae4e089af03a506ee272573445bf6510b946712bc`.
+
+The artifact was uploaded by the successful manual planner run, remained unexpired when reviewed, matched GitHub's recorded digest, and its 13-file internal SHA-256 manifest verified successfully.
 
 The exact What-If contained 25 entries: 21 `Ignore` and four `Create` changes:
 
@@ -90,17 +92,17 @@ These values are decision evidence, not a Microsoft quotation or actual-cost mea
 
 ## Dispatch inputs
 
-Use **Actions → Existing collector report publication → Run workflow** only after this workflow PR is merged and separate Azure-mutation authorization is recorded.
+Use **Actions → Existing collector report publication → Run workflow** only after this planner-repin pull request is merged and separate Azure-mutation authorization is recorded.
 
 ```text
 reviewed_commit: <exact merged workflow commit>
-planner_run_id: 29974111656
-planner_commit: d181c48bf718c65015f83e04e1bbf9a7bcf152f4
-planner_artifact_digest: sha256:faed857cbd230e55b206ca6ab05adeeca75c98a9a48b0dc43bb04293cde09333
+planner_run_id: 29979955391
+planner_commit: c3a17f8765fc7b9e43ef5f92a490ee43246ef35e
+planner_artifact_digest: sha256:cb2b3ec7f9563d376e0ac4bae4e089af03a506ee272573445bf6510b946712bc
 current_price_evidence_id: <reviewed evidence identifier>
 estimated_monthly_cost_cad: <reviewed estimate>
 maximum_monthly_cost_cad: 10.00
-confirmation: PUBLISH:rg-servicetracer-dev-westus2:vm-stcollector-mst-dev:29974111656
+confirmation: PUBLISH:rg-servicetracer-dev-westus2:vm-stcollector-mst-dev:29979955391
 ```
 
 The PR and merge do not authorize dispatch. The exact `PUBLISH:` phrase is valid only after Anthony Edgar explicitly authorizes Azure mutation against the final merged commit, current price evidence, current Azure state, and reviewed permission scope.
@@ -157,7 +159,8 @@ A separately authorized cleanup operation should stop publication, preserve requ
 ## Authority boundary
 
 ```text
-workflow_merged
+workflow_repinned
+!= workflow_merged
 != dispatch_authorized
 != Azure_mutation_authorized
 != deployment_succeeded

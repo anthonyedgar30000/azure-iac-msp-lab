@@ -163,9 +163,9 @@ class ExistingCollectorReportPublicationTests(unittest.TestCase):
 
     def test_workflow_is_pinned_to_current_evidence_and_fails_closed(self) -> None:
         for expected in (
-            "default: '29974111656'",
-            "d181c48bf718c65015f83e04e1bbf9a7bcf152f4",
-            "sha256:faed857cbd230e55b206ca6ab05adeeca75c98a9a48b0dc43bb04293cde09333",
+            "default: '29979955391'",
+            "c3a17f8765fc7b9e43ef5f92a490ee43246ef35e",
+            "sha256:cb2b3ec7f9563d376e0ac4bae4e089af03a506ee272573445bf6510b946712bc",
             "environment: azure-lab",
             "id-token: write",
             "current_price_evidence_id",
@@ -176,6 +176,8 @@ class ExistingCollectorReportPublicationTests(unittest.TestCase):
             "execute_existing_collector_report_publication.sh",
         ):
             self.assertIn(expected, WORKFLOW)
+        self.assertNotIn("29974111656", WORKFLOW)
+        self.assertNotIn("faed857cbd230e55b206ca6ab05adeeca75c98a9a48b0dc43bb04293cde09333", WORKFLOW)
         self.assertEqual(WORKFLOW.count("azure/login@v2"), 1)
         self.assertNotIn("az deployment group create", WORKFLOW)
         self.assertNotIn("infra/main.bicep", WORKFLOW)
