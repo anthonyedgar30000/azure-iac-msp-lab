@@ -1,6 +1,6 @@
 {
   "schema_version": "servicetracer.report-source.v1",
   "live_report_url": "",
-  "live_demo_api_url": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+  "live_demo_api_url": "",
   "fallback_report_url": "technician-handoff-report.json"
 }
