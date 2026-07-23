@@ -214,6 +214,6 @@
     "pull_requests": "Query live PR head, draft state, mergeability, reviews, threads, and exact-head CI.",
     "ci": "Query workflow runs and jobs for the exact commit under evaluation.",
     "azure": "Use fresh authenticated Azure evidence; repository declarations and historical artifacts are insufficient.",
-    "canonical_distinction": "planner_repinned != workflow_dispatch_authorized != Azure_mutation_authorized"
+    "canonical_distinction": "last_substantive_baseline != current_repository_head"
   }
 }
