@@ -9,6 +9,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 MAIN = ROOT / "infra" / "main.bicep"
 COLLECTOR_MODULE = ROOT / "infra" / "modules" / "operations_collector_vm.bicep"
+INGRESS_MODULE = ROOT / "infra" / "modules" / "collector_demo_api.bicep"
 EDGE_LB_MODULE = ROOT / "infra" / "modules" / "edge_load_balancer.bicep"
 WORKFLOW = ROOT / ".github" / "workflows" / "collector-demo-api.yml"
 INSTALLER = ROOT / "infra" / "scripts" / "install_collector_demo_api.sh"
@@ -40,7 +41,7 @@ class CollectorDemoApiTests(unittest.TestCase):
         source = STANDALONE.read_text(encoding="utf-8")
         self.assertIn('"127.0.0.1"', source)
         self.assertIn('"8090"', source)
-        self.assertIn('MAX_REQUEST_BYTES = 4096', source)
+        self.assertIn("MAX_REQUEST_BYTES = 4096", source)
         self.assertIn('"/api/health"', source)
         self.assertIn('"/api/demo/run"', source)
         self.assertIn("normalize_attempts", source)
@@ -56,17 +57,23 @@ class CollectorDemoApiTests(unittest.TestCase):
         self.assertIn("https://${PUBLIC_FQDN}/api/health", source)
         self.assertNotIn("Microsoft.Web", source)
 
-    def test_bicep_reuses_collector_and_excludes_app_service(self):
+    def test_bicep_reuses_private_collector_and_load_balancer(self):
         main = MAIN.read_text(encoding="utf-8")
-        module = COLLECTOR_MODULE.read_text(encoding="utf-8")
+        collector = COLLECTOR_MODULE.read_text(encoding="utf-8")
+        ingress = INGRESS_MODULE.read_text(encoding="utf-8")
         edge = EDGE_LB_MODULE.read_text(encoding="utf-8")
-        combined = main + module
+        combined = main + collector + ingress
+
         self.assertIn("deployCollectorDemoApi", main)
-        self.assertIn("operationsNsgName", main)
-        self.assertIn("pip-st-demo-api-", module)
-        self.assertIn("servicetracer-demo-api", module)
-        self.assertIn("Allow-Demo-API-HTTP-From-Internet", module)
-        self.assertIn("Allow-Demo-API-HTTPS-From-Internet", module)
+        self.assertIn("collector_demo_api.bicep", main)
+        self.assertNotIn("publicIPAddresses", collector)
+        self.assertIn("collectorRemainsPrivate bool = true", ingress)
+        self.assertIn("pip-st-demo-api-", ingress)
+        self.assertIn("loadBalancers/frontendIPConfigurations", ingress)
+        self.assertIn("loadBalancers/backendAddressPools", ingress)
+        self.assertIn("servicetracer-demo-api", ingress)
+        self.assertIn("Allow-Demo-API-HTTP-From-Internet", ingress)
+        self.assertIn("Allow-Demo-API-HTTPS-From-Internet", ingress)
         self.assertIn("publicIpAddress string", edge)
         self.assertNotIn("Microsoft.Web", combined)
         self.assertNotIn("Microsoft.Storage/storageAccounts", combined)
@@ -78,7 +85,7 @@ class CollectorDemoApiTests(unittest.TestCase):
         self.assertIn("--no-pretty-print", workflow)
         self.assertIn("deployment_decision_ready", workflow)
         self.assertIn("assert_collector_demo_api_what_if.py", workflow)
-        self.assertIn("collectorDemoApiSourceRef=\"$REVIEWED_COMMIT\"", workflow)
+        self.assertIn('collectorDemoApiSourceRef="$REVIEWED_COMMIT"', workflow)
         self.assertNotIn("az functionapp", workflow)
         self.assertNotIn("Microsoft.Web/serverfarms", workflow)
 
@@ -89,7 +96,7 @@ class CollectorDemoApiTests(unittest.TestCase):
             "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
         )
 
-    def test_classifier_accepts_only_expected_collector_changes(self):
+    def test_classifier_accepts_only_expected_load_balancer_children(self):
         suffix = "mst-dev"
         payload = {
             "status": "Succeeded",
@@ -102,43 +109,13 @@ class CollectorDemoApiTests(unittest.TestCase):
                 },
                 {
                     "changeType": "Create",
-                    "resourceId": "/subscriptions/x/resourceGroups/y/providers/Microsoft.Network/networkSecurityGroups/nsg-operations-mst-dev/securityRules/Allow-Demo-API-HTTPS-From-Internet",
-                    "after": {"type": "Microsoft.Network/networkSecurityGroups/securityRules"},
+                    "resourceId": "/subscriptions/x/resourceGroups/y/providers/Microsoft.Network/loadBalancers/lb-remote-access-mst-dev/frontendIPConfigurations/fe-public-st-demo-api",
+                    "after": {"type": "Microsoft.Network/loadBalancers/frontendIPConfigurations"},
                 },
                 {
-                    "changeType": "Modify",
-                    "resourceId": f"/subscriptions/x/resourceGroups/y/providers/Microsoft.Network/networkInterfaces/nic-stcollector-{suffix}",
-                    "before": {
-                        "properties": {
-                            "enableAcceleratedNetworking": False,
-                            "ipConfigurations": [
-                                {
-                                    "properties": {
-                                        "privateIPAddress": "10.20.40.10",
-                                        "privateIPAllocationMethod": "Static",
-                                        "subnet": {"id": "/subscriptions/x/subnets/snet-operations"},
-                                    }
-                                }
-                            ],
-                        }
-                    },
-                    "after": {
-                        "properties": {
-                            "enableAcceleratedNetworking": False,
-                            "ipConfigurations": [
-                                {
-                                    "properties": {
-                                        "privateIPAddress": "10.20.40.10",
-                                        "privateIPAllocationMethod": "Static",
-                                        "subnet": {"id": "/subscriptions/x/subnets/snet-operations"},
-                                        "publicIPAddress": {
-                                            "id": f"/subscriptions/x/resourceGroups/y/providers/Microsoft.Network/publicIPAddresses/pip-st-demo-api-{suffix}"
-                                        },
-                                    }
-                                }
-                            ],
-                        }
-                    },
+                    "changeType": "Create",
+                    "resourceId": "/subscriptions/x/resourceGroups/y/providers/Microsoft.Network/networkSecurityGroups/nsg-operations-mst-dev/securityRules/Allow-Demo-API-HTTPS-From-Internet",
+                    "after": {"type": "Microsoft.Network/networkSecurityGroups/securityRules"},
                 },
             ],
         }
@@ -147,11 +124,12 @@ class CollectorDemoApiTests(unittest.TestCase):
             suffix=suffix,
             private_ip="10.20.40.10",
         )
-        self.assertEqual(result["creates"], 2)
-        self.assertEqual(len(result["accepted_collector_nic_modifies"]), 1)
+        self.assertEqual(result["creates"], 3)
+        self.assertEqual(result["collector_nic_modifications"], [])
+        self.assertEqual(result["collector_vm_modifications"], [])
         self.assertFalse(result["deployment_authorized"])
 
-    def test_classifier_rejects_microsoft_web_and_other_vm_changes(self):
+    def test_classifier_rejects_managed_web_and_other_vm_changes(self):
         with self.assertRaises(SystemExit):
             self.classifier.classify(
                 {
