@@ -2,20 +2,20 @@
 
 ## Live repository reality
 
-Observed on `2026-07-23` before opening the publication-readiness PR:
+Observed on `2026-07-23` before opening PR #45:
 
 - repository: `anthonyedgar30000/azure-iac-msp-lab`;
 - default branch: `main`;
 - live `main` head: `e77d5e9c59537a6cd0ad05858565b2a51942e278`;
 - latest merged pull request: PR #44, **Repin live publication to planner run 29979955391**;
-- no open pull requests were observed;
+- no open pull requests were observed before PR #45 was created;
 - the mutation-capable publication workflow is present on `main` and pinned to the current verified planner artifact;
 - no post-merge CI status was attached to merge commit `e77d5e9...`; PR #44 exact-head CI passed before merge.
 
 Active repository-only increment:
 
 - branch: `feat/publication-predeployment-readiness`;
-- pull request: not yet assigned when this handoff was authored;
+- draft pull request: PR #45, **Add read-only publication predeployment readiness**;
 - authority: add a read-only predeployment-readiness workflow and supporting evidence controls only.
 
 Live GitHub, exact-head CI, and fresh Azure evidence remain authoritative.
@@ -59,16 +59,11 @@ planner_artifact_digest: sha256:cb2b3ec7f9563d376e0ac4bae4e089af03a506ee27257344
 
 It has not been dispatched. No Azure execution login, Provider execution validation, Storage creation, role assignment, VM Run Command, report publication, Blob response, or browser rendering has been observed.
 
-## Proposed predeployment-readiness workflow
+## Draft PR #45
 
-New path:
+Declared paths:
 
-```text
-.github/workflows/existing-collector-report-publication-readiness.yml
-```
-
-Supporting files:
-
+- `.github/workflows/existing-collector-report-publication-readiness.yml`;
 - `infra/scripts/assess_existing_collector_publication_readiness.py`;
 - `infra/tests/test_existing_collector_report_publication_readiness.py`;
 - `docs/runbooks/existing-collector-report-publication-readiness.md`;
@@ -102,9 +97,11 @@ The readiness workflow may capture:
 
 The workflow and assessor contain no command that deploys resources, creates or deletes RBAC, changes quota or policy, invokes VM Run Command, publishes a report, or changes the frontend source.
 
+The readiness regression test parses assembled Azure CLI command arrays in the Python abstract syntax tree and restricts them to the reviewed read-only command families. It does not rely only on substring matching.
+
 ## Cost model
 
-The estimate uses the highest matching current Hot LRS Blob retail meter for each category:
+The estimate uses the highest matching current Blob LRS retail meter for each required category:
 
 ```text
 10 GB-month stored
@@ -115,7 +112,7 @@ The estimate uses the highest matching current Hot LRS Blob retail meter for eac
 CAD 2.00 uncaptured-cost contingency
 ```
 
-Missing required meters fail readiness closed. The estimate is retail planning evidence, not a bill, quotation, negotiated rate, tax calculation, or actual cost.
+Missing required meters fail readiness closed. The estimate is deliberately conservative retail planning evidence, not a bill, quotation, negotiated rate, tax calculation, or actual cost. The artifact preserves each selected meter for human review.
 
 ## Permission and policy boundary
 
@@ -156,6 +153,7 @@ Current classifications:
 - PR #44 merged: **true**;
 - execution workflow pinned to planner run `29979955391`: **true**;
 - execution workflow dispatched: **false**;
+- draft PR #45 open: **true**;
 - proposed readiness workflow present on `main`: **false**;
 - readiness workflow dispatched: **false**;
 - Azure mutation authorized: **false**;
@@ -166,7 +164,7 @@ Current classifications:
 
 ## PR verification gates
 
-Before the readiness PR can merge:
+Before PR #45 can merge:
 
 1. `.project/validate.py` must pass;
 2. the complete unit-test suite must pass;
@@ -181,6 +179,6 @@ After merge, a separate explicit read-only dispatch decision is required. A succ
 
 ## Failure and rollback
 
-A repository failure keeps the PR draft and limits repairs to the six declared paths.
+A repository failure keeps PR #45 draft and limits repairs to the six declared paths.
 
-There is no Azure rollback because neither this PR nor the proposed workflow performs Azure mutation. Repository rollback is closing the PR or reverting its commits.
+There is no Azure rollback because neither this PR nor the proposed workflow performs Azure mutation. Repository rollback is closing PR #45 or reverting its commits.
