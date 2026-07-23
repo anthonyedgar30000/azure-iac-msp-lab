@@ -1,7 +1,7 @@
 {
   "schema_version": "project.active-work.v2",
   "project": "ServiceTracer — Governed Azure Operations Lab",
-  "updated_at": "2026-07-23T04:01:30Z",
+  "updated_at": "2026-07-23T04:08:16Z",
   "resolution_rules": {
     "repository": "Resolve the default-branch head and pull-request state from live GitHub at read time.",
     "ci_and_reviews": "Resolve CI and reviews against the exact source commit under evaluation.",
@@ -39,16 +39,19 @@
     "latest_merged_pull_request": 41,
     "execution_workflow_path": ".github/workflows/existing-collector-report-publication.yml",
     "execution_workflow_present_on_main": true,
-    "claim_boundary": "This is a time-bounded GitHub observation. Re-resolve repository, CI, review, workflow-run, and Azure state whenever this record is read."
+    "claim_boundary": "This is a time-bounded GitHub observation. Re-resolve repository, CI, review, workflow-run, and Azure state whenever this record is read.",
+    "open_pull_requests_after_reconciliation": [
+      43
+    ]
   },
   "workstreams": [
     {
       "workstream_id": "reconcile-publication-merge-state",
       "branch": "chore/reconcile-publication-merge-state",
-      "pull_request": null,
+      "pull_request": 43,
       "write_owner": "This ChatGPT conversation — bounded Azure IaC project-state reconciliation explicitly authorized by Anthony Edgar with 'Proceed'",
       "objective": "Reconcile repository-native project state and handoff documentation to the live PR #41 merge without changing workflows, scripts, infrastructure, Azure resources, permissions, deployments, runtime systems, or frontend source.",
-      "status": "branch_created_before_pull_request",
+      "status": "draft_open_ci_pending",
       "permitted_paths": [
         ".project/active-work.json",
         ".project/handoffs/current-state.md"
