@@ -8,7 +8,7 @@
     "pull_request": 40,
     "title": "Use ProviderNoRbac for read-only ARM planning",
     "qualification": "merged_provider_no_rbac_planner_repair_followed_by_successful_read_only_run_29965079470_not_deployed",
-    "claim_boundary": "This baseline proves the read-only planner can complete current-state inventory, ProviderNoRbac validation, and What-If against the architecture at commit 19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92. It does not authorize Azure mutation, prove current pricing or quota, deploy report Storage, publish a report, or prove frontend live-data ingestion."
+    "claim_boundary": "This baseline proves the read-only planner completed current-state inventory, ProviderNoRbac validation, and What-If against the architecture at commit 19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92. It does not authorize Azure mutation, prove current pricing or quota, deploy report Storage, publish a report, or prove frontend live-data ingestion."
   },
   "repository_observation": {
     "observed_on": "2026-07-23",
@@ -81,74 +81,6 @@
       "claim_boundary": "This grant authorizes authentication and dispatch only for current-state inventory, ProviderNoRbac ARM validation, and What-If. It does not authorize deployment, role changes, report publication, endpoint configuration, guest commands, or any Azure resource mutation."
     }
   ],
-  "completed_increments": [
-    {
-      "pull_request": 32,
-      "title": "Add fail-closed collector recovery evidence schemas",
-      "merge_commit": "777ec83b8a447f01904d5f891795ebcb6ab7abaf",
-      "qualification": "merged_exact_head_ci_passed_evidence_quality_changes_required_later_resolved_by_pr34"
-    },
-    {
-      "pull_request": 34,
-      "title": "Remediate PR32 evidence-quality findings",
-      "merge_commit": "36010582460b393c0667e274144d9700e78721bf",
-      "qualification": "repository_design_remediation_exact_head_ci_passed_owner_account_review_accepted_not_independent_not_operationally_verified"
-    },
-    {
-      "pull_request": 35,
-      "title": "Reconcile PR34 merge and project state",
-      "merge_commit": "a115b4cb0f3a3edbefd5171201c07bd144b7bf72",
-      "qualification": "coordination_only_exact_head_ci_passed_owner_account_review_not_independent"
-    },
-    {
-      "pull_request": 36,
-      "title": "Eliminate self-referential project state",
-      "merge_commit": "e6dcb9a2cf1ba05620a294137fea5e21f8dba1ed",
-      "qualification": "coordination_model_exact_head_ci_passed_owner_account_review_not_independent"
-    },
-    {
-      "pull_request": 37,
-      "title": "Decouple live report publication from collector compute",
-      "merge_commit": "54466651f291e271e5da542ea0afb38679ca6ca9",
-      "qualification": "repository_design_and_read_only_planning_path_exact_head_ci_passed_owner_account_review_not_independent_not_deployed"
-    },
-    {
-      "pull_request": 38,
-      "title": "Promote read-only report publication planner",
-      "merge_commit": "e379064b7ee8b6a1a8b7731d31dedef1bca19e6f",
-      "qualification": "read_only_workflow_promoted_exact_head_ci_passed_owner_account_review_not_independent_first_dispatch_failed_safely"
-    },
-    {
-      "pull_request": 39,
-      "title": "Repair read-only planner RBAC evidence capture",
-      "merge_commit": "3b035171e274819cb9590e32ac2ff752455d4387",
-      "qualification": "repository_repair_exact_head_and_post_merge_ci_passed_owner_account_review_not_independent_second_dispatch_completed_inventory_then_failed_safely_at_provider_validation"
-    },
-    {
-      "pull_request": 40,
-      "title": "Use ProviderNoRbac for read-only ARM planning",
-      "merge_commit": "19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92",
-      "qualification": "merged_provider_no_rbac_planner_repair_successful_read_only_run_29965079470_not_deployed"
-    }
-  ],
-  "resolved_repository_items": [
-    {
-      "pull_request": 31,
-      "title": "Define collector recovery evidence schemas",
-      "state": "closed_unmerged",
-      "resolution": "superseded_by_pr34_bounded_remediation",
-      "closed_on": "2026-07-22",
-      "claim_boundary": "Historical branch only; not repository authority."
-    },
-    {
-      "pull_request": 33,
-      "title": "Repair collector recovery evidence review findings",
-      "state": "closed_unmerged",
-      "resolution": "superseded_by_merged_pr34_after_parallel_branch_divergence",
-      "closed_on": "2026-07-22",
-      "claim_boundary": "Historical branch only; not repository authority."
-    }
-  ],
   "latest_observed_planner_attempt": {
     "run_id": 29965079470,
     "commit": "19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92",
@@ -161,9 +93,8 @@
       "bounded authority validation and static read-only tests succeeded",
       "Azure OIDC login succeeded",
       "resource group and current collector identity observations were captured",
-      "resource-group and report-storage RBAC inventories were captured as valid JSON",
       "no tagged report Storage account existed",
-      "no visible role assignment granted the collector report-storage access",
+      "no visible collector publication role assignment existed",
       "ProviderNoRbac ARM validation completed",
       "ProviderNoRbac ARM What-If completed with 21 Ignore and exactly three old-architecture Create changes",
       "no Azure mutation was authorized or performed"
@@ -194,15 +125,6 @@
     "freshness_boundary": "This is the latest successfully completed report-publication plan but it evaluates the pre-repair architecture. A fresh plan against the exact merged PR #42 commit is required before proposing or authorizing deployment."
   },
   "review_state": {
-    "pr40_provider_no_rbac_repair": {
-      "status": "merged_then_read_only_planner_completed_successfully",
-      "reviewed_pull_request": 40,
-      "merge_commit": "19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92",
-      "workflow_run_id": 29965079470,
-      "review_account": "pull_request_owner",
-      "independent_organizational_approval": false,
-      "claim_boundary": "Planner reliability and read-only Azure evidence only; not deployment permission, mutation authority, publication, or browser proof."
-    },
     "pr41_publication_execution_promotion": {
       "status": "draft_changes_required_browser_endpoint_architecture_invalidated",
       "reviewed_pull_request": 41,
@@ -215,16 +137,14 @@
     "pr42_blob_endpoint_repair": {
       "status": "draft_authored_change_pending_exact_head_ci_and_review",
       "reviewed_pull_request": 42,
-      "reviewed_head": null,
-      "reviewed_ci_run_id": null,
-      "review_account": null,
       "independent_organizational_approval": false,
       "claim_boundary": "Repository-only architecture repair. No Azure action or merge is authorized by this state record."
     }
   },
   "authority_defaults": {
-    "active_mutation_workflow_present_on_main": false,
-    "mutation_dispatch_authorized": false,
+    "active_workflow_present": false,
+    "dispatch_authorized": false,
+    "azure_authentication_authorized": false,
     "azure_mutations_authorized": false,
     "rule": "Defaults remain fail-closed. The validated read-only planning grant is a narrow exception for Azure reads and ProviderNoRbac planning only. Draft PRs do not create execution authority."
   },
@@ -233,7 +153,6 @@
     "pull_requests": "Query live open pull requests, draft status, reviews, and mergeability at read time.",
     "ci": "Query workflow runs and jobs for the exact commit under evaluation.",
     "azure": "Use fresh authenticated Azure evidence; repository declarations and historical artifacts are insufficient.",
-    "cost_and_quota": "Obtain fresh region- and subscription-specific evidence before deployment authorization.",
-    "canonical_distinction": "successful_old_plan != current_architecture_plan != deployment_authorized"
+    "canonical_distinction": "last_substantive_baseline != current_repository_head"
   }
 }
