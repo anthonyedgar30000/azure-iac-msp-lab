@@ -49,7 +49,7 @@
 - Static GitHub Pages operator console with technician workflow visualization.
 - Strict public-report sanitizer and versioned `servicetracer.public-report.v1` envelope with source, version, generation, and expiry metadata.
 - Local atomic public-envelope output and Azure Blob publication using managed-identity OAuth.
-- Optional dedicated Azure Storage static-website module with restricted CORS, disabled shared-key authorization, Blob versioning, delete retention, and a narrowly scoped collector data role.
+- Optional dedicated Azure Storage publication module using the Blob service endpoint, exact-origin Blob CORS, disabled shared-key authorization, OAuth writes, account-level anonymous Blob access limited to the dedicated sanitized-output account, `$web` Blob-only public access, Blob versioning, delete retention, and a narrowly scoped collector data role.
 - Operator console support for live public envelopes, stale-report warning, provenance display, query-string test override, and controlled fixture fallback.
 - Preassembled attempts and the deterministic generator retained only for replay and regression compatibility.
 - Unit tests for collector persistence, authentication, identity reuse, batch atomicity, structured syslog extraction, ingestion, evidence gaps, localization, probe gaps, containment, recovery gating, report sanitization, managed-identity upload, visual fallback, collector VM security, disk retention, bootstrap behavior, publication infrastructure, lifecycle guardrails, image-drift planning, replacement execution design, and safe default parameters.
@@ -66,6 +66,8 @@
 
 ## Read-only Azure evidence verified
 
+### Collector replacement
+
 - Collector replacement plan workflow run `29856203054` completed successfully against the target resource group.
 - The run used repository commit `93fcdaf6c1d99f88f3ae8c34f86533a020e1a29a` and produced artifact `collector-replacement-plan-29856203054-1` with SHA-256 `76f3b44e6e97e906dac6d62eeb212a6bc55265e77271a030b9c45b0cacf55637`.
 - Azure mutations were not authorized and were not performed.
@@ -77,27 +79,38 @@
 - The current disposable OS disk allows public network access and should be hardened in the replacement design.
 - The sanitized four-lens review is recorded in `docs/reviews/collector-replacement-plan-2026-07-21.md`.
 
+### Existing-collector report publication
+
+- Read-only publication planner run `29965079470` completed successfully against `main` commit `19b8eddf4fb9038a41ba1fb0e81567dcbdfe2e92`.
+- It produced artifact `existing-collector-report-publication-plan-29965079470-1` with GitHub digest `sha256:0f0ba512d1c61acc3149cb11c33e66ad7218cc1391f6b32f2fa1176459c2be10`.
+- The run verified the intended resource group, region, existing collector identity, no tagged report Storage account, and no visible collector publication role assignment.
+- ProviderNoRbac ARM validation and What-If completed with 21 `Ignore` changes and exactly three old-architecture `Create` changes.
+- Current price evidence and quota remained unresolved, deployment remained blocked, and Azure mutations were not authorized or performed.
+- The run evaluated the superseded static-website URL architecture. It is historical planning evidence and cannot authorize the revised Blob-endpoint deployment.
+
 ## Designed and CI-verified but deliberately inactive
 
-- PR #25 merged the collector replacement authority, evidence, phase, cost, cleanup, and review contract into `main`.
-- The future workflow input surface and ordered state-machine candidate.
-- The policy ceilings of CAD 10 temporary cost, at most two snapshots and 96 GiB total snapshot capacity, zero compute overlap, and 24-hour recovery-resource retention.
-- The explicit rule that Azure budgets, billing alerts, action groups, and billing configuration are out of scope.
-- The candidate workflow is not under `.github/workflows`, cannot be dispatched, does not authenticate to Azure, and contains no mutation commands.
-- Rollback remains an explicit blocker; the design is not ready for promotion or execution.
+- The future collector replacement workflow input surface and ordered state-machine candidate.
+- Collector replacement policy ceilings of CAD 10 temporary cost, at most two snapshots and 96 GiB total snapshot capacity, zero compute overlap, and 24-hour recovery-resource retention.
+- The explicit rule that Azure budgets, billing alerts, action groups, and billing configuration are out of scope for collector replacement.
+- The replacement candidate workflow remains outside `.github/workflows`, cannot be dispatched, does not authenticate to Azure, and contains no mutation commands.
+- Rollback remains an explicit collector replacement blocker; that design is not ready for promotion or execution.
+- PR #41 is a draft authority-changing publication workflow and is not part of `main`. Its prior three-create planner pin and static-website endpoint assumptions must be replaced after the Blob-endpoint repair is merged and freshly planned.
 
 ## Implemented but not yet deployed or operationally verified
 
 - Replacement collector deployment using the Ubuntu 24.04 image and corrected first-boot Python/certificate path.
 - ServiceTracer `0.5.0` on the Azure collector.
-- The dedicated public-report Storage account and collector Blob data role assignment.
+- The dedicated public-report Storage account, Blob service, `$web` Blob-only access configuration, and collector Blob data role assignment.
 - Managed-identity upload from the collector to `$web/reports/technician-handoff-report.json`.
+- Anonymous fetch from the Blob service URL with the exact reviewed CORS response.
 - Browser loading of the Azure-hosted report, provenance display, expiry warning, and outage fallback.
 - A recurring or event-triggered report-generation schedule.
 
 ## Not yet implemented as live infrastructure or active execution
 
 - An active mutation-capable collector replacement workflow, tested Azure mutation executor, and dispatch authority.
+- A merged and separately authorized live-report publication execution workflow.
 - Windows Server virtual machines.
 - Active Directory Domain Services, DNS, Kerberos, NPS, or RDS.
 - VPN appliance virtual machines or backend-pool associations.
@@ -108,7 +121,7 @@
 
 ## Not yet verified
 
-- Current guest service health, ServiceTracer version, evidence-disk mount source, filesystem identity, and recent evidence readability immediately before maintenance.
+- Current guest service health, ServiceTracer version, evidence-disk mount source, filesystem identity, recent evidence readability, and publisher availability immediately before maintenance or publication.
 - A verified evidence-disk recovery point before any collector replacement execution.
 - NIC preservation or deterministic recreation of its subnet, static addressing, and security relationships.
 - Replacement of the current collector VM while retaining and reattaching the evidence disk.
@@ -119,34 +132,33 @@
 - Replacement OS-disk public-network hardening.
 - Temporary replacement-resource cost, maximum overlap period, cleanup ownership, and cleanup evidence.
 - A tested rollback mechanism that resolves canonical OS-disk naming and can restore the prior bootable collector after VM deletion.
+- A fresh four-create publication What-If against the merged Blob-endpoint architecture.
+- Current publication Storage pricing, quota, policy allowance, and effective execution identity permissions.
+- Account anonymous Blob access, `$web` Blob-only access, CORS, retention, versioning, public fetch, and teardown behavior in Azure.
+- Browser rendering of a fresh collector-published report.
 - Real collector traffic from Windows, VPN appliances, Azure telemetry, or SNMP tooling.
 - Real VPN transactions and RADIUS timeout behavior.
 - Real load-balancer backend draining and probe behavior.
 - Vendor-specific raw syslog parsing and production collector mappings.
 - Collector throughput, disk retention, failover, governed certificate replacement, secret recovery, and repeatable upgrade behavior.
-- Storage public-output retention, deletion, cost, CORS, and security behavior in Azure.
 - Operational cost and performance of the complete hybrid scenario.
 
 ## Next bounded increments
 
-1. Perform independent evidence-quality, operations/recovery, security/identity, and Azure-cost reviews of the merged fail-closed design.
-2. Resolve rollback by selecting and testing either temporary old-OS-disk preservation or verified OS-disk snapshot recreation.
-3. Define the fresh pre-maintenance guest and control-plane evidence schema.
-4. Implement recovery-point creation and independent verification behind fake-Azure-CLI tests.
-5. Implement and test NIC delete-option preservation and post-delete resource verification.
-6. Implement approved managed-identity/RBAC restoration from an explicit allowlist.
-7. Implement replacement OS-disk public-network hardening and verification.
-8. Add current cost estimation, cleanup owner, cleanup deadline, and deletion evidence.
-9. Record the four separate review decisions and unresolved conditions in repository evidence.
-10. Use a separate authority-changing PR to promote an implementation into `.github/workflows` only after every blocker is resolved.
-11. Obtain separate explicit human authorization before dispatching any snapshot, detach, delete, create, update, or replacement operation.
-12. Replace and verify the collector only through that governed execution path, then prove Ubuntu 24.04 bootstrap, ServiceTracer `0.5.0`, evidence-disk reattachment, service health, durable ingestion, and permission restoration.
-13. Generate the technician-handoff report on the verified collector and publish it with managed identity.
-14. Verify the public envelope contains no raw evidence, credentials, private endpoints, customer identifiers, or exact-root-cause claim.
-15. Test the report URL through the console query-string override, then commit the verified URL to `docs/report-source.json`.
-16. Confirm stale-report behavior and deliberate fallback by temporarily making the endpoint unavailable.
-17. Add Windows VM definitions and domain bootstrap automation.
-18. Add two VPN appliance nodes and associate their NICs with the load-balancer backend pool.
-19. Add source-specific Windows, Azure, VPN, SNMP, and synthetic-check exporters that emit the implemented contract.
-20. Replace the bootstrap self-signed certificate and locally generated token with governed certificate and secret delivery.
-21. Add the live ticketing-system adapter and governed configuration comparison for drift repair and return to service.
+1. Complete exact-head CI and review for the Blob-endpoint browser-CORS architecture repair.
+2. Merge the repair only after explicit merge authorization.
+3. Manually rerun the existing read-only publication planner against the exact merge commit.
+4. Verify the new What-If contains only the reviewed Storage account, Blob service, `$web` container, and current-principal role-assignment creations, with protected infrastructure ignored.
+5. Obtain fresh West US 2 cost and quota evidence and define the minimum execution identity permissions.
+6. Rebase or repin PR #41 to the merged architecture and fresh planner artifact; keep it draft until its execution guards and rollback are re-reviewed.
+7. Obtain separate explicit human authorization before dispatching any Azure mutation workflow.
+8. Prove the collector publisher exists and works before creating the endpoint.
+9. Deploy the bounded publication resources, publish through managed identity, fetch from the Blob service URL, and verify schema, freshness, CORS, content equality, and rollback behavior.
+10. Test the report through the console query-string override, then commit the verified URL to `docs/report-source.json` in a separate repository-only increment.
+11. Confirm stale-report behavior and deliberate fallback by temporarily making the endpoint unavailable.
+12. Continue collector replacement only after recovery, rollback, network-preservation, cost, and permission blockers are independently resolved.
+13. Add Windows VM definitions and domain bootstrap automation.
+14. Add two VPN appliance nodes and associate their NICs with the load-balancer backend pool.
+15. Add source-specific Windows, Azure, VPN, SNMP, and synthetic-check exporters that emit the implemented contract.
+16. Replace the bootstrap self-signed certificate and locally generated token with governed certificate and secret delivery.
+17. Add the live ticketing-system adapter and governed configuration comparison for drift repair and return to service.
