@@ -50,6 +50,8 @@ module reportPublication './modules/report_publication.bicep' = {
 }
 
 output storageAccountName string = reportPublication.outputs.storageAccountName
+output blobEndpoint string = reportPublication.outputs.blobEndpoint
 output staticWebsiteEndpoint string = reportPublication.outputs.staticWebsiteEndpoint
+output publicReportContainerName string = reportPublication.outputs.publicReportContainerName
 output publicReportUrl string = reportPublication.outputs.publicReportUrl
 output collectorWriterRoleAssignmentId string = reportPublication.outputs.collectorWriterRoleAssignmentId
