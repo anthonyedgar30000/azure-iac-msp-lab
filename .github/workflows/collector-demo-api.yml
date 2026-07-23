@@ -83,7 +83,6 @@ jobs:
           DNS_LABEL: ${{ inputs.dns_label }}
           ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
           CONFIRMATION: ${{ inputs.confirmation }}
-          ADMIN_SSH_PUBLIC_KEY: ${{ secrets.COLLECTOR_ADMIN_SSH_PUBLIC_KEY }}
         run: |
           set -euo pipefail
           mkdir -p "$ARTIFACT_DIR"
@@ -101,12 +100,6 @@ jobs:
             echo "Confirmation must exactly equal: $expected" >&2
             exit 1
           }
-          if [[ "$OPERATION" == 'what-if' || "$OPERATION" == 'deploy' ]]; then
-            [[ "$ADMIN_SSH_PUBLIC_KEY" == ssh-* ]] || {
-              echo 'The azure-lab environment must provide COLLECTOR_ADMIN_SSH_PUBLIC_KEY.' >&2
-              exit 1
-            }
-          fi
           jq -n \
             --arg operation "$OPERATION" \
             --arg reviewed_commit "$REVIEWED_COMMIT" \
@@ -116,7 +109,7 @@ jobs:
             --arg prefix "$PREFIX" \
             --arg dns_label "$DNS_LABEL" \
             --arg allowed_origin "$ALLOWED_ORIGIN" \
-            '{schema_version:"servicetracer.collector-demo-api-request.v1",operation:$operation,reviewed_commit:$reviewed_commit,resource_group:$resource_group,location:$location,environment:$environment,prefix:$prefix,dns_label:$dns_label,allowed_origin:$allowed_origin,azure_authentication_authorized:true,azure_mutations_authorized:($operation=="deploy"),collector_configuration_mutation_authorized:($operation=="deploy"),microsoft_web_authorized:false}' \
+            '{schema_version:"servicetracer.collector-demo-api-request.v2",operation:$operation,reviewed_commit:$reviewed_commit,resource_group:$resource_group,location:$location,environment:$environment,prefix:$prefix,dns_label:$dns_label,allowed_origin:$allowed_origin,azure_authentication_authorized:true,azure_mutations_authorized:($operation=="deploy"),collector_configuration_mutation_authorized:($operation=="deploy"),base_infrastructure_mutation_authorized:false,microsoft_web_authorized:false}' \
             > "$ARTIFACT_DIR/request.json"
 
       - name: Run repository tests before Azure login
@@ -153,8 +146,13 @@ jobs:
           jq -e '.provisioningState=="Succeeded"' "$ARTIFACT_DIR/collector-vm.json" > /dev/null
           az network nic show --resource-group "$RESOURCE_GROUP" --name "nic-stcollector-${suffix}" --output json > "$ARTIFACT_DIR/collector-nic.json"
           az network nsg show --resource-group "$RESOURCE_GROUP" --name "nsg-operations-${suffix}" --output json > "$ARTIFACT_DIR/operations-nsg.json"
+          az network lb show --resource-group "$RESOURCE_GROUP" --name "lb-remote-access-${suffix}" --output json > "$ARTIFACT_DIR/edge-load-balancer.json"
           az network public-ip show --resource-group "$RESOURCE_GROUP" --name "pip-remote-access-${suffix}" --output json > "$ARTIFACT_DIR/remote-access-public-ip.json"
           az deployment group show --resource-group "$RESOURCE_GROUP" --name "operations-collector-${LAB_ENVIRONMENT}" --output json > "$ARTIFACT_DIR/collector-module-deployment.json"
+
+          jq -e --arg vm "/virtualMachines/vm-stcollector-${suffix}" '.virtualMachine.id | endswith($vm)' "$ARTIFACT_DIR/collector-nic.json" > /dev/null
+          jq -e --arg lb "/loadBalancers/lb-remote-access-${suffix}/frontendIPConfigurations/" '.ipConfiguration.id | contains($lb)' "$ARTIFACT_DIR/remote-access-public-ip.json" > /dev/null
+          jq -e '.ipAddress != null and .ipAddress != "" and .provisioningState=="Succeeded"' "$ARTIFACT_DIR/remote-access-public-ip.json" > /dev/null
 
           if az network public-ip show --resource-group "$RESOURCE_GROUP" --name "pip-st-demo-api-${suffix}" --output json > "$ARTIFACT_DIR/existing-demo-api-public-ip.json" 2>/dev/null; then
             jq -n '{status:"observed_existing"}' > "$ARTIFACT_DIR/demo-api-public-ip-state.json"
@@ -200,59 +198,66 @@ jobs:
           DNS_LABEL: ${{ inputs.dns_label }}
           ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
           REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
-          ADMIN_SSH_PUBLIC_KEY: ${{ secrets.COLLECTOR_ADMIN_SSH_PUBLIC_KEY }}
         run: |
           set -euo pipefail
           suffix="${PREFIX}-${LAB_ENVIRONMENT}"
           collector_private_ip="$(jq -r '.ipConfigurations[0].privateIPAddress' "$ARTIFACT_DIR/collector-nic.json")"
-          collector_vm_size="$(jq -r '.hardwareProfile.vmSize' "$ARTIFACT_DIR/collector-vm.json")"
-          collector_admin_username="$(jq -r '.properties.parameters.adminUsername.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
-          collector_data_disk_size="$(jq -r '.properties.parameters.dataDiskSizeGb.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
-          collector_port="$(jq -r '.properties.parameters.collectorPort.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
+          collector_subnet_id="$(jq -r '.ipConfigurations[0].subnet.id' "$ARTIFACT_DIR/collector-nic.json")"
+          virtual_network_id="${collector_subnet_id%/subnets/*}"
+          collector_vm_name="$(jq -r '.name' "$ARTIFACT_DIR/collector-vm.json")"
+          operations_nsg_name="$(jq -r '.name' "$ARTIFACT_DIR/operations-nsg.json")"
+          load_balancer_name="$(jq -r '.name' "$ARTIFACT_DIR/edge-load-balancer.json")"
+          remote_access_ip="$(jq -r '.ipAddress' "$ARTIFACT_DIR/remote-access-public-ip.json")"
           collector_source_repository="$(jq -r '.properties.parameters.collectorSourceRepository.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
-          collector_source_ref="$(jq -r '.properties.parameters.collectorSourceRef.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
+          existing_collector_source_ref="$(jq -r '.properties.parameters.collectorSourceRef.value' "$ARTIFACT_DIR/collector-module-deployment.json")"
+          backend_transaction_url="https://${remote_access_ip}/transaction"
+          installer_uri="https://raw.githubusercontent.com/anthonyedgar30000/azure-iac-msp-lab/${REVIEWED_COMMIT}/infra/scripts/install_collector_demo_api.sh"
+
+          [[ "$collector_vm_name" == "vm-stcollector-${suffix}" ]]
+          [[ "$operations_nsg_name" == "nsg-operations-${suffix}" ]]
+          [[ "$load_balancer_name" == "lb-remote-access-${suffix}" ]]
+          [[ "$virtual_network_id" == */virtualNetworks/vnet-onprem-sim-${suffix} ]]
 
           jq -n \
             --arg collector_private_ip "$collector_private_ip" \
-            --arg collector_vm_size "$collector_vm_size" \
-            --arg collector_admin_username "$collector_admin_username" \
-            --arg collector_data_disk_size "$collector_data_disk_size" \
-            --arg collector_port "$collector_port" \
+            --arg virtual_network_id "$virtual_network_id" \
+            --arg collector_vm_name "$collector_vm_name" \
+            --arg operations_nsg_name "$operations_nsg_name" \
+            --arg load_balancer_name "$load_balancer_name" \
+            --arg backend_transaction_url "$backend_transaction_url" \
             --arg collector_source_repository "$collector_source_repository" \
-            --arg collector_source_ref "$collector_source_ref" \
-            '{collector_private_ip:$collector_private_ip,collector_vm_size:$collector_vm_size,collector_admin_username:$collector_admin_username,collector_data_disk_size_gb:($collector_data_disk_size|tonumber),collector_port:($collector_port|tonumber),collector_source_repository:$collector_source_repository,collector_source_ref:$collector_source_ref}' \
+            --arg existing_collector_source_ref "$existing_collector_source_ref" \
+            --arg deployment_source_ref "$REVIEWED_COMMIT" \
+            --arg installer_uri "$installer_uri" \
+            '{collector_private_ip:$collector_private_ip,virtual_network_id:$virtual_network_id,collector_vm_name:$collector_vm_name,operations_nsg_name:$operations_nsg_name,load_balancer_name:$load_balancer_name,backend_transaction_url:$backend_transaction_url,collector_source_repository:$collector_source_repository,existing_collector_source_ref:$existing_collector_source_ref,deployment_source_ref:$deployment_source_ref,installer_uri:$installer_uri}' \
             > "$ARTIFACT_DIR/effective-collector-parameters.json"
 
           parameters=(
             prefix="$PREFIX"
             environment="$LAB_ENVIRONMENT"
             location="$LOCATION"
-            deployDemoBackends=false
-            deployOperationsCollector=true
+            virtualNetworkId="$virtual_network_id"
+            loadBalancerName="$load_balancer_name"
+            operationsNsgName="$operations_nsg_name"
+            collectorVmName="$collector_vm_name"
             collectorPrivateIpAddress="$collector_private_ip"
-            collectorAdminUsername="$collector_admin_username"
-            collectorAdminSshPublicKey="$ADMIN_SSH_PUBLIC_KEY"
-            collectorVmSize="$collector_vm_size"
-            collectorDataDiskSizeGb="$collector_data_disk_size"
-            collectorPort="$collector_port"
-            collectorSourceRepository="$collector_source_repository"
-            collectorSourceRef="$collector_source_ref"
-            deployCollectorDemoApi=true
-            collectorDemoApiDnsLabel="$DNS_LABEL"
-            collectorDemoApiAllowedOrigin="$ALLOWED_ORIGIN"
-            collectorDemoApiSourceRef="$REVIEWED_COMMIT"
-            deployPublicReportEndpoint=false
+            dnsLabel="$DNS_LABEL"
+            allowedOrigin="$ALLOWED_ORIGIN"
+            backendTransactionUrl="$backend_transaction_url"
+            sourceRepository="$collector_source_repository"
+            sourceRef="$REVIEWED_COMMIT"
+            installerUri="$installer_uri"
           )
 
           az deployment group validate \
             --resource-group "$RESOURCE_GROUP" \
-            --template-file infra/main.bicep \
+            --template-file infra/collector-demo-api.bicep \
             --parameters "${parameters[@]}" \
             --output json > "$ARTIFACT_DIR/arm-validation.json"
 
           az deployment group what-if \
             --resource-group "$RESOURCE_GROUP" \
-            --template-file infra/main.bicep \
+            --template-file infra/collector-demo-api.bicep \
             --parameters "${parameters[@]}" \
             --result-format FullResourcePayloads \
             --no-pretty-print \
@@ -273,41 +278,37 @@ jobs:
           LAB_ENVIRONMENT: ${{ inputs.environment }}
           DNS_LABEL: ${{ inputs.dns_label }}
           ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
-          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
-          ADMIN_SSH_PUBLIC_KEY: ${{ secrets.COLLECTOR_ADMIN_SSH_PUBLIC_KEY }}
         run: |
           set -euo pipefail
           collector_private_ip="$(jq -r '.collector_private_ip' "$ARTIFACT_DIR/effective-collector-parameters.json")"
-          collector_vm_size="$(jq -r '.collector_vm_size' "$ARTIFACT_DIR/effective-collector-parameters.json")"
-          collector_admin_username="$(jq -r '.collector_admin_username' "$ARTIFACT_DIR/effective-collector-parameters.json")"
-          collector_data_disk_size="$(jq -r '.collector_data_disk_size_gb' "$ARTIFACT_DIR/effective-collector-parameters.json")"
-          collector_port="$(jq -r '.collector_port' "$ARTIFACT_DIR/effective-collector-parameters.json")"
+          virtual_network_id="$(jq -r '.virtual_network_id' "$ARTIFACT_DIR/effective-collector-parameters.json")"
+          collector_vm_name="$(jq -r '.collector_vm_name' "$ARTIFACT_DIR/effective-collector-parameters.json")"
+          operations_nsg_name="$(jq -r '.operations_nsg_name' "$ARTIFACT_DIR/effective-collector-parameters.json")"
+          load_balancer_name="$(jq -r '.load_balancer_name' "$ARTIFACT_DIR/effective-collector-parameters.json")"
+          backend_transaction_url="$(jq -r '.backend_transaction_url' "$ARTIFACT_DIR/effective-collector-parameters.json")"
           collector_source_repository="$(jq -r '.collector_source_repository' "$ARTIFACT_DIR/effective-collector-parameters.json")"
-          collector_source_ref="$(jq -r '.collector_source_ref' "$ARTIFACT_DIR/effective-collector-parameters.json")"
+          deployment_source_ref="$(jq -r '.deployment_source_ref' "$ARTIFACT_DIR/effective-collector-parameters.json")"
+          installer_uri="$(jq -r '.installer_uri' "$ARTIFACT_DIR/effective-collector-parameters.json")"
 
           az deployment group create \
             --resource-group "$RESOURCE_GROUP" \
             --name "collector-demo-api-${LAB_ENVIRONMENT}" \
-            --template-file infra/main.bicep \
+            --template-file infra/collector-demo-api.bicep \
             --parameters \
               prefix="$PREFIX" \
               environment="$LAB_ENVIRONMENT" \
               location="$LOCATION" \
-              deployDemoBackends=false \
-              deployOperationsCollector=true \
+              virtualNetworkId="$virtual_network_id" \
+              loadBalancerName="$load_balancer_name" \
+              operationsNsgName="$operations_nsg_name" \
+              collectorVmName="$collector_vm_name" \
               collectorPrivateIpAddress="$collector_private_ip" \
-              collectorAdminUsername="$collector_admin_username" \
-              collectorAdminSshPublicKey="$ADMIN_SSH_PUBLIC_KEY" \
-              collectorVmSize="$collector_vm_size" \
-              collectorDataDiskSizeGb="$collector_data_disk_size" \
-              collectorPort="$collector_port" \
-              collectorSourceRepository="$collector_source_repository" \
-              collectorSourceRef="$collector_source_ref" \
-              deployCollectorDemoApi=true \
-              collectorDemoApiDnsLabel="$DNS_LABEL" \
-              collectorDemoApiAllowedOrigin="$ALLOWED_ORIGIN" \
-              collectorDemoApiSourceRef="$REVIEWED_COMMIT" \
-              deployPublicReportEndpoint=false \
+              dnsLabel="$DNS_LABEL" \
+              allowedOrigin="$ALLOWED_ORIGIN" \
+              backendTransactionUrl="$backend_transaction_url" \
+              sourceRepository="$collector_source_repository" \
+              sourceRef="$deployment_source_ref" \
+              installerUri="$installer_uri" \
             --output json > "$ARTIFACT_DIR/deployment-result.json"
 
       - name: Verify public TLS, API, and frontend contract
@@ -394,10 +395,10 @@ jobs:
             echo "- Operation: \`$OPERATION\`"
             echo "- Resource group: \`$RESOURCE_GROUP\`"
             echo "- DNS label: \`$DNS_LABEL\`"
+            echo '- The deployment uses a dedicated Bicep root that references the existing VM, VNet, load balancer, and NSG without redeclaring base infrastructure.'
             echo '- Microsoft.Web/App Service is excluded from this deployment path.'
             echo '- Public-IP quota evidence preserves raw Azure values, JSON types, normalized counts, and remaining headroom.'
-            echo '- The existing collector remains the compute host; only its bounded API exposure and extension are in scope.'
-            echo '- Existing Function/App Service leftovers require a separate cleanup decision.'
+            echo '- Existing Function/App Service leftovers are ignored by this path and require a separate cleanup decision.'
             echo '- Detailed non-secret evidence is attached as a workflow artifact.'
           } >> "$GITHUB_STEP_SUMMARY"
 
