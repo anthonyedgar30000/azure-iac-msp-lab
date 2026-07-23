@@ -59,6 +59,34 @@
     "failure_behavior": "Keep PR #46 draft, inspect the exact test or Bicep failure, patch only declared paths, and do not dispatch the workflow or mutate Azure.",
     "rollback": "Close PR #46 without merge or revert its repository commits. No Azure cleanup applies because this increment does not dispatch or deploy."
   },
+  "bounded_authority_grants": [
+    {
+      "grant_id": "existing-collector-report-publication-read-only-plan",
+      "workflow_path": ".github/workflows/existing-collector-report-publication-plan.yml",
+      "operation": "read_only_azure_planning",
+      "active_workflow_authorized": true,
+      "dispatch_authorized": true,
+      "azure_authentication_authorized": true,
+      "azure_mutations_authorized": false,
+      "authorized_by": "Anthony Edgar",
+      "authorized_on": "2026-07-22",
+      "authorization_source": "Explicit user instruction after the read-only Azure planning boundary was stated",
+      "protected_environment": "azure-lab",
+      "required_commit_semantics": "exact_40_character_reviewed_commit_checked_out_and_verified",
+      "required_confirmation": "PLAN-PUBLICATION:<resource-group>:vm-stcollector-<prefix>-<environment>",
+      "permitted_azure_operations": [
+        "az account show",
+        "az group show",
+        "az vm show",
+        "az storage account list",
+        "az role assignment list",
+        "az deployment group validate",
+        "az deployment group what-if"
+      ],
+      "state_semantics": "bounded_exception_to_false_defaults",
+      "claim_boundary": "This grant authorizes Azure reads and ProviderNoRbac planning only. It does not authorize PR #46's demo-backend/API workflow, deployment, collector changes, RBAC changes, report publication, guest commands, or any Azure mutation."
+    }
+  ],
   "latest_scope_observation": {
     "workflow_run_id": 29985391850,
     "workflow": "Azure lab lifecycle",
@@ -86,7 +114,7 @@
     "dispatch_authorized": false,
     "azure_authentication_authorized": false,
     "azure_mutations_authorized": false,
-    "rule": "Repository implementation authority does not authorize workflow dispatch, Azure authentication, backend or API deployment, collector changes, or any other Azure mutation."
+    "rule": "Repository implementation authority does not authorize workflow dispatch, Azure authentication, backend or API deployment, collector changes, or any other Azure mutation. The separate historical publication-planner grant remains the only active bounded Azure-read exception."
   },
   "live_state_resolution": {
     "repository_head": "Query the live GitHub default branch at read time.",
