@@ -99,11 +99,13 @@ class CollectorDemoApiTests(unittest.TestCase):
         self.assertNotIn("az functionapp", workflow)
         self.assertNotIn("Microsoft.Web/serverfarms", workflow)
 
-    def test_source_configuration_uses_collector_dns_endpoint(self):
+    def test_source_configuration_withholds_unverified_endpoint(self):
         config = json.loads(SOURCE_CONFIG.read_text(encoding="utf-8"))
+        self.assertEqual(config["live_report_url"], "")
+        self.assertEqual(config["live_demo_api_url"], "")
         self.assertEqual(
-            config["live_demo_api_url"],
-            "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+            config["fallback_report_url"],
+            "technician-handoff-report.json",
         )
 
     def test_classifier_accepts_expected_creates_and_passive_leftovers(self):
