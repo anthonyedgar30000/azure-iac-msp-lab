@@ -50,6 +50,49 @@
     "inconclusive_sample_must_remain_inconclusive": true,
     "technician_workflow_hidden_until_stable_backend_comparison": true
   },
+  "timeout_budget_fix": {
+    "authorization_source": "Explicit governed control message: fix",
+    "status": "implemented_in_repository_not_deployed",
+    "failed_gate_run_id": 30128947155,
+    "prior_repository_budget": {
+      "execution_model": "sequential",
+      "backend_timeout_seconds": 10,
+      "frontend_attempts": 20,
+      "frontend_theoretical_max_seconds": 200,
+      "api_max_attempts": 50,
+      "api_theoretical_max_seconds": 500,
+      "nginx_proxy_read_timeout_seconds": 45,
+      "mismatch_present": true
+    },
+    "corrected_repository_budget": {
+      "execution_model": "bounded_parallel_worker_pool",
+      "backend_timeout_seconds": 10,
+      "max_parallel_transactions": 10,
+      "frontend_attempts": 20,
+      "frontend_theoretical_max_seconds": 20,
+      "api_max_attempts": 50,
+      "api_theoretical_max_seconds": 50,
+      "nginx_proxy_read_timeout_seconds": 75,
+      "proxy_safety_margin_seconds": 25,
+      "mismatch_present": false
+    },
+    "changed_paths": [
+      "demo_api/runtime.py",
+      "demo_api/standalone_server.py",
+      "infra/scripts/install_collector_demo_api.sh",
+      "workloads/servicetracer-demo-api/scripts/install.sh",
+      "workloads/servicetracer-demo-api/tests/test_timeout_budget.py"
+    ],
+    "health_contract_additions": [
+      "backend_timeout_seconds",
+      "max_parallel_transactions",
+      "max_attempts",
+      "estimated_max_execution_seconds"
+    ],
+    "deployment_applied": false,
+    "live_replay_after_fix_performed": false,
+    "claim_boundary": "repository_timeout_budget_fixed != deployed_runtime_fixed"
+  },
   "authority": {
     "repository_changes_authorized": true,
     "pull_request_creation_authorized": true,
@@ -85,6 +128,25 @@
         "additional transaction replay outside the bounded verification run"
       ],
       "result": "Health and CORS preflight passed. The transaction POST was attempted but no HTTP response was observed, so the frontend correctly fell back to the controlled fixture."
+    },
+    "bounded_timeout_fix_grant": {
+      "status": "consumed_repository_fix",
+      "authorized_by": "Anthony Edgar",
+      "authorization_source": "Explicit governed control message: fix",
+      "permitted_operations": [
+        "diagnose the failed timeout budget",
+        "correct application execution and proxy timeout declarations in repository code",
+        "add regression tests",
+        "run ordinary exact-head CI"
+      ],
+      "prohibited_operations": [
+        "Azure authentication",
+        "Azure deployment or mutation",
+        "guest command execution",
+        "additional live transaction replay",
+        "GitHub Pages publication",
+        "pull-request merge"
+      ]
     }
   },
   "validation": {
@@ -98,8 +160,10 @@
     "browser_rendering_of_live_response_verified": false,
     "live_twenty_attempt_sample_verified": false,
     "actual_github_pages_deployment_verified": false,
-    "timeout_budget_mismatch_present_in_repository": true
+    "timeout_budget_mismatch_present_in_repository": false,
+    "timeout_budget_fix_deployed_to_azure": false,
+    "timeout_budget_fix_live_verified": false
   },
-  "rollback": "Remove the candidate endpoint or revert this repository-only integration. The default live_demo_api_url remains blank, so no Azure rollback is required.",
-  "next_gate": "Await an explicit governed fix control before correcting the transaction timeout budget or performing another live replay. Deployment, guest commands, merge, and publication remain unauthorized."
+  "rollback": "Revert the timeout-budget commits to restore sequential execution and the previous installer values. No Azure rollback is required because this fix has not been deployed.",
+  "next_gate": "Pass exact-head CI for the repository fix, then require separate deployment authorization before changing the running Azure workload. Require a separate bounded live-replay authorization after deployment. Merge and publication remain unauthorized."
 }
