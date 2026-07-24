@@ -93,6 +93,8 @@ Azure_authentication_authorized = false
 
 The merged PR #68 head also differed from the earlier exact two-path head reviewed for merge.
 
+Human ratification of the expanded architecture remains unresolved.
+
 Therefore:
 
 ```text
@@ -180,7 +182,7 @@ The newest promoted Azure evidence remains historical collector-hosted run `3005
 - `azure_mutations_performed=false`;
 - `deployment_authorized=false`.
 
-It observed collector-hosted residue and rejected a public-IP Modify fail closed. It is not a dual-subscription independent-workload plan.
+It observed collector-hosted residue and rejected a public-IP Modify fail closed. It is not evidence about the proposed Azure Plan target subscription.
 
 ## Legacy residue boundary
 
