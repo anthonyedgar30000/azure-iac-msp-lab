@@ -13,12 +13,13 @@ This record does not authorize workflow dispatch, Azure authentication, Azure mu
 - current `main`: `551ca0ee2c7d1955b3bd81c09f46f43dceeae3a6`;
 - PR #76 promoted protected planner evidence into durable project state at that commit;
 - PR #76 source `1ca93552ae1a445922248ff4409706e203609f70` changed five `.project/` paths;
-- PR #77 is open and owns `.project/active-work.json`, `.project/environment-state.json`, and `.project/handoffs/current-state.md` for Azure MCP reconciliation;
-- this increment therefore avoids those overlapping paths and records its candidate decision in `.project/reconciliations/independent-demo-api-westus2-f1alsv7.json`.
+- PR #77 is concurrently open but was rebuilt into five added Azure MCP-specific paths;
+- PR #75 and PR #77 therefore have no changed-file overlap at this watermark;
+- this increment records its candidate decision in `.project/reconciliations/independent-demo-api-westus2-f1alsv7.json` without modifying shared active-work, environment-state, or the current handoff.
 
 ```text
-path_non_overlap != project_state_fully_reconciled
-competing_path_owner != permission_to_overwrite
+concurrent_nonoverlap != either_pull_request_merged
+competing_work_observed != permission_to_ignore_freshness
 ```
 
 ## Protected planner evidence
@@ -78,7 +79,7 @@ candidate_selected != deployment_authorized
 
 - pin workflow input defaults and guards to `westus2` / `Standard_F1als_v7`;
 - pin the subscription-scope Bicep defaults to the same package;
-- add regression coverage for workflow, Bicep, candidate evidence, authority, and path ownership;
+- add regression coverage for workflow, Bicep, candidate evidence, authority, and concurrent path ownership;
 - add a typed, non-overlapping reconciliation record;
 - update workload and subscription-boundary documentation.
 
@@ -108,4 +109,4 @@ endpoint_promotion_authorized = false
 
 ## Next gate
 
-After exact-head CI and human merge review, re-resolve `main`, reconcile any newly merged project-state paths, and separately request authorization to dispatch the read-only planner. A successful What-If will still not authorize deployment.
+After exact-head CI and human merge review, re-resolve `main` and both open PRs, then separately request authorization to dispatch the read-only planner. A successful What-If will still not authorize deployment.
