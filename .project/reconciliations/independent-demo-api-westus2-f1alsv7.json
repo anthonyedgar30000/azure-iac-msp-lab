@@ -11,9 +11,11 @@
     "promoted_planner_evidence_merge": "551ca0ee2c7d1955b3bd81c09f46f43dceeae3a6",
     "competing_open_pull_request": 77,
     "competing_owned_paths": [
-      ".project/active-work.json",
-      ".project/environment-state.json",
-      ".project/handoffs/current-state.md"
+      ".github/workflows/azure-mcp-post-merge-sync.yml",
+      ".project/handoffs/azure-mcp-current-state.md",
+      ".project/reconciliations/azure-mcp-pr74.json",
+      "scripts/validate_azure_mcp_post_merge_sync.py",
+      "tests/test_azure_mcp_post_merge_sync.py"
     ],
     "local_working_tree_observed": false
   },
@@ -60,9 +62,10 @@
     "selection_status": "human_selected_requires_protected_refresh"
   },
   "path_ownership": {
+    "overlap_with_pr_77": false,
     "overlapping_project_state_paths_modified": false,
     "candidate_record_path": ".project/reconciliations/independent-demo-api-westus2-f1alsv7.json",
-    "reason": "PR #77 owns active-work, environment-state, and current handoff; this increment records the candidate in a non-overlapping typed reconciliation and leaves later project-state integration to a fresh synchronization gate."
+    "reason": "PR #77 was rebuilt from the PR #76 baseline using five added Azure MCP-specific paths. This increment remains a separate seven-path candidate package and does not overwrite shared active-work, environment-state, or current handoff."
   },
   "authority": {
     "repository_increment_authorized": true,
@@ -86,7 +89,7 @@
     "functional_access_observed != least_privilege_verified",
     "sku_unrestricted != quota_reserved",
     "candidate_selected != deployment_authorized",
-    "path_non_overlap != project_state_fully_reconciled"
+    "concurrent_nonoverlap != either_pull_request_merged"
   ],
-  "claim_boundary": "This record selects an evidence-informed read-only planner package and preserves concurrent path ownership. It does not establish current quota, cost, target-resource absence, ARM plan acceptance, deployment, or service health."
+  "claim_boundary": "This record selects an evidence-informed read-only planner package and preserves concurrent non-overlapping work. It does not establish current quota, cost, target-resource absence, ARM plan acceptance, deployment, or service health."
 }
