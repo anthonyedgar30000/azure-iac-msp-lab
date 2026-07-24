@@ -20,7 +20,7 @@ GitHub Pages or local docs server
 https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run
 ```
 
-The committed frontend configuration treats this as a candidate integration source. The browser must pass the API health contract before the **Run incident analysis** button can execute live transactions. The controlled fixture remains available when health or the POST request fails.
+The committed frontend configuration stores this only as a candidate source. The default frontend remains on the controlled fixture. Pass the candidate endpoint through the existing `?api=` query parameter for an explicit browser validation. The browser must pass the API health contract before the **Run incident analysis** button can execute live transactions.
 
 ## Local validation
 
@@ -33,14 +33,14 @@ python3 -m http.server 8000 --directory docs
 Open:
 
 ```text
-http://localhost:8000
+http://localhost:8000/?api=https%3A%2F%2Fst-demo-api-vm-aeg30000.westus2.cloudapp.azure.com%2Fapi%2Fdemo%2Frun
 ```
 
 Expected initial behavior:
 
 1. `report-source.json` loads.
-2. The controlled fixture loads as the fallback.
-3. The browser requests `/api/health` from the configured Azure API.
+2. The default URL remains fixture-only because `live_demo_api_url` is blank.
+3. The explicit `?api=` URL loads the controlled fixture as the fallback and derives `/api/health` from the candidate run URL.
 4. A valid health response changes the source label to `Azure demo API — ready`.
 5. No lab transactions run until the operator clicks **Run incident analysis**.
 
