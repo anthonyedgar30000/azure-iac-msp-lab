@@ -165,7 +165,7 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_TARGET_SUBSCRIPTION_ID }}
 
-      - name: Capture target provider, policy, quota, SKU, and resource state
+      - name: Capture and assess target provider, policy, quota, SKU, and resource state
         env:
           LAB_ENVIRONMENT: ${{ inputs.environment }}
           LOCATION: ${{ inputs.location }}
@@ -179,28 +179,10 @@ jobs:
           jq -e --arg subscription "$TARGET_SUBSCRIPTION_ID" --arg tenant "$AZURE_TENANT_ID" '.subscriptionId==$subscription and .tenantId==$tenant and .state=="Enabled"' "$ARTIFACT_DIR/target-azure-context.json" > /dev/null
           az provider show --namespace Microsoft.Compute --query '{namespace:namespace,registrationState:registrationState}' --output json > "$ARTIFACT_DIR/provider-compute.json"
           az provider show --namespace Microsoft.Network --query '{namespace:namespace,registrationState:registrationState}' --output json > "$ARTIFACT_DIR/provider-network.json"
-          jq -e '.registrationState=="Registered"' "$ARTIFACT_DIR/provider-compute.json" > /dev/null
-          jq -e '.registrationState=="Registered"' "$ARTIFACT_DIR/provider-network.json" > /dev/null
           az policy assignment list --disable-scope-strict-match true --output json > "$ARTIFACT_DIR/target-policy-assignments.json"
           az vm list-usage --location "$LOCATION" --output json > "$ARTIFACT_DIR/compute-usage.json"
           az network list-usages --location "$LOCATION" --output json > "$ARTIFACT_DIR/network-usage.json"
           az vm list-skus --location "$LOCATION" --size "$VM_SIZE" --all --output json > "$ARTIFACT_DIR/vm-size-availability.json"
-
-          jq -n \
-            --arg vm_size "$VM_SIZE" \
-            --slurpfile sku "$ARTIFACT_DIR/vm-size-availability.json" \
-            '{vm_size:$vm_size,matching_records:([$sku[0][] | select(.name==$vm_size)] | length),unrestricted_records:([$sku[0][] | select(.name==$vm_size and ((.restrictions // []) | length)==0)] | length),restrictions:[$sku[0][] | select(.name==$vm_size) | (.restrictions // [])[]?]}' \
-            > "$ARTIFACT_DIR/vm-size-assessment.json"
-          jq -e '.matching_records>0 and .unrestricted_records>0' "$ARTIFACT_DIR/vm-size-assessment.json" > /dev/null
-
-          required_cores="$(jq -r --arg vm_size "$VM_SIZE" '[.[] | select(.name==$vm_size) | .capabilities[]? | select(.name=="vCPUs") | .value] | first // empty' "$ARTIFACT_DIR/vm-size-availability.json")"
-          [[ "$required_cores" =~ ^[0-9]+$ ]]
-          jq -n \
-            --argjson required_cores "$required_cores" \
-            --slurpfile usage "$ARTIFACT_DIR/compute-usage.json" \
-            '{required_cores:$required_cores,total_regional_cores:([$usage[0][] | select(.name.value=="cores")][0] // null)} | . + {sufficient:(.total_regional_cores!=null and ((.total_regional_cores.currentValue + .required_cores) <= .total_regional_cores.limit))}' \
-            > "$ARTIFACT_DIR/compute-quota-assessment.json"
-          jq -e '.sufficient==true' "$ARTIFACT_DIR/compute-quota-assessment.json" > /dev/null
 
           if az group show --name "$target_resource_group" --output json > "$ARTIFACT_DIR/existing-target-resource-group.json" 2>/dev/null; then
             jq -n '{status:"observed_existing"}' > "$ARTIFACT_DIR/target-resource-group-state.json"
@@ -209,6 +191,37 @@ jobs:
             jq -n '{status:"not_present"}' > "$ARTIFACT_DIR/existing-target-resource-group.json"
             jq -n '{status:"not_present"}' > "$ARTIFACT_DIR/target-resource-group-state.json"
             printf '[]\n' > "$ARTIFACT_DIR/existing-target-resources.json"
+          fi
+
+          jq -n \
+            --arg vm_size "$VM_SIZE" \
+            --slurpfile sku "$ARTIFACT_DIR/vm-size-availability.json" \
+            '{vm_size:$vm_size,matching_records:([$sku[0][] | select(.name==$vm_size)] | length),unrestricted_records:([$sku[0][] | select(.name==$vm_size and ((.restrictions // []) | length)==0)] | length),restrictions:[$sku[0][] | select(.name==$vm_size) | (.restrictions // [])[]?]}' \
+            > "$ARTIFACT_DIR/vm-size-assessment.json"
+
+          required_cores="$(jq -r --arg vm_size "$VM_SIZE" '[.[] | select(.name==$vm_size) | .capabilities[]? | select(.name=="vCPUs") | .value] | first // 0' "$ARTIFACT_DIR/vm-size-availability.json")"
+          [[ "$required_cores" =~ ^[0-9]+$ ]]
+          jq -n \
+            --argjson required_cores "$required_cores" \
+            --slurpfile usage "$ARTIFACT_DIR/compute-usage.json" \
+            '{required_cores:$required_cores,total_regional_cores:([$usage[0][] | select(.name.value=="cores")][0] // null)} | . + {sufficient:(.total_regional_cores!=null and ((.total_regional_cores.currentValue|tonumber) + .required_cores <= (.total_regional_cores.limit|tonumber)))}' \
+            > "$ARTIFACT_DIR/compute-quota-assessment.json"
+
+          python workloads/servicetracer-demo-api/scripts/assess_target_readiness.py \
+            --vm-size "$VM_SIZE" \
+            --provider-compute "$ARTIFACT_DIR/provider-compute.json" \
+            --provider-network "$ARTIFACT_DIR/provider-network.json" \
+            --vm-size-availability "$ARTIFACT_DIR/vm-size-availability.json" \
+            --compute-usage "$ARTIFACT_DIR/compute-usage.json" \
+            --network-usage "$ARTIFACT_DIR/network-usage.json" \
+            --target-resource-group-state "$ARTIFACT_DIR/target-resource-group-state.json" \
+            --existing-target-resources "$ARTIFACT_DIR/existing-target-resources.json" \
+            --output "$ARTIFACT_DIR/target-readiness-assessment.json"
+
+          if ! jq -e '.status=="ready_for_arm_what_if"' "$ARTIFACT_DIR/target-readiness-assessment.json" > /dev/null; then
+            reasons="$(jq -c '.blocking_reasons' "$ARTIFACT_DIR/target-readiness-assessment.json")"
+            echo "::error title=Target readiness rejected::${reasons}"
+            exit 1
           fi
 
       - name: Validate and capture target-subscription What-If
@@ -224,6 +237,7 @@ jobs:
         run: |
           set -euo pipefail
           jq -e --arg subscription "$TARGET_SUBSCRIPTION_ID" '.subscriptionId==$subscription' "$ARTIFACT_DIR/target-azure-context.json" > /dev/null
+          jq -e '.status=="ready_for_arm_what_if"' "$ARTIFACT_DIR/target-readiness-assessment.json" > /dev/null
           suffix="${PREFIX}-${LAB_ENVIRONMENT}"
           target_resource_group="rg-st-demo-api-${LAB_ENVIRONMENT}-${LOCATION}"
           backend_ip="$(jq -r '.ipAddress' "$ARTIFACT_DIR/dependency-public-ip.json")"
@@ -306,6 +320,8 @@ jobs:
         run: |
           dependency_name="$(jq -r '.subscriptionName // "not-observed"' "$ARTIFACT_DIR/dependency-azure-context.json" 2>/dev/null || echo not-observed)"
           target_name="$(jq -r '.subscriptionName // "not-observed"' "$ARTIFACT_DIR/target-azure-context.json" 2>/dev/null || echo not-observed)"
+          readiness_status="$(jq -r '.status // "not-observed"' "$ARTIFACT_DIR/target-readiness-assessment.json" 2>/dev/null || echo not-observed)"
+          readiness_reasons="$(jq -c '.blocking_reasons // []' "$ARTIFACT_DIR/target-readiness-assessment.json" 2>/dev/null || echo '[]')"
           {
             echo '## ServiceTracer demo API independent workload plan'
             echo
@@ -317,6 +333,8 @@ jobs:
             echo "- Target resource group: \`rg-st-demo-api-${LAB_ENVIRONMENT}-${LOCATION}\`"
             echo "- DNS label: \`$DNS_LABEL\`"
             echo "- VM size: \`$VM_SIZE\`"
+            echo "- Target readiness: \`$readiness_status\`"
+            echo "- Blocking reasons: \`$readiness_reasons\`"
             echo '- Provider validation level: `ProviderNoRbac`'
             echo '- Azure authentication authorized: `true` for read-only planning'
             echo '- Credential creation authorized: `false`; no credential is created'
