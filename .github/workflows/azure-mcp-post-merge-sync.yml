@@ -1,0 +1,49 @@
+name: Azure MCP post-merge synchronization
+
+on:
+  pull_request:
+    paths:
+      - ".project/active-work.json"
+      - ".project/environment-state.json"
+      - ".project/handoffs/current-state.md"
+      - ".project/handoffs/azure-mcp-current-state.md"
+      - ".project/contracts/azure-mcp-reality-bridge.json"
+      - ".project/reconciliations/azure-mcp-pr74.json"
+      - "scripts/validate_azure_mcp_post_merge_sync.py"
+      - "tests/test_azure_mcp_post_merge_sync.py"
+      - ".github/workflows/azure-mcp-post-merge-sync.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".project/active-work.json"
+      - ".project/environment-state.json"
+      - ".project/handoffs/current-state.md"
+      - ".project/handoffs/azure-mcp-current-state.md"
+      - ".project/contracts/azure-mcp-reality-bridge.json"
+      - ".project/reconciliations/azure-mcp-pr74.json"
+      - "scripts/validate_azure_mcp_post_merge_sync.py"
+      - "tests/test_azure_mcp_post_merge_sync.py"
+      - ".github/workflows/azure-mcp-post-merge-sync.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact workflow commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate post-merge synchronization
+        run: python scripts/validate_azure_mcp_post_merge_sync.py
+
+      - name: Run synchronization regression tests
+        run: python -m unittest tests/test_azure_mcp_post_merge_sync.py -v
