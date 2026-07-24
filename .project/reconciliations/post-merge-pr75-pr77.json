@@ -1,0 +1,120 @@
+{
+  "schema_version": "project.post-merge-reality-sync.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "observed_on": "2026-07-24T06:26:00Z",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "synchronization_scope": "post_merge_repository_and_project_state_reconciliation",
+  "repository_reality": {
+    "default_branch": "main",
+    "main_commit": "0d364dac63fb948c4912e04a2f420df4451189cb",
+    "open_pull_requests_observed": [],
+    "merged_pull_requests": [
+      {
+        "pull_request": 75,
+        "title": "Reconcile West US 2 F1alsv7 planner package",
+        "source_head": "118c0f7167715d6b6e78184d396afacc33408ae8",
+        "merge_commit": "1ae445831668131f495f39f4d887822885fc1ec0",
+        "exact_head_ci": [
+          {
+            "run_id": 30071058351,
+            "name": "CI",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "pull_request": 77,
+        "title": "Reconcile Azure MCP contract without regressing planner evidence",
+        "source_head": "2f503bfdc91c4cb37c067fe0205c9b115d23c862",
+        "merge_commit": "0d364dac63fb948c4912e04a2f420df4451189cb",
+        "exact_head_ci": [
+          {
+            "run_id": 30070811160,
+            "name": "CI",
+            "conclusion": "success"
+          },
+          {
+            "run_id": 30070810759,
+            "name": "Azure MCP post-merge synchronization",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  },
+  "current_repository_declaration": {
+    "planner_workflow": ".github/workflows/servicetracer-demo-api-subproject-plan.yml",
+    "bicep_root": "workloads/servicetracer-demo-api/infra/main.bicep",
+    "location": "westus2",
+    "vm_size": "Standard_F1als_v7",
+    "target_resource_group": "rg-st-demo-api-dev-westus2",
+    "github_environment": "azure-api-payg",
+    "provider_validation_level": "ProviderNoRbac",
+    "deployment_command_present": false
+  },
+  "shared_project_state_observation": {
+    "status": "conflicting_with_current_repository_declaration",
+    "active_work_location": "eastus",
+    "active_work_vm_size": "Standard_B2ats_v2",
+    "environment_state_location": "eastus",
+    "environment_state_vm_size": "Standard_B2ats_v2",
+    "current_handoff_scope": "consumed_run_30064289707",
+    "interpretation": "The shared files remain valid historical evidence for the consumed eastus and Standard_B2ats_v2 planner run, but they are not current declarations for the merged westus2 and Standard_F1als_v7 package. Historical truth must be preserved while current repository authority is represented separately."
+  },
+  "azure_evidence_boundary": {
+    "latest_protected_run_id": 30064289707,
+    "latest_protected_location": "eastus",
+    "latest_protected_vm_size": "Standard_B2ats_v2",
+    "protected_westus2_f1alsv7_evidence": false,
+    "interactive_candidate_evidence_present": true,
+    "current_target_resource_group_state": "not_observed_by_protected_workflow",
+    "current_cost_verified": false,
+    "arm_validation_performed_for_selected_package": false,
+    "what_if_performed_for_selected_package": false,
+    "deployed": false,
+    "service_verified": false
+  },
+  "resolution": {
+    "verification_status": "conflicting",
+    "current_repository_package_selected": true,
+    "historical_consumed_run_evidence_preserved": true,
+    "shared_project_state_fully_reconciled": false,
+    "claim_boundary": "Current repository declarations and historical protected Azure evidence are both valid in their own scopes. The historical eastus and Standard_B2ats_v2 evidence must not overwrite the current westus2 and Standard_F1als_v7 declaration, and the current declaration must not be treated as protected Azure readiness evidence."
+  },
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_what_if_authorized": false,
+    "azure_mutations_authorized": false,
+    "deployment_authorized": false,
+    "cleanup_authorized": false,
+    "endpoint_promotion_authorized": false
+  },
+  "next_gate": {
+    "operation": "review_post_merge_reconciliation_then_issue_exact_read_only_planner_authorization",
+    "required_main_refresh_after_merge": true,
+    "required_exact_confirmation": "PLAN-DEMO-API-SUBPROJECT:dev:st-demo-api-vm-aeg30000",
+    "required_inputs": {
+      "environment": "dev",
+      "location": "westus2",
+      "prefix": "mst",
+      "dependency_resource_group": "rg-servicetracer-dev-westus2",
+      "target_resource_group": "rg-st-demo-api-dev-westus2",
+      "dns_label": "st-demo-api-vm-aeg30000",
+      "allowed_origin": "https://anthonyedgar30000.github.io",
+      "vm_size": "Standard_F1als_v7",
+      "maximum_monthly_cost_cad": "25.00"
+    }
+  },
+  "canonical_distinctions": [
+    "declared_in_code != deployed_in_azure",
+    "historical_protected_evidence != current_repository_declaration",
+    "manual_cloud_shell_observation != protected_workflow_artifact",
+    "candidate_selected != workflow_dispatch_authorized",
+    "planner_dispatched != ARM_WhatIf_completed",
+    "not_observed != false"
+  ]
+}
