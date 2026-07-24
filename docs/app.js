@@ -2,6 +2,8 @@ const state = {
   report: null,
   reportMetadata: null,
   demoApiUrl: '',
+  demoApiHealthUrl: '',
+  demoApiReady: false,
   completedSteps: new Set(),
 };
 
@@ -22,6 +24,7 @@ const elements = {
   vpn01Badge: document.querySelector('#vpn01-badge'),
   vpn02Badge: document.querySelector('#vpn02-badge'),
   result: document.querySelector('#analysis-result'),
+  findingTitle: document.querySelector('.finding-panel h2'),
   findingText: document.querySelector('#finding-text'),
   factLoadBalancer: document.querySelector('#fact-load-balancer'),
   factSuspect: document.querySelector('#fact-suspect'),
@@ -33,6 +36,8 @@ const elements = {
   workflowList: document.querySelector('#workflow-list'),
   completionMessage: document.querySelector('#completion-message'),
 };
+
+const KNOWN_BACKENDS = ['VPN-01', 'VPN-02'];
 
 function delay(milliseconds) {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
@@ -50,10 +55,10 @@ function setNodeState(node, stateName) {
   node.classList.add(`node-${stateName}`);
 }
 
-function setBadge(badge, text, healthy) {
+function setBadgeState(badge, text, stateName = 'neutral') {
   badge.textContent = text;
   badge.classList.remove('badge-neutral', 'badge-healthy', 'badge-failed');
-  badge.classList.add(healthy ? 'badge-healthy' : 'badge-failed');
+  badge.classList.add(`badge-${stateName}`);
 }
 
 function setIncidentState(text, warning = false) {
@@ -100,6 +105,16 @@ function validatePublicEnvelope(envelope) {
   return envelope;
 }
 
+function validateDemoApiHealth(payload) {
+  if (!payload || payload.schema_version !== 'servicetracer.demo-api-health.v1') {
+    throw new Error('Unsupported demo API health schema');
+  }
+  if (payload.status !== 'healthy' || payload.backend_target_configured !== true) {
+    throw new Error('Demo API is not ready to run lab transactions');
+  }
+  return payload;
+}
+
 function validateDemoApiResponse(payload) {
   if (!payload || payload.schema_version !== 'servicetracer.demo-api-response.v1') {
     throw new Error('Unsupported demo API response schema');
@@ -120,6 +135,18 @@ async function fetchJson(url, options = {}) {
     throw new Error(`${url} returned HTTP ${response.status}`);
   }
   return response.json();
+}
+
+function deriveDemoApiHealthUrl(runUrl) {
+  const url = new URL(runUrl, window.location.href);
+  if (url.pathname.endsWith('/api/demo/run')) {
+    url.pathname = url.pathname.replace(/\/api\/demo\/run$/, '/api/health');
+  } else {
+    url.pathname = '/api/health';
+  }
+  url.search = '';
+  url.hash = '';
+  return url.toString();
 }
 
 async function loadSourceConfiguration() {
@@ -194,6 +221,56 @@ function setFallbackReport(report, fallbackUrl, liveError = null) {
   setIncidentState('Awaiting analysis');
 }
 
+function localizationIsStable(report) {
+  const localization = report.localization || {};
+  const counts = localization.backend_attempt_counts || {};
+  const rates = localization.backend_failure_rates || {};
+  const suspect = localization.suspect_backend;
+  const healthy = localization.healthy_comparison_backend;
+
+  return (
+    KNOWN_BACKENDS.includes(suspect)
+    && KNOWN_BACKENDS.includes(healthy)
+    && suspect !== healthy
+    && Number(counts['VPN-01'] || 0) > 0
+    && Number(counts['VPN-02'] || 0) > 0
+    && typeof rates[suspect] === 'number'
+    && typeof rates[healthy] === 'number'
+    && rates[suspect] > rates[healthy]
+  );
+}
+
+function renderBackendState(backendId, node, rateElement, badge, report, stable) {
+  const localization = report.localization;
+  const backendState = report.load_balancer.backend_states[backendId];
+  const count = Number(localization.backend_attempt_counts?.[backendId] || 0);
+  const rate = localization.backend_failure_rates?.[backendId];
+  const probeStatus = backendState?.probe_status || 'unknown';
+
+  rateElement.textContent = count > 0 ? asPercent(rate) : 'Not observed';
+
+  if (count === 0) {
+    setNodeState(node, 'pending');
+    setBadgeState(badge, `Probe ${probeStatus} · not sampled`, 'neutral');
+    return;
+  }
+
+  if (!stable) {
+    setNodeState(node, 'pending');
+    setBadgeState(badge, `Observed ${count} · sample inconclusive`, 'neutral');
+    return;
+  }
+
+  if (backendId === localization.suspect_backend) {
+    setNodeState(node, 'failed');
+    setBadgeState(badge, `Probe ${probeStatus} · transaction failures`, 'failed');
+    return;
+  }
+
+  setNodeState(node, 'healthy');
+  setBadgeState(badge, `Probe ${probeStatus} · comparison path`, 'healthy');
+}
+
 function renderWorkflow() {
   elements.workflowList.replaceChildren();
 
@@ -238,39 +315,62 @@ function completeWorkflowStep(item, button, stepId) {
 
 function populateReport() {
   const report = state.report;
-  const failureRates = report.localization.backend_failure_rates;
-  const backendStates = report.load_balancer.backend_states;
   const incident = report.incident;
+  const stable = localizationIsStable(report);
 
-  setIncidentState('Technician investigation required', true);
+  setIncidentState(
+    stable ? 'Technician investigation required' : 'More evidence required',
+    true,
+  );
 
   elements.evidenceSummary.textContent = `${incident.attempts} correlated transactions: ${incident.successful_attempts} successful, ${incident.failed_attempts} failed.`;
   elements.loadBalancerState.textContent = 'Healthy under configured probe';
-  elements.loadBalancerBadge.textContent = `${report.load_balancer.probe_name} · ${report.load_balancer.probe_scope}`;
-  elements.loadBalancerBadge.classList.remove('badge-neutral');
-  elements.loadBalancerBadge.classList.add('badge-healthy');
+  setBadgeState(
+    elements.loadBalancerBadge,
+    `${report.load_balancer.probe_name} · ${report.load_balancer.probe_scope}`,
+    'healthy',
+  );
 
-  elements.vpn01Rate.textContent = asPercent(failureRates['VPN-01']);
-  elements.vpn02Rate.textContent = asPercent(failureRates['VPN-02']);
-  setBadge(elements.vpn01Badge, `Probe ${backendStates['VPN-01'].probe_status}`, true);
-  setBadge(elements.vpn02Badge, `Probe ${backendStates['VPN-02'].probe_status}`, true);
+  renderBackendState('VPN-01', elements.vpn01Node, elements.vpn01Rate, elements.vpn01Badge, report, stable);
+  renderBackendState('VPN-02', elements.vpn02Node, elements.vpn02Rate, elements.vpn02Badge, report, stable);
 
+  elements.findingTitle.textContent = stable
+    ? `Continue the investigation on ${report.localization.suspect_backend}`
+    : 'Repeat the bounded sample before localizing';
   elements.findingText.textContent = report.service_tracer_finding;
   elements.factLoadBalancer.textContent = 'Healthy under configured probe';
-  elements.factSuspect.textContent = report.localization.suspect_backend;
-  elements.factHealthy.textContent = report.localization.healthy_comparison_backend;
+  elements.factSuspect.textContent = stable ? report.localization.suspect_backend : 'Not established';
+  elements.factHealthy.textContent = stable
+    ? report.localization.healthy_comparison_backend
+    : 'Not established';
   elements.factRootCause.textContent = 'Not determined by ServiceTracer';
-  elements.boundaryBackend.textContent = report.investigation_boundary.service_tracer_stops_at;
+  elements.boundaryBackend.textContent = stable
+    ? report.investigation_boundary.service_tracer_stops_at
+    : 'Not established';
   elements.boundaryStatement.textContent = report.investigation_boundary.statement;
 
-  renderWorkflow();
   elements.result.classList.remove('is-hidden');
-  elements.workflowPanel.classList.remove('is-hidden');
+  if (stable) {
+    renderWorkflow();
+    elements.workflowPanel.classList.remove('is-hidden');
+  } else {
+    elements.workflowPanel.classList.add('is-hidden');
+    elements.workflowList.replaceChildren();
+  }
+}
+
+async function probeDemoApi() {
+  if (!state.demoApiUrl) {
+    return null;
+  }
+  state.demoApiHealthUrl = deriveDemoApiHealthUrl(state.demoApiUrl);
+  const payload = await fetchJson(state.demoApiHealthUrl);
+  return validateDemoApiHealth(payload);
 }
 
 async function requestLiveDemoReport() {
-  if (!state.demoApiUrl) {
-    return null;
+  if (!state.demoApiUrl || !state.demoApiReady) {
+    throw new Error('Demo API is not ready');
   }
   const payload = await fetchJson(state.demoApiUrl, {
     method: 'POST',
@@ -282,7 +382,7 @@ async function requestLiveDemoReport() {
 
 async function runAnalysis() {
   elements.runButton.disabled = true;
-  elements.runButton.textContent = state.demoApiUrl
+  elements.runButton.textContent = state.demoApiReady
     ? 'Running Azure transactions…'
     : 'Analyzing controlled evidence…';
   setIncidentState('Analysis running');
@@ -291,21 +391,20 @@ async function runAnalysis() {
   await delay(350);
   setNodeState(elements.loadBalancerNode, 'healthy');
   elements.loadBalancerState.textContent = 'Probe healthy';
-  elements.loadBalancerBadge.textContent = 'Listener responds';
-  elements.loadBalancerBadge.classList.remove('badge-neutral');
-  elements.loadBalancerBadge.classList.add('badge-healthy');
+  setBadgeState(elements.loadBalancerBadge, 'Listener responds', 'healthy');
 
   setNodeState(elements.vpn01Node, 'analyzing');
   setNodeState(elements.vpn02Node, 'analyzing');
 
   let apiError = null;
-  if (state.demoApiUrl) {
+  if (state.demoApiReady) {
     try {
       const payload = await requestLiveDemoReport();
       setApiReport(payload, state.demoApiUrl);
     } catch (error) {
       apiError = error;
       console.error('Could not run the live Azure demo API; using the controlled fixture.', error);
+      state.demoApiReady = false;
       elements.reportSourceName.textContent = 'Controlled demo fixture — API unavailable';
       elements.reportSourceDetail.textContent = 'The live Azure API failed; using the controlled fixture.';
     }
@@ -313,8 +412,6 @@ async function runAnalysis() {
 
   await delay(350);
   populateReport();
-  setNodeState(elements.vpn01Node, 'healthy');
-  setNodeState(elements.vpn02Node, 'failed');
 
   elements.runButton.textContent = apiError ? 'Fixture analysis complete' : 'Analysis complete';
   elements.result.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -326,6 +423,8 @@ function resetDemo() {
   elements.runButton.textContent = state.report ? 'Run incident analysis' : 'Loading report…';
   if (state.reportMetadata?.stale) {
     setIncidentState('Live report is stale', true);
+  } else if (state.demoApiReady) {
+    setIncidentState('Live lab API ready');
   } else {
     setIncidentState('Awaiting analysis');
   }
@@ -336,14 +435,11 @@ function resetDemo() {
   setNodeState(elements.vpn02Node, 'pending');
 
   elements.loadBalancerState.textContent = 'Not evaluated';
-  elements.loadBalancerBadge.textContent = 'TCP 443 probe';
-  elements.loadBalancerBadge.className = 'node-badge badge-neutral';
+  setBadgeState(elements.loadBalancerBadge, 'TCP 443 probe', 'neutral');
   elements.vpn01Rate.textContent = '—';
   elements.vpn02Rate.textContent = '—';
-  elements.vpn01Badge.textContent = 'Probe unknown';
-  elements.vpn02Badge.textContent = 'Probe unknown';
-  elements.vpn01Badge.className = 'node-badge badge-neutral';
-  elements.vpn02Badge.className = 'node-badge badge-neutral';
+  setBadgeState(elements.vpn01Badge, 'Probe unknown', 'neutral');
+  setBadgeState(elements.vpn02Badge, 'Probe unknown', 'neutral');
 
   elements.result.classList.add('is-hidden');
   elements.workflowPanel.classList.add('is-hidden');
@@ -353,8 +449,9 @@ function resetDemo() {
 
 async function loadReport() {
   const config = await loadSourceConfiguration();
-  const queryReportUrl = new URLSearchParams(window.location.search).get('report');
-  const queryApiUrl = new URLSearchParams(window.location.search).get('api');
+  const query = new URLSearchParams(window.location.search);
+  const queryReportUrl = query.get('report');
+  const queryApiUrl = query.get('api');
   const liveReportUrl = queryReportUrl || config.live_report_url;
   state.demoApiUrl = queryApiUrl || config.live_demo_api_url || '';
   let liveError = null;
@@ -375,8 +472,21 @@ async function loadReport() {
     const fallbackUrl = config.fallback_report_url || 'technician-handoff-report.json';
     const report = await fetchJson(fallbackUrl);
     setFallbackReport(report, fallbackUrl, liveError);
+
     if (state.demoApiUrl) {
-      elements.reportSourceDetail.textContent = 'Live Azure API configured; the controlled fixture remains the fallback.';
+      try {
+        const health = await probeDemoApi();
+        state.demoApiReady = true;
+        elements.reportSourceName.textContent = 'Azure demo API — ready';
+        elements.reportSourceDetail.textContent = (
+          `${health.hosting_model || 'Azure workload'} · health contract verified · controlled fixture remains the fallback.`
+        );
+      } catch (error) {
+        state.demoApiReady = false;
+        console.error('Could not verify the Azure demo API health contract.', error);
+        elements.reportSourceName.textContent = 'Controlled demo fixture — API unavailable';
+        elements.reportSourceDetail.textContent = 'The configured API did not pass its health contract; no live transactions will run.';
+      }
     }
     resetDemo();
   } catch (error) {
