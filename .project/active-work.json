@@ -21,12 +21,13 @@
       "durable_history != live_status",
       "pull_request_merged != Azure_deployed",
       "workflow_present != workflow_dispatched",
-      "CI_passed != service_validated",
-      "merged_state != authorized_state_transition",
-      "read_only_plan != administrative_prerequisite_authority",
-      "not_observed != false"
+      "planner_dispatched != ARM_WhatIf_completed",
+      "readiness_rejected != workflow_mechanism_failed",
+      "Azure_authentication_succeeded != deployment_authorized",
+      "not_observed != false",
+      "resource_exists != service_healthy"
     ],
-    "claim_boundary": "This file preserves durable architecture, authority, and evidence claims. Live GitHub and Azure state must be queried at read time, and repository presence does not establish legitimate authorization."
+    "claim_boundary": "This file preserves durable architecture, authority, and evidence claims. Live GitHub and Azure state must be queried at read time."
   },
   "last_substantive_baseline": {
     "event_id": "repository-pr-59-merged",
@@ -34,7 +35,7 @@
     "commit": "ffe83c2966985dc4fa4d736d178ade9e9fd085b7",
     "title": "Fix collector demo API deployment name collision",
     "qualification": "historical_collector_hosted_repair_baseline",
-    "claim_boundary": "PR #59 remains the latest event in the curated repository event log. It is historical and does not describe the active independent API design.",
+    "claim_boundary": "PR #59 is historical and does not describe the active independent API design.",
     "ci_run_id": 30045980827
   },
   "latest_promoted_repository_event": {
@@ -43,7 +44,7 @@
     "merge_commit": "ffe83c2966985dc4fa4d736d178ade9e9fd085b7",
     "title": "Fix collector demo API deployment name collision",
     "qualification": "latest_event_in_curated_repository_log",
-    "claim_boundary": "The curated event log is non-exhaustive. Later merge anchors are preserved in the architecture baseline and handoff but do not become Azure or mutation authority.",
+    "claim_boundary": "The curated repository event log is non-exhaustive. Later merge anchors are recorded below.",
     "ci_run_id": 30045980827
   },
   "architecture_baseline": {
@@ -65,17 +66,21 @@
     "stack_merge_ci_run_id": 30061412042,
     "main_merge_commit": "84a527a248964c907172b9af5ca3d5fab991c96d",
     "evidence_merge_commit": "323b3892c6efd598231037f23281d49608ceb570",
-    "authorization_status": "human_ratification_required",
-    "authorization_conflict": "PR #71 declared pull-request merge authority false and expanded PR #68 beyond its originally reviewed two-path head before PR #68 reached main.",
-    "state": "repository_merged_Azure_state_not_observed_authorization_unresolved",
-    "claim_boundary": "The dual-subscription design exists on main and passed exact-head CI. It must not be used for administrative setup or workflow dispatch until a human ratifies the architecture, target subscription, region, identity model, and RBAC boundary."
+    "typed_readiness_source_head": "0b0c0eb650ca0da3bb0f8e0143fcc8a0e3c50f7d",
+    "typed_readiness_ci_run_id": 30067704269,
+    "typed_readiness_merge_commit": "b395f32a08965a7a9602ccdbd25e79a765b42a7b",
+    "authorization_reconciliation_merge_commit": "92b0c3b1064158684a4b280348c77eeedba6dfc3",
+    "authorization_status": "ratified_for_bounded_read_only_planning",
+    "authorization_resolution": "Anthony Edgar explicitly authorized one read-only planner run at main 323b3892c6efd598231037f23281d49608ceb570 using eastus, azure-api-payg, separate OIDC identities, and zero Azure mutation or deployment authority.",
+    "state": "architecture_ratified_readiness_rejected_before_arm_validation_and_what_if",
+    "claim_boundary": "The architecture and administrative prerequisites were sufficient for the authorized read-only run. That consumed authorization does not authorize another dispatch, ARM What-If, deployment, cleanup, or endpoint promotion."
   },
   "work_ownership_resolution": {
     "state_semantics": "resolve_live_from_git_and_github",
     "persist_active_branch": false,
     "persist_active_pull_request": false,
     "persist_current_ci_status": false,
-    "rule": "Resolve default-branch head, open pull requests, branch ownership, exact-head CI, and authorization evidence before every write or dispatch."
+    "rule": "Resolve default-branch head, open pull requests, ownership, exact-head CI, and current authority before every write or dispatch."
   },
   "repository_capabilities": {
     "publication_plan_workflow_present_in_repository": true,
@@ -96,9 +101,11 @@
     "dual_subscription_planning_contract_present": true,
     "provider_no_rbac_validation_present": true,
     "planner_credential_generation_absent": true,
+    "typed_target_readiness_assessor_present": true,
+    "target_observation_failure_preserved": true,
     "active_demo_strategy": "independent_servicetracer_demo_api_subproject",
     "state_semantics": "repository_declaration_not_runtime_or_authorization_proof",
-    "claim_boundary": "The planner code is present, but its required environment, secrets, identities, role assignments, target subscription, and human ratification are not established by repository state."
+    "claim_boundary": "The planner now emits typed readiness and preserves unknown target inventory. A fresh run still requires exact human authorization."
   },
   "bounded_authority_grants": [
     {
@@ -125,7 +132,7 @@
         "az deployment group what-if"
       ],
       "state_semantics": "bounded_exception_to_false_defaults",
-      "claim_boundary": "This grant does not authorize the independent demo API planner or any dual-subscription administrative setup."
+      "claim_boundary": "This grant does not authorize the independent demo API planner or any dual-subscription administrative change."
     }
   ],
   "authority_defaults": {
@@ -138,8 +145,9 @@
     "github_secret_mutation_authorized": false,
     "entra_identity_mutation_authorized": false,
     "azure_rbac_mutation_authorized": false,
-    "architecture_ratification_complete": false,
-    "rule": "Authority is fail-closed unless a narrowly scoped current human instruction explicitly permits the exact operation and reviewed state."
+    "architecture_ratification_complete": true,
+    "consumed_planner_authorization_active": false,
+    "rule": "The architecture was ratified by the consumed run authorization. All new operational authority remains fail-closed."
   },
   "deployment_state": {
     "state_semantics": "promoted_evidence_only",
@@ -157,61 +165,94 @@
       "cors_verified": false,
       "frontend_live_verified": false,
       "strategy_status": "historical_superseded_by_independent_subproject",
-      "claim_boundary": "Run 30053018998 is the newest authenticated Azure evidence but belongs to the superseded collector-hosted strategy."
+      "claim_boundary": "Run 30053018998 remains the newest promoted collector-hosted evidence and is a separate legacy scope."
     },
     "independent_demo_api": {
       "repository_implemented": true,
       "planner_present": true,
-      "planner_dispatched": false,
-      "architecture_ratified": false,
-      "target_subscription_selected": false,
-      "github_environment_configured": false,
-      "dependency_identity_configured": false,
-      "target_identity_configured": false,
-      "required_rbac_configured": false,
+      "planner_dispatched": true,
+      "last_planner_run_id": 30064289707,
+      "last_planner_run_attempt": 1,
+      "dispatch_sha": "323b3892c6efd598231037f23281d49608ceb570",
+      "architecture_ratified": true,
+      "target_subscription_selected": true,
+      "github_environment_configured": true,
+      "dependency_identity_configured": true,
+      "target_identity_configured": true,
+      "required_read_only_rbac_configured": true,
+      "azure_authentication_succeeded": true,
+      "dependency_endpoint_observed": true,
+      "target_compute_provider_registered": true,
+      "target_network_provider_registered": true,
+      "requested_location": "eastus",
+      "requested_vm_size": "Standard_B2ats_v2",
+      "requested_target_resource_group": "rg-st-demo-api-dev-eastus",
+      "requested_sku_unrestricted": false,
+      "requested_sku_restriction_reason": "NotAvailableForSubscription",
+      "target_total_regional_vcpu_current": 0,
+      "target_total_regional_vcpu_limit": 10,
+      "target_vm_family": "standardBasv2Family",
+      "target_vm_family_vcpu_current": 0,
+      "target_vm_family_vcpu_limit": 0,
+      "target_standard_ipv4_public_ip_current": 0,
+      "target_standard_ipv4_public_ip_limit": 20,
       "target_resource_group_observed": false,
+      "arm_validation_performed": false,
+      "what_if_performed": false,
+      "plan_accepted": false,
       "deployed": false,
       "tls_verified": false,
       "health_verified": false,
       "transactions_verified": false,
       "cors_verified": false,
       "frontend_live_verified": false,
-      "Azure_state": "not_observed",
-      "claim_boundary": "Repository implementation does not prove ratification, administrative prerequisites, planning evidence, deployment, or service validation."
+      "Azure_state": "readiness_observed_target_inventory_not_observed_ARM_what_if_not_performed",
+      "claim_boundary": "OIDC and bounded reads succeeded. The requested SKU was unavailable and its family quota was zero, so the workflow stopped before target inventory, ARM validation, and What-If. No deployment or service claim exists."
     },
     "operationally_verified": false,
-    "claim_boundary": "Repository implementation is not planning. Planning is not deployment. Deployment is not operational verification."
+    "claim_boundary": "Readiness observation is not an accepted plan. An accepted plan is not deployment. Deployment is not operational verification."
   },
   "latest_promoted_evidence": {
-    "event_id": "collector-demo-api-what-if-30053018998",
-    "workflow": "Collector-hosted demo API",
-    "run_id": 30053018998,
+    "event_id": "independent-demo-api-plan-30064289707-attempt-1",
+    "workflow": "ServiceTracer demo API subproject plan",
+    "run_id": 30064289707,
     "run_attempt": 1,
-    "reviewed_commit": "46821092a6d196cc08279d3d79b09ae613a09b2a",
-    "artifact_id": 8581736555,
-    "artifact_sha256": "be58e1d9e9b3dda587209dfdf25a9b9f19aecf1a4ca4ffe08c9ac66e5c41d277",
-    "generated_at": "2026-07-23T23:24:05Z",
-    "operation": "what-if",
-    "status": "historical_collector_hosted_plan_rejected_fail_closed",
+    "reviewed_commit": "323b3892c6efd598231037f23281d49608ceb570",
+    "artifact_id": 8585693830,
+    "artifact_name": "servicetracer-demo-api-subproject-plan-30064289707-1",
+    "artifact_sha256": "7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22",
+    "generated_at": "2026-07-24T03:29:44Z",
+    "operation": "read_only_dual_subscription_target_readiness",
+    "status": "oidc_and_dependency_succeeded_requested_sku_rejected_before_arm_validation_and_what_if",
+    "azure_authentication_authorized": true,
+    "azure_authentication_performed": true,
     "azure_mutations_authorized": false,
     "azure_mutations_performed": false,
+    "arm_validation_performed": false,
+    "what_if_performed": false,
     "deployment_authorized": false,
-    "freshness_boundary": "This is not an independent dual-subscription plan and cannot establish target subscription, region, quota, policy, cost, or deployment readiness."
+    "freshness_boundary": "This evidence is exact for eastus and Standard_B2ats_v2 at the generated time. It does not establish another size or region, target-resource-group absence, cost, or deployment readiness."
   },
   "configuration_state": {
     "committed_live_report_url_present": false,
     "committed_live_demo_api_url_present": false,
     "fallback_fixture_present": true,
-    "claim_boundary": "No independent demo endpoint may be committed before deployment and browser verification are established."
+    "claim_boundary": "No independent demo endpoint may be committed before deployment and browser verification."
   },
   "safe_next_gate": {
-    "operation": "ratify_or_reject_dual_subscription_planner_architecture",
+    "operation": "select_candidate_and_authorize_fresh_read_only_planner",
+    "evidence_constraints": [
+      "Standard_B2ats_v2 is restricted in eastus for the selected target subscription",
+      "standardBasv2Family quota is 0",
+      "total regional vCPU quota is 10",
+      "standardBSFamily quota is 10",
+      "Standard IPv4 public-IP quota is 20",
+      "alternate SKU availability and cost remain not observed"
+    ],
     "required_decisions": [
-      "accept_or_revert_dual_subscription_boundary",
-      "select_or_reject_Azure_Plan_target_subscription",
-      "accept_or_change_default_location_eastus",
-      "authorize_or_reject_azure-api-payg_environment_setup",
-      "authorize_or_reject_two_OIDC_identities_and_Reader_RBAC"
+      "choose one candidate VM size and region without treating quota as availability",
+      "set an acceptable monthly cost ceiling",
+      "bind authorization to the exact current main SHA and confirmation string"
     ],
     "workflow_dispatch_authorized": false,
     "Azure_authentication_authorized": false,
@@ -223,7 +264,7 @@
     "repository": "Query live GitHub default branch and exact head.",
     "pull_requests": "Query open pull requests, ownership, review state, and mergeability.",
     "ci": "Query exact-head workflow runs and jobs.",
-    "azure": "Use fresh scoped evidence only after the exact administrative and planning authority is granted.",
+    "azure": "Use fresh scoped evidence only after exact authorization.",
     "local_working_tree": "Not observable through the GitHub connector; inspect separately before local writes or merges."
   }
 }
