@@ -2,240 +2,176 @@
 
 ## Interpretation boundary
 
-This handoff records the accepted architecture, promoted evidence, unresolved gates, and safe next decision boundary after a full repository and evidence reconciliation on `2026-07-23`.
-
-It is not a live GitHub or Azure dashboard. Query the current default-branch head, pull requests, branch ownership, exact-head CI, and Azure state whenever it is read.
+This handoff records the synchronized repository architecture and the newest promoted Azure evidence available on `2026-07-24`. It is not a live GitHub or Azure dashboard.
 
 ```text
 durable_handoff != live_status
-promoted_evidence != current_Azure_state
 declared_in_code != deployed_in_Azure
+not_observed != false
 resource_exists != service_healthy
 failed_deploy != proof_of_zero_partial_mutation
 ```
 
+Resolve the live default-branch head, open pull requests, exact-head CI, Azure subscription context, quotas, costs, target resources, and local working tree whenever this document is used for a consequential decision.
+
 ## Repository synchronization watermark
 
-The branch was rebased onto the live repository state containing:
+The independent ServiceTracer demo API workload was merged through PR #65.
 
-- `main@ffe83c2966985dc4fa4d736d178ade9e9fd085b7`;
-- PR #59, **Fix collector demo API deployment name collision**;
-- PR #58, **Add governed persistence controller**;
-- PR #57, **Supersede stale backend deployment fact**;
-- PR #56, **Isolate collector demo API from base infrastructure**.
+Repository evidence:
 
-Exact PR-head CI:
+- source head `1be38682bf382bb70a585522d9e8c193beb89937`;
+- exact-head CI run `30055579796`: success;
+- merge commit `e3364b9cb918bf5aef23eab011d2a168183b3442`;
+- no file-content differences between the tested source head and merge commit;
+- no Azure mutation authorized by that merge.
 
-- PR #56 run `30041552071`: success;
-- PR #57 run `30042254963`: success;
-- PR #58 run `30042848348`: success;
-- PR #59 run `30045980827`: success.
+A separate post-merge CI run was not observed. That is an observation limitation, not evidence of failure.
 
-A local clone, uncommitted working tree, unpushed branch, or local Azure CLI context is not observable through the GitHub connector and must be inspected separately.
+## Current declared architecture
 
-## Current active architecture
-
-The active demo strategy is collector-hosted and does not use Microsoft.Web:
+The active repository strategy is now an independent workload inside the Azure IaC MSP Lab:
 
 ```text
 GitHub Pages
-→ dedicated Azure public IP and DNS
-→ second frontend on the existing Standard Load Balancer
-→ IP-based backend pool targeting collector private IP 10.20.40.10
-→ Nginx TLS termination and rate limiting
-→ loopback-only Python API on 127.0.0.1:8090
-→ existing remote-access transaction endpoint
-→ synthetic VPN-01 / VPN-02 backends
+→ dedicated Standard public IP and DNS
+→ dedicated NSG allowing TCP 80/443 only
+→ dedicated Linux VM in its own VNet and subnet
+→ Nginx TLS and rate limiting
+→ loopback-only Python API
+→ read-only HTTPS dependency on existing ServiceTracer transaction endpoint
 ```
 
-Repository implementation includes:
-
-- `.github/workflows/collector-demo-api.yml`;
-- `infra/collector-demo-api.bicep`, the isolated deployment root;
-- distinct parent and nested ARM deployment names;
-- a bounded What-If classifier;
-- a typed readiness assessor;
-- the hardened installer and standalone API;
-- deterministic service verification;
-- the Governed Persistence Loop controller.
-
-The legacy Azure Function/App Service workflow is retired from the active path.
-
-## Azure reality established by evidence
-
-### Collector and dependencies
-
-The newest authenticated Azure observation is collector-hosted demo API deploy run `30044644501`, generated at `2026-07-23T21:05:01Z`.
-
-Before deployment it observed:
-
-- subscription type: Azure for Students;
-- resource group: `rg-servicetracer-dev-westus2`;
-- region: `westus2`;
-- collector VM: `vm-stcollector-mst-dev`;
-- collector power state: running;
-- collector size: `Standard_B2ats_v2`;
-- collector private IP: `10.20.40.10`;
-- collector public IP: none;
-- dedicated demo API public IP: not present;
-- Public IP Addresses quota: 1 used, 3 limit, 2 remaining;
-- resource-group read-only locks: none.
-
-These are time-bounded control-plane facts. They do not prove current guest health, running ServiceTracer version, evidence-disk readability, publisher availability, effective permissions, actual cost, or post-failure target-resource state.
-
-### Backend VMs and legacy partial mutation
-
-Retired App Service run `30029515018` partially mutated Azure before Microsoft.Web quota failure.
-
-Promoted evidence records:
-
-- two synthetic backend VMs exist;
-- Application Insights `appi-demo-api-mst-dev` exists;
-- storage account `storfxczr3fewce` exists;
-- the Function plan was not established;
-- the Function App was not established;
-- listeners and transaction behavior remain unverified.
-
-Cleanup is not authorized by this handoff.
-
-### Broad planning failure and isolated-root repair
-
-Run `30040676542` passed readiness and ARM validation but used the broad base template. Its What-If predicted:
+Default scope:
 
 ```text
-Create    9
-Modify   13
-Ignore   11
-NoChange  5
+rg-st-demo-api-dev-westus2
+├── vnet-st-demo-api-mst-dev
+├── nsg-st-demo-api-mst-dev
+├── pip-st-demo-api-vm-mst-dev
+├── nic-st-demo-api-mst-dev
+└── vm-st-demo-api-mst-dev
 ```
 
-Protected collector, disk, NIC, VNet, subnet, load-balancer, NSG, and public-IP modifications caused the workflow to fail closed.
+The independent workload must not mutate:
 
-PR #56 introduced the isolated root `infra/collector-demo-api.bicep`.
+- `vm-stcollector-mst-dev`;
+- `nsg-operations-mst-dev`;
+- `vnet-onprem-sim-mst-dev`;
+- `lb-remote-access-mst-dev`;
+- collector NIC, disks, extensions, identity, or guest configuration.
 
-### Accepted isolated plan and failed deploy
+## Correct VM sizing contract
 
-Run `30044644501` used the isolated root.
-
-It established:
-
-- readiness passed;
-- ARM validation passed;
-- nine isolated Create changes;
-- no protected base-infrastructure modifications classified;
-- the isolated What-If status was `accepted_isolated_collector_api_changes`;
-- deployment was explicitly authorized for that run.
-
-The deployment command then failed because the parent CLI deployment and nested Bicep module both used:
+The independent API planning and IaC default is:
 
 ```text
-collector-demo-api-dev
+Standard_B2ats_v2
 ```
 
-`deployment-result.json` is empty and service verification was skipped.
+The earlier `Standard_B1s` default came from the synthetic backend workload and was not the approved API-host default.
 
 ```text
-isolated_WhatIf_accepted = true
-deployment_attempted      = true
-deployment_succeeded      = false
-post_failure_mutation     = not_proven
-service_verified          = false
+observed_working_size != current_SKU_availability
+configured_default != quota_reserved
 ```
 
-PR #59 changed only the nested deployment name to:
+A fresh planner run must still verify regional availability, compute quota, public-IP quota, cost, and remaining Azure for Students credit.
+
+## Planner authority
+
+The active workflow is:
 
 ```text
-collector-demo-api-resources-dev
+.github/workflows/servicetracer-demo-api-subproject-plan.yml
 ```
 
-That repository fix does not prove the Azure fix executed. Because the template changed and the failed run does not prove zero partial mutation, a fresh Azure inventory and isolated What-If are required before a retry decision.
+It:
 
-## Frontend configuration reality
+- runs only from `refs/heads/main`;
+- checks out immutable `github.sha`;
+- accepts no manually entered commit SHA;
+- authenticates to Azure for read-only inventory, validation, and What-If;
+- captures provider registration, VM SKU availability, compute usage, network usage, dependency state, and target resource-group state;
+- rejects any Modify, Delete, Replace, dependency mutation, scope escape, or unrelated resource type;
+- always reports `deployment_authorized: false`.
 
-No live report or demo API URL is committed. The controlled fixture remains the default.
+No deployment workflow exists for the independent workload.
 
-After an authorized deployment, a verified endpoint can be tested without repository promotion:
+## New workload Azure reality
+
+The independent target resource group, VM, VNet, NSG, NIC, public IP, DNS, TLS, API health, transaction behavior, CORS, and browser integration are currently:
 
 ```text
-?api=https://<verified-fqdn>/api/demo/run
+not_observed
 ```
 
-A live URL may be committed only after public-IP existence, DNS, TLS, API health, 20 correlated transactions, CORS, provenance, and browser rendering are verified.
+This must not be restated as absent or failed until a fresh scoped Azure observation is performed.
 
-## Report-publication workstream
+## Newest authenticated Azure evidence
 
-Read-only planner run `29979955391` remains the promoted evidence for the separate publication path. It produced four Create changes, no Modify/Delete/Replace, and no Azure mutation.
+The newest authenticated Azure evidence inspected during this sync remains collector-hosted What-If run `30053018998`, generated on `2026-07-23`.
 
-The report Storage account, Blob configuration, `$web` access, data role, managed-identity upload, Blob response, and live browser rendering are not deployed or verified.
+It established that Azure login, dependency inventory, readiness, ARM validation, evidence capture, and artifact upload succeeded. The What-If classifier failed closed, and deployment and service verification were skipped.
 
-The only durable authority grant remains the read-only publication planner. It does not authorize collector demo API planning, deployment, or cleanup.
+Observed at that time:
 
-## Collector replacement and recovery
+- Azure for Students subscription and expected tenant;
+- `rg-servicetracer-dev-westus2` in `westus2`;
+- collector VM running at private IP `10.20.40.10`;
+- collector had no public IP;
+- partial collector-hosted residue included `pip-st-demo-api-mst-dev` and HTTP/HTTPS operations-NSG rules;
+- no resource-group read-only lock;
+- Standard public-IP usage was 2 of 3, leaving one observed slot.
 
-Replacement and recovery contracts are implemented and CI-verified but inactive.
+Those facts are time-bounded. The later stale-commit workflow failure did not reach Azure and added no newer Azure evidence.
 
-Promoted evidence records:
+## Quota and cost consequence
 
-- deployed Ubuntu 22.04 versus desired Ubuntu 24.04 image drift;
-- evidence-disk preservation requirements;
-- collector NIC delete-on-VM-delete risk;
-- system-assigned identity turnover;
-- no visible publication role assignments at the recorded time;
-- OS-disk public-network hardening required.
-
-No current recovery point, isolated boot rehearsal, rollback execution, or disaster-recovery proof exists.
-
-## Cost and quota boundary
-
-Promoted evidence supports only bounded planning claims:
-
-- Public IP quota was 1 of 3 at `2026-07-23T21:05:01Z`;
-- an earlier two-backend-VM estimate was approximately CAD 19.42 for 730 hours;
-- current invoice cost, remaining student credit, taxes, discounts, and complete allocation are not observable;
-- backend VMs and partial resources may continue to incur cost.
-
-## Security and identity boundary
-
-The isolated design keeps the collector NIC private and exposes only load-balanced HTTP/HTTPS. The API binds to loopback behind Nginx, restricts CORS to the exact GitHub Pages origin, caps request bodies, rate-limits requests, and accepts no caller-controlled backend target.
-
-Those are declared controls, not runtime proof.
-
-Current Azure Policy, deny assignments, effective permissions, guest hardening, certificate issuance, NSG effectiveness, and endpoint behavior require fresh verification.
-
-## Governed Persistence Loop
-
-PR #58 adds deterministic support for:
-
-- `proceed`;
-- `fix`;
-- `sync_with_reality`;
-- `restrategize`;
-- `verify`;
-- `rollback`;
-- `escalate`;
-- `complete`.
-
-The controller recommends typed messages while preserving objective, scope, and authority. It does not dispatch workflows or grant authority.
-
-Current transition:
+The independent workload requires one Standard public IP. If the 2-of-3 observation remains current, the workload would consume the last available slot.
 
 ```text
-isolated_plan_accepted
-→ deploy_failed_name_collision
-→ PR59 bounded fix merged
-→ fresh reality sync and isolated What-If required
+quota_observed != quota_reserved
+estimated_cost != actual_cost
+student_credit_present != zero_cost
 ```
+
+Deployment authorization must explicitly evaluate zero remaining public-IP headroom, current VM-family quota, exact SKU availability, actual subscription cost context, and rollback implications.
+
+## Historical collector-hosted path
+
+The collector-hosted design is retained as history and evidence, not the active deployment strategy.
+
+Required historical anchors:
+
+- PR #56 isolated the collector API deployment root;
+- PR #58 added the governed persistence controller;
+- PR #59 repaired the parent/nested deployment-name collision;
+- run `30044644501` accepted an isolated What-If and then failed deployment;
+- post-failure mutation was not proven;
+- a fresh Azure inventory and isolated What-If were required before any retry.
+
+Later PRs #63 and #64 repaired the dedicated-load-balancer and public-IP reconciliation path, but that strategy was superseded by PR #65 before successful service deployment.
+
+No legacy cleanup is authorized by this handoff.
+
+## Other unresolved Azure reality
+
+- Current collector guest health and ServiceTracer version remain unverified.
+- Synthetic backend VM listeners and transaction behavior remain unverified.
+- Legacy Application Insights and storage residue may still exist and may incur cost.
+- Current Azure Policy, deny assignments, effective RBAC, actual cost, remaining student credit, and resource-level cost allocation remain unobserved.
+- Backup configuration, recovery rehearsal, rollback execution, and disaster recovery remain unverified.
 
 ## Safe next bounded operation
 
-After this repository-only reconciliation is reviewed and merged:
+After the VM-size correction is exact-head CI verified and merged:
 
-1. resolve the new live GitHub head and exact post-merge CI;
-2. inspect local working-tree and Azure CLI context separately;
-3. obtain explicit authorization for one read-only `what-if` dispatch;
-4. use the exact reviewed commit containing PR #59 and the isolated root;
-5. capture post-failure target-resource inventory, quota, locks, ARM validation, and full What-If;
-6. reject any unexpected Create or any protected Modify/Delete/Replace;
-7. stop for a separate deployment decision.
+1. resolve the new live `main` head and open PRs;
+2. run the independent read-only planner from `main` with `Standard_B2ats_v2`;
+3. capture exact Azure context, providers, target-resource-group state, SKU availability, compute quota, network quota, dependency public endpoint, validation, and full What-If;
+4. reject any unexpected active change;
+5. explicitly review the public-IP headroom and cost evidence;
+6. stop for a separate deployment decision.
 
-No deployment retry, cleanup, report publication, collector replacement, rollback, or recovery is part of this synchronization.
+No Azure deployment, cleanup, collector mutation, report publication, replacement, rollback, or recovery is authorized by this synchronization.

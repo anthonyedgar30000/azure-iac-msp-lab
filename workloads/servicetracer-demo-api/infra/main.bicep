@@ -25,7 +25,7 @@ param allowedOrigin string
 param backendTransactionUrl string
 
 @description('Linux VM size. Deployment authorization requires refreshed quota and cost evidence.')
-param vmSize string = 'Standard_B1s'
+param vmSize string = 'Standard_B2ats_v2'
 
 @description('Linux administrator username. No inbound SSH rule is created.')
 param adminUsername string = 'azureadmin'
