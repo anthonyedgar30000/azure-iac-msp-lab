@@ -1,6 +1,9 @@
 {
   "schema_version": "servicetracer.report-source.v1",
   "live_report_url": "",
-  "live_demo_api_url": "",
-  "fallback_report_url": "technician-handoff-report.json"
+  "live_demo_api_url": "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+  "fallback_report_url": "technician-handoff-report.json",
+  "activation_status": "candidate_frontend_integration",
+  "evidence_anchor": ".project/evidence/servicetracer-demo-api-live-verification-30086152352.json",
+  "claim_boundary": "The frontend verifies the API health contract before enabling live transactions and falls back to the controlled fixture. Configuration does not prove current reachability, backend transaction success, or browser rendering."
 }
