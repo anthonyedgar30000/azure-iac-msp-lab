@@ -80,7 +80,7 @@ jobs:
               -d promoted-browser-evidence/artifact
           fi
 
-      - name: Validate promoted browser evidence
+      - name: Validate promoted browser outcome
         run: |
           python3 - <<'PY'
           import json
@@ -88,21 +88,40 @@ jobs:
 
           root = Path('promoted-browser-evidence')
           source = json.loads((root / 'source-run.json').read_text(encoding='utf-8'))
-          if source['conclusion'] != 'success':
-              raise SystemExit(f"browser verification run concluded {source['conclusion']!r}")
+          evidence_files = list(root.glob('artifact/**/frontend-live-candidate-verification.json'))
+          screenshot_files = list(root.glob('artifact/**/frontend-live-candidate.png'))
+          log = (root / 'source-job.log').read_text(encoding='utf-8', errors='replace')
 
-          candidates = list(root.glob('artifact/**/frontend-live-candidate-verification.json'))
-          if len(candidates) != 1:
-              raise SystemExit(f'expected one browser evidence JSON, found {len(candidates)}')
-          evidence = json.loads(candidates[0].read_text(encoding='utf-8'))
-          assert evidence['schema_version'] == 'project.frontend-live-candidate-browser-verification.v1'
-          assert evidence['repository_sha'] == 'a9c7f4f1826b1cf2a8944a3a7575f07ce54f9d1b'
-          assert evidence['health']['status'] == 200
-          assert evidence['cors_preflight']['status'] == 204
-          assert evidence['transaction_run']['status'] == 200
-          assert evidence['transaction_run']['attempts'] == 20
-          assert evidence['frontend']['fixture_fallback_used'] is False
-          assert evidence['actual_github_pages_deployment_verified'] is False
+          if source['conclusion'] == 'success':
+              if len(evidence_files) != 1:
+                  raise SystemExit(f'expected one successful browser evidence JSON, found {len(evidence_files)}')
+              evidence = json.loads(evidence_files[0].read_text(encoding='utf-8'))
+              assert evidence['schema_version'] == 'project.frontend-live-candidate-browser-verification.v1'
+              assert evidence['repository_sha'] == 'a9c7f4f1826b1cf2a8944a3a7575f07ce54f9d1b'
+              assert evidence['health']['status'] == 200
+              assert evidence['cors_preflight']['status'] == 204
+              assert evidence['transaction_run']['status'] == 200
+              assert evidence['transaction_run']['attempts'] == 20
+              assert evidence['frontend']['fixture_fallback_used'] is False
+              assert evidence['actual_github_pages_deployment_verified'] is False
+          elif source['conclusion'] == 'failure':
+              assert len(evidence_files) == 0
+              assert len(screenshot_files) == 1
+              assert 'Error: browser did not observe the transaction response' in log
+              assert 'Fixture analysis complete' not in log
+              record = json.loads(
+                  Path('.project/evidence/frontend-live-candidate-browser-verification-30128947155.json').read_text(
+                      encoding='utf-8'
+                  )
+              )
+              assert record['source_execution']['run_id'] == source['source_run_id']
+              assert record['observations']['api_health_verified'] is True
+              assert record['observations']['cors_preflight_verified'] is True
+              assert record['observations']['transaction_http_response_observed'] is False
+              assert record['observations']['frontend_fail_closed_behavior_verified'] is True
+              assert record['authority_and_mutation']['additional_transaction_replay_authorized'] is False
+          else:
+              raise SystemExit(f"unexpected browser run conclusion: {source['conclusion']!r}")
           PY
 
       - name: Upload promoted browser evidence
