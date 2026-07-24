@@ -24,8 +24,8 @@ param allowedOrigin string
 @description('Fixed HTTPS ServiceTracer transaction dependency.')
 param backendTransactionUrl string
 
-@description('Linux VM size. Deployment authorization requires refreshed quota and cost evidence.')
-param vmSize string = 'Standard_B2ats_v2'
+@description('Linux VM size. Read-only planning evidence supports this default; deployment still requires fresh cost and runtime validation.')
+param vmSize string = 'Standard_F1als_v7'
 
 @description('Linux administrator username. No inbound SSH rule is created.')
 param adminUsername string = 'azureadmin'

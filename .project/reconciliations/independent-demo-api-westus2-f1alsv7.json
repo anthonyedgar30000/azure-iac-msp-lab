@@ -1,0 +1,95 @@
+{
+  "schema_version": "project.independent-demo-api-candidate-reconciliation.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "observed_on": "2026-07-24",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "synchronization_scope": "repository_candidate_selection_and_read_only_planner_preparation",
+  "starting_reality": {
+    "default_branch": "main",
+    "main_commit": "551ca0ee2c7d1955b3bd81c09f46f43dceeae3a6",
+    "promoted_planner_evidence_pr": 76,
+    "promoted_planner_evidence_merge": "551ca0ee2c7d1955b3bd81c09f46f43dceeae3a6",
+    "competing_open_pull_request": 77,
+    "competing_owned_paths": [
+      ".github/workflows/azure-mcp-post-merge-sync.yml",
+      ".project/handoffs/azure-mcp-current-state.md",
+      ".project/reconciliations/azure-mcp-pr74.json",
+      "scripts/validate_azure_mcp_post_merge_sync.py",
+      "tests/test_azure_mcp_post_merge_sync.py"
+    ],
+    "local_working_tree_observed": false
+  },
+  "protected_planner_evidence": {
+    "run_id": 30064289707,
+    "run_attempt": 1,
+    "dispatch_sha": "323b3892c6efd598231037f23281d49608ceb570",
+    "artifact_id": 8585693830,
+    "artifact_name": "servicetracer-demo-api-subproject-plan-30064289707-1",
+    "artifact_sha256": "7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22",
+    "old_location": "eastus",
+    "old_vm_size": "Standard_B2ats_v2",
+    "result": "readiness_rejected_before_arm_validation_and_what_if",
+    "azure_mutations_performed": false
+  },
+  "interactive_candidate_evidence": {
+    "source": "human_observed_azure_cloud_shell_session",
+    "protected_artifact": false,
+    "target_subscription_name": "Azure subscription 1",
+    "target_subscription_offer": "PayAsYouGo_2014-09-01",
+    "target_subscription_fingerprint": "sha256:262d05105062731302e7121dd53aed5f97bf644e86f84aa6d86efd322b4f5104",
+    "tenant_fingerprint": "sha256:26ba6e04f1a9cde8b97b64734498f4cbe81d5dcbf7b0f451d81570817c2967bc",
+    "location": "westus2",
+    "vm_size": "Standard_F1als_v7",
+    "family": "StandardFalsv7Family",
+    "vcpus": 1,
+    "memory_gib": 2,
+    "premium_io": true,
+    "restrictions": [],
+    "total_regional_vcpu": {"current": 0, "limit": 10},
+    "vm_family_vcpu": {"current": 0, "limit": 10},
+    "standard_ipv4_public_ips": {"current": 0, "limit": 20},
+    "rejected_candidates": {
+      "Standard_B2ats_v2": "Basv2 family quota 0 of 0",
+      "Standard_F2s_v2": "NotAvailableForSubscription at westus2"
+    }
+  },
+  "selected_read_only_package": {
+    "location": "westus2",
+    "vm_size": "Standard_F1als_v7",
+    "target_resource_group": "rg-st-demo-api-dev-westus2",
+    "github_environment": "azure-api-payg",
+    "validation_level": "ProviderNoRbac",
+    "selection_status": "human_selected_requires_protected_refresh"
+  },
+  "path_ownership": {
+    "overlap_with_pr_77": false,
+    "overlapping_project_state_paths_modified": false,
+    "candidate_record_path": ".project/reconciliations/independent-demo-api-westus2-f1alsv7.json",
+    "reason": "PR #77 was rebuilt from the PR #76 baseline using five added Azure MCP-specific paths. This increment remains a separate seven-path candidate package and does not overwrite shared active-work, environment-state, or current handoff."
+  },
+  "authority": {
+    "repository_increment_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_mutations_authorized": false,
+    "deployment_authorized": false,
+    "cleanup_authorized": false,
+    "endpoint_promotion_authorized": false
+  },
+  "next_gate": {
+    "operation": "review_and_merge_candidate_package_then_request_read_only_dispatch_authorization",
+    "exact_head_ci_required": true,
+    "fresh_main_resolution_required": true,
+    "protected_candidate_refresh_required": true
+  },
+  "canonical_distinctions": [
+    "manual_cloud_shell_observation != protected_workflow_artifact",
+    "functional_access_observed != least_privilege_verified",
+    "sku_unrestricted != quota_reserved",
+    "candidate_selected != deployment_authorized",
+    "concurrent_nonoverlap != either_pull_request_merged"
+  ],
+  "claim_boundary": "This record selects an evidence-informed read-only planner package and preserves concurrent non-overlapping work. It does not establish current quota, cost, target-resource absence, ARM plan acceptance, deployment, or service health."
+}
