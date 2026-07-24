@@ -4,6 +4,8 @@
 
 Plan the independent ServiceTracer demo API in a dedicated Pay-As-You-Go subscription while preserving the Azure for Students ServiceTracer environment as a read-only dependency source.
 
+This is the governed **dual-subscription** planning boundary for the workload.
+
 ```text
 dependency_subscription != deployment_target_subscription
 functional_access_observed != least_privilege_verified
