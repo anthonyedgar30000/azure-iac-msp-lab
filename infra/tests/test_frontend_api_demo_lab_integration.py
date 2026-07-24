@@ -24,7 +24,7 @@ class FrontendApiDemoLabIntegrationTests(unittest.TestCase):
         self.assertIn("deriveDemoApiHealthUrl", app)
         self.assertIn("localizationIsStable", app)
         self.assertIn("Repeat the bounded sample before localizing", app)
-        self.assertIn("const queryApiUrl = query.get('api');", app)
+        self.assertIn("new URLSearchParams(window.location.search).get('api')", app)
         self.assertIn("state.demoApiUrl = queryApiUrl || config.live_demo_api_url || '';", app)
         self.assertIn("technician_workflow_hidden_until_stable_backend_comparison", (
             ROOT / ".project" / "reconciliations" / "frontend-api-demo-lab-integration.json"
