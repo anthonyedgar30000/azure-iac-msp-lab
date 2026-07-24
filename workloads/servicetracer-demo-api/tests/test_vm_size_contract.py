@@ -42,6 +42,7 @@ class DemoApiVmSizeContractTests(unittest.TestCase):
         self.assertEqual(evidence["vm_family_vcpu"], {"current": 0, "limit": 10})
         self.assertEqual(evidence["standard_ipv4_public_ips"], {"current": 0, "limit": 20})
         ownership = record["path_ownership"]
+        self.assertFalse(ownership["overlap_with_pr_77"])
         self.assertFalse(ownership["overlapping_project_state_paths_modified"])
         self.assertEqual(record["starting_reality"]["competing_open_pull_request"], 77)
         authority = record["authority"]
