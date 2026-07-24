@@ -34,6 +34,7 @@ REQUIRED_DEPLOYMENT_EVENTS = {
     "collector-demo-api-deploy-30044644501",
     "collector-demo-api-deploy-30050103888",
     "collector-demo-api-what-if-30053018998",
+    "independent-demo-api-plan-30064289707-attempt-1",
 }
 REQUIRED_FACTS = {
     "operations-collector-control-plane",
@@ -56,6 +57,10 @@ REQUIRED_FACTS = {
     "independent-demo-api-github-environment",
     "independent-demo-api-oidc-identities-rbac",
     "independent-demo-api-default-location",
+    "independent-demo-api-plan-run-30064289707",
+    "independent-demo-api-target-readiness",
+    "independent-demo-api-target-resource-group-state",
+    "independent-demo-api-provider-registration",
 }
 CANONICAL_WORKSTREAMS = {
     "architecture-and-design-decisions",
@@ -65,7 +70,7 @@ CANONICAL_WORKSTREAMS = {
     "servicetracer-findings-and-reports",
     "portfolio-and-demo-narrative",
 }
-FALSE_AUTHORITY_FIELDS = {
+FALSE_OPERATIONAL_AUTHORITY_FIELDS = {
     "workflow_dispatch_authorized",
     "azure_authentication_authorized",
     "azure_mutations_authorized",
@@ -75,17 +80,28 @@ FALSE_AUTHORITY_FIELDS = {
     "github_secret_mutation_authorized",
     "entra_identity_mutation_authorized",
     "azure_rbac_mutation_authorized",
-    "architecture_ratification_complete",
 }
-FALSE_INDEPENDENT_STATE_FIELDS = {
+TRUE_INDEPENDENT_FIELDS = {
+    "repository_implemented",
+    "planner_present",
     "planner_dispatched",
     "architecture_ratified",
     "target_subscription_selected",
     "github_environment_configured",
     "dependency_identity_configured",
     "target_identity_configured",
-    "required_rbac_configured",
+    "required_read_only_rbac_configured",
+    "azure_authentication_succeeded",
+    "dependency_endpoint_observed",
+    "target_compute_provider_registered",
+    "target_network_provider_registered",
+}
+FALSE_INDEPENDENT_FIELDS = {
+    "requested_sku_unrestricted",
     "target_resource_group_observed",
+    "arm_validation_performed",
+    "what_if_performed",
+    "plan_accepted",
     "deployed",
     "tls_verified",
     "health_verified",
@@ -123,6 +139,11 @@ def require_digest(value: Any, field: str) -> str:
 
 def require_positive_int(value: Any, field: str) -> int:
     require(isinstance(value, int) and not isinstance(value, bool) and value > 0, f"{field} must be a positive integer")
+    return value
+
+
+def require_nonnegative_int(value: Any, field: str) -> int:
+    require(isinstance(value, int) and not isinstance(value, bool) and value >= 0, f"{field} must be a nonnegative integer")
     return value
 
 
@@ -209,7 +230,12 @@ def validate_active_work(repository_events: dict[str, dict[str, Any]]) -> None:
     require(model.get("live_repository_state_policy") == "query_live_github_never_persist_as_current_truth", "active-work live-state policy is invalid")
     require(set(require_list(model.get("forbidden_live_fields"), "active-work.state_model.forbidden_live_fields")) == FORBIDDEN_LIVE_KEYS, "active-work forbidden live fields differ from validator")
     distinctions = set(require_list(model.get("canonical_distinctions"), "active-work.state_model.canonical_distinctions"))
-    require("merged_state != authorized_state_transition" in distinctions, "merge-versus-authority distinction is missing")
+    for marker in (
+        "readiness_rejected != workflow_mechanism_failed",
+        "planner_dispatched != ARM_WhatIf_completed",
+        "not_observed != false",
+    ):
+        require(marker in distinctions, f"canonical distinction is missing: {marker}")
 
     for key, commit_field in (("last_substantive_baseline", "commit"), ("latest_promoted_repository_event", "merge_commit")):
         selected = require_object(active.get(key), f"active-work.{key}")
@@ -222,9 +248,9 @@ def validate_active_work(repository_events: dict[str, dict[str, Any]]) -> None:
     architecture = require_object(active.get("architecture_baseline"), "active-work.architecture_baseline")
     require(architecture.get("strategy") == "independent_servicetracer_demo_api_subproject", "active strategy is invalid")
     require(architecture.get("planning_boundary") == "dual_subscription_repository_design", "dual-subscription boundary is missing")
-    require(architecture.get("authorization_status") == "human_ratification_required", "architecture must remain at human ratification")
-    require(architecture.get("repository_default_location") == "eastus", "merged eastus default is not recorded")
-    require(architecture.get("initial_requested_location") == "westus2", "original westus2 request is not recorded")
+    require(architecture.get("authorization_status") == "ratified_for_bounded_read_only_planning", "architecture ratification resolution is missing")
+    require(architecture.get("state") == "architecture_ratified_readiness_rejected_before_arm_validation_and_what_if", "architecture state mismatch")
+    require(architecture.get("repository_default_location") == "eastus", "authorized eastus run is not recorded")
     require(architecture.get("github_environment_name") == "azure-api-payg", "planner environment name mismatch")
     for field in (
         "application_architecture_merge",
@@ -233,9 +259,17 @@ def validate_active_work(repository_events: dict[str, dict[str, Any]]) -> None:
         "stack_merge_commit",
         "main_merge_commit",
         "evidence_merge_commit",
+        "typed_readiness_source_head",
+        "typed_readiness_merge_commit",
+        "authorization_reconciliation_merge_commit",
     ):
         require_sha(architecture.get(field), f"active-work.architecture_baseline.{field}")
-    for field in ("application_architecture_ci_run_id", "dual_subscription_ci_run_id", "stack_merge_ci_run_id"):
+    for field in (
+        "application_architecture_ci_run_id",
+        "dual_subscription_ci_run_id",
+        "stack_merge_ci_run_id",
+        "typed_readiness_ci_run_id",
+    ):
         require_positive_int(architecture.get(field), f"active-work.architecture_baseline.{field}")
 
     capabilities = require_object(active.get("repository_capabilities"), "active-work.repository_capabilities")
@@ -247,52 +281,59 @@ def validate_active_work(repository_events: dict[str, dict[str, Any]]) -> None:
         "dual_subscription_planning_contract_present",
         "provider_no_rbac_validation_present",
         "planner_credential_generation_absent",
+        "typed_target_readiness_assessor_present",
+        "target_observation_failure_preserved",
     ):
         require(capabilities.get(field) is True, f"repository capability {field} must be true")
     require(capabilities.get("independent_demo_api_deploy_workflow_present") is False, "independent deploy workflow must remain absent")
-    require(capabilities.get("demo_backend_api_workflow_present_in_repository") is False, "legacy demo workflow must remain retired")
-
-    grants = require_list(active.get("bounded_authority_grants"), "active-work.bounded_authority_grants")
-    require(len(grants) == 1, "exactly one durable bounded grant is expected")
-    grant = require_object(grants[0], "active-work.bounded_authority_grants[0]")
-    require(grant.get("operation") == "read_only_azure_planning", "durable grant operation is invalid")
-    require(grant.get("azure_mutations_authorized") is False, "durable grant must not authorize Azure mutation")
-    require("does not authorize the independent demo API planner" in require_text(grant.get("claim_boundary"), "active-work.bounded_authority_grants[0].claim_boundary"), "publication grant must explicitly exclude the independent planner")
 
     defaults = require_object(active.get("authority_defaults"), "active-work.authority_defaults")
-    for field in FALSE_AUTHORITY_FIELDS:
+    for field in FALSE_OPERATIONAL_AUTHORITY_FIELDS:
         require(defaults.get(field) is False, f"authority default {field} must be false")
+    require(defaults.get("architecture_ratification_complete") is True, "architecture ratification must be recorded")
+    require(defaults.get("consumed_planner_authorization_active") is False, "consumed authorization must not remain active")
 
     deployment = require_object(active.get("deployment_state"), "active-work.deployment_state")
-    collector = require_object(deployment.get("collector_hosted_demo_api"), "active-work.deployment_state.collector_hosted_demo_api")
-    require(collector.get("last_observed_run_id") == 30053018998, "latest authenticated collector evidence must be run 30053018998")
-    require(collector.get("latest_read_only_what_if_rejected") is True, "latest collector What-If rejection is not recorded")
-    require(collector.get("deployment_succeeded") is False, "collector deployment must not be promoted to success")
-    for field in ("deployed", "tls_verified", "health_verified", "transactions_verified", "cors_verified", "frontend_live_verified"):
-        require(collector.get(field) is False, f"collector state {field} must remain false")
-
     independent = require_object(deployment.get("independent_demo_api"), "active-work.deployment_state.independent_demo_api")
-    require(independent.get("repository_implemented") is True, "independent implementation must remain recorded")
-    require(independent.get("planner_present") is True, "independent planner must remain recorded")
-    for field in FALSE_INDEPENDENT_STATE_FIELDS:
-        require(independent.get(field) is False, f"independent state {field} must remain false")
-    require(independent.get("Azure_state") == "not_observed", "independent Azure state must remain not_observed")
+    for field in TRUE_INDEPENDENT_FIELDS:
+        require(independent.get(field) is True, f"independent state {field} must be true")
+    for field in FALSE_INDEPENDENT_FIELDS:
+        require(independent.get(field) is False, f"independent state {field} must be false")
+    require(independent.get("last_planner_run_id") == 30064289707, "independent planner run mismatch")
+    require(independent.get("last_planner_run_attempt") == 1, "independent planner attempt mismatch")
+    require_sha(independent.get("dispatch_sha"), "active-work.deployment_state.independent_demo_api.dispatch_sha")
+    require(independent.get("requested_location") == "eastus", "requested location mismatch")
+    require(independent.get("requested_vm_size") == "Standard_B2ats_v2", "requested VM size mismatch")
+    require(independent.get("requested_sku_restriction_reason") == "NotAvailableForSubscription", "SKU restriction mismatch")
+    require(independent.get("target_vm_family") == "standardBasv2Family", "VM family mismatch")
+    for field, expected in (
+        ("target_total_regional_vcpu_current", 0),
+        ("target_total_regional_vcpu_limit", 10),
+        ("target_vm_family_vcpu_current", 0),
+        ("target_vm_family_vcpu_limit", 0),
+        ("target_standard_ipv4_public_ip_current", 0),
+        ("target_standard_ipv4_public_ip_limit", 20),
+    ):
+        require(require_nonnegative_int(independent.get(field), f"independent.{field}") == expected, f"independent {field} mismatch")
+    require(independent.get("Azure_state") == "readiness_observed_target_inventory_not_observed_ARM_what_if_not_performed", "independent Azure state mismatch")
     require(deployment.get("operationally_verified") is False, "project must not claim operational verification")
 
     latest = require_object(active.get("latest_promoted_evidence"), "active-work.latest_promoted_evidence")
-    require(latest.get("event_id") == "collector-demo-api-what-if-30053018998", "latest evidence event mismatch")
-    require(latest.get("run_id") == 30053018998, "latest evidence run mismatch")
+    require(latest.get("event_id") == "independent-demo-api-plan-30064289707-attempt-1", "latest evidence event mismatch")
+    require(latest.get("run_id") == 30064289707, "latest evidence run mismatch")
+    require(latest.get("run_attempt") == 1, "latest evidence attempt mismatch")
+    require(latest.get("artifact_id") == 8585693830, "latest evidence artifact mismatch")
     require_digest(latest.get("artifact_sha256"), "active-work.latest_promoted_evidence.artifact_sha256")
-    require(latest.get("azure_mutations_authorized") is False, "latest read-only evidence must not authorize mutation")
-    require(latest.get("azure_mutations_performed") is False, "latest read-only evidence must record zero mutation")
-    require(latest.get("deployment_authorized") is False, "latest evidence must not authorize deployment")
+    require(latest.get("azure_authentication_performed") is True, "latest evidence must record Azure authentication")
+    for field in ("azure_mutations_authorized", "azure_mutations_performed", "arm_validation_performed", "what_if_performed", "deployment_authorized"):
+        require(latest.get(field) is False, f"latest evidence field {field} must remain false")
 
     configuration = require_object(active.get("configuration_state"), "active-work.configuration_state")
     require(configuration.get("committed_live_report_url_present") is False, "unverified report URL must not be committed")
     require(configuration.get("committed_live_demo_api_url_present") is False, "unverified API URL must not be committed")
 
     gate = require_object(active.get("safe_next_gate"), "active-work.safe_next_gate")
-    require(gate.get("operation") == "ratify_or_reject_dual_subscription_planner_architecture", "safe next gate must remain architecture ratification")
+    require(gate.get("operation") == "select_candidate_and_authorize_fresh_read_only_planner", "safe next gate mismatch")
     for field in ("workflow_dispatch_authorized", "Azure_authentication_authorized", "Azure_mutations_authorized", "deployment_authorized", "cleanup_authorized"):
         require(gate.get(field) is False, f"safe-next-gate field {field} must be false")
 
@@ -309,21 +350,25 @@ def validate_environment_state() -> int:
         for field in ("value", "status", "last_observed_on", "source", "notes"):
             require_text(fact.get(field), f"environment-state.facts[{index}].{field}")
         by_id[fact_id] = fact
-    require(REQUIRED_FACTS.issubset(by_id), "environment-state is missing required independent-planner facts")
-    require(by_id["independent-demo-api-planning-authorization"]["status"] == "human_ratification_required_fail_closed", "planning authorization must remain fail closed")
-    require(by_id["independent-demo-api-target-subscription"]["status"] == "not_observed_and_not_authorized", "target subscription must remain unselected")
-    require(by_id["independent-demo-api-default-location"]["status"] == "repository_configuration_conflict_human_resolution_required", "location conflict must remain explicit")
+    require(REQUIRED_FACTS.issubset(by_id), "environment-state is missing required facts")
+    require(by_id["independent-demo-api-planning-authorization"]["status"] == "consumed_no_new_dispatch_authority", "planner authorization status mismatch")
+    require(by_id["independent-demo-api-target-subscription"]["status"] == "selected_enabled_identity_redacted", "target subscription observation mismatch")
+    require(by_id["independent-demo-api-default-location"]["status"] == "resolved_for_run_30064289707_new_run_requires_fresh_choice", "location resolution mismatch")
+    require(by_id["independent-demo-api-plan-run-30064289707"]["status"] == "completed_readiness_rejected_safely", "planner run fact mismatch")
+    require(by_id["independent-demo-api-target-resource-group-state"]["status"] == "not_observed", "target resource group must remain not_observed")
     return len(facts)
 
 
 def validate_deployment_history() -> int:
     events = load_jsonl(ROOT / "deployment-history.jsonl", "deployment-history")
     ids: set[str] = set()
+    by_id: dict[str, dict[str, Any]] = {}
     for index, event in enumerate(events, 1):
         prefix = f"deployment-history[{index}]"
         event_id = require_text(event.get("event_id"), f"{prefix}.event_id")
         require(event_id not in ids, f"duplicate deployment event_id: {event_id}")
         ids.add(event_id)
+        by_id[event_id] = event
         for field in ("event_type", "component", "status", "evidence", "notes"):
             require_text(event.get(field), f"{prefix}.{field}")
         for field in ("workflow_run_id", "run_attempt", "artifact_id"):
@@ -334,6 +379,13 @@ def validate_deployment_history() -> int:
         if "artifact_sha256" in event:
             require_digest(event.get("artifact_sha256"), f"{prefix}.artifact_sha256")
     require(REQUIRED_DEPLOYMENT_EVENTS.issubset(ids), "deployment history is missing required Azure evidence events")
+    plan = by_id["independent-demo-api-plan-30064289707-attempt-1"]
+    require(plan.get("workflow_run_id") == 30064289707, "independent planner history run mismatch")
+    require(plan.get("artifact_id") == 8585693830, "independent planner history artifact mismatch")
+    require(plan.get("azure_authentication_performed") is True, "independent planner must record authentication")
+    for field in ("azure_mutations_authorized", "azure_mutations_performed", "arm_validation_performed", "what_if_performed", "deployment_authorized"):
+        require(plan.get(field) is False, f"independent planner history {field} must remain false")
+    require(plan.get("target_resource_group_state") == "not_observed", "target resource group history must remain not_observed")
     return len(events)
 
 
@@ -359,16 +411,27 @@ def validate_frontend_configuration() -> None:
 
 def validate_planner_contract() -> None:
     workflow = (REPOSITORY_ROOT / ".github" / "workflows" / "servicetracer-demo-api-subproject-plan.yml").read_text(encoding="utf-8")
+    assessor = (REPOSITORY_ROOT / "workloads" / "servicetracer-demo-api" / "scripts" / "assess_target_readiness.py").read_text(encoding="utf-8")
     runbook = (REPOSITORY_ROOT / "docs" / "runbooks" / "servicetracer-demo-api-payg-subscription-boundary.md").read_text(encoding="utf-8")
     require("environment: azure-api-payg" in workflow, "planner must use azure-api-payg")
-    require(workflow.count("uses: azure/login@v2") == 2, "planner must retain two distinct Azure logins")
+    require(workflow.count("uses: azure/login@v2") == 2, "planner must retain two Azure logins")
     require(workflow.count("--validation-level ProviderNoRbac") == 2, "planner must use ProviderNoRbac twice")
     require("credential_creation_authorized:false" in workflow, "planner must record credential creation as unauthorized")
     require("ssh-keygen" not in workflow, "planner must not generate a credential")
     require("az deployment sub create" not in workflow, "planner must not deploy")
     require("az role assignment create" not in workflow, "planner must not mutate RBAC")
-    require("does not create GitHub environments" in runbook, "runbook must preserve the environment-setup boundary")
-    require("does not create Azure role assignments" in runbook, "runbook must preserve the RBAC boundary")
+    for marker in (
+        "assess_target_readiness.py",
+        "target-readiness-assessment.json",
+        "ResourceGroupNotFound",
+        'status:"observation_failed"',
+        'status:"not_observed"',
+    ):
+        require(marker in workflow, f"planner is missing typed observation marker: {marker}")
+    require("ready_for_arm_what_if" in assessor, "readiness assessor must emit ready status")
+    require("target_resource_group_observation_failed" in assessor, "readiness assessor must block failed target observation")
+    require("does not create GitHub environments" in runbook, "runbook must preserve environment setup boundary")
+    require("does not create Azure role assignments" in runbook, "runbook must preserve RBAC boundary")
 
 
 def validate_documents() -> None:
@@ -377,15 +440,14 @@ def validate_documents() -> None:
     overview = (REPOSITORY_ROOT / "README.md").read_text(encoding="utf-8")
     helix = load_json(REPOSITORY_ROOT / ".helix" / "repository-context.json")
     for marker in (
-        "323b3892c6efd598231037f23281d49608ceb570",
-        "PR #71",
-        "dd9b33b6d849b0e3635b148159d7f484744ee77a",
-        "dual-subscription",
-        "Human ratification",
-        "30053018998",
-        "azure-api-payg",
-        "eastus",
-        "westus2",
+        "92b0c3b1064158684a4b280348c77eeedba6dfc3",
+        "30064289707",
+        "8585693830",
+        "7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22",
+        "NotAvailableForSubscription",
+        "standardBasv2Family",
+        "not_observed != false",
+        "PR #73",
     ):
         require(marker in handoff, f"current handoff is missing marker: {marker}")
     require("independent" in implementation.lower(), "implementation status must describe the independent architecture")
