@@ -116,7 +116,7 @@ jobs:
             --arg allowed_origin "$ALLOWED_ORIGIN" \
             --arg vm_size "$VM_SIZE" \
             --arg maximum_monthly_cost_cad "$MAXIMUM_MONTHLY_COST_CAD" \
-            '{schema_version:"servicetracer.demo-api-subproject-plan-request.v1",dispatch_sha:$dispatch_sha,ref:$ref,environment:$environment,location:$location,prefix:$prefix,dependency_resource_group:$dependency_resource_group,target_resource_group:$target_resource_group,dns_label:$dns_label,allowed_origin:$allowed_origin,vm_size:$vm_size,maximum_monthly_cost_cad:($maximum_monthly_cost_cad|tonumber),azure_authentication_authorized:true,azure_mutations_authorized:false,deployment_authorized:false}' \
+            '{schema_version:"servicetracer.demo-api-subproject-plan-request.v1",dispatch_sha:$dispatch_sha,ref:$ref,environment:$environment,location:$location,prefix:$prefix,dependency_resource_group:$dependency_resource_group,target_resource_group:$target_resource_group,dns_label:$dns_label,allowed_origin:$allowed_origin,vm_size:$vm_size,maximum_monthly_cost_cad:($maximum_monthly_cost_cad|tonumber),azure_authentication_authorized:true,credential_creation_authorized:false,azure_mutations_authorized:false,deployment_authorized:false}' \
             > "$ARTIFACT_DIR/request.json"
 
       - name: Run subproject tests before Azure login
@@ -183,8 +183,9 @@ jobs:
           backend_transaction_url="https://${backend_ip}/transaction"
           source_repository="https://github.com/${GITHUB_REPOSITORY}.git"
           installer_uri="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_SHA}/workloads/servicetracer-demo-api/scripts/install.sh"
-          ssh-keygen -q -t ed25519 -N '' -f /tmp/servicetracer-demo-api-plan-key
-          admin_ssh_public_key="$(cat /tmp/servicetracer-demo-api-plan-key.pub)"
+
+          # Public-only ARM placeholder. No private key exists and no login credential is created.
+          admin_ssh_public_key='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFhmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZm servicetracer-plan-placeholder-no-private-key'
 
           jq -n \
             --arg target_resource_group "$target_resource_group" \
@@ -193,7 +194,7 @@ jobs:
             --arg source_repository "$source_repository" \
             --arg source_ref "$GITHUB_SHA" \
             --arg installer_uri "$installer_uri" \
-            '{target_resource_group:$target_resource_group,dependency_resource_group:$dependency_resource_group,backend_transaction_url:$backend_transaction_url,source_repository:$source_repository,source_ref:$source_ref,installer_uri:$installer_uri}' \
+            '{target_resource_group:$target_resource_group,dependency_resource_group:$dependency_resource_group,backend_transaction_url:$backend_transaction_url,source_repository:$source_repository,source_ref:$source_ref,installer_uri:$installer_uri,credential_creation_authorized:false}' \
             > "$ARTIFACT_DIR/effective-parameters.json"
 
           parameters=(
@@ -263,6 +264,7 @@ jobs:
             echo "- DNS label: \`$DNS_LABEL\`"
             echo "- VM size: \`$VM_SIZE\`"
             echo '- Azure authentication authorized: `true` for read-only planning'
+            echo '- Credential creation authorized: `false`; no credential is created'
             echo '- Azure mutations authorized: `false`'
             echo '- Deployment authorized: `false`'
             echo '- No manually entered commit SHA is accepted by this workflow.'
