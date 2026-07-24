@@ -1,0 +1,209 @@
+{
+  "schema_version": "project.servicetracer-demo-api-post-deployment-inventory.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "recorded_on": "2026-07-24",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "component": "independent-servicetracer-demo-api",
+  "evidence_source": {
+    "capture_channel": "operator_authenticated_azure_cloud_shell",
+    "capture_started_at": "2026-07-24T16:39:38Z",
+    "capture_completed_at": "2026-07-24T16:40:36Z",
+    "archive_name": "servicetracer-post-deployment-inventory-evidence.zip",
+    "archive_sha256": "95512590ba39a6ef68a78ececf525268af49ba18f2f5d9a582adff4aff85fca0",
+    "archive_size_bytes": 18409,
+    "raw_archive_committed": false,
+    "manifest_entry_count": 21,
+    "manifest_hashes_verified": true,
+    "manifest_entries": {
+      "account-context.json": "cd66b28008b924862bcc5c7cd4a5dc122213ecabb22ae27dbb0e20cb221ce54c",
+      "backup.json": "e74a00d663525ffcb5c936c26cfd6e7bc4a23c18204ed71d6b8319784c901aaf",
+      "compute-usage.json": "c5df31746ebbef810caa6f57bd5042f3a80f6f32493ae957a143ae8766e2e65a",
+      "cost-month-to-date.json": "f96e262c42df1b3e9a03a570fe0f6b7f675b3384f9aa14af3a6c97322c91e08b",
+      "deployment-provenance.json": "d26d1bd47776b51d3bedbffc32909f63db841988b1287f166b4bea99c16d63c1",
+      "diagnostic-settings.json": "4f750a67cf867d3b5708967314b13edb6c2fecc30528eb6117eff8fd01a29a3c",
+      "expected-resource-resolution.json": "cb338b05a4d93214f4e17ac15fe81a910907fb577af17b892635db48c51b8ca1",
+      "inventory-summary.json": "88869beacd6cb2ca95342181faaed816d2fbcbcf4ffb8bc4cd7295b1f03f5e33",
+      "locks.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "monitoring.json": "ccb6558f576813ace0e25cdebeef70d49fa4b8d549defb11dee722cff740e534",
+      "network-usage.json": "7a6622246bcb1d44c9b7699a10ec5b3257342df58f00189e6f469a007168cd47",
+      "nic.json": "c587f41ee318213b3477a790920ada4c897c5bbe5f38176487965b29202644a4",
+      "nsg.json": "417f5d348e59d1a0ed44d823342d10fe305baeeaa1b3524f328abf7599f94855",
+      "public-ip.json": "c9fe5634054f972bdd750725f8d240d13830687b7a0295cc22e80137b9cfd198",
+      "rbac.json": "97c90b85e57e38e36e6944fcae3fd1a446dee32cf3262ce2096187eb1b1e7bff",
+      "resource-group.json": "825f7a5e7006d0ed13647ae0fbfbf4a82a7b9cb559d92e224968573a4a397292",
+      "resource-inventory.json": "0a846f2184c8698d5a1360e2b206b51797c80e75071d13dfa156a2b836bd1eec",
+      "subscription-discovery.json": "4ea8553e525f0d208ec8cd808e2ce9ed21d08dc21a52fa6d46329e7ddfb178a6",
+      "vm-extension.json": "e6029a1a2078b78ec27b2d79025c460f32731352dfe6aed2372ac451ad7ed27a",
+      "vm-state.json": "0e449ec14889f44c35f086727fc31f9cf6544ce1cac602075fcf59295028ad94",
+      "vnet.json": "95b0b729b81909b867685df42cf2a00c627b9f9c70e3146b0873d607d0c9f041"
+    },
+    "claim_boundary": "The repository promotes a sanitized, operator-captured evidence digest. The original ZIP is not committed and was not produced by a protected GitHub workflow."
+  },
+  "repository_reconciliation": {
+    "repository_main_at_promotion_start": "e20ef494fe93806085d2b983cde2c58a504ab217",
+    "deployed_source_ref": "8b3d55c616d8820edd523f77021a35fe24167bd0",
+    "deployed_source_ref_observed": true,
+    "deployed_source_vs_main": {
+      "status": "main_ahead",
+      "ahead_by_commits": 9,
+      "behind_by_commits": 0,
+      "changed_paths": [
+        ".github/workflows/servicetracer-demo-api-live-evidence-sync.yml",
+        ".github/workflows/servicetracer-demo-api-live-verify.yml",
+        ".project/deployment-history.jsonl",
+        ".project/evidence/servicetracer-demo-api-live-verification-30086152352.json",
+        ".project/handoffs/servicetracer-demo-api-live-current-state.md",
+        "scripts/validate_servicetracer_demo_api_live_evidence.py",
+        "tests/test_servicetracer_demo_api_live_evidence.py"
+      ],
+      "workload_source_or_iac_path_changed": false,
+      "claim_boundary": "The deployed source ref differs from main, but GitHub reported only governance, evidence, workflow, validator, and test paths changed. Application or workload IaC content drift was not observed in this comparison."
+    }
+  },
+  "azure_context": {
+    "subscription_name": "Azure subscription 1",
+    "subscription_sha256": "262d05105062731302e7121dd53aed5f97bf644e86f84aa6d86efd322b4f5104",
+    "tenant_sha256": "26ba6e04f1a9cde8b97b64734498f4cbe81d5dcbf7b0f451d81570817c2967bc",
+    "subscription_state": "Enabled",
+    "cloud_name": "AzureCloud",
+    "discovery_status": "resolved_single_subscription",
+    "enabled_subscriptions_observed": 3,
+    "raw_subscription_or_tenant_identifiers_persisted": false
+  },
+  "deployment_provenance": {
+    "resource_group": {
+      "name": "rg-st-demo-api-dev-westus2",
+      "location": "westus2",
+      "provisioning_state": "Succeeded",
+      "tags": {
+        "environment": "dev",
+        "lifecycle": "independent-subproject",
+        "managedBy": "bicep",
+        "parentProject": "azure-iac-msp-lab",
+        "workload": "servicetracer-demo-api"
+      }
+    },
+    "resource_count": 7,
+    "expected_resources": {
+      "nic": {"expected_name": "nic-st-demo-api-mst-dev", "expected_type": "Microsoft.Network/networkInterfaces", "id": "/subscriptions/<redacted>/resourceGroups/rg-st-demo-api-dev-westus2/providers/Microsoft.Network/networkInterfaces/nic-st-demo-api-mst-dev", "status": "observed"},
+      "nsg": {"expected_name": "nsg-st-demo-api-mst-dev", "expected_type": "Microsoft.Network/networkSecurityGroups", "id": "/subscriptions/<redacted>/resourceGroups/rg-st-demo-api-dev-westus2/providers/Microsoft.Network/networkSecurityGroups/nsg-st-demo-api-mst-dev", "status": "observed"},
+      "public_ip": {"expected_name": "pip-st-demo-api-vm-mst-dev", "expected_type": "Microsoft.Network/publicIPAddresses", "id": "/subscriptions/<redacted>/resourceGroups/rg-st-demo-api-dev-westus2/providers/Microsoft.Network/publicIPAddresses/pip-st-demo-api-vm-mst-dev", "status": "observed"},
+      "vm": {"expected_name": "vm-st-demo-api-mst-dev", "expected_type": "Microsoft.Compute/virtualMachines", "id": "/subscriptions/<redacted>/resourceGroups/rg-st-demo-api-dev-westus2/providers/Microsoft.Compute/virtualMachines/vm-st-demo-api-mst-dev", "status": "observed"},
+      "vnet": {"expected_name": "vnet-st-demo-api-mst-dev", "expected_type": "Microsoft.Network/virtualNetworks", "id": "/subscriptions/<redacted>/resourceGroups/rg-st-demo-api-dev-westus2/providers/Microsoft.Network/virtualNetworks/vnet-st-demo-api-mst-dev", "status": "observed"}
+    },
+    "deployment_record": {
+      "status": "observed",
+      "name": "servicetracer-demo-api-dev",
+      "correlation_id": "d63351c7-9be7-41b1-9020-12e0154d92e4",
+      "timestamp": "2026-07-24T09:28:47.774684+00:00",
+      "duration": "PT2M5.2306076S",
+      "provisioning_state": "Succeeded",
+      "template_hash": "10044340613002374893",
+      "source_ref": "8b3d55c616d8820edd523f77021a35fe24167bd0",
+      "source_repository": "https://github.com/anthonyedgar30000/azure-iac-msp-lab.git",
+      "installer_uri": "https://raw.githubusercontent.com/anthonyedgar30000/azure-iac-msp-lab/8b3d55c616d8820edd523f77021a35fe24167bd0/workloads/servicetracer-demo-api/scripts/install.sh",
+      "vm_size": "Standard_F1als_v7",
+      "allowed_origin": "https://anthonyedgar30000.github.io",
+      "outputs": {
+        "fqdn": "st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com",
+        "healthUrl": "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/health",
+        "publicIpId": "/subscriptions/<redacted>/resourceGroups/rg-st-demo-api-dev-westus2/providers/Microsoft.Network/publicIPAddresses/pip-st-demo-api-vm-mst-dev",
+        "runUrl": "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+        "vmId": "/subscriptions/<redacted>/resourceGroups/rg-st-demo-api-dev-westus2/providers/Microsoft.Compute/virtualMachines/vm-st-demo-api-mst-dev"
+      }
+    }
+  },
+  "runtime_control_plane": {
+    "vm": {
+      "name": "vm-st-demo-api-mst-dev",
+      "location": "westus2",
+      "size": "Standard_F1als_v7",
+      "power_state": "VM running",
+      "provisioning_state": "Succeeded",
+      "identity_type": "SystemAssigned",
+      "identity_principal_sha256": "9d818f86e7642bcdcee5a12363d27105f164b6eb3e7ca028b4ceeccabbbbac2e",
+      "image_reference": {"exactVersion": "24.04.202607140", "offer": "ubuntu-24_04-lts", "publisher": "Canonical", "sku": "server", "version": "latest"},
+      "os_disk": {"size_gb": 30, "storage_account_type": "Standard_LRS", "delete_option": "Delete"},
+      "boot_diagnostics_enabled": true
+    },
+    "extension": {"name": "servicetracer-demo-api", "status": "observed", "provisioning_state": "Succeeded", "publisher": "Microsoft.Azure.Extensions", "type": "CustomScript", "protected_settings_observed": false},
+    "public_ip": {"name": "pip-st-demo-api-vm-mst-dev", "fqdn": "st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com", "fqdn_matches_expected": true, "allocation_method": "Static", "version": "IPv4", "sku": {"name": "Standard", "tier": "Regional"}},
+    "network": {
+      "nic_name": "nic-st-demo-api-mst-dev",
+      "private_ip": "10.30.0.4",
+      "vnet_name": "vnet-st-demo-api-mst-dev",
+      "vnet_address_space": ["10.30.0.0/24"],
+      "subnet_name": "snet-api",
+      "subnet_prefix": "10.30.0.0/27",
+      "nsg_name": "nsg-st-demo-api-mst-dev",
+      "custom_inbound_rules": [
+        {"name": "Allow-HTTP-From-Internet", "priority": 100, "access": "Allow", "direction": "Inbound", "protocol": "Tcp", "sourceAddressPrefix": "Internet", "destinationPortRange": "80"},
+        {"name": "Allow-HTTPS-From-Internet", "priority": 110, "access": "Allow", "direction": "Inbound", "protocol": "Tcp", "sourceAddressPrefix": "Internet", "destinationPortRange": "443"}
+      ]
+    }
+  },
+  "security_and_operations": {
+    "resource_group_locks": {"status": "observed", "count": 0},
+    "diagnostic_settings": {"supported_resources_observed": 6, "supported_resources_with_zero_settings": 6, "unsupported_or_failed_observations": 1, "claim_boundary": "Zero settings were observed for supported resource types. The VM extension does not support diagnostic settings; its query failure is not interpreted as a missing configurable setting."},
+    "monitoring": {"metric_alert_count": 0, "action_group_count": 0, "alert_delivery_verified": false},
+    "rbac": {"status": "observation_failed", "effective_least_privilege_verified": false, "defect": "The collector combined --all with --scope, so Azure CLI rejected the query.", "state": "not_observed"},
+    "backup": {"status": "not_observed_tool_unavailable", "backup_absence_established": false, "recovery_tested": false, "defect": "The collector required an already-installed Resource Graph extension and intentionally did not install it.", "state": "not_observed"},
+    "cost": {"status": "observation_failed", "actual_cost_observed": false, "defect": "The Cost Management query grouped by unsupported Currency dimension.", "state": "not_observed"}
+  },
+  "quota_observations": {
+    "standard_falsv7_family_vcpus": {"current": 1, "limit": 10, "localized_name": "Standard Falsv7 Family vCPUs"},
+    "total_regional_vcpus": {"current": 1, "limit": 10, "localized_name": "Total Regional vCPUs"},
+    "standard_ipv4_public_ips": {"current": 1, "limit": 20}
+  },
+  "combined_verification": {
+    "public_runtime_evidence_record": ".project/evidence/servicetracer-demo-api-live-verification-30086152352.json",
+    "deployment_provenance_verified": true,
+    "public_endpoint_identity_verified": true,
+    "vm_and_networking_observed": true,
+    "vm_control_plane_running": true,
+    "arm_deployment_succeeded": true,
+    "public_api_health_tls_cors_verified_by_prior_evidence": true,
+    "transaction_protocol_verified_by_prior_evidence": true,
+    "backend_transaction_success_verified": false,
+    "guest_os_or_service_configuration_directly_verified": false,
+    "effective_rbac_observed": false,
+    "azure_monitor_diagnostics_configured": false,
+    "azure_monitor_alerting_configured": false,
+    "backup_observed": false,
+    "recovery_tested": false,
+    "actual_cost_observed": false
+  },
+  "mutation_and_authority": {
+    "azure_authentication_performed_for_inventory": true,
+    "azure_control_plane_queried": true,
+    "azure_mutations_authorized": false,
+    "azure_mutations_performed": false,
+    "guest_commands_authorized": false,
+    "guest_commands_performed": false,
+    "transaction_replay_performed": false,
+    "repository_evidence_promotion_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "corrected_follow_up_execution_authorized": false
+  },
+  "canonical_distinctions": [
+    "declared_in_code != deployed_in_azure",
+    "deployment_succeeded != service_validated",
+    "resource_exists != securely_configured",
+    "RBAC_assignment != effective_least_privilege",
+    "monitoring_enabled != alerts_verified",
+    "backup_configured != recovery_tested",
+    "estimated_cost != actual_cost",
+    "not_observed != absent"
+  ],
+  "next_gate": {
+    "operation": "run_corrected_read_only_rbac_backup_and_cost_follow_up",
+    "required_corrections": [
+      "remove --all from the scoped RBAC assignment query",
+      "remove unsupported Currency grouping from the Cost Management query",
+      "query Recovery Services vaults and AzureIaasVM protected items without installing an extension"
+    ],
+    "azure_authentication_authorized": false,
+    "azure_mutations_authorized": false
+  }
+}
