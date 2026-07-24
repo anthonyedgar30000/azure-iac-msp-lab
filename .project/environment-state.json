@@ -33,7 +33,7 @@
       "status": "arm_what_if_observed_rejected_fail_closed",
       "last_observed_on": "2026-07-23T20:06:49Z",
       "source": "Collector-hosted demo API run 30040676542",
-      "notes": "The unsafe broad plan was rejected. This remains historical evidence."
+      "notes": "The unsafe broad plan was rejected and remains historical evidence."
     },
     {
       "fact_id": "collector-demo-api-isolated-deployment-root",
@@ -41,7 +41,7 @@
       "status": "repository_implemented_historical_strategy_superseded",
       "last_observed_on": "2026-07-24",
       "source": "Merged PRs #56, #59, #63, and #64",
-      "notes": "Repository repairs did not establish successful Azure deployment or service health. PR #65 superseded this strategy with an independent workload."
+      "notes": "Repository repairs did not establish successful Azure deployment or service health. PR #65 superseded this strategy."
     },
     {
       "fact_id": "collector-demo-api-public-endpoint",
@@ -49,7 +49,7 @@
       "status": "partial_azure_state_observed_historical_strategy",
       "last_observed_on": "2026-07-23T23:24:05Z",
       "source": "Collector-hosted demo API What-If run 30053018998",
-      "notes": "This residue is not the independent workload endpoint and is not authorized for cleanup by this record."
+      "notes": "This residue is not the independent workload endpoint and is not authorized for cleanup."
     },
     {
       "fact_id": "collector-demo-api-isolated-what-if",
@@ -57,35 +57,35 @@
       "status": "arm_what_if_observed_accepted_time_bounded_historical",
       "last_observed_on": "2026-07-23T21:05:01Z",
       "source": "Collector-hosted demo API deploy run 30044644501",
-      "notes": "The accepted plan applied to the historical collector-hosted strategy and cannot authorize the independent workload."
+      "notes": "The accepted plan cannot authorize the independent workload."
     },
     {
       "fact_id": "collector-demo-api-deployment-attempt",
       "value": "The historical collector-hosted deployment failed after an accepted isolated What-If",
-      "status": "deployment_failed_post_failure_mutation_state_unproven",
-      "last_observed_on": "2026-07-23T21:05:01Z",
-      "source": "Collector-hosted demo API deploy run 30044644501",
-      "notes": "A failed command does not prove zero partial mutation. Service verification was skipped."
+      "status": "deployment_failed_post_failure_mutation_state_partially_observed",
+      "last_observed_on": "2026-07-23T23:24:05Z",
+      "source": "Runs 30044644501, 30050103888, and 30053018998",
+      "notes": "Later evidence observed partial public-IP and NSG residue. No service verification succeeded."
     },
     {
       "fact_id": "frontend-live-demo-api-configuration",
       "value": "No verified live demo API endpoint is committed",
       "status": "repository_configuration_aligned_with_unverified_deployment",
       "last_observed_on": "2026-07-24",
-      "source": "Repository reality synchronization through PR #66",
+      "source": "Repository reality synchronization through PR #70",
       "notes": "The controlled fixture remains the default until deployment and browser verification are established."
     },
     {
       "fact_id": "actual-cost-and-credit",
-      "value": "Current invoice-level cost, remaining Azure for Students credit, and complete resource-level cost allocation are not observed",
+      "value": "Current invoice-level cost, remaining credits, and complete resource-level cost allocation are not observed for the proposed target subscription",
       "status": "not_observed",
       "last_observed_on": "2026-07-24",
       "source": "Repository and workflow evidence review",
-      "notes": "Do not infer zero cost from student credit or historical retail estimates."
+      "notes": "Do not infer zero cost from subscription type, credits, or historical retail estimates."
     },
     {
       "fact_id": "independent-demo-api-repository-architecture",
-      "value": "The active repository strategy is an independent ServiceTracer demo API workload in rg-st-demo-api-dev-westus2",
+      "value": "The independent ServiceTracer demo API application architecture is implemented in the repository",
       "status": "repository_implemented_exact_head_ci_verified_Azure_state_not_observed",
       "last_observed_on": "2026-07-24",
       "source": "PR #65 merge e3364b9cb918bf5aef23eab011d2a168183b3442 and CI run 30055579796",
@@ -93,27 +93,75 @@
     },
     {
       "fact_id": "independent-demo-api-vm-size",
-      "value": "The approved independent API planning and IaC default is Standard_B2ats_v2",
+      "value": "The repository planning and IaC default VM size is Standard_B2ats_v2",
       "status": "repository_contract_corrected_exact_head_ci_verified",
       "last_observed_on": "2026-07-24",
       "source": "PR #66 merge 9fd2af042d0ee1be28b61c8e9c26939ee98c319e and CI run 30058073866",
-      "notes": "Regional availability, compute-family quota, cost, and subscription credit still require fresh Azure evidence."
+      "notes": "Regional availability, quota, cost, and target-subscription acceptance require fresh authorized evidence."
     },
     {
       "fact_id": "independent-demo-api-Azure-state",
-      "value": "Target resource group, VM, VNet, NSG, NIC, public IP, DNS, TLS, health, transactions, CORS, and frontend behavior are not observed",
-      "status": "not_observed_read_only_planner_required",
+      "value": "Target subscription, resource group, VM, VNet, NSG, NIC, public IP, DNS, TLS, health, transactions, CORS, and frontend behavior are not observed",
+      "status": "not_observed_human_ratification_and_read_only_planner_required",
       "last_observed_on": "2026-07-24",
-      "source": "Full repository and evidence synchronization",
-      "notes": "Not observed must not be converted to absent or failed."
+      "source": "Repository and evidence synchronization after PRs #68, #70, and #71",
+      "notes": "Not observed must not be converted to absent, failed, or ready."
     },
     {
       "fact_id": "independent-demo-api-public-ip-headroom",
-      "value": "The newest inspected authenticated evidence observed Standard public-IP usage at 2 of 3 in West US 2",
-      "status": "azure_control_plane_observed_time_bounded_zero_post_deploy_headroom_risk",
+      "value": "Standard public-IP usage of 2 of 3 was observed only in the Azure for Students dependency subscription",
+      "status": "historical_dependency_subscription_quota_not_target_quota",
       "last_observed_on": "2026-07-23T23:24:05Z",
       "source": "Collector-hosted demo API What-If run 30053018998",
-      "notes": "The independent workload requires one public IP. Refresh quota before deployment and explicitly evaluate zero remaining headroom."
+      "notes": "The dual-subscription design targets a different Azure Plan subscription. Its public-IP quota remains unobserved."
+    },
+    {
+      "fact_id": "independent-demo-api-dual-subscription-plan",
+      "value": "Repository code now reads the ServiceTracer dependency from Azure for Students and plans the independent workload in a separate Azure Plan subscription using ProviderNoRbac",
+      "status": "repository_merged_exact_head_ci_verified_authorization_unresolved",
+      "last_observed_on": "2026-07-24",
+      "source": "PR #71 source head 5b54fc63542836f42a530c5f644b97ccdd1020a7, CI 30061331939, stacked merge dd9b33b6d849b0e3635b148159d7f484744ee77a, CI 30061412042, and PR #68 merge 84a527a248964c907172b9af5ca3d5fab991c96d",
+      "notes": "The design is present on main. Human ratification is required because PR #71 declared merge authority false and expanded PR #68 beyond its previously reviewed head."
+    },
+    {
+      "fact_id": "independent-demo-api-planning-authorization",
+      "value": "Human acceptance of the dual-subscription boundary, Azure Plan target, eastus default, isolated GitHub environment, identities, and RBAC is unresolved",
+      "status": "human_ratification_required_fail_closed",
+      "last_observed_on": "2026-07-24",
+      "source": "PR #71 authority section and post-merge reality reconciliation",
+      "notes": "No workflow dispatch, Azure authentication, environment creation, secret write, identity creation, or role assignment is authorized."
+    },
+    {
+      "fact_id": "independent-demo-api-target-subscription",
+      "value": "No exact Azure Plan target subscription has been selected or verified",
+      "status": "not_observed_and_not_authorized",
+      "last_observed_on": "2026-07-24",
+      "source": "Dual-subscription runbook and repository review",
+      "notes": "Subscription selection is a human decision and must precede any environment or identity setup."
+    },
+    {
+      "fact_id": "independent-demo-api-github-environment",
+      "value": "The planner expects a protected GitHub environment named azure-api-payg",
+      "status": "repository_expected_runtime_configuration_not_observed",
+      "last_observed_on": "2026-07-24",
+      "source": "Merged planner workflow and dual-subscription runbook",
+      "notes": "Environment creation and secret population are not authorized or verified."
+    },
+    {
+      "fact_id": "independent-demo-api-oidc-identities-rbac",
+      "value": "The planner expects separate dependency and target OIDC identities with bounded Reader assignments",
+      "status": "repository_expected_administrative_state_not_observed",
+      "last_observed_on": "2026-07-24",
+      "source": "Merged dual-subscription planner and runbook",
+      "notes": "Entra applications, federated credentials, and Azure RBAC changes require separate explicit authorization."
+    },
+    {
+      "fact_id": "independent-demo-api-default-location",
+      "value": "The merged workflow default is eastus while the original requested target was westus2",
+      "status": "repository_configuration_conflict_human_resolution_required",
+      "last_observed_on": "2026-07-24",
+      "source": "Merged workflow compared with the original independent-subproject handoff",
+      "notes": "Do not select a region or prepare a dispatch package until the human resolves this location change."
     }
   ]
 }
