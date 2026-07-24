@@ -40,7 +40,8 @@
   "candidate_endpoint": "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
   "evidence_anchors": {
     "public_runtime_verification": ".project/evidence/servicetracer-demo-api-live-verification-30086152352.json",
-    "post_deployment_inventory": ".project/evidence/servicetracer-demo-api-post-deployment-inventory-20260724T163938Z.json"
+    "post_deployment_inventory": ".project/evidence/servicetracer-demo-api-post-deployment-inventory-20260724T163938Z.json",
+    "browser_candidate_verification": ".project/evidence/frontend-live-candidate-browser-verification-30128947155.json"
   },
   "frontend_contract": {
     "health_must_pass_before_post": true,
@@ -60,10 +61,12 @@
     "transaction_replay_from_agent_default": false,
     "bounded_browser_validation_grant": {
       "grant_id": "pr84-live-candidate-browser-validation-20260724",
-      "status": "authorized_not_yet_consumed",
+      "status": "consumed_failed",
       "authorized_by": "Anthony Edgar",
       "authorization_source": "Explicit governed control message: proceed",
       "authorized_at": "2026-07-24T17:44:12-04:00",
+      "consumed_by_run_id": 30128947155,
+      "consumed_source_head": "a9c7f4f1826b1cf2a8944a3a7575f07ce54f9d1b",
       "repository_scope": "pull_request_84_exact_head",
       "permitted_operations": [
         "serve the pull-request docs tree on runner loopback under the exact allowed browser origin",
@@ -80,16 +83,22 @@
         "guest command execution",
         "cleanup",
         "additional transaction replay outside the bounded verification run"
-      ]
+      ],
+      "result": "Health and CORS preflight passed. The transaction POST was attempted but no HTTP response was observed, so the frontend correctly fell back to the controlled fixture."
     }
   },
   "validation": {
     "static_contract_tests_required": true,
     "exact_head_ci_required": true,
-    "browser_rendering_verified": false,
+    "health_contract_verified": true,
+    "cors_preflight_verified": true,
+    "transaction_http_response_verified": false,
+    "browser_fail_closed_rendering_verified": true,
+    "browser_rendering_of_live_response_verified": false,
     "live_twenty_attempt_sample_verified": false,
-    "actual_github_pages_deployment_verified": false
+    "actual_github_pages_deployment_verified": false,
+    "timeout_budget_mismatch_present_in_repository": true
   },
   "rollback": "Remove the candidate endpoint or revert this repository-only integration. The default live_demo_api_url remains blank, so no Azure rollback is required.",
-  "next_gate": "Execute the one-time evidence-producing browser validation grant, then reconcile its artifact without promoting or merging the candidate endpoint."
+  "next_gate": "Await an explicit governed fix control before correcting the transaction timeout budget or performing another live replay. Deployment, guest commands, merge, and publication remain unauthorized."
 }
