@@ -184,13 +184,72 @@ jobs:
           az network list-usages --location "$LOCATION" --output json > "$ARTIFACT_DIR/network-usage.json"
           az vm list-skus --location "$LOCATION" --size "$VM_SIZE" --all --output json > "$ARTIFACT_DIR/vm-size-availability.json"
 
-          if az group show --name "$target_resource_group" --output json > "$ARTIFACT_DIR/existing-target-resource-group.json" 2>/dev/null; then
-            jq -n '{status:"observed_existing"}' > "$ARTIFACT_DIR/target-resource-group-state.json"
-            az resource list --resource-group "$target_resource_group" --output json > "$ARTIFACT_DIR/existing-target-resources.json"
-          else
-            jq -n '{status:"not_present"}' > "$ARTIFACT_DIR/existing-target-resource-group.json"
-            jq -n '{status:"not_present"}' > "$ARTIFACT_DIR/target-resource-group-state.json"
+          group_stdout="$ARTIFACT_DIR/existing-target-resource-group.raw.json"
+          group_stderr="$ARTIFACT_DIR/existing-target-resource-group.error.txt"
+          set +e
+          az group show --name "$target_resource_group" --output json > "$group_stdout" 2> "$group_stderr"
+          group_show_exit_status=$?
+          set -e
+
+          if (( group_show_exit_status == 0 )); then
+            mv "$group_stdout" "$ARTIFACT_DIR/existing-target-resource-group.json"
+            resources_stdout="$ARTIFACT_DIR/existing-target-resources.raw.json"
+            resources_stderr="$ARTIFACT_DIR/existing-target-resources.error.txt"
+            set +e
+            az resource list --resource-group "$target_resource_group" --output json > "$resources_stdout" 2> "$resources_stderr"
+            resource_list_exit_status=$?
+            set -e
+
+            if (( resource_list_exit_status == 0 )); then
+              mv "$resources_stdout" "$ARTIFACT_DIR/existing-target-resources.json"
+              jq -n \
+                --arg resource_group "$target_resource_group" \
+                --argjson group_show_exit_status "$group_show_exit_status" \
+                --argjson resource_list_exit_status "$resource_list_exit_status" \
+                '{status:"observed_existing",resource_group:$resource_group,group_show_exit_status:$group_show_exit_status,resource_list_exit_status:$resource_list_exit_status,error_code:null,evidence_authoritative:true}' \
+                > "$ARTIFACT_DIR/target-resource-group-state.json"
+            else
+              rm -f "$resources_stdout"
+              jq -n \
+                --arg resource_group "$target_resource_group" \
+                --arg stage "resource_list" \
+                --argjson group_show_exit_status "$group_show_exit_status" \
+                --argjson resource_list_exit_status "$resource_list_exit_status" \
+                '{status:"observation_failed",resource_group:$resource_group,stage:$stage,group_show_exit_status:$group_show_exit_status,resource_list_exit_status:$resource_list_exit_status,error_code:null,evidence_authoritative:false}' \
+                > "$ARTIFACT_DIR/target-resource-group-state.json"
+              jq -n '{status:"not_observed",resources:null,evidence_authoritative:false}' \
+                > "$ARTIFACT_DIR/existing-target-resources.json"
+            fi
+          elif grep -Eq '(^|[^[:alnum:]_])ResourceGroupNotFound([^[:alnum:]_]|$)' "$group_stderr"; then
+            rm -f "$group_stdout"
+            jq -n \
+              --arg resource_group "$target_resource_group" \
+              --argjson group_show_exit_status "$group_show_exit_status" \
+              --rawfile error "$group_stderr" \
+              '{status:"not_present",resource_group:$resource_group,group_show_exit_status:$group_show_exit_status,error_code:"ResourceGroupNotFound",error:$error,evidence_authoritative:true}' \
+              > "$ARTIFACT_DIR/existing-target-resource-group.json"
+            jq -n \
+              --arg resource_group "$target_resource_group" \
+              --argjson group_show_exit_status "$group_show_exit_status" \
+              '{status:"not_present",resource_group:$resource_group,group_show_exit_status:$group_show_exit_status,resource_list_exit_status:null,error_code:"ResourceGroupNotFound",evidence_authoritative:true}' \
+              > "$ARTIFACT_DIR/target-resource-group-state.json"
             printf '[]\n' > "$ARTIFACT_DIR/existing-target-resources.json"
+          else
+            rm -f "$group_stdout"
+            jq -n \
+              --arg resource_group "$target_resource_group" \
+              --argjson group_show_exit_status "$group_show_exit_status" \
+              --rawfile error "$group_stderr" \
+              '{status:"observation_failed",resource_group:$resource_group,group_show_exit_status:$group_show_exit_status,error_code:null,error:$error,evidence_authoritative:false}' \
+              > "$ARTIFACT_DIR/existing-target-resource-group.json"
+            jq -n \
+              --arg resource_group "$target_resource_group" \
+              --arg stage "group_show" \
+              --argjson group_show_exit_status "$group_show_exit_status" \
+              '{status:"observation_failed",resource_group:$resource_group,stage:$stage,group_show_exit_status:$group_show_exit_status,resource_list_exit_status:null,error_code:null,evidence_authoritative:false}' \
+              > "$ARTIFACT_DIR/target-resource-group-state.json"
+            jq -n '{status:"not_observed",resources:null,evidence_authoritative:false}' \
+              > "$ARTIFACT_DIR/existing-target-resources.json"
           fi
 
           jq -n \
