@@ -136,10 +136,13 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Validate collector VM contract
+      - name: Validate infrastructure and workload contracts
         run: |
-          python -m unittest discover -s infra/tests -v > /tmp/infra-tests.log 2>&1
-          tail -n 100 /tmp/infra-tests.log
+          {
+            python -m unittest discover -s infra/tests -v
+            python -m unittest discover -s workloads/servicetracer-demo-api/tests -v
+          } > /tmp/infra-tests.log 2>&1
+          tail -n 140 /tmp/infra-tests.log
 
       - name: Upload infrastructure test log
         if: always()
@@ -164,6 +167,8 @@ jobs:
               az bicep build --file infra/demo-backend-api.bicep --outfile /tmp/demo-backend-api.json
               az bicep lint --file infra/collector-demo-api.bicep
               az bicep build --file infra/collector-demo-api.bicep --outfile /tmp/collector-demo-api.json
+              az bicep lint --file workloads/servicetracer-demo-api/infra/main.bicep
+              az bicep build --file workloads/servicetracer-demo-api/infra/main.bicep --outfile /tmp/servicetracer-demo-api-subproject.json
             } 2>&1 | tee "$GITHUB_WORKSPACE/bicep-validation.log"
 
       - name: Upload Bicep validation log
