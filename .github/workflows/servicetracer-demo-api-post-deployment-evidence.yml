@@ -1,0 +1,50 @@
+name: ServiceTracer demo API post-deployment evidence
+
+on:
+  pull_request:
+    paths:
+      - ".project/evidence/servicetracer-demo-api-post-deployment-inventory-20260724T163938Z.json"
+      - ".project/handoffs/servicetracer-demo-api-post-deployment-current-state.md"
+      - ".project/reconciliations/servicetracer-demo-api-post-deployment-follow-up.json"
+      - "scripts/servicetracer_demo_api_readonly_follow_up.py"
+      - "scripts/validate_servicetracer_demo_api_post_deployment_inventory_evidence.py"
+      - "tests/test_servicetracer_demo_api_post_deployment_inventory_evidence.py"
+      - "docs/runbooks/servicetracer-demo-api-post-deployment-inventory.md"
+      - ".github/workflows/servicetracer-demo-api-post-deployment-evidence.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".project/evidence/servicetracer-demo-api-post-deployment-inventory-20260724T163938Z.json"
+      - ".project/handoffs/servicetracer-demo-api-post-deployment-current-state.md"
+      - ".project/reconciliations/servicetracer-demo-api-post-deployment-follow-up.json"
+      - "scripts/servicetracer_demo_api_readonly_follow_up.py"
+      - "scripts/validate_servicetracer_demo_api_post_deployment_inventory_evidence.py"
+      - "tests/test_servicetracer_demo_api_post_deployment_inventory_evidence.py"
+      - "docs/runbooks/servicetracer-demo-api-post-deployment-inventory.md"
+      - ".github/workflows/servicetracer-demo-api-post-deployment-evidence.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact workflow commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate authenticated inventory promotion
+        run: python scripts/validate_servicetracer_demo_api_post_deployment_inventory_evidence.py
+
+      - name: Run post-deployment evidence regression tests
+        run: python -m unittest tests/test_servicetracer_demo_api_post_deployment_inventory_evidence.py -v
+
+      - name: Compile corrected read-only collector
+        run: python -m py_compile scripts/servicetracer_demo_api_readonly_follow_up.py
