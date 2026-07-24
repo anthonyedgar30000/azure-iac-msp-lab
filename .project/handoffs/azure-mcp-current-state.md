@@ -2,126 +2,119 @@
 
 ## Interpretation boundary
 
-This handoff records the Azure MCP workstream after rebasing its reconciliation onto current repository reality. It is not a live Azure or ChatGPT connection report.
+This handoff records the selected OpenAI API to Azure MCP architecture and its reviewable Cloud Shell preflight package. It is not a live Azure MCP endpoint or OpenAI API connection report.
 
 ```text
-contract_merged != endpoint_deployed
-client_available != client_connected
+client_path_selected != client_configured
+hosting_path_selected != hosting_deployed
+managed_identity_selected != managed_identity_created
 tool_advertised != tool_authorized
-planner_evidence_preserved != Azure_MCP_runtime_observed
-rebase_completed != deployment_authorized
+not_observed != absent
 ```
 
-## Repository anchors
+## Repository watermark
 
-The governed Azure MCP contract reached `main` through PR #74:
+The observed default-branch baseline for this package is:
 
 ```text
-PR: 74
-source head: 514549fd2c052ea44409b2a221113cc8c1cc0798
-merge commit: cb310345c4ed42bece42db4e67a442498b7eba8f
-CI: 30068916201
-contract CI: 30068916240
+main: df0458a4d0a9075787726a3205c6c7b454cfa15e
+merged PR: 78
+source head: cc6d2c2b4a238d22f2ab56f68a0722d3f9f1423a
+exact-head CI: 30072601791
+open pull requests observed: none
 ```
 
-The reconciliation is integrated on top of the newer repository baseline established by PR #76:
+PR #78 preserves a typed conflict between the current repository declaration and the latest protected Azure planner evidence:
 
 ```text
-main: 551ca0ee2c7d1955b3bd81c09f46f43dceeae3a6
-merged PR: 76
-source head: 1ca93552ae1a445922248ff4409706e203609f70
-exact-head CI: 30069778338
+current repository package = westus2 / Standard_F1als_v7
+latest protected Azure package = eastus / Standard_B2ats_v2
+verification_status = conflicting
 ```
 
-## Concurrent planner evidence preserved
+Neither package is Azure MCP runtime evidence.
 
-PR #76 promoted independent planner run `30064289707` and artifact `8585693830`.
-
-The Azure MCP reconciliation does not replace these claims:
+## Selected architecture
 
 ```text
-Azure_authentication_succeeded = true
-requested_location = eastus
-requested_VM_size = Standard_B2ats_v2
-requested_candidate_ready = false
-target_resource_group_state = not_observed
-ARM_validation_performed = false
-What_If_performed = false
-Azure_mutations_performed = false
-deployed = false
-service_verified = false
-```
+client_path_selected = true
+selected_client_path = openai_responses_api
+client_configured = false
+client_connected = false
 
-The planner artifact digest remains:
-
-```text
-sha256:7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22
-```
-
-## Azure MCP repository authority
-
-Repository authority now includes:
-
-- `.project/contracts/azure-mcp-reality-bridge.json`;
-- `docs/architecture/azure-mcp-reality-bridge.md`;
-- the contract validator and regression tests;
-- `.project/reconciliations/azure-mcp-pr74.json`.
-
-The shared `.project/active-work.json`, `.project/environment-state.json`, and `.project/handoffs/current-state.md` are intentionally left at the newer PR #76 state. This workstream uses a dedicated handoff rather than overwriting authenticated planner evidence.
-
-## Azure MCP runtime state
-
-```text
+hosting_architecture_selected = true
+selected_hosting_service = azure_container_apps
+deployment_interface_selected = true
+selected_deployment_interface = azure_cloud_shell
 remote_endpoint_deployed = false
 endpoint_url = null
-client_path_selected = false
-client_connected = false
-authentication_model_selected = false
-Azure_authentication_authorized = false
-Azure_resources_created = false
-Entra_identity_changed = false
-Azure_RBAC_changed = false
-tenant_scope_selected = false
-subscription_scope_selected = false
-resource_group_scope_selected = false
-server_version_observed = false
-tool_inventory_observed = false
-allowed_tool_names = []
-cost_observed = false
-quota_observed = false
-Azure_runtime_state = not_observed
+
+client_to_server_authentication_selected = entra_oauth
+client_to_server_authentication_implemented = false
+server_to_azure_authentication_selected = managed_identity_shared_service_identity
+server_to_azure_authentication_implemented = false
 ```
 
-`not_observed` must not be interpreted as absent, unhealthy, or ready.
+The template candidate is `azmcp-copilot-studio-aca-mi` because Microsoft documents a remote Azure MCP Server on Azure Container Apps backed by a managed identity and Reader RBAC. The template remains unpinned and unapproved until its exact downloaded content is hashed and reviewed.
+
+## Cloud Shell package
+
+The paste-ready read-only preparation script is:
+
+```text
+scripts/azure_mcp_cloud_shell_preflight.sh
+```
+
+The operator runbook is:
+
+```text
+docs/runbooks/openai-api-azure-mcp-cloud-shell.md
+```
+
+The preflight can observe Azure account, provider, resource-group, and resource inventory state and download the template into Cloud Shell storage. It contains no Azure deployment, provider registration, role assignment, Entra mutation, Container Apps mutation, cleanup, or OpenAI API command.
+
+## Runtime state
+
+```text
+Azure_MCP_remote_endpoint_deployed = false
+Azure_MCP_endpoint_url = null
+Azure_MCP_server_version_observed = false
+Azure_MCP_container_image_observed = false
+Azure_MCP_tool_inventory_observed = false
+Azure_MCP_allowed_tool_names = []
+Azure_MCP_tenant_scope_selected = false
+Azure_MCP_subscription_scope_selected = false
+Azure_MCP_resource_group_scope_selected = false
+Azure_MCP_cost_observed = false
+Azure_MCP_quota_observed = false
+OpenAI_API_project_observed = false
+OpenAI_API_key_observed = false
+OpenAI_API_execution_performed = false
+Azure_MCP_runtime_state = not_observed
+```
 
 ## Current authority
 
 ```text
-repository_reconciliation_authorized = true
+repository_design_authorized = true
 pull_request_creation_authorized = true
 pull_request_merge_authorized = false
-Azure_MCP_hosting_authorized = false
-Azure_MCP_client_configuration_authorized = false
+Cloud_Shell_preflight_execution_authorized = false
 Azure_authentication_authorized = false
 Azure_resource_creation_authorized = false
-Entra_identity_mutation_authorized = false
+Entra_application_mutation_authorized = false
+managed_identity_mutation_authorized = false
 Azure_RBAC_mutation_authorized = false
-MCP_tool_admission_authorized = false
-ChatGPT_app_registration_authorized = false
+Container_Apps_mutation_authorized = false
 OpenAI_API_execution_authorized = false
+MCP_tool_admission_authorized = false
 cleanup_authorized = false
 ```
 
-## Next Azure MCP gate
+## Next gate
 
 ```text
-select_and_verify_client_path
+review_and_merge_package_then_authorize_read_only_cloud_shell_preflight
 ```
 
-The bounded choices are:
-
-1. verify whether the current ChatGPT workspace can attach the remote MCP server;
-2. accept or reject a separately billed OpenAI Responses API client;
-3. accept or reject an IDE MCP client as a local proof path.
-
-Client selection does not authorize Azure hosting. Hosting, identity, exact scope, cost, quota, tool inventory, and tool admission require later evidence and separate authorization.
+The next authorization must be limited to the preflight script and explicit hosting subscription, location, and resource-group inputs. It must not include `azd up`, resource creation, Entra changes, RBAC changes, OpenAI API calls, or cleanup.
