@@ -1,0 +1,112 @@
+{
+  "schema_version": "project.azure-mcp-post-merge-reconciliation.v2",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "observed_on": "2026-07-24",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "synchronization_scope": "repository_only_post_merge_reconciliation_preserving_concurrent_planner_evidence",
+  "contract_authority": {
+    "pull_request": 74,
+    "title": "Add governed Azure MCP reality bridge contract",
+    "source_head": "514549fd2c052ea44409b2a221113cc8c1cc0798",
+    "merge_commit": "cb310345c4ed42bece42db4e67a442498b7eba8f",
+    "changed_files": 5,
+    "exact_head_ci": [
+      {
+        "run_id": 30068916201,
+        "name": "CI",
+        "conclusion": "success"
+      },
+      {
+        "run_id": 30068916240,
+        "name": "Azure MCP reality bridge contract",
+        "conclusion": "success"
+      }
+    ],
+    "contract_path": ".project/contracts/azure-mcp-reality-bridge.json",
+    "architecture_path": "docs/architecture/azure-mcp-reality-bridge.md"
+  },
+  "integration_baseline": {
+    "main_commit": "551ca0ee2c7d1955b3bd81c09f46f43dceeae3a6",
+    "merged_pull_request": 76,
+    "source_head": "1ca93552ae1a445922248ff4409706e203609f70",
+    "exact_head_ci_run_id": 30069778338,
+    "promoted_planner_run_id": 30064289707,
+    "planner_artifact_id": 8585693830,
+    "planner_artifact_sha256": "7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22",
+    "preserved_planner_claims": {
+      "azure_authentication_succeeded": true,
+      "requested_location": "eastus",
+      "requested_vm_size": "Standard_B2ats_v2",
+      "requested_candidate_ready": false,
+      "target_resource_group_state": "not_observed",
+      "arm_validation_performed": false,
+      "what_if_performed": false,
+      "azure_mutations_performed": false,
+      "deployed": false,
+      "service_verified": false
+    }
+  },
+  "repository_integration": {
+    "active_work_modified": false,
+    "environment_state_modified": false,
+    "current_project_handoff_modified": false,
+    "dedicated_handoff": ".project/handoffs/azure-mcp-current-state.md",
+    "reason": "PR #76 promoted newer authenticated Azure planner evidence into the shared project-state files. The Azure MCP reconciliation is isolated so it cannot overwrite or semantically regress that evidence."
+  },
+  "runtime_claims": {
+    "remote_endpoint_deployed": false,
+    "endpoint_url": null,
+    "client_path_selected": false,
+    "client_connected": false,
+    "authentication_model_selected": false,
+    "azure_authentication_authorized": false,
+    "azure_resources_created": false,
+    "entra_identity_created_or_changed": false,
+    "azure_rbac_changed": false,
+    "tenant_scope_selected": false,
+    "subscription_scope_selected": false,
+    "resource_group_scope_selected": false,
+    "server_version_observed": false,
+    "tool_inventory_observed": false,
+    "tool_names_admitted": [],
+    "cost_observed": false,
+    "quota_observed": false,
+    "azure_runtime_state": "not_observed"
+  },
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_resource_creation_authorized": false,
+    "entra_identity_mutation_authorized": false,
+    "azure_rbac_mutation_authorized": false,
+    "azure_mcp_hosting_authorized": false,
+    "client_configuration_authorized": false,
+    "tool_admission_authorized": false,
+    "openai_api_execution_authorized": false,
+    "chatgpt_app_registration_authorized": false,
+    "cleanup_authorized": false
+  },
+  "next_gate": {
+    "operation": "select_and_verify_client_path",
+    "choices": [
+      "verify_ChatGPT_custom_app_availability",
+      "accept_or_reject_OpenAI_Responses_API",
+      "accept_or_reject_IDE_MCP_client_proof"
+    ],
+    "hosting_selection_authorized": false,
+    "authentication_selection_authorized": false,
+    "azure_scope_selection_authorized": false
+  },
+  "canonical_distinctions": [
+    "contract_merged != endpoint_deployed",
+    "client_available != client_connected",
+    "tool_advertised != tool_authorized",
+    "azure_state_not_observed != azure_state_absent",
+    "repository_reconciliation != Azure_mutation_authority",
+    "planner_evidence_preserved != Azure_MCP_runtime_observed",
+    "rebase_completed != deployment_authorized"
+  ],
+  "claim_boundary": "This record synchronizes Azure MCP repository authority on top of PR #76 without replacing its authenticated planner evidence. It does not establish or authorize Azure MCP hosting, identity, RBAC, client configuration, tool admission, runtime health, cost, quota, cleanup, or any new planner dispatch."
+}
