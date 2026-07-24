@@ -1,0 +1,180 @@
+{
+  "schema_version": "servicetracer.azure-mcp-reality-bridge.v1",
+  "status": "repository_contract_only",
+  "objective": "Provide a governed remote Azure MCP evidence channel for reconciling GitHub-declared infrastructure with time-bounded Azure observations without granting implicit Azure mutation authority.",
+  "canonical_distinctions": [
+    "mcp_endpoint_deployed != chatgpt_connected",
+    "tool_advertised != tool_authorized",
+    "read_only_annotation != effective_least_privilege",
+    "azure_observed != repository_declared",
+    "authentication_succeeded != scope_authorized",
+    "resource_listed != service_validated",
+    "not_observed != absent",
+    "evidence_collected != action_authorized"
+  ],
+  "transport": {
+    "required": "streamable_http",
+    "endpoint_path": "/mcp",
+    "tls_required": true,
+    "remote_endpoint_deployed": false,
+    "endpoint_url": null
+  },
+  "hosting": {
+    "candidate_service": "azure_container_apps",
+    "gateway_candidate": "azure_api_management",
+    "architecture_selected": false,
+    "region_selected": false,
+    "resource_group_selected": false,
+    "cost_estimate_observed": false,
+    "quota_observed": false
+  },
+  "client_paths": {
+    "openai_responses_api": {
+      "platform_support_observed": true,
+      "configured": false,
+      "requires_separate_api_project_and_billing": true
+    },
+    "chatgpt_custom_app": {
+      "availability": "plan_and_workspace_dependent",
+      "configured": false,
+      "current_connection_observed": false
+    },
+    "ide_mcp_clients": {
+      "examples": [
+        "github_copilot",
+        "visual_studio_code",
+        "cursor"
+      ],
+      "configured": false
+    }
+  },
+  "authentication": {
+    "selected_model": null,
+    "candidate_models": [
+      "oauth_identity_passthrough",
+      "managed_identity_shared_service_identity"
+    ],
+    "anonymous_access_allowed": false,
+    "static_long_lived_secret_allowed": false,
+    "client_identity_observed": false,
+    "server_identity_observed": false,
+    "federated_credentials_observed": false,
+    "admin_consent_observed": false
+  },
+  "azure_scope": {
+    "tenant_id": null,
+    "subscription_ids": [],
+    "resource_group_allowlist": [],
+    "cross_subscription_discovery_allowed": false,
+    "default_subscription_inference_allowed": false
+  },
+  "tool_admission": {
+    "default_policy": "deny",
+    "required_annotations": {
+      "read_only": true,
+      "destructive": false,
+      "secret": false,
+      "local_required": false
+    },
+    "requested_observation_domains": [
+      "subscription_inventory",
+      "resource_group_inventory",
+      "resource_inventory",
+      "activity_logs",
+      "metrics_and_logs",
+      "resource_health",
+      "quota_and_usage",
+      "retail_pricing_and_cost_observation",
+      "policy_assignment_inventory",
+      "rbac_assignment_inventory",
+      "advisor_recommendations"
+    ],
+    "allowed_tool_names": [],
+    "tool_inventory_digest": null,
+    "server_version": null,
+    "denied_capabilities": [
+      "create_resource",
+      "update_resource",
+      "delete_resource",
+      "deploy_template",
+      "assign_role",
+      "remove_role",
+      "register_provider",
+      "read_secret_value",
+      "write_secret_value",
+      "execute_guest_command",
+      "open_network_access",
+      "change_policy",
+      "change_quota"
+    ],
+    "admission_rule": "A tool becomes callable only after exact-version discovery, annotation review, effective-RBAC review, bounded-scope review, and explicit human approval of its exact name."
+  },
+  "authority": {
+    "repository_design_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_resource_creation_authorized": false,
+    "entra_application_mutation_authorized": false,
+    "managed_identity_mutation_authorized": false,
+    "azure_rbac_mutation_authorized": false,
+    "api_management_mutation_authorized": false,
+    "container_apps_mutation_authorized": false,
+    "chatgpt_app_registration_authorized": false,
+    "openai_api_execution_authorized": false
+  },
+  "evidence_contract": {
+    "required_request_context": [
+      "observed_at_utc",
+      "tenant_id",
+      "subscription_id",
+      "resource_scope",
+      "server_version",
+      "tool_name",
+      "tool_inventory_digest",
+      "caller_identity_mode",
+      "correlation_id"
+    ],
+    "required_result_fields": [
+      "observation_status",
+      "source_system",
+      "resource_id_or_scope",
+      "freshness_boundary",
+      "limitations",
+      "raw_evidence_digest"
+    ],
+    "observation_status_values": [
+      "observed",
+      "not_present",
+      "not_observed",
+      "observation_failed",
+      "conflicting"
+    ],
+    "secret_redaction_required": true,
+    "raw_protected_payload_commit_allowed": false
+  },
+  "success_criteria": [
+    "The remote endpoint is reachable over TLS and exposes Streamable HTTP at /mcp.",
+    "Authentication resolves the intended tenant and identity model.",
+    "The exact tool inventory is captured and hashed.",
+    "Only explicitly admitted read-only, non-secret tools are callable.",
+    "Subscription and resource scopes cannot silently widen.",
+    "A known Azure observation is reconciled against an exact Git commit.",
+    "Every result records provenance, freshness, limitations, and a digest.",
+    "No Azure, Entra, GitHub, or OpenAI mutation occurs during read-only verification."
+  ],
+  "failure_and_rollback": {
+    "fail_closed_conditions": [
+      "tool_inventory_changed",
+      "tool_annotation_missing_or_changed",
+      "tenant_or_subscription_mismatch",
+      "scope_allowlist_mismatch",
+      "authentication_identity_unverified",
+      "write_or_secret_capability_detected",
+      "evidence_digest_missing",
+      "prompt_injection_or_untrusted_tool_output_detected"
+    ],
+    "rollback_action": "Disable the client connection, revoke or remove the federated/OAuth path, remove endpoint ingress, preserve redacted evidence, and leave Azure workload resources unchanged unless separately authorized.",
+    "cleanup_authorized": false
+  }
+}
