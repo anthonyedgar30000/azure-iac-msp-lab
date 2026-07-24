@@ -1,0 +1,276 @@
+name: ServiceTracer demo API subproject plan
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Lab environment'
+        required: true
+        default: dev
+        type: choice
+        options: [dev, test]
+      location:
+        description: 'Azure region'
+        required: true
+        default: westus2
+        type: string
+      prefix:
+        description: 'Resource-name prefix'
+        required: true
+        default: mst
+        type: string
+      dependency_resource_group:
+        description: 'Existing ServiceTracer dependency resource group'
+        required: true
+        default: rg-servicetracer-dev-westus2
+        type: string
+      dns_label:
+        description: 'Globally unique public DNS label'
+        required: true
+        default: st-demo-api-vm-aeg30000
+        type: string
+      allowed_origin:
+        description: 'Exact browser origin allowed by CORS'
+        required: true
+        default: https://anthonyedgar30000.github.io
+        type: string
+      vm_size:
+        description: 'Candidate VM size; cost and quota are planning evidence'
+        required: true
+        default: Standard_B1s
+        type: string
+      maximum_monthly_cost_cad:
+        description: 'Human planning ceiling only; no price claim is inferred'
+        required: true
+        default: '25.00'
+        type: string
+      confirmation:
+        description: 'Enter PLAN-DEMO-API-SUBPROJECT:<environment>:<dns-label>'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: servicetracer-demo-api-subproject-plan-${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+  ARTIFACT_DIR: servicetracer-demo-api-subproject-plan-evidence
+
+jobs:
+  plan:
+    name: Plan independent ServiceTracer demo API workload
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 45
+    steps:
+      - name: Check out immutable dispatch state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Validate main-bound read-only authority
+        env:
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          DEPENDENCY_RESOURCE_GROUP: ${{ inputs.dependency_resource_group }}
+          DNS_LABEL: ${{ inputs.dns_label }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+          VM_SIZE: ${{ inputs.vm_size }}
+          MAXIMUM_MONTHLY_COST_CAD: ${{ inputs.maximum_monthly_cost_cad }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          [[ "$GITHUB_REF" == 'refs/heads/main' ]]
+          [[ "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$LAB_ENVIRONMENT" =~ ^(dev|test)$ ]]
+          [[ "$LOCATION" =~ ^[a-z0-9]+$ ]]
+          [[ "$PREFIX" =~ ^[a-z0-9]{2,12}$ ]]
+          [[ "$DEPENDENCY_RESOURCE_GROUP" =~ ^rg-servicetracer-(dev|test)(-[a-z0-9-]+)?$ ]]
+          [[ "$DNS_LABEL" =~ ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$ ]]
+          [[ "$ALLOWED_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]
+          [[ "$VM_SIZE" =~ ^Standard_[A-Za-z0-9_]+$ ]]
+          [[ "$MAXIMUM_MONTHLY_COST_CAD" =~ ^[0-9]+([.][0-9]{1,2})?$ ]]
+          expected="PLAN-DEMO-API-SUBPROJECT:${LAB_ENVIRONMENT}:${DNS_LABEL}"
+          [[ "$CONFIRMATION" == "$expected" ]] || {
+            echo "Confirmation must exactly equal: $expected" >&2
+            exit 1
+          }
+          target_resource_group="rg-st-demo-api-${LAB_ENVIRONMENT}-${LOCATION}"
+          jq -n \
+            --arg dispatch_sha "$GITHUB_SHA" \
+            --arg ref "$GITHUB_REF" \
+            --arg environment "$LAB_ENVIRONMENT" \
+            --arg location "$LOCATION" \
+            --arg prefix "$PREFIX" \
+            --arg dependency_resource_group "$DEPENDENCY_RESOURCE_GROUP" \
+            --arg target_resource_group "$target_resource_group" \
+            --arg dns_label "$DNS_LABEL" \
+            --arg allowed_origin "$ALLOWED_ORIGIN" \
+            --arg vm_size "$VM_SIZE" \
+            --arg maximum_monthly_cost_cad "$MAXIMUM_MONTHLY_COST_CAD" \
+            '{schema_version:"servicetracer.demo-api-subproject-plan-request.v1",dispatch_sha:$dispatch_sha,ref:$ref,environment:$environment,location:$location,prefix:$prefix,dependency_resource_group:$dependency_resource_group,target_resource_group:$target_resource_group,dns_label:$dns_label,allowed_origin:$allowed_origin,vm_size:$vm_size,maximum_monthly_cost_cad:($maximum_monthly_cost_cad|tonumber),azure_authentication_authorized:true,azure_mutations_authorized:false,deployment_authorized:false}' \
+            > "$ARTIFACT_DIR/request.json"
+
+      - name: Run subproject tests before Azure login
+        run: python -m unittest discover -s workloads/servicetracer-demo-api/tests -v
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Capture dependency, provider, quota, and target state
+        env:
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          DEPENDENCY_RESOURCE_GROUP: ${{ inputs.dependency_resource_group }}
+          VM_SIZE: ${{ inputs.vm_size }}
+        run: |
+          set -euo pipefail
+          suffix="${PREFIX}-${LAB_ENVIRONMENT}"
+          target_resource_group="rg-st-demo-api-${LAB_ENVIRONMENT}-${LOCATION}"
+          az account show --query '{subscriptionId:id,subscriptionName:name,tenantId:tenantId,user:user}' --output json > "$ARTIFACT_DIR/azure-context.json"
+          az provider show --namespace Microsoft.Compute --query '{namespace:namespace,registrationState:registrationState}' --output json > "$ARTIFACT_DIR/provider-compute.json"
+          az provider show --namespace Microsoft.Network --query '{namespace:namespace,registrationState:registrationState}' --output json > "$ARTIFACT_DIR/provider-network.json"
+          jq -e '.registrationState=="Registered"' "$ARTIFACT_DIR/provider-compute.json" > /dev/null
+          jq -e '.registrationState=="Registered"' "$ARTIFACT_DIR/provider-network.json" > /dev/null
+          az vm list-usage --location "$LOCATION" --output json > "$ARTIFACT_DIR/compute-usage.json"
+          az network list-usages --location "$LOCATION" --output json > "$ARTIFACT_DIR/network-usage.json"
+          az vm list-skus --location "$LOCATION" --size "$VM_SIZE" --all --output json > "$ARTIFACT_DIR/vm-size-availability.json"
+          jq -e 'length > 0' "$ARTIFACT_DIR/vm-size-availability.json" > /dev/null
+
+          az group show --name "$DEPENDENCY_RESOURCE_GROUP" --output json > "$ARTIFACT_DIR/dependency-resource-group.json"
+          az network public-ip show \
+            --resource-group "$DEPENDENCY_RESOURCE_GROUP" \
+            --name "pip-remote-access-${suffix}" \
+            --output json > "$ARTIFACT_DIR/dependency-public-ip.json"
+          jq -e '.provisioningState=="Succeeded" and .ipAddress!=null and .ipAddress!=""' "$ARTIFACT_DIR/dependency-public-ip.json" > /dev/null
+
+          if az group show --name "$target_resource_group" --output json > "$ARTIFACT_DIR/existing-target-resource-group.json" 2>/dev/null; then
+            jq -n '{status:"observed_existing"}' > "$ARTIFACT_DIR/target-resource-group-state.json"
+            az resource list --resource-group "$target_resource_group" --output json > "$ARTIFACT_DIR/existing-target-resources.json"
+          else
+            jq -n '{status:"not_present"}' > "$ARTIFACT_DIR/existing-target-resource-group.json"
+            jq -n '{status:"not_present"}' > "$ARTIFACT_DIR/target-resource-group-state.json"
+            printf '[]\n' > "$ARTIFACT_DIR/existing-target-resources.json"
+          fi
+
+      - name: Validate and capture subscription What-If
+        env:
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          LOCATION: ${{ inputs.location }}
+          PREFIX: ${{ inputs.prefix }}
+          DEPENDENCY_RESOURCE_GROUP: ${{ inputs.dependency_resource_group }}
+          DNS_LABEL: ${{ inputs.dns_label }}
+          ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
+          VM_SIZE: ${{ inputs.vm_size }}
+        run: |
+          set -euo pipefail
+          suffix="${PREFIX}-${LAB_ENVIRONMENT}"
+          target_resource_group="rg-st-demo-api-${LAB_ENVIRONMENT}-${LOCATION}"
+          backend_ip="$(jq -r '.ipAddress' "$ARTIFACT_DIR/dependency-public-ip.json")"
+          backend_transaction_url="https://${backend_ip}/transaction"
+          source_repository="https://github.com/${GITHUB_REPOSITORY}.git"
+          installer_uri="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_SHA}/workloads/servicetracer-demo-api/scripts/install.sh"
+          ssh-keygen -q -t ed25519 -N '' -f /tmp/servicetracer-demo-api-plan-key
+          admin_ssh_public_key="$(cat /tmp/servicetracer-demo-api-plan-key.pub)"
+
+          jq -n \
+            --arg target_resource_group "$target_resource_group" \
+            --arg dependency_resource_group "$DEPENDENCY_RESOURCE_GROUP" \
+            --arg backend_transaction_url "$backend_transaction_url" \
+            --arg source_repository "$source_repository" \
+            --arg source_ref "$GITHUB_SHA" \
+            --arg installer_uri "$installer_uri" \
+            '{target_resource_group:$target_resource_group,dependency_resource_group:$dependency_resource_group,backend_transaction_url:$backend_transaction_url,source_repository:$source_repository,source_ref:$source_ref,installer_uri:$installer_uri}' \
+            > "$ARTIFACT_DIR/effective-parameters.json"
+
+          parameters=(
+            prefix="$PREFIX"
+            environment="$LAB_ENVIRONMENT"
+            location="$LOCATION"
+            dnsLabel="$DNS_LABEL"
+            allowedOrigin="$ALLOWED_ORIGIN"
+            backendTransactionUrl="$backend_transaction_url"
+            vmSize="$VM_SIZE"
+            adminSshPublicKey="$admin_ssh_public_key"
+            sourceRepository="$source_repository"
+            sourceRef="$GITHUB_SHA"
+            installerUri="$installer_uri"
+          )
+
+          deployment_name="servicetracer-demo-api-plan-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          az deployment sub validate \
+            --name "$deployment_name" \
+            --location "$LOCATION" \
+            --template-file workloads/servicetracer-demo-api/infra/main.bicep \
+            --parameters "${parameters[@]}" \
+            --output json > "$ARTIFACT_DIR/arm-validation.json"
+
+          az deployment sub what-if \
+            --name "$deployment_name" \
+            --location "$LOCATION" \
+            --template-file workloads/servicetracer-demo-api/infra/main.bicep \
+            --parameters "${parameters[@]}" \
+            --no-pretty-print \
+            --result-format FullResourcePayloads \
+            --output json > "$ARTIFACT_DIR/arm-what-if.json"
+
+          python workloads/servicetracer-demo-api/scripts/assert_what_if.py \
+            --input "$ARTIFACT_DIR/arm-what-if.json" \
+            --output "$ARTIFACT_DIR/what-if-assessment.json" \
+            --target-resource-group "$target_resource_group" \
+            --dependency-resource-group "$DEPENDENCY_RESOURCE_GROUP" \
+            --suffix "$suffix"
+          jq -e '.status=="accepted_independent_workload_create_plan" and .deployment_authorized==false and .azure_mutations_performed==false' "$ARTIFACT_DIR/what-if-assessment.json" > /dev/null
+
+      - name: Write evidence manifest
+        if: always()
+        run: |
+          set -euo pipefail
+          if [[ -d "$ARTIFACT_DIR" ]]; then
+            find "$ARTIFACT_DIR" -type f ! -name artifact-manifest.sha256 -print0 \
+              | sort -z \
+              | xargs -0 -r sha256sum \
+              > "$ARTIFACT_DIR/artifact-manifest.sha256"
+          fi
+
+      - name: Write planning summary
+        if: always()
+        env:
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          LOCATION: ${{ inputs.location }}
+          DNS_LABEL: ${{ inputs.dns_label }}
+        run: |
+          {
+            echo '## ServiceTracer demo API independent workload plan'
+            echo
+            echo "- Dispatch SHA: \`$GITHUB_SHA\`"
+            echo "- Ref: \`$GITHUB_REF\`"
+            echo "- Target resource group: \`rg-st-demo-api-${LAB_ENVIRONMENT}-${LOCATION}\`"
+            echo "- DNS label: \`$DNS_LABEL\`"
+            echo '- Azure authentication authorized: `true` for read-only planning'
+            echo '- Azure mutations authorized: `false`'
+            echo '- Deployment authorized: `false`'
+            echo '- No manually entered commit SHA is accepted by this workflow.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload scoped planning evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: servicetracer-demo-api-subproject-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
