@@ -2,207 +2,239 @@
 
 ## Interpretation boundary
 
-This handoff records durable repository architecture and the newest authenticated Azure evidence reviewed on `2026-07-24`. It is not a live GitHub or Azure dashboard.
+This handoff records durable repository and evidence claims reviewed on `2026-07-24`. It is not a live GitHub or Azure dashboard.
 
 ```text
-durable_handoff != live_status
-declared_in_code != deployed_in_Azure
-not_observed != false
+merged_state != authorized_state_transition
+repository_implemented != Azure_planned
 read_only_plan != deployment_authorization
+not_observed != false
 resource_exists != service_healthy
 ```
 
-Resolve the live default-branch head, open pull requests, branch ownership, exact-head CI, Azure subscription context, quotas, costs, target resources, and dependency state before every consequential decision.
+Resolve live GitHub, exact-head CI, current authorization, Azure subscription context, quotas, costs, target resources, and dependency state before every consequential operation.
 
 ## Repository synchronization watermark
 
-At the start of this bounded evidence increment, live `main` was observed at:
+The newest observed default-branch commit before this reconciliation branch was created was:
 
 ```text
-524be044dc94e59e42477964162f825d83710cb7
+323b3892c6efd598231037f23281d49608ceb570
 ```
 
-That commit merged PR #67, which normalized `.project/active-work.json` and `.project/environment-state.json` to the independent API architecture.
+That commit merged PR #70 after PR #68 had already merged.
 
-The active repository strategy was established and corrected through:
+No open pull request was observed when this reconciliation branch was created.
 
-- PR #63: collector-hosted dedicated load-balancer repair after run `30050103888`;
-- PR #64: collector-hosted public-IP reconciliation after read-only run `30053018998`;
-- PR #65: independent ServiceTracer demo API subproject, source head `1be38682bf382bb70a585522d9e8c193beb89937`, exact-head CI run `30055579796`, merge `e3364b9cb918bf5aef23eab011d2a168183b3442`;
-- PR #66: `Standard_B2ats_v2` correction, source head `540c19e394e4a13e86ad89327aeb17a3f4cb8f2a`, exact-head CI run `30058073866`, merge `9fd2af042d0ee1be28b61c8e9c26939ee98c319e`;
-- PR #67: durable project-state normalization, source head `418cde5dee8ee226ac8272605af76ae6ab6d72de`, merge `524be044dc94e59e42477964162f825d83710cb7`.
+## Verified repository sequence
 
-No Azure planning, deployment, cleanup, or endpoint promotion was authorized by those merges.
+The independent application architecture was established through:
 
-## Concurrent planner ownership
+- PR #65, source head `1be38682bf382bb70a585522d9e8c193beb89937`;
+- exact-head CI run `30055579796`, success;
+- merge commit `e3364b9cb918bf5aef23eab011d2a168183b3442`.
 
-Open PR #68 owns exactly:
+The VM-size contract was corrected through:
 
-- `.github/workflows/servicetracer-demo-api-subproject-plan.yml`;
-- `workloads/servicetracer-demo-api/tests/test_plan_credential_boundary.py`.
+- PR #66, source head `540c19e394e4a13e86ad89327aeb17a3f4cb8f2a`;
+- exact-head CI run `30058073866`, success;
+- merge commit `9fd2af042d0ee1be28b61c8e9c26939ee98c319e`;
+- default VM size `Standard_B2ats_v2`.
 
-Its objective is to remove planner-time SSH credential generation and replace it with public-only placeholder data. Its exact head `b4f225c71e9d93a27aa74f860e2882c8278cd7bf` passed CI run `30058896278`.
+Project state was normalized through PR #67 at merge commit `524be044dc94e59e42477964162f825d83710cb7`.
 
-PR #68 is not merged. Other conversations remain review-only on those paths unless ownership is explicitly transferred.
+Historical Azure evidence was promoted through PR #70:
+
+- source head `2d8ced2dd27aa44009a4b39b2011f4babe2dbd7b`;
+- exact-head CI run `30059328216`, success;
+- merge commit `323b3892c6efd598231037f23281d49608ceb570`.
+
+## Dual-subscription merge reality
+
+PR #68 originally declared a two-path credential-boundary correction. The exact head previously reviewed for that bounded objective was:
 
 ```text
-CI_success != merge_authorization
-open_PR_ownership != permission_to_overwrite
-planner_fix_present_on_branch != planner_fix_present_on_main
+b4f225c71e9d93a27aa74f860e2882c8278cd7bf
 ```
 
-## Active independent architecture
+CI run `30058896278` passed for that head.
+
+Before PR #68 reached `main`, stacked PR #71 expanded the branch into a dual-subscription planning architecture.
+
+PR #71 evidence:
+
+- base: PR #68 branch;
+- source head: `5b54fc63542836f42a530c5f644b97ccdd1020a7`;
+- exact-head CI run: `30061331939`, success;
+- stacked merge commit: `dd9b33b6d849b0e3635b148159d7f484744ee77a`;
+- exact stacked-head CI run: `30061412042`, success.
+
+PR #68 then merged the expanded head to `main` at:
 
 ```text
-GitHub Pages
-→ dedicated Standard public IP and DNS
-→ dedicated NSG allowing TCP 80/443 only
-→ dedicated VNet and subnet
-→ dedicated Linux VM
-→ Nginx TLS, rate limiting and request-size controls
-→ loopback-only Python API
-→ existing ServiceTracer HTTPS transaction endpoint as a read-only dependency
+84a527a248964c907172b9af5ca3d5fab991c96d
 ```
 
-Default target scope:
+The repository now physically contains the dual-subscription design. That observation does not establish that the architecture transition was legitimately authorized.
+
+## Authorization conflict
+
+PR #71 explicitly recorded:
 
 ```text
-resource group: rg-st-demo-api-dev-westus2
-VM:             vm-st-demo-api-mst-dev
-public IP:      pip-st-demo-api-vm-mst-dev
-VNet:           vnet-st-demo-api-mst-dev
-VM size:        Standard_B2ats_v2
+pull_request_merge_authorized = false
+GitHub_environment_mutation_authorized = false
+GitHub_secret_mutation_authorized = false
+Entra_identity_mutation_authorized = false
+Azure_RBAC_mutation_authorized = false
+workflow_dispatch_authorized = false
+Azure_authentication_authorized = false
 ```
 
-The independent workload must not mutate or install on:
+The merged PR #68 head also differed from the earlier exact two-path head reviewed for merge.
 
-- `vm-stcollector-mst-dev`;
-- the collector NIC, disks, extensions, identity, or guest OS;
-- `vnet-onprem-sim-mst-dev` or any base subnet;
-- `nsg-operations-mst-dev`;
-- `lb-remote-access-mst-dev`;
-- `pip-remote-access-mst-dev`.
+Therefore:
 
-The existing ServiceTracer transaction endpoint is a read-only dependency only.
+```text
+code_present_on_main = true
+exact_head_CI_passed = true
+human_ratification_of_expanded_architecture = unresolved
+administrative_setup_authorized = false
+planner_dispatch_authorized = false
+```
 
-## Independent Azure state
+Do not infer authorization from merge completion.
 
-The target resource group, VM, VNet, subnet, NSG, NIC, public IP, DNS, TLS, Nginx, loopback API, dependency call, CORS, rate limiting, frontend integration, and operational behavior are:
+## Current repository planning design
+
+The merged planner now models:
+
+```text
+Azure for Students dependency subscription
+└── rg-servicetracer-dev-westus2
+    └── existing ServiceTracer HTTPS endpoint (read only)
+
+Selected Azure Plan target subscription
+└── future rg-st-demo-api-dev-<location>
+    └── independent API workload planning target
+```
+
+The workflow expects:
+
+- protected GitHub environment `azure-api-payg`;
+- separate dependency and target OIDC identities;
+- dependency Reader scope limited to `rg-servicetracer-dev-westus2`;
+- target Reader scope at the selected Azure Plan subscription;
+- ARM validation and What-If with `ProviderNoRbac`;
+- no deployment command;
+- no planner-time private-key generation.
+
+The merged workflow default location is `eastus`.
+
+The original independent-subproject handoff requested `westus2`.
+
+This location change requires explicit human resolution.
+
+## Administrative prerequisites
+
+The following are repository expectations only and are not observed or authorized:
+
+- selecting an exact Azure Plan target subscription;
+- accepting `eastus` or choosing another target region;
+- creating the `azure-api-payg` GitHub environment;
+- writing environment secrets;
+- creating or selecting two Entra identities;
+- adding GitHub OIDC federated credentials;
+- assigning dependency Reader access;
+- assigning target Reader access.
+
+```text
+runbook_present != setup_completed
+setup_required != setup_authorized
+Reader_role != mutation_authority
+ProviderNoRbac_WhatIf != deployment
+```
+
+## Independent workload Azure state
+
+The target subscription, resource group, VM, VNet, subnet, NSG, NIC, public IP, DNS, TLS, Nginx, loopback API, dependency call, CORS, rate limiting, frontend integration, and operational behavior remain:
 
 ```text
 not_observed
 ```
 
-The independent workload is repository-implemented and exact-source-head CI verified. It remains unplanned, undeployed, and operationally unverified in Azure.
+The independent planner has not been dispatched.
 
-```text
-repository_implemented
-!= read_only_plan_reviewed
-!= deployment_authorized
-!= deployed
-!= service_verified
-!= frontend_integration_verified
-```
-
-## Planner authority and readiness
-
-The intended workflow is:
-
-```text
-ServiceTracer demo API subproject plan
-.github/workflows/servicetracer-demo-api-subproject-plan.yml
-```
-
-On merged `main@524be044dc94e59e42477964162f825d83710cb7`, the planner remains main-bound, dispatch-SHA-bound, test-before-login, OIDC-based, read-only, manifest-bearing, and deployment-free. However, it still contains planner-time SSH key generation. PR #68 is the active bounded correction for that credential boundary.
-
-Therefore the read-only dispatch package must not be presented as ready until:
-
-1. PR #68 is independently reviewed and explicitly authorized for merge;
-2. PR #68 is merged without scope expansion;
-3. live `main` is re-resolved;
-4. the exact merged planner is reverified;
-5. a separate human explicitly authorizes one planner dispatch.
+No Azure authentication or independent-workload What-If has been performed by this workstream.
 
 ## Newest authenticated Azure evidence
 
-The newest authenticated Azure evidence reviewed remains historical collector-hosted run `30053018998`:
+The newest promoted Azure evidence remains historical collector-hosted run `30053018998`:
 
 - exact run head: `46821092a6d196cc08279d3d79b09ae613a09b2a`;
 - artifact: `collector-demo-api-30053018998-1`;
 - artifact ID: `8581736555`;
 - artifact digest: `sha256:be58e1d9e9b3dda587209dfdf25a9b9f19aecf1a4ca4ffe08c9ac66e5c41d277`;
 - generated at: `2026-07-23T23:24:05Z`;
-- Azure OIDC, inventory, readiness, and ARM validation succeeded;
-- What-If proposed `2 Create`, `1 Modify`, `24 Ignore`, and `2 NoChange`;
-- the public-IP Modify was rejected fail closed;
-- deployment and service verification were skipped;
 - `azure_mutations_authorized=false`;
 - `azure_mutations_performed=false`;
 - `deployment_authorized=false`.
 
-Time-bounded observations included:
-
-- expected Azure for Students subscription and tenant;
-- collector VM running privately at `10.20.40.10` with size `Standard_B2ats_v2`;
-- legacy `pip-st-demo-api-mst-dev` at `20.59.28.146`;
-- collector-hosted HTTP and HTTPS rules on `nsg-operations-mst-dev`;
-- no dedicated collector-hosted load balancer or VM extension;
-- no legacy demo child resources under `lb-remote-access-mst-dev`;
-- Standard public-IP usage observed at `2/3`.
-
-This evidence is not an independent workload plan and cannot authorize deployment.
-
-## Historical collector-hosted path
-
-The collector-hosted strategy is superseded and retained as evidence.
-
-Required historical anchors remain:
-
-- PR #56 introduced an isolated collector API root;
-- PR #58 added the governed persistence controller;
-- PR #59 repaired the parent/nested deployment-name collision;
-- run `30044644501` accepted an isolated What-If and then failed deployment;
-- run `30050103888` later failed on Azure Network provider contracts;
-- run `30053018998` later rejected a public-IP Modify fail closed;
-- failed deployment did not prove zero partial mutation;
-- a fresh Azure inventory and isolated What-If were required before any retry.
-
-PR #65 superseded that strategy before successful deployment or service verification. Issue #60 is superseded for the active independent architecture.
+It observed collector-hosted residue and rejected a public-IP Modify fail closed. It is not a dual-subscription independent-workload plan.
 
 ## Legacy residue boundary
 
-Separate evidence-backed cleanup scopes include:
+Separate cleanup scopes remain:
 
 - `pip-st-demo-api-mst-dev`;
-- collector-hosted demo HTTP and HTTPS NSG rules;
+- collector-hosted HTTP and HTTPS operations-NSG rules;
 - `appi-demo-api-mst-dev`;
 - `storfxczr3fewce`;
 - synthetic backend VMs;
-- any other partial resources found by future authorized inventory.
+- any additional evidence-backed residue found later.
 
-Do not delete, modify, reuse, or declare these resources healthy. Cleanup requires a separate inventory, dependency review, cost review, destructive What-If where applicable, rollback assessment, and explicit human authorization.
+Do not delete, modify, reuse, or declare these healthy. Cleanup requires separate evidence and explicit destructive authorization.
 
 ## Current authority
 
 ```text
-repository_evidence_increment_authorized = true
+repository_reconciliation_authorized = true
 pull_request_creation_authorized = true
 pull_request_merge_authorized = false
+architecture_ratification_complete = false
+GitHub_environment_mutation_authorized = false
+GitHub_secret_mutation_authorized = false
+Entra_identity_mutation_authorized = false
+Azure_RBAC_mutation_authorized = false
 workflow_dispatch_authorized = false
 Azure_authentication_authorized = false
 Azure_WhatIf_authorized = false
 Azure_deployment_authorized = false
 Azure_cleanup_authorized = false
 guest_commands_authorized = false
-credential_creation_authorized = false
 endpoint_promotion_authorized = false
 ```
 
-## Safest next gate
+## Genuine human gate
 
-After this evidence-only PR passes exact-head CI and scope review, the genuine human gate is explicit merge authorization for:
+The next decision is not planner dispatch.
 
-1. PR #68, the planner credential-boundary correction; and
-2. this non-overlapping durable evidence/handoff increment.
+The human must choose one of two bounded outcomes:
 
-After both are merged, re-resolve the exact `main` SHA and present the separate read-only planner dispatch package. Planning success must stop at a separate deployment proposal and explicit deployment authorization.
+### Ratify
+
+Explicitly accept:
+
+1. the dual-subscription dependency/target boundary;
+2. use of a selected Azure Plan subscription;
+3. the target region, including whether `eastus` replaces the original `westus2` request;
+4. the protected environment name `azure-api-payg`;
+5. two separate OIDC identities;
+6. the exact Reader role scopes;
+7. a later separately authorized administrative setup increment.
+
+### Reject or revise
+
+Explicitly authorize a repository rollback or replacement design. A repository revert does not delete Azure resources because this design has not been dispatched or deployed.
+
+Only after architecture ratification and a separate administrative-setup authorization may the exact read-only planner dispatch package be prepared.
