@@ -64,6 +64,11 @@ class ServiceTracerDemoApiSubprojectTests(unittest.TestCase):
         self.assertIn("refs/heads/main", source)
         self.assertIn('"$(git rev-parse HEAD)" == "$GITHUB_SHA"', source)
         self.assertNotIn("reviewed_commit", source)
+        self.assertIn("Run subproject tests before Azure login", source)
+        self.assertLess(
+            source.index("Run subproject tests before Azure login"),
+            source.index("Log in to Azure with workload identity federation"),
+        )
         self.assertIn("az deployment sub validate", source)
         self.assertIn("az deployment sub what-if", source)
         self.assertNotIn("az deployment sub create", source)
@@ -71,6 +76,31 @@ class ServiceTracerDemoApiSubprojectTests(unittest.TestCase):
         self.assertNotIn("az resource delete", source)
         self.assertNotIn("az vm run-command", source)
         self.assertIn("azure_mutations_authorized:false", source)
+        self.assertIn("azure_mutations_performed:false", source)
+        self.assertIn("deployment_authorized:false", source)
+
+    def test_planner_evidence_manifest_and_cost_limitations_are_explicit(self):
+        source = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("evidence-manifest.json", source)
+        self.assertIn("artifact-manifest.sha256", source)
+        self.assertIn("servicetracer.demo-api-subproject-plan-evidence.v1", source)
+        self.assertIn("generated_at", source)
+        self.assertIn("artifact_name", source)
+        self.assertIn("cost-limitations.json", source)
+        self.assertIn("invoice_level_cost_observed:false", source)
+        self.assertIn("remaining_student_credit_cad:null", source)
+        self.assertIn("deployment_cost_accepted:false", source)
+
+    def test_planner_rejects_restricted_vm_sku_and_records_target_inventory(self):
+        source = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("(.restrictions // []) | length == 0", source)
+        self.assertIn("existing-target-resource-group.json", source)
+        self.assertIn("existing-target-resources.json", source)
+        self.assertIn("dependency-public-ip.json", source)
+        self.assertIn("provider-compute.json", source)
+        self.assertIn("provider-network.json", source)
+        self.assertIn("compute-usage.json", source)
+        self.assertIn("network-usage.json", source)
 
     def test_installer_uses_shared_application_on_dedicated_host(self):
         source = INSTALLER.read_text(encoding="utf-8")
@@ -147,6 +177,7 @@ class ServiceTracerDemoApiSubprojectTests(unittest.TestCase):
         self.assertEqual(len(result["active_changes"]), 7)
         self.assertEqual(result["base_infrastructure_modifications"], [])
         self.assertFalse(result["deployment_authorized"])
+        self.assertFalse(result["azure_mutations_performed"])
 
     def test_classifier_rejects_dependency_mutation(self):
         payload = self._valid_payload()
