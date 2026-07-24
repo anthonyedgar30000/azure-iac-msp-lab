@@ -1,0 +1,111 @@
+{
+  "schema_version": "project.openai-api-azure-mcp-cloud-shell-plan.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "observed_on": "2026-07-24",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "synchronization_scope": "repository_only_client_selection_and_cloud_shell_preflight_package",
+  "repository_reality": {
+    "default_branch": "main",
+    "main_commit": "df0458a4d0a9075787726a3205c6c7b454cfa15e",
+    "merged_pull_request": 78,
+    "source_head": "cc6d2c2b4a238d22f2ab56f68a0722d3f9f1423a",
+    "exact_head_ci_run_id": 30072601791,
+    "open_pull_requests_observed": [],
+    "local_working_tree_observed": false
+  },
+  "preserved_azure_evidence": {
+    "latest_protected_run_id": 30064289707,
+    "protected_location": "eastus",
+    "protected_vm_size": "Standard_B2ats_v2",
+    "current_repository_location": "westus2",
+    "current_repository_vm_size": "Standard_F1als_v7",
+    "verification_status": "conflicting",
+    "azure_mcp_runtime_state": "not_observed"
+  },
+  "selected_architecture": {
+    "client": "openai_responses_api",
+    "remote_server": "azure_mcp_server",
+    "hosting_service": "azure_container_apps",
+    "deployment_interface": "azure_cloud_shell",
+    "client_to_server_authentication": "entra_oauth",
+    "server_to_azure_authentication": "managed_identity_shared_service_identity",
+    "template_candidate": "azmcp-copilot-studio-aca-mi",
+    "selection_status": "repository_design_selected_runtime_unimplemented"
+  },
+  "cloud_shell_preflight": {
+    "script": "scripts/azure_mcp_cloud_shell_preflight.sh",
+    "runbook": "docs/runbooks/openai-api-azure-mcp-cloud-shell.md",
+    "operations": [
+      "read current Azure account context",
+      "verify an explicitly supplied hosting subscription",
+      "observe provider registration states",
+      "observe target resource-group state without inferring absence on arbitrary failures",
+      "observe existing resource inventory when the resource group exists",
+      "download the official azd template into Cloud Shell storage",
+      "hash the downloaded template inventory",
+      "scan the template for roles, Entra objects, namespaces, scopes, and mutation entry points"
+    ],
+    "azure_mutations_present": false,
+    "deployment_command_present": false,
+    "preflight_execution_authorized": false
+  },
+  "unresolved_inputs": {
+    "hosting_subscription": null,
+    "tenant": null,
+    "location": null,
+    "resource_group": null,
+    "monthly_cost_ceiling_cad": null,
+    "provider_registration_acceptance": null,
+    "template_source_commit": null,
+    "template_inventory_digest": null,
+    "container_image_version": null,
+    "entra_server_application": null,
+    "entra_client_application": null,
+    "managed_identity": null,
+    "effective_rbac_scope": null,
+    "namespace_allowlist": [],
+    "tool_inventory_digest": null,
+    "allowed_tool_names": [],
+    "openai_project": null,
+    "openai_api_key_secret_location": null,
+    "endpoint_url": null
+  },
+  "authority": {
+    "repository_design_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "cloud_shell_preflight_execution_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_resource_creation_authorized": false,
+    "entra_application_mutation_authorized": false,
+    "managed_identity_mutation_authorized": false,
+    "azure_rbac_mutation_authorized": false,
+    "container_apps_mutation_authorized": false,
+    "openai_api_execution_authorized": false,
+    "tool_admission_authorized": false,
+    "cleanup_authorized": false
+  },
+  "next_gate": {
+    "operation": "review_and_merge_package_then_authorize_read_only_cloud_shell_preflight",
+    "required_outputs": [
+      "sanitized account-context.json",
+      "provider-states.json",
+      "resource-group-state.json",
+      "existing-resource-summary.json",
+      "template-files.sha256",
+      "template-risk-scan.txt",
+      "preflight-summary.json"
+    ],
+    "deployment_authorized_after_preflight": false
+  },
+  "canonical_distinctions": [
+    "client_path_selected != client_configured",
+    "cloud_shell_script_present != cloud_shell_script_executed",
+    "template_downloaded != template_approved",
+    "managed_identity_selected != managed_identity_created",
+    "read_only_server_flag != effective_least_privilege",
+    "azure_mcp_endpoint_deployed != openai_client_connected",
+    "not_observed != absent"
+  ],
+  "claim_boundary": "This record selects the OpenAI Responses API and Azure Container Apps architecture and creates a read-only Cloud Shell preflight package. It does not authenticate a new principal, create Azure or Entra resources, assign RBAC, deploy an endpoint, admit tools, call the OpenAI API, or incur authorized cost."
+}
