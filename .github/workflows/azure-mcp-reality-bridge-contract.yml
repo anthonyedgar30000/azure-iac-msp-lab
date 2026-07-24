@@ -1,0 +1,41 @@
+name: Azure MCP reality bridge contract
+
+on:
+  pull_request:
+    paths:
+      - ".project/contracts/azure-mcp-reality-bridge.json"
+      - "docs/architecture/azure-mcp-reality-bridge.md"
+      - "scripts/validate_azure_mcp_reality_bridge.py"
+      - "tests/test_azure_mcp_reality_bridge.py"
+      - ".github/workflows/azure-mcp-reality-bridge-contract.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".project/contracts/azure-mcp-reality-bridge.json"
+      - "docs/architecture/azure-mcp-reality-bridge.md"
+      - "scripts/validate_azure_mcp_reality_bridge.py"
+      - "tests/test_azure_mcp_reality_bridge.py"
+      - ".github/workflows/azure-mcp-reality-bridge-contract.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact workflow commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate governed contract
+        run: python scripts/validate_azure_mcp_reality_bridge.py
+
+      - name: Run contract regression tests
+        run: python -m unittest tests/test_azure_mcp_reality_bridge.py -v
