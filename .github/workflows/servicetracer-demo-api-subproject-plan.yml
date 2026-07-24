@@ -10,9 +10,9 @@ on:
         type: choice
         options: [dev, test]
       location:
-        description: 'Target Azure Plan region'
+        description: 'Approved target Azure Plan region'
         required: true
-        default: eastus
+        default: westus2
         type: string
       prefix:
         description: 'Resource-name prefix'
@@ -35,9 +35,9 @@ on:
         default: https://anthonyedgar30000.github.io
         type: string
       vm_size:
-        description: 'Candidate VM size; cost and quota are planning evidence'
+        description: 'Approved read-only planning candidate; deployment still requires fresh cost and runtime evidence'
         required: true
-        default: Standard_B2ats_v2
+        default: Standard_F1als_v7
         type: string
       maximum_monthly_cost_cad:
         description: 'Human planning ceiling only; no price claim is inferred'
@@ -96,12 +96,12 @@ jobs:
           [[ "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]
           [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
           [[ "$LAB_ENVIRONMENT" =~ ^(dev|test)$ ]]
-          [[ "$LOCATION" =~ ^[a-z0-9]+$ ]]
+          [[ "$LOCATION" == 'westus2' ]]
+          [[ "$VM_SIZE" == 'Standard_F1als_v7' ]]
           [[ "$PREFIX" =~ ^[a-z0-9]{2,12}$ ]]
           [[ "$DEPENDENCY_RESOURCE_GROUP" =~ ^rg-servicetracer-(dev|test)(-[a-z0-9-]+)?$ ]]
           [[ "$DNS_LABEL" =~ ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$ ]]
           [[ "$ALLOWED_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]
-          [[ "$VM_SIZE" =~ ^Standard_[A-Za-z0-9_]+$ ]]
           [[ "$MAXIMUM_MONTHLY_COST_CAD" =~ ^[0-9]+([.][0-9]{1,2})?$ ]]
           for value in "$AZURE_TENANT_ID" "$DEPENDENCY_CLIENT_ID" "$DEPENDENCY_SUBSCRIPTION_ID" "$TARGET_CLIENT_ID" "$TARGET_SUBSCRIPTION_ID"; do
             [[ "$value" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]
@@ -126,7 +126,7 @@ jobs:
             --arg allowed_origin "$ALLOWED_ORIGIN" \
             --arg vm_size "$VM_SIZE" \
             --arg maximum_monthly_cost_cad "$MAXIMUM_MONTHLY_COST_CAD" \
-            '{schema_version:"servicetracer.demo-api-subproject-plan-request.v2",dispatch_sha:$dispatch_sha,ref:$ref,environment:$environment,location:$location,prefix:$prefix,dependency_resource_group:$dependency_resource_group,target_resource_group:$target_resource_group,dns_label:$dns_label,allowed_origin:$allowed_origin,vm_size:$vm_size,maximum_monthly_cost_cad:($maximum_monthly_cost_cad|tonumber),subscription_boundary:"dual_subscription",github_environment:"azure-api-payg",dependency_subscription_read_only:true,target_subscription_planning_only:true,provider_validation_level:"ProviderNoRbac",azure_authentication_authorized:true,credential_creation_authorized:false,azure_mutations_authorized:false,deployment_authorized:false}' \
+            '{schema_version:"servicetracer.demo-api-subproject-plan-request.v3",dispatch_sha:$dispatch_sha,ref:$ref,environment:$environment,location:$location,prefix:$prefix,dependency_resource_group:$dependency_resource_group,target_resource_group:$target_resource_group,dns_label:$dns_label,allowed_origin:$allowed_origin,vm_size:$vm_size,maximum_monthly_cost_cad:($maximum_monthly_cost_cad|tonumber),subscription_boundary:"dual_subscription",github_environment:"azure-api-payg",dependency_subscription_read_only:true,target_subscription_planning_only:true,provider_validation_level:"ProviderNoRbac",azure_authentication_authorized:true,credential_creation_authorized:false,azure_mutations_authorized:false,deployment_authorized:false}' \
             > "$ARTIFACT_DIR/request.json"
 
       - name: Run subproject tests before Azure login
@@ -199,7 +199,6 @@ jobs:
             az resource list --resource-group "$target_resource_group" --output json > "$resources_stdout" 2> "$resources_stderr"
             resource_list_exit_status=$?
             set -e
-
             if (( resource_list_exit_status == 0 )); then
               mv "$resources_stdout" "$ARTIFACT_DIR/existing-target-resources.json"
               jq -n \
@@ -217,8 +216,7 @@ jobs:
                 --argjson resource_list_exit_status "$resource_list_exit_status" \
                 '{status:"observation_failed",resource_group:$resource_group,stage:$stage,group_show_exit_status:$group_show_exit_status,resource_list_exit_status:$resource_list_exit_status,error_code:null,evidence_authoritative:false}' \
                 > "$ARTIFACT_DIR/target-resource-group-state.json"
-              jq -n '{status:"not_observed",resources:null,evidence_authoritative:false}' \
-                > "$ARTIFACT_DIR/existing-target-resources.json"
+              jq -n '{status:"not_observed",resources:null,evidence_authoritative:false}' > "$ARTIFACT_DIR/existing-target-resources.json"
             fi
           elif grep -Eq '(^|[^[:alnum:]_])ResourceGroupNotFound([^[:alnum:]_]|$)' "$group_stderr"; then
             rm -f "$group_stdout"
@@ -248,8 +246,7 @@ jobs:
               --argjson group_show_exit_status "$group_show_exit_status" \
               '{status:"observation_failed",resource_group:$resource_group,stage:$stage,group_show_exit_status:$group_show_exit_status,resource_list_exit_status:null,error_code:null,evidence_authoritative:false}' \
               > "$ARTIFACT_DIR/target-resource-group-state.json"
-            jq -n '{status:"not_observed",resources:null,evidence_authoritative:false}' \
-              > "$ARTIFACT_DIR/existing-target-resources.json"
+            jq -n '{status:"not_observed",resources:null,evidence_authoritative:false}' > "$ARTIFACT_DIR/existing-target-resources.json"
           fi
 
           jq -n \
@@ -303,8 +300,6 @@ jobs:
           backend_transaction_url="https://${backend_ip}/transaction"
           source_repository="https://github.com/${GITHUB_REPOSITORY}.git"
           installer_uri="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_SHA}/workloads/servicetracer-demo-api/scripts/install.sh"
-
-          # Public-only ARM placeholder. No private key exists and no login credential is created.
           admin_ssh_public_key='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFhmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZm servicetracer-plan-placeholder-no-private-key'
 
           jq -n \
@@ -330,8 +325,8 @@ jobs:
             sourceRef="$GITHUB_SHA"
             installerUri="$installer_uri"
           )
-
           deployment_name="servicetracer-demo-api-plan-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+
           az deployment sub validate \
             --name "$deployment_name" \
             --location "$LOCATION" \
@@ -395,7 +390,7 @@ jobs:
             echo "- Target readiness: \`$readiness_status\`"
             echo "- Blocking reasons: \`$readiness_reasons\`"
             echo '- Provider validation level: `ProviderNoRbac`'
-            echo '- Azure authentication authorized: `true` for read-only planning'
+            echo '- Azure authentication authorized: `true` for this read-only planning run'
             echo '- Credential creation authorized: `false`; no credential is created'
             echo '- Azure mutations authorized: `false`'
             echo '- Deployment authorized: `false`'
