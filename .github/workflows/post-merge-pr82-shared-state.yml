@@ -1,0 +1,47 @@
+name: Post-merge PR 82 shared-state reconciliation
+
+on:
+  pull_request:
+    paths:
+      - ".project/current-reality.json"
+      - ".project/reconciliations/post-merge-pr82-shared-state.json"
+      - ".project/handoffs/current-state.md"
+      - ".project/deployment-history.jsonl"
+      - "docs/reviews/post-merge-pr82-shared-state-reconciliation.md"
+      - "scripts/validate_post_merge_pr82_shared_state.py"
+      - "tests/test_post_merge_pr82_shared_state.py"
+      - ".github/workflows/post-merge-pr82-shared-state.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".project/current-reality.json"
+      - ".project/reconciliations/post-merge-pr82-shared-state.json"
+      - ".project/handoffs/current-state.md"
+      - ".project/deployment-history.jsonl"
+      - "docs/reviews/post-merge-pr82-shared-state-reconciliation.md"
+      - "scripts/validate_post_merge_pr82_shared_state.py"
+      - "tests/test_post_merge_pr82_shared_state.py"
+      - ".github/workflows/post-merge-pr82-shared-state.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact workflow commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate shared-state reconciliation
+        run: python scripts/validate_post_merge_pr82_shared_state.py
+
+      - name: Run reconciliation regression tests
+        run: python -m unittest tests/test_post_merge_pr82_shared_state.py -v

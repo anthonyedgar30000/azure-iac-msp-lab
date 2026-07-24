@@ -1,0 +1,157 @@
+{
+  "schema_version": "project.current-reality.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "recorded_on": "2026-07-24",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "repository_state": {
+    "default_branch": "main",
+    "observed_head": "5dfa3b76a9fb975002d9cd702a892a0f678c88c5",
+    "latest_merged_pull_request": 82,
+    "open_pull_requests_observed": [],
+    "local_working_tree": "not_observed",
+    "claim_boundary": "GitHub state was resolved live. No local checkout was available, and this record is not a continuously refreshed dashboard."
+  },
+  "evidence_anchors": {
+    "post_deployment_inventory": ".project/evidence/servicetracer-demo-api-post-deployment-inventory-20260724T163938Z.json",
+    "public_runtime_verification": ".project/evidence/servicetracer-demo-api-live-verification-30086152352.json",
+    "post_deployment_handoff": ".project/handoffs/servicetracer-demo-api-post-deployment-current-state.md",
+    "pr82_source_head": "a85970061879ef4a900564d18e9631630e95b11e",
+    "pr82_merge_commit": "5dfa3b76a9fb975002d9cd702a892a0f678c88c5",
+    "pr82_ci_run_id": 30112308916,
+    "pr82_evidence_workflow_run_id": 30112309167,
+    "pr82_source_vs_merge_file_content_difference_observed": false
+  },
+  "independent_demo_api": {
+    "component": "independent-servicetracer-demo-api",
+    "deployment_provenance": {
+      "status": "verified_time_bounded",
+      "capture_completed_at": "2026-07-24T16:40:36Z",
+      "subscription_name": "Azure subscription 1",
+      "subscription_and_tenant_identifiers": "hashed_only",
+      "resource_group": "rg-st-demo-api-dev-westus2",
+      "location": "westus2",
+      "resource_count": 7,
+      "deployment_name": "servicetracer-demo-api-dev",
+      "deployment_state": "Succeeded",
+      "deployment_timestamp": "2026-07-24T09:28:47.774684+00:00",
+      "deployed_source_ref": "8b3d55c616d8820edd523f77021a35fe24167bd0",
+      "vm_name": "vm-st-demo-api-mst-dev",
+      "vm_size": "Standard_F1als_v7",
+      "vm_power_state": "VM running",
+      "vm_provisioning_state": "Succeeded",
+      "fqdn": "st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com"
+    },
+    "repository_reconciliation": {
+      "deployed_source_ref_differs_from_main": true,
+      "main_ahead_by_commits": 18,
+      "main_behind_by_commits": 0,
+      "workload_source_or_iac_path_changed": false,
+      "interpretation": "Repository governance, workflow, evidence, validation, test, documentation, and handoff changes advanced after deployment. Workload source or IaC content drift was not observed."
+    },
+    "runtime": {
+      "public_observed_at": "2026-07-24T10:26:15Z",
+      "public_endpoint_reachable": true,
+      "tls_verified": true,
+      "health_http_status": 200,
+      "health_status": "healthy",
+      "cors_verified": true,
+      "transaction_protocol_verified": true,
+      "backend_transaction_success_verified": false,
+      "attempts": 2,
+      "successful_attempts": 0,
+      "failed_attempts": 2,
+      "observed_backends": [
+        "VPN-02"
+      ],
+      "backend_http_statuses": [
+        503,
+        503
+      ],
+      "failure_boundary": "radius_response",
+      "exact_root_cause_claimed": false,
+      "full_workload_operationally_verified": false
+    },
+    "security_and_operations": {
+      "vm_identity": "SystemAssigned",
+      "boot_diagnostics_enabled": true,
+      "internet_tcp_80_allowed": true,
+      "internet_tcp_443_allowed": true,
+      "resource_group_lock_count": 0,
+      "supported_resources_queried_for_diagnostic_settings": 6,
+      "supported_resources_with_zero_diagnostic_settings": 6,
+      "metric_alert_count": 0,
+      "action_group_count": 0,
+      "alert_delivery_verified": false,
+      "effective_rbac": "not_observed",
+      "effective_least_privilege_verified": false,
+      "backup": "not_observed",
+      "recovery_tested": false,
+      "actual_cost": "not_observed"
+    },
+    "quota_snapshot": {
+      "captured_at": "2026-07-24T16:40:36Z",
+      "standard_falsv7_family_vcpus": {
+        "current": 1,
+        "limit": 10
+      },
+      "total_regional_vcpus": {
+        "current": 1,
+        "limit": 10
+      },
+      "standard_ipv4_public_ips": {
+        "current": 1,
+        "limit": 20
+      }
+    },
+    "resolved_state": {
+      "repository_implemented": true,
+      "deployed": true,
+      "deployment_verified": true,
+      "control_plane_running": true,
+      "public_api_verified": true,
+      "backend_transaction_success_verified": false,
+      "operationally_verified": false,
+      "claim_boundary": "Deployment and public API health are verified by separate evidence channels. Backend transaction success, guest configuration, effective RBAC, backup, recovery, alert delivery, and actual cost are not verified."
+    }
+  },
+  "historical_planner_evidence": {
+    "run_id": 30064289707,
+    "location": "eastus",
+    "vm_size": "Standard_B2ats_v2",
+    "status": "readiness_rejected_before_arm_validation_and_what_if",
+    "preserved": true,
+    "current_deployment_view": false,
+    "claim_boundary": "The consumed East US planner run remains valid historical evidence for that candidate. It does not negate or describe the later independently observed West US 2 deployment."
+  },
+  "shared_state_resolution": {
+    "active_work_planner_fields": "historical_preserved_not_current_deployment_truth",
+    "environment_state_planner_fields": "historical_preserved_not_current_deployment_truth",
+    "primary_handoff": ".project/handoffs/current-state.md",
+    "canonical_current_view": ".project/current-reality.json",
+    "deployment_history_event": "independent-demo-api-post-deployment-inventory-20260724T163938Z",
+    "canonical_distinctions": [
+      "historical_planner_evidence != current_deployment_state",
+      "declared_in_code != deployed_in_azure",
+      "deployment_succeeded != service_validated",
+      "public_API_healthy != backend_transaction_successful",
+      "resource_exists != securely_configured",
+      "not_observed != absent"
+    ]
+  },
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_mutations_authorized": false,
+    "guest_commands_authorized": false,
+    "transaction_replay_authorized": false,
+    "cleanup_authorized": false
+  },
+  "next_gate": {
+    "operation": "run_corrected_read_only_rbac_backup_and_cost_follow_up",
+    "execution_authorized": false,
+    "claim_boundary": "A separate exact authorization is required before Azure authentication or execution of the corrected read-only collector."
+  }
+}
