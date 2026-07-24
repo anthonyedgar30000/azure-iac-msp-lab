@@ -10,9 +10,9 @@ on:
         type: choice
         options: [dev, test]
       location:
-        description: 'Azure region'
+        description: 'Target Azure Plan region'
         required: true
-        default: westus2
+        default: eastus
         type: string
       prefix:
         description: 'Resource-name prefix'
@@ -65,7 +65,7 @@ jobs:
   plan:
     name: Plan independent ServiceTracer demo API workload
     runs-on: ubuntu-latest
-    environment: azure-lab
+    environment: azure-api-payg
     timeout-minutes: 45
     steps:
       - name: Check out immutable dispatch state
@@ -73,7 +73,7 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      - name: Validate main-bound read-only authority
+      - name: Validate main-bound dual-subscription read-only authority
         env:
           LAB_ENVIRONMENT: ${{ inputs.environment }}
           LOCATION: ${{ inputs.location }}
@@ -84,6 +84,11 @@ jobs:
           VM_SIZE: ${{ inputs.vm_size }}
           MAXIMUM_MONTHLY_COST_CAD: ${{ inputs.maximum_monthly_cost_cad }}
           CONFIRMATION: ${{ inputs.confirmation }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          DEPENDENCY_CLIENT_ID: ${{ secrets.AZURE_DEPENDENCY_CLIENT_ID }}
+          DEPENDENCY_SUBSCRIPTION_ID: ${{ secrets.AZURE_DEPENDENCY_SUBSCRIPTION_ID }}
+          TARGET_CLIENT_ID: ${{ secrets.AZURE_TARGET_CLIENT_ID }}
+          TARGET_SUBSCRIPTION_ID: ${{ secrets.AZURE_TARGET_SUBSCRIPTION_ID }}
         run: |
           set -euo pipefail
           mkdir -p "$ARTIFACT_DIR"
@@ -98,6 +103,11 @@ jobs:
           [[ "$ALLOWED_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]
           [[ "$VM_SIZE" =~ ^Standard_[A-Za-z0-9_]+$ ]]
           [[ "$MAXIMUM_MONTHLY_COST_CAD" =~ ^[0-9]+([.][0-9]{1,2})?$ ]]
+          for value in "$AZURE_TENANT_ID" "$DEPENDENCY_CLIENT_ID" "$DEPENDENCY_SUBSCRIPTION_ID" "$TARGET_CLIENT_ID" "$TARGET_SUBSCRIPTION_ID"; do
+            [[ "$value" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]
+          done
+          [[ "$DEPENDENCY_CLIENT_ID" != "$TARGET_CLIENT_ID" ]]
+          [[ "$DEPENDENCY_SUBSCRIPTION_ID" != "$TARGET_SUBSCRIPTION_ID" ]]
           expected="PLAN-DEMO-API-SUBPROJECT:${LAB_ENVIRONMENT}:${DNS_LABEL}"
           [[ "$CONFIRMATION" == "$expected" ]] || {
             echo "Confirmation must exactly equal: $expected" >&2
@@ -116,46 +126,81 @@ jobs:
             --arg allowed_origin "$ALLOWED_ORIGIN" \
             --arg vm_size "$VM_SIZE" \
             --arg maximum_monthly_cost_cad "$MAXIMUM_MONTHLY_COST_CAD" \
-            '{schema_version:"servicetracer.demo-api-subproject-plan-request.v1",dispatch_sha:$dispatch_sha,ref:$ref,environment:$environment,location:$location,prefix:$prefix,dependency_resource_group:$dependency_resource_group,target_resource_group:$target_resource_group,dns_label:$dns_label,allowed_origin:$allowed_origin,vm_size:$vm_size,maximum_monthly_cost_cad:($maximum_monthly_cost_cad|tonumber),azure_authentication_authorized:true,credential_creation_authorized:false,azure_mutations_authorized:false,deployment_authorized:false}' \
+            '{schema_version:"servicetracer.demo-api-subproject-plan-request.v2",dispatch_sha:$dispatch_sha,ref:$ref,environment:$environment,location:$location,prefix:$prefix,dependency_resource_group:$dependency_resource_group,target_resource_group:$target_resource_group,dns_label:$dns_label,allowed_origin:$allowed_origin,vm_size:$vm_size,maximum_monthly_cost_cad:($maximum_monthly_cost_cad|tonumber),subscription_boundary:"dual_subscription",github_environment:"azure-api-payg",dependency_subscription_read_only:true,target_subscription_planning_only:true,provider_validation_level:"ProviderNoRbac",azure_authentication_authorized:true,credential_creation_authorized:false,azure_mutations_authorized:false,deployment_authorized:false}' \
             > "$ARTIFACT_DIR/request.json"
 
       - name: Run subproject tests before Azure login
         run: python -m unittest discover -s workloads/servicetracer-demo-api/tests -v
 
-      - name: Log in to Azure with workload identity federation
+      - name: Log in to dependency subscription with workload identity federation
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          client-id: ${{ secrets.AZURE_DEPENDENCY_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          subscription-id: ${{ secrets.AZURE_DEPENDENCY_SUBSCRIPTION_ID }}
 
-      - name: Capture dependency, provider, quota, and target state
+      - name: Capture read-only ServiceTracer dependency state
         env:
           LAB_ENVIRONMENT: ${{ inputs.environment }}
-          LOCATION: ${{ inputs.location }}
           PREFIX: ${{ inputs.prefix }}
           DEPENDENCY_RESOURCE_GROUP: ${{ inputs.dependency_resource_group }}
-          VM_SIZE: ${{ inputs.vm_size }}
+          DEPENDENCY_SUBSCRIPTION_ID: ${{ secrets.AZURE_DEPENDENCY_SUBSCRIPTION_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         run: |
           set -euo pipefail
           suffix="${PREFIX}-${LAB_ENVIRONMENT}"
-          target_resource_group="rg-st-demo-api-${LAB_ENVIRONMENT}-${LOCATION}"
-          az account show --query '{subscriptionId:id,subscriptionName:name,tenantId:tenantId,user:user}' --output json > "$ARTIFACT_DIR/azure-context.json"
-          az provider show --namespace Microsoft.Compute --query '{namespace:namespace,registrationState:registrationState}' --output json > "$ARTIFACT_DIR/provider-compute.json"
-          az provider show --namespace Microsoft.Network --query '{namespace:namespace,registrationState:registrationState}' --output json > "$ARTIFACT_DIR/provider-network.json"
-          jq -e '.registrationState=="Registered"' "$ARTIFACT_DIR/provider-compute.json" > /dev/null
-          jq -e '.registrationState=="Registered"' "$ARTIFACT_DIR/provider-network.json" > /dev/null
-          az vm list-usage --location "$LOCATION" --output json > "$ARTIFACT_DIR/compute-usage.json"
-          az network list-usages --location "$LOCATION" --output json > "$ARTIFACT_DIR/network-usage.json"
-          az vm list-skus --location "$LOCATION" --size "$VM_SIZE" --all --output json > "$ARTIFACT_DIR/vm-size-availability.json"
-          jq -e 'length > 0' "$ARTIFACT_DIR/vm-size-availability.json" > /dev/null
-
+          az account show --query '{subscriptionId:id,subscriptionName:name,tenantId:tenantId,state:state,user:user}' --output json > "$ARTIFACT_DIR/dependency-azure-context.json"
+          jq -e --arg subscription "$DEPENDENCY_SUBSCRIPTION_ID" --arg tenant "$AZURE_TENANT_ID" '.subscriptionId==$subscription and .tenantId==$tenant and .state=="Enabled"' "$ARTIFACT_DIR/dependency-azure-context.json" > /dev/null
           az group show --name "$DEPENDENCY_RESOURCE_GROUP" --output json > "$ARTIFACT_DIR/dependency-resource-group.json"
           az network public-ip show \
             --resource-group "$DEPENDENCY_RESOURCE_GROUP" \
             --name "pip-remote-access-${suffix}" \
             --output json > "$ARTIFACT_DIR/dependency-public-ip.json"
           jq -e '.provisioningState=="Succeeded" and .ipAddress!=null and .ipAddress!=""' "$ARTIFACT_DIR/dependency-public-ip.json" > /dev/null
+
+      - name: Log in to target Azure Plan subscription with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_TARGET_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_TARGET_SUBSCRIPTION_ID }}
+
+      - name: Capture target provider, policy, quota, SKU, and resource state
+        env:
+          LAB_ENVIRONMENT: ${{ inputs.environment }}
+          LOCATION: ${{ inputs.location }}
+          VM_SIZE: ${{ inputs.vm_size }}
+          TARGET_SUBSCRIPTION_ID: ${{ secrets.AZURE_TARGET_SUBSCRIPTION_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: |
+          set -euo pipefail
+          target_resource_group="rg-st-demo-api-${LAB_ENVIRONMENT}-${LOCATION}"
+          az account show --query '{subscriptionId:id,subscriptionName:name,tenantId:tenantId,state:state,user:user}' --output json > "$ARTIFACT_DIR/target-azure-context.json"
+          jq -e --arg subscription "$TARGET_SUBSCRIPTION_ID" --arg tenant "$AZURE_TENANT_ID" '.subscriptionId==$subscription and .tenantId==$tenant and .state=="Enabled"' "$ARTIFACT_DIR/target-azure-context.json" > /dev/null
+          az provider show --namespace Microsoft.Compute --query '{namespace:namespace,registrationState:registrationState}' --output json > "$ARTIFACT_DIR/provider-compute.json"
+          az provider show --namespace Microsoft.Network --query '{namespace:namespace,registrationState:registrationState}' --output json > "$ARTIFACT_DIR/provider-network.json"
+          jq -e '.registrationState=="Registered"' "$ARTIFACT_DIR/provider-compute.json" > /dev/null
+          jq -e '.registrationState=="Registered"' "$ARTIFACT_DIR/provider-network.json" > /dev/null
+          az policy assignment list --disable-scope-strict-match true --output json > "$ARTIFACT_DIR/target-policy-assignments.json"
+          az vm list-usage --location "$LOCATION" --output json > "$ARTIFACT_DIR/compute-usage.json"
+          az network list-usages --location "$LOCATION" --output json > "$ARTIFACT_DIR/network-usage.json"
+          az vm list-skus --location "$LOCATION" --size "$VM_SIZE" --all --output json > "$ARTIFACT_DIR/vm-size-availability.json"
+
+          jq -n \
+            --arg vm_size "$VM_SIZE" \
+            --slurpfile sku "$ARTIFACT_DIR/vm-size-availability.json" \
+            '{vm_size:$vm_size,matching_records:([$sku[0][] | select(.name==$vm_size)] | length),unrestricted_records:([$sku[0][] | select(.name==$vm_size and ((.restrictions // []) | length)==0)] | length),restrictions:[$sku[0][] | select(.name==$vm_size) | (.restrictions // [])[]?]}' \
+            > "$ARTIFACT_DIR/vm-size-assessment.json"
+          jq -e '.matching_records>0 and .unrestricted_records>0' "$ARTIFACT_DIR/vm-size-assessment.json" > /dev/null
+
+          required_cores="$(jq -r --arg vm_size "$VM_SIZE" '[.[] | select(.name==$vm_size) | .capabilities[]? | select(.name=="vCPUs") | .value] | first // empty' "$ARTIFACT_DIR/vm-size-availability.json")"
+          [[ "$required_cores" =~ ^[0-9]+$ ]]
+          jq -n \
+            --argjson required_cores "$required_cores" \
+            --slurpfile usage "$ARTIFACT_DIR/compute-usage.json" \
+            '{required_cores:$required_cores,total_regional_cores:([$usage[0][] | select(.name.value=="cores")][0] // null)} | . + {sufficient:(.total_regional_cores!=null and ((.total_regional_cores.currentValue + .required_cores) <= .total_regional_cores.limit))}' \
+            > "$ARTIFACT_DIR/compute-quota-assessment.json"
+          jq -e '.sufficient==true' "$ARTIFACT_DIR/compute-quota-assessment.json" > /dev/null
 
           if az group show --name "$target_resource_group" --output json > "$ARTIFACT_DIR/existing-target-resource-group.json" 2>/dev/null; then
             jq -n '{status:"observed_existing"}' > "$ARTIFACT_DIR/target-resource-group-state.json"
@@ -166,7 +211,7 @@ jobs:
             printf '[]\n' > "$ARTIFACT_DIR/existing-target-resources.json"
           fi
 
-      - name: Validate and capture subscription What-If
+      - name: Validate and capture target-subscription What-If
         env:
           LAB_ENVIRONMENT: ${{ inputs.environment }}
           LOCATION: ${{ inputs.location }}
@@ -175,8 +220,10 @@ jobs:
           DNS_LABEL: ${{ inputs.dns_label }}
           ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
           VM_SIZE: ${{ inputs.vm_size }}
+          TARGET_SUBSCRIPTION_ID: ${{ secrets.AZURE_TARGET_SUBSCRIPTION_ID }}
         run: |
           set -euo pipefail
+          jq -e --arg subscription "$TARGET_SUBSCRIPTION_ID" '.subscriptionId==$subscription' "$ARTIFACT_DIR/target-azure-context.json" > /dev/null
           suffix="${PREFIX}-${LAB_ENVIRONMENT}"
           target_resource_group="rg-st-demo-api-${LAB_ENVIRONMENT}-${LOCATION}"
           backend_ip="$(jq -r '.ipAddress' "$ARTIFACT_DIR/dependency-public-ip.json")"
@@ -194,7 +241,7 @@ jobs:
             --arg source_repository "$source_repository" \
             --arg source_ref "$GITHUB_SHA" \
             --arg installer_uri "$installer_uri" \
-            '{target_resource_group:$target_resource_group,dependency_resource_group:$dependency_resource_group,backend_transaction_url:$backend_transaction_url,source_repository:$source_repository,source_ref:$source_ref,installer_uri:$installer_uri,credential_creation_authorized:false}' \
+            '{target_resource_group:$target_resource_group,dependency_resource_group:$dependency_resource_group,backend_transaction_url:$backend_transaction_url,source_repository:$source_repository,source_ref:$source_ref,installer_uri:$installer_uri,subscription_boundary:"dual_subscription",provider_validation_level:"ProviderNoRbac",dependency_subscription_read_only:true,target_subscription_planning_only:true,credential_creation_authorized:false}' \
             > "$ARTIFACT_DIR/effective-parameters.json"
 
           parameters=(
@@ -217,6 +264,7 @@ jobs:
             --location "$LOCATION" \
             --template-file workloads/servicetracer-demo-api/infra/main.bicep \
             --parameters "${parameters[@]}" \
+            --validation-level ProviderNoRbac \
             --output json > "$ARTIFACT_DIR/arm-validation.json"
 
           az deployment sub what-if \
@@ -224,6 +272,7 @@ jobs:
             --location "$LOCATION" \
             --template-file workloads/servicetracer-demo-api/infra/main.bicep \
             --parameters "${parameters[@]}" \
+            --validation-level ProviderNoRbac \
             --no-pretty-print \
             --result-format FullResourcePayloads \
             --output json > "$ARTIFACT_DIR/arm-what-if.json"
@@ -255,14 +304,20 @@ jobs:
           DNS_LABEL: ${{ inputs.dns_label }}
           VM_SIZE: ${{ inputs.vm_size }}
         run: |
+          dependency_name="$(jq -r '.subscriptionName // "not-observed"' "$ARTIFACT_DIR/dependency-azure-context.json" 2>/dev/null || echo not-observed)"
+          target_name="$(jq -r '.subscriptionName // "not-observed"' "$ARTIFACT_DIR/target-azure-context.json" 2>/dev/null || echo not-observed)"
           {
             echo '## ServiceTracer demo API independent workload plan'
             echo
             echo "- Dispatch SHA: \`$GITHUB_SHA\`"
             echo "- Ref: \`$GITHUB_REF\`"
+            echo "- GitHub environment: \`azure-api-payg\`"
+            echo "- Dependency subscription: \`$dependency_name\` (read-only source)"
+            echo "- Target subscription: \`$target_name\` (read-only planning target)"
             echo "- Target resource group: \`rg-st-demo-api-${LAB_ENVIRONMENT}-${LOCATION}\`"
             echo "- DNS label: \`$DNS_LABEL\`"
             echo "- VM size: \`$VM_SIZE\`"
+            echo '- Provider validation level: `ProviderNoRbac`'
             echo '- Azure authentication authorized: `true` for read-only planning'
             echo '- Credential creation authorized: `false`; no credential is created'
             echo '- Azure mutations authorized: `false`'

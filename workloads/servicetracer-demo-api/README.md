@@ -15,7 +15,34 @@ backend_dependency != mutation_authority
 what_if_accepted != deployment_authorized
 ```
 
-## Intended architecture
+## Dual-subscription architecture
+
+The active planning design separates the existing dependency from the future API deployment target:
+
+```text
+Azure for Students dependency subscription
+└── rg-servicetracer-dev-westus2
+    └── existing ServiceTracer HTTPS endpoint (read only)
+
+Dedicated Azure Plan target subscription
+└── rg-st-demo-api-dev-<region>
+    ├── vnet-st-demo-api-mst-dev
+    ├── nsg-st-demo-api-mst-dev
+    ├── pip-st-demo-api-vm-mst-dev
+    ├── nic-st-demo-api-mst-dev
+    └── vm-st-demo-api-mst-dev
+```
+
+```text
+dependency_subscription != target_subscription
+billing_plan != deployment_context
+Reader_assignment != mutation_authority
+ProviderNoRbac_what_if != deployment
+```
+
+The planner uses the isolated GitHub environment `azure-api-payg`, not the shared `azure-lab` environment.
+
+## Intended application path
 
 ```text
 GitHub Pages
@@ -27,18 +54,6 @@ GitHub Pages
 → loopback-only Python API on 127.0.0.1:8090
 → configured ServiceTracer HTTPS transaction dependency
 → synthetic VPN-01 / VPN-02 backends
-```
-
-Default resource scope:
-
-```text
-subscription
-└── rg-st-demo-api-dev-westus2
-    ├── vnet-st-demo-api-mst-dev
-    ├── nsg-st-demo-api-mst-dev
-    ├── pip-st-demo-api-vm-mst-dev
-    ├── nic-st-demo-api-mst-dev
-    └── vm-st-demo-api-mst-dev
 ```
 
 ## Canonical boundary
@@ -68,13 +83,20 @@ observed_working_size != guaranteed_current_availability
 configured_default != quota_reserved
 ```
 
-The planner must still refresh SKU availability, regional quota, cost, and remaining student credit before deployment authorization.
+The planner refreshes target-subscription SKU restrictions and Total Regional vCPU quota before ARM What-If. It fails closed when no unrestricted SKU record exists or the target region cannot accommodate the required cores.
 
 ## Identity and permissions
 
-The VM receives a system-assigned managed identity but no Azure role assignment in the initial workload. Deployment uses GitHub OIDC through the protected `azure-lab` environment. The planning workflow has Azure read, ARM validation, and What-If authority only.
+The VM receives a system-assigned managed identity but no Azure role assignment in the initial workload.
 
-The VM has no inbound SSH rule. Administration must use a separately governed Azure control-plane method. A generated public key remains required by the Linux provisioning contract, but possession of that key does not create a network path.
+The read-only planner uses two separate OIDC identities in the protected `azure-api-payg` GitHub environment:
+
+- dependency identity: Reader on `rg-servicetracer-dev-westus2` in the dependency subscription;
+- target identity: Reader on the selected Azure Plan subscription.
+
+ARM validation and What-If use `ProviderNoRbac`, so the planner checks provider-backed resource validity with read permissions instead of granting the planning identities deployment permissions.
+
+The VM has no inbound SSH rule. Administration must use a separately governed Azure control-plane method. The planner supplies a public-only ARM placeholder and creates no usable private credential.
 
 ## Network and security controls
 
@@ -88,13 +110,16 @@ The VM has no inbound SSH rule. Administration must use a separately governed Az
 - The API backend URL is deployment configuration, not caller input.
 - The service runs as an unprivileged system account with systemd hardening.
 
-## Cost and quota implications
+## Cost, policy, and quota implications
 
-The workload adds one Linux VM, one managed OS disk, one Standard public IP, and outbound data usage. Exact West US 2 CAD cost, remaining Azure for Students credit, VM-family quota, SKU availability, and public-IP quota must be refreshed in the planning artifact before deployment authorization.
+The workload adds one Linux VM, one managed OS disk, one Standard public IP, and outbound data usage in the selected Azure Plan subscription.
+
+The planner captures target subscription state, inherited policy assignments, providers, regional compute usage, network usage, SKU restrictions, target inventory, and ARM What-If evidence. The human `maximum_monthly_cost_cad` input is a planning ceiling only; it is not a computed price or spending limit.
 
 ```text
 estimated_cost != actual_cost
 quota_observed != quota_reserved
+Azure_Plan != unlimited_quota
 ```
 
 ## Deployment method
@@ -105,9 +130,13 @@ The only active workflow for this workload is:
 .github/workflows/servicetracer-demo-api-subproject-plan.yml
 ```
 
-It runs only from `refs/heads/main`, checks out the immutable dispatch SHA from `github.sha`, captures Azure context and quota, validates the subscription-scope Bicep, runs an exact What-If, classifies the result, uploads evidence, and stops.
+It runs only from `refs/heads/main`, checks out the immutable dispatch SHA from `github.sha`, validates the dual-subscription secret contract, runs tests before Azure login, reads the dependency subscription, switches to a separate target identity, captures target evidence, validates the subscription-scope Bicep with `ProviderNoRbac`, runs an exact What-If, classifies the result, uploads evidence, and stops.
 
-The workflow deliberately has no user-entered commit field. No deploy workflow is authorized by this increment.
+The workflow deliberately has no user-entered commit field and no deployment command. GitHub environment creation, secret population, federated credentials, and RBAC are manual prerequisites documented in:
+
+```text
+docs/runbooks/servicetracer-demo-api-payg-subscription-boundary.md
+```
 
 ## Validation commands
 
@@ -118,7 +147,7 @@ az bicep build --file workloads/servicetracer-demo-api/infra/main.bicep
 bash -n workloads/servicetracer-demo-api/scripts/install.sh
 ```
 
-An accepted plan must create only the dedicated resource group and its declared resources. Any Modify, Delete, Replace, dependency-resource mutation, collector reference, or unrelated resource type is blocking.
+An accepted plan must create only the dedicated target resource group and its declared resources. Any Modify, Delete, Replace, dependency-resource mutation, collector reference, unrelated resource type, unavailable SKU, or insufficient target regional-core quota is blocking.
 
 ## Failure, rollback, and cleanup
 
@@ -126,4 +155,4 @@ Planning failures perform no Azure mutation. Repository rollback is a PR revert.
 
 A later failed deployment must capture subscription and resource-group deployment operations plus target inventory. It must not infer zero partial mutation from a failed command.
 
-Cleanup is a separate destructive decision. Delete only the dedicated workload resource group after consumer checks, endpoint withdrawal, cost capture, and deletion verification. Cleanup of legacy collector-hosted or Microsoft.Web residue remains outside this subproject.
+Cleanup is a separate destructive decision. Delete only the dedicated workload resource group after consumer checks, endpoint withdrawal, cost capture, and deletion verification. Cleanup of legacy collector-hosted, Microsoft.Web, or synthetic-backend residue remains outside this subproject.
