@@ -1,1 +1,119 @@
-{"schema_version":"project.environment-state.v1","project":"ServiceTracer — Governed Azure Operations Lab","updated_on":"2026-07-23","facts":[{"fact_id":"operations-collector-control-plane","value":"vm-stcollector-mst-dev is a running private Azure VM at 10.20.40.10 using Standard_B2ats_v2 and no public IP","status":"azure_control_plane_observed_time_bounded","last_observed_on":"2026-07-23T20:06:49Z","source":"Collector-hosted demo API run 30040676542, artifact 8577095554","notes":"Control-plane observation only. Current guest health, ServiceTracer version, evidence readability, and publisher availability were not reverified."},{"fact_id":"operations-collector-guest-runtime","value":"ServiceTracer 0.4.0 after manual Python and certificate repairs","status":"historical_operational_verification_guest_reverification_pending","last_observed_on":"2026-07-20","source":"Manual collector verification recorded in repository documentation","notes":"Later read-only runs did not execute guest commands. Do not present this as a current runtime fact."},{"fact_id":"collector-immutable-image-blocker","value":"Deployed Canonical Ubuntu 22.04 Jammy differs from desired Canonical Ubuntu 24.04","status":"azure_control_plane_observed_replacement_required","last_observed_on":"2026-07-21","source":"Collector replacement plan run 29856203054","notes":"Ordinary collector-owning deployment remains blocked. The isolated collector API root references the existing VM and does not replace it."},{"fact_id":"collector-evidence-disk-preservation","value":"32 GiB Standard SSD evidence disk uses detach-on-delete and denies public network access","status":"azure_control_plane_observed_preservation_required","last_observed_on":"2026-07-21","source":"Collector replacement plan run 29856203054","notes":"A current verified recovery point and guest readability check are still required before replacement."},{"fact_id":"collector-nic-replacement-risk","value":"Static-address collector NIC is associated with VM deleteOption Delete","status":"azure_control_plane_observed_execution_blocker","last_observed_on":"2026-07-21","source":"Collector replacement plan run 29856203054","notes":"Replacement requires preservation or deterministic recreation and verification."},{"fact_id":"collector-identity-and-rbac","value":"Collector has a system-assigned managed identity; no visible publication role assignments were observed","status":"azure_control_plane_observed_time_bounded","last_observed_on":"2026-07-21","source":"Collector replacement plan run 29856203054","notes":"Effective current permissions and identity-dependent publication remain unverified."},{"fact_id":"collector-os-disk-network-policy","value":"Current disposable OS disk allows public network access with AllowAll network access policy","status":"azure_control_plane_observed_hardening_required","last_observed_on":"2026-07-21","source":"Collector replacement plan run 29856203054","notes":"The replacement design should disable public disk access unless an approved exception exists."},{"fact_id":"azure-probe-scope-backends","value":"Two private Ubuntu VPN backend VMs exist behind the Standard Public Load Balancer","status":"azure_control_plane_observed_service_unverified","last_observed_on":"2026-07-23","source":"Demo backend API run 30029515018 attempts 1 and 2","notes":"VM existence is observed. Listener health, load-balancer membership, synthetic transaction behavior, and operational readiness remain unverified."},{"fact_id":"legacy-app-service-demo-partial-resources","value":"Application Insights appi-demo-api-mst-dev and storage account storfxczr3fewce were observed after the failed Microsoft.Web deployment","status":"partial_azure_mutation_observed_cleanup_pending_separate_authority","last_observed_on":"2026-07-23","source":"Demo backend API run 30029515018 attempts 1 and 2","notes":"The Function plan and Function App were not established. No cleanup is authorized by this record."},{"fact_id":"legacy-app-service-demo-cost","value":"Two Standard_B2ats_v2 backend VMs had a bounded 730-hour CAD retail estimate of approximately 19.42 in the captured planning evidence","status":"historical_retail_estimate_not_actual_cost","last_observed_on":"2026-07-23","source":"Demo backend API run 30029515018 attempt 1 planning artifact","notes":"This is not an invoice, student-credit balance, negotiated price, or current meter verification. Existing resources may continue to incur cost."},{"fact_id":"collector-public-ip-quota-headroom","value":"Public IP Addresses usage 1 of limit 3 in West US 2; remaining headroom 2","status":"azure_control_plane_observed_time_bounded","last_observed_on":"2026-07-23T21:05:01Z","source":"Collector-hosted demo API deploy run 30044644501, artifact 8578652891","notes":"Quota was sufficient for one new public IP before the failed deployment attempt. Refresh before any retry."},{"fact_id":"collector-demo-api-readiness","value":"Collector, dependency, quota, and lock readiness passed","status":"azure_readiness_observed_time_bounded","last_observed_on":"2026-07-23T21:05:01Z","source":"Collector-hosted demo API deploy run 30044644501","notes":"Readiness passed and the isolated What-If was accepted. Readiness did not guarantee successful ARM deployment."},{"fact_id":"collector-demo-api-broad-what-if","value":"Broad template predicted 9 Create, 13 Modify, 11 Ignore, and 5 NoChange results including protected collector, disk, NIC, network, load-balancer, and public-IP modifications","status":"arm_what_if_observed_rejected_fail_closed","last_observed_on":"2026-07-23T20:06:49Z","source":"Collector-hosted demo API run 30040676542, artifact 8577095554","notes":"Deployment and service verification were skipped. PR #56 replaced the broad root with an isolated collector API template."},{"fact_id":"collector-demo-api-isolated-deployment-root","value":"infra/collector-demo-api.bicep references existing base resources; PR #59 also gives the nested module a name distinct from the parent CLI deployment","status":"repository_implemented_exact_head_ci_verified_requires_fresh_azure_plan","last_observed_on":"2026-07-23","source":"Merged PRs #56 and #59","notes":"The isolated What-If was accepted before the name repair. Because the template changed afterward, a fresh exact-commit What-If is required."},{"fact_id":"collector-demo-api-public-endpoint","value":"Dedicated public IP was absent before deploy run 30044644501; post-failure target-resource state is not proven","status":"pre_deployment_absence_observed_post_failure_state_unknown","last_observed_on":"2026-07-23T21:05:01Z","source":"Collector-hosted demo API deploy run 30044644501","notes":"The deployment command failed and produced no result JSON. Do not infer either successful creation or zero partial mutation."},{"fact_id":"collector-demo-api-service-validation","value":"Not established","status":"fresh_what_if_then_separate_deploy_and_verify_required","last_observed_on":"2026-07-23","source":"Run 30044644501 followed by merged PR #59","notes":"The isolated What-If was accepted, deployment failed on a name collision, and service verification was skipped. PR #59 repairs the collision; a fresh plan is required before any separately authorized retry."},{"fact_id":"frontend-live-demo-api-configuration","value":"No live demo API endpoint is committed; the controlled fixture remains the default source","status":"repository_configuration_aligned_with_deployment_evidence","last_observed_on":"2026-07-23","source":"Full reality synchronization increment","notes":"The previously committed undeployed endpoint was removed. A verified URL may be tested through the query-string override before a later repository promotion."},{"fact_id":"public-report-publication","value":"Read-only four-create publication plan exists; Storage, RBAC, managed-identity publication, Blob response, and browser rendering are not deployed or verified","status":"planned_read_only_not_deployed","last_observed_on":"2026-07-23","source":"Existing collector report publication planner run 29979955391","notes":"Current price, policy, effective role-assignment write permission, publisher availability, and endpoint behavior remain gates."},{"fact_id":"collector-recovery-and-rollback","value":"Recovery evidence schemas and rollback design are implemented, but snapshots, isolated boot rehearsal, rollback, and recovery are not operationally tested","status":"repository_design_only_execution_unauthorized","last_observed_on":"2026-07-23","source":"Merged collector recovery and replacement design pull requests","notes":"High availability is not disaster recovery; backup configuration is not recovery proof."},{"fact_id":"actual-cost-and-credit","value":"Current invoice-level cost, remaining Azure for Students credit, and complete resource-level cost allocation are not observable from the available artifacts","status":"not_observed","last_observed_on":"2026-07-23","source":"Full evidence review","notes":"Do not infer zero cost from student credit or use historical retail estimates as actual cost."},{"fact_id":"collector-demo-api-isolated-what-if","value":"Nine isolated collector API Create changes were accepted with no protected base-infrastructure modifications classified","status":"arm_what_if_observed_accepted_time_bounded","last_observed_on":"2026-07-23T21:05:01Z","source":"Collector-hosted demo API deploy run 30044644501, artifact 8578652891","notes":"The accepted plan applied to commit d519991f... before PR #59 changed the nested deployment name. It cannot authorize a retry against the repaired commit."},{"fact_id":"collector-demo-api-deployment-attempt","value":"Deployment attempted after accepted isolated What-If and failed because parent and nested ARM deployments shared collector-demo-api-dev","status":"deployment_failed_post_failure_mutation_state_unproven","last_observed_on":"2026-07-23T21:05:01Z","source":"Collector-hosted demo API deploy run 30044644501 and merged PR #59","notes":"deployment-result.json was empty and service verification was skipped. PR #59 repairs the name collision in code only. Fresh Azure reconciliation and What-If are required before a retry."}]}
+{
+  "schema_version": "project.environment-state.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "updated_on": "2026-07-24",
+  "facts": [
+    {
+      "fact_id": "operations-collector-control-plane",
+      "value": "vm-stcollector-mst-dev was observed running privately at 10.20.40.10 with no public IP",
+      "status": "azure_control_plane_observed_time_bounded",
+      "last_observed_on": "2026-07-23T23:24:05Z",
+      "source": "Collector-hosted demo API What-If run 30053018998",
+      "notes": "Control-plane observation only. Current guest health, ServiceTracer version, evidence readability, and publisher availability remain unverified."
+    },
+    {
+      "fact_id": "azure-probe-scope-backends",
+      "value": "Two private synthetic backend VMs were previously observed behind the existing remote-access path",
+      "status": "azure_control_plane_observed_service_unverified",
+      "last_observed_on": "2026-07-23",
+      "source": "Demo backend API run 30029515018",
+      "notes": "VM existence does not prove listeners, load-balancer membership, health, or transaction behavior."
+    },
+    {
+      "fact_id": "legacy-app-service-demo-partial-resources",
+      "value": "Application Insights appi-demo-api-mst-dev and storage account storfxczr3fewce were observed after the failed Microsoft.Web deployment",
+      "status": "partial_azure_mutation_observed_cleanup_pending_separate_authority",
+      "last_observed_on": "2026-07-23",
+      "source": "Demo backend API run 30029515018",
+      "notes": "Function plan and Function App were not established. Cleanup remains unauthorized."
+    },
+    {
+      "fact_id": "collector-demo-api-broad-what-if",
+      "value": "The broad collector-hosted template predicted protected base-infrastructure modifications",
+      "status": "arm_what_if_observed_rejected_fail_closed",
+      "last_observed_on": "2026-07-23T20:06:49Z",
+      "source": "Collector-hosted demo API run 30040676542",
+      "notes": "The unsafe broad plan was rejected. This remains historical evidence."
+    },
+    {
+      "fact_id": "collector-demo-api-isolated-deployment-root",
+      "value": "The historical collector-hosted path gained an isolated Bicep root and later dedicated load-balancer repairs",
+      "status": "repository_implemented_historical_strategy_superseded",
+      "last_observed_on": "2026-07-24",
+      "source": "Merged PRs #56, #59, #63, and #64",
+      "notes": "Repository repairs did not establish successful Azure deployment or service health. PR #65 superseded this strategy with an independent workload."
+    },
+    {
+      "fact_id": "collector-demo-api-public-endpoint",
+      "value": "Partial collector-hosted public-IP and NSG state was observed after failed deployment attempts",
+      "status": "partial_azure_state_observed_historical_strategy",
+      "last_observed_on": "2026-07-23T23:24:05Z",
+      "source": "Collector-hosted demo API What-If run 30053018998",
+      "notes": "This residue is not the independent workload endpoint and is not authorized for cleanup by this record."
+    },
+    {
+      "fact_id": "collector-demo-api-isolated-what-if",
+      "value": "Nine isolated collector-hosted Create changes were accepted before the deployment-name failure",
+      "status": "arm_what_if_observed_accepted_time_bounded_historical",
+      "last_observed_on": "2026-07-23T21:05:01Z",
+      "source": "Collector-hosted demo API deploy run 30044644501",
+      "notes": "The accepted plan applied to the historical collector-hosted strategy and cannot authorize the independent workload."
+    },
+    {
+      "fact_id": "collector-demo-api-deployment-attempt",
+      "value": "The historical collector-hosted deployment failed after an accepted isolated What-If",
+      "status": "deployment_failed_post_failure_mutation_state_unproven",
+      "last_observed_on": "2026-07-23T21:05:01Z",
+      "source": "Collector-hosted demo API deploy run 30044644501",
+      "notes": "A failed command does not prove zero partial mutation. Service verification was skipped."
+    },
+    {
+      "fact_id": "frontend-live-demo-api-configuration",
+      "value": "No verified live demo API endpoint is committed",
+      "status": "repository_configuration_aligned_with_unverified_deployment",
+      "last_observed_on": "2026-07-24",
+      "source": "Repository reality synchronization through PR #66",
+      "notes": "The controlled fixture remains the default until deployment and browser verification are established."
+    },
+    {
+      "fact_id": "actual-cost-and-credit",
+      "value": "Current invoice-level cost, remaining Azure for Students credit, and complete resource-level cost allocation are not observed",
+      "status": "not_observed",
+      "last_observed_on": "2026-07-24",
+      "source": "Repository and workflow evidence review",
+      "notes": "Do not infer zero cost from student credit or historical retail estimates."
+    },
+    {
+      "fact_id": "independent-demo-api-repository-architecture",
+      "value": "The active repository strategy is an independent ServiceTracer demo API workload in rg-st-demo-api-dev-westus2",
+      "status": "repository_implemented_exact_head_ci_verified_Azure_state_not_observed",
+      "last_observed_on": "2026-07-24",
+      "source": "PR #65 merge e3364b9cb918bf5aef23eab011d2a168183b3442 and CI run 30055579796",
+      "notes": "Repository implementation does not prove target-resource existence, deployment, or service health."
+    },
+    {
+      "fact_id": "independent-demo-api-vm-size",
+      "value": "The approved independent API planning and IaC default is Standard_B2ats_v2",
+      "status": "repository_contract_corrected_exact_head_ci_verified",
+      "last_observed_on": "2026-07-24",
+      "source": "PR #66 merge 9fd2af042d0ee1be28b61c8e9c26939ee98c319e and CI run 30058073866",
+      "notes": "Regional availability, compute-family quota, cost, and subscription credit still require fresh Azure evidence."
+    },
+    {
+      "fact_id": "independent-demo-api-Azure-state",
+      "value": "Target resource group, VM, VNet, NSG, NIC, public IP, DNS, TLS, health, transactions, CORS, and frontend behavior are not observed",
+      "status": "not_observed_read_only_planner_required",
+      "last_observed_on": "2026-07-24",
+      "source": "Full repository and evidence synchronization",
+      "notes": "Not observed must not be converted to absent or failed."
+    },
+    {
+      "fact_id": "independent-demo-api-public-ip-headroom",
+      "value": "The newest inspected authenticated evidence observed Standard public-IP usage at 2 of 3 in West US 2",
+      "status": "azure_control_plane_observed_time_bounded_zero_post_deploy_headroom_risk",
+      "last_observed_on": "2026-07-23T23:24:05Z",
+      "source": "Collector-hosted demo API What-If run 30053018998",
+      "notes": "The independent workload requires one public IP. Refresh quota before deployment and explicitly evaluate zero remaining headroom."
+    }
+  ]
+}
