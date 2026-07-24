@@ -30,6 +30,7 @@
   "integration_path": [
     "GitHub Pages operator console",
     "HTTPS GET /api/health readiness handshake",
+    "browser-origin CORS preflight",
     "HTTPS POST /api/demo/run with 20 bounded attempts",
     "independent ServiceTracer demo API VM",
     "existing Azure Standard Load Balancer transaction endpoint",
@@ -56,14 +57,39 @@
     "azure_authentication_authorized": false,
     "azure_mutations_authorized": false,
     "guest_commands_authorized": false,
-    "transaction_replay_from_agent_authorized": false
+    "transaction_replay_from_agent_default": false,
+    "bounded_browser_validation_grant": {
+      "grant_id": "pr84-live-candidate-browser-validation-20260724",
+      "status": "authorized_not_yet_consumed",
+      "authorized_by": "Anthony Edgar",
+      "authorization_source": "Explicit governed control message: proceed",
+      "authorized_at": "2026-07-24T17:44:12-04:00",
+      "repository_scope": "pull_request_84_exact_head",
+      "permitted_operations": [
+        "serve the pull-request docs tree on runner loopback under the exact allowed browser origin",
+        "GET the candidate /api/health endpoint once",
+        "allow the browser to perform one CORS preflight",
+        "POST one request to /api/demo/run with attempts set to 20",
+        "capture sanitized response metadata, rendered DOM state, console messages, and a screenshot"
+      ],
+      "prohibited_operations": [
+        "GitHub pull-request merge",
+        "GitHub Pages publication",
+        "Azure authentication",
+        "Azure control-plane mutation",
+        "guest command execution",
+        "cleanup",
+        "additional transaction replay outside the bounded verification run"
+      ]
+    }
   },
   "validation": {
     "static_contract_tests_required": true,
     "exact_head_ci_required": true,
     "browser_rendering_verified": false,
-    "live_twenty_attempt_sample_verified": false
+    "live_twenty_attempt_sample_verified": false,
+    "actual_github_pages_deployment_verified": false
   },
-  "rollback": "Clear docs/report-source.json live_demo_api_url and revert the frontend integration commit. No Azure rollback is required for this repository-only increment.",
-  "next_gate": "Review exact-head CI, then perform a human browser test that captures health, CORS, the 20-attempt API response, rendered provenance, and either stable localization or an explicit inconclusive result."
+  "rollback": "Remove the candidate endpoint or revert this repository-only integration. The default live_demo_api_url remains blank, so no Azure rollback is required.",
+  "next_gate": "Execute the one-time evidence-producing browser validation grant, then reconcile its artifact without promoting or merging the candidate endpoint."
 }
