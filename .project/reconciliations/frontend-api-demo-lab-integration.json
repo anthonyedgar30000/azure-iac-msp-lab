@@ -90,6 +90,7 @@
   "validation": {
     "static_contract_tests_required": true,
     "exact_head_ci_required": true,
+    "browser_rendering_verified": false,
     "health_contract_verified": true,
     "cors_preflight_verified": true,
     "transaction_http_response_verified": false,
