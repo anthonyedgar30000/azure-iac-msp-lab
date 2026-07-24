@@ -1,0 +1,173 @@
+{
+  "schema_version": "project.servicetracer-demo-api-live-verification.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "recorded_on": "2026-07-24",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "component": "independent-servicetracer-demo-api",
+  "repository_evidence": {
+    "base_main": "8b3d55c616d8820edd523f77021a35fe24167bd0",
+    "pull_request": 80,
+    "source_head": "9212437bf2155434c035b50a8d32b39fcc046182",
+    "tested_pull_request_merge_sha": "ebf90d9752146cb3a8f8a7f7a386add0b69cbe0c",
+    "final_merge_commit": "76279db80458b098b063e428bc7dabf9c1f9edce",
+    "tested_tree_vs_final_merge": {
+      "comparison_status": "diverged",
+      "changed_file_count": 0,
+      "file_content_difference_observed": false,
+      "claim_boundary": "The commits have different graph ancestry but GitHub reported no changed files between the tested pull-request merge tree and the final merge commit."
+    },
+    "exact_source_head_ci": [
+      {
+        "run_id": 30086152352,
+        "workflow": "ServiceTracer demo API live verification",
+        "conclusion": "success"
+      },
+      {
+        "run_id": 30086152445,
+        "workflow": "CI",
+        "conclusion": "success"
+      }
+    ],
+    "final_merge_commit_ci_observed": false
+  },
+  "artifact": {
+    "workflow_run_id": 30086152352,
+    "run_attempt": 1,
+    "artifact_id": 8593782051,
+    "artifact_name": "servicetracer-demo-api-live-verification-30086152352-1",
+    "artifact_sha256": "2bd876dfd7e707994218ea347887816df03cff03ba5cb45b60e96cf082c83ad7",
+    "created_at": "2026-07-24T10:26:22Z",
+    "expires_at": "2026-08-23T10:26:22Z",
+    "expired_when_promoted": false,
+    "manifest_entries": {
+      "base-url.txt": "c1f29c6613b348bf7762483e5a652b9e724cebeb646c5cb023baef322ec8e175",
+      "cors-headers.txt": "eaa1a5a8c6f5271b56ff1feb9e50d473134d4e7f5ffa6432b8850777b230a7b7",
+      "health-headers.txt": "90de5fef306d27bdd6237384decdead01422541a043aa0da6759bba72933d422",
+      "health.json": "f739cfda85b34ac8a4a05f07769a4a8fb8ce3007e6f16c865d241c52c1d7c3b2",
+      "observed-at.txt": "70eb7ba15f6ee31f4e46312daeeb2a20230589555e2abf4e99383d18473d1c47",
+      "repository-sha.txt": "8d6f0c5915b8562091298f21c67486e4adf4f59259becb83dd6886edbcfd61e3",
+      "transaction-headers.txt": "6cd0e7e3fa97736d3cf7228f0f7d589562e69c0cb204ba2f1865af0208065e51",
+      "transaction.json": "63bce06c609506cb78e716be223a4f95b56279ea9a7704ff6d2e222446bfd066",
+      "verification-summary.json": "af2458228f8bfd315c9f2837f5b7d0f9d34c9b8e79a71d842af873cc2bbed417"
+    }
+  },
+  "public_runtime_observation": {
+    "observed_at": "2026-07-24T10:26:15Z",
+    "base_url": "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com",
+    "allowed_origin": "https://anthonyedgar30000.github.io",
+    "public_endpoint_reachable": true,
+    "tls_verified": true,
+    "health": {
+      "http_status": 200,
+      "schema_version": "servicetracer.demo-api-health.v1",
+      "status": "healthy",
+      "backend_target_configured": true,
+      "hosting_model": "dedicated_vm_subproject"
+    },
+    "cors": {
+      "preflight_http_status": 204,
+      "allow_origin_exact_match": true,
+      "allow_methods": [
+        "POST",
+        "OPTIONS"
+      ]
+    },
+    "transaction_protocol": {
+      "request_http_status": 200,
+      "schema_version": "servicetracer.demo-api-response.v1",
+      "source_id": "st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com",
+      "transport": "azure-load-balancer-correlated-transactions",
+      "attempts": 2,
+      "successful_attempts": 0,
+      "failed_attempts": 2,
+      "observed_backends": [
+        "VPN-02"
+      ],
+      "backend_attempt_counts": {
+        "VPN-01": 0,
+        "VPN-02": 2
+      },
+      "backend_http_statuses": [
+        503,
+        503
+      ],
+      "failure_boundaries": [
+        "radius_response",
+        "radius_response"
+      ],
+      "load_balancer_status": "healthy_under_configured_probe",
+      "probe_name": "tcp-443-shallow",
+      "probe_gap_detected": true,
+      "root_cause_status": "not_determined_by_servicetracer",
+      "exact_root_cause_claimed": false,
+      "backend_specific_localization_stable": false
+    }
+  },
+  "typed_verification": {
+    "public_api_operationally_verified": true,
+    "health_contract_verified": true,
+    "cors_verified": true,
+    "transaction_protocol_verified": true,
+    "backend_transaction_success_verified": false,
+    "full_workload_operationally_verified": false,
+    "frontend_integration_verified": false,
+    "claim_boundary": "The public API completed the governed protocol and returned valid evidence. Both sampled backend transactions failed, only VPN-02 was observed, and the sample did not support stable device-specific localization."
+  },
+  "azure_control_plane_provenance": {
+    "azure_authentication_performed_by_verification": false,
+    "azure_control_plane_queried": false,
+    "hosting_subscription_observed": false,
+    "tenant_observed": false,
+    "resource_group_observed": false,
+    "vm_resource_observed": false,
+    "deployed_vm_size_observed": false,
+    "deployment_correlation_observed": false,
+    "deployed_source_commit_observed": false,
+    "effective_rbac_observed": false,
+    "cost_observed": false,
+    "backup_observed": false,
+    "monitoring_and_alerts_verified": false,
+    "state": "not_observed"
+  },
+  "mutation_and_authority": {
+    "verification_azure_mutations_performed": false,
+    "repository_evidence_promotion_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_mutations_authorized": false,
+    "deployment_authorized": false,
+    "cleanup_authorized": false
+  },
+  "shared_state_integration": {
+    "active_work_modified": false,
+    "environment_state_modified": false,
+    "primary_handoff_modified": false,
+    "dedicated_handoff": ".project/handoffs/servicetracer-demo-api-live-current-state.md",
+    "deployment_history_appended": true,
+    "claim_boundary": "The older shared planner state remains preserved rather than being overwritten by public-runtime evidence from a different observation channel."
+  },
+  "canonical_distinctions": [
+    "public_endpoint_reachable != Azure_deployment_provenance_observed",
+    "API_healthy != backend_transaction_successful",
+    "transaction_protocol_verified != root_cause_determined",
+    "load_balancer_probe_healthy != full_application_transaction_healthy",
+    "public_runtime_observed != control_plane_inventory_observed",
+    "not_observed != absent"
+  ],
+  "next_gate": {
+    "operation": "capture_authenticated_post_deployment_azure_inventory_and_reconcile_exact_runtime_provenance",
+    "required_evidence": [
+      "hosting subscription and tenant fingerprints",
+      "exact resource group and resource inventory",
+      "VM SKU and provisioning state",
+      "public IP and DNS resource identity",
+      "deployed source commit or immutable image identity",
+      "deployment correlation or deployment record",
+      "actual or forecast cost",
+      "monitoring, alert, backup, and recovery state"
+    ],
+    "azure_authentication_authorized": false,
+    "azure_mutations_authorized": false
+  }
+}

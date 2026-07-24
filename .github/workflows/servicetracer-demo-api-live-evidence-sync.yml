@@ -1,0 +1,45 @@
+name: ServiceTracer demo API live-evidence promotion
+
+on:
+  pull_request:
+    paths:
+      - ".project/evidence/servicetracer-demo-api-live-verification-30086152352.json"
+      - ".project/handoffs/servicetracer-demo-api-live-current-state.md"
+      - ".project/deployment-history.jsonl"
+      - "scripts/validate_servicetracer_demo_api_live_evidence.py"
+      - "tests/test_servicetracer_demo_api_live_evidence.py"
+      - ".github/workflows/servicetracer-demo-api-live-evidence-sync.yml"
+      - ".github/workflows/servicetracer-demo-api-live-verify.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".project/evidence/servicetracer-demo-api-live-verification-30086152352.json"
+      - ".project/handoffs/servicetracer-demo-api-live-current-state.md"
+      - ".project/deployment-history.jsonl"
+      - "scripts/validate_servicetracer_demo_api_live_evidence.py"
+      - "tests/test_servicetracer_demo_api_live_evidence.py"
+      - ".github/workflows/servicetracer-demo-api-live-evidence-sync.yml"
+      - ".github/workflows/servicetracer-demo-api-live-verify.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact workflow commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate promoted live evidence
+        run: python scripts/validate_servicetracer_demo_api_live_evidence.py
+
+      - name: Run live-evidence regression tests
+        run: python -m unittest tests/test_servicetracer_demo_api_live_evidence.py -v
