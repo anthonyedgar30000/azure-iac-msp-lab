@@ -51,13 +51,30 @@ The subproject must never target these existing base resources for mutation:
 - `lb-remote-access-mst-dev`;
 - the collector NIC, evidence disk, extensions, or managed identity.
 
-The existing remote-access public endpoint is read only and is converted into the fixed backend transaction URL. The API caller cannot supply an arbitrary target.
+The existing remote-access public endpoint is read only and becomes the fixed backend transaction URL. The API caller cannot supply an arbitrary target.
+
+## VM sizing contract
+
+The default planning and IaC size is:
+
+```text
+Standard_B2ats_v2
+```
+
+This size matches the latest working Azure-observed compute contract used in the lab. The earlier `Standard_B1s` default was inherited from the synthetic backend workload and is not the approved default for this independent API host.
+
+```text
+observed_working_size != guaranteed_current_availability
+configured_default != quota_reserved
+```
+
+The planner must still refresh SKU availability, regional quota, cost, and remaining student credit before deployment authorization.
 
 ## Identity and permissions
 
 The VM receives a system-assigned managed identity but no Azure role assignment in the initial workload. Deployment uses GitHub OIDC through the protected `azure-lab` environment. The planning workflow has Azure read, ARM validation, and What-If authority only.
 
-The VM has no inbound SSH rule. Administration must use a separately governed Azure control-plane method. A generated public key is still required by the Linux provisioning contract, but possession of that key does not create a network path.
+The VM has no inbound SSH rule. Administration must use a separately governed Azure control-plane method. A generated public key remains required by the Linux provisioning contract, but possession of that key does not create a network path.
 
 ## Network and security controls
 
@@ -73,7 +90,7 @@ The VM has no inbound SSH rule. Administration must use a separately governed Az
 
 ## Cost and quota implications
 
-The workload adds one small Linux VM, one managed OS disk, one Standard public IP, and outbound data usage. Exact West US 2 CAD cost, remaining Azure for Students credit, VM-family quota, and public-IP quota must be refreshed in the planning artifact before deployment authorization.
+The workload adds one Linux VM, one managed OS disk, one Standard public IP, and outbound data usage. Exact West US 2 CAD cost, remaining Azure for Students credit, VM-family quota, SKU availability, and public-IP quota must be refreshed in the planning artifact before deployment authorization.
 
 ```text
 estimated_cost != actual_cost
@@ -82,7 +99,7 @@ quota_observed != quota_reserved
 
 ## Deployment method
 
-The only active workflow in this increment is:
+The only active workflow for this workload is:
 
 ```text
 .github/workflows/servicetracer-demo-api-subproject-plan.yml
@@ -90,9 +107,7 @@ The only active workflow in this increment is:
 
 It runs only from `refs/heads/main`, checks out the immutable dispatch SHA from `github.sha`, captures Azure context and quota, validates the subscription-scope Bicep, runs an exact What-If, classifies the result, uploads evidence, and stops.
 
-The workflow deliberately has no user-entered commit field. This removes stale-SHA transcription as an operational failure mode.
-
-No deploy workflow is authorized by this increment.
+The workflow deliberately has no user-entered commit field. No deploy workflow is authorized by this increment.
 
 ## Validation commands
 
@@ -103,32 +118,12 @@ az bicep build --file workloads/servicetracer-demo-api/infra/main.bicep
 bash -n workloads/servicetracer-demo-api/scripts/install.sh
 ```
 
-An accepted plan must create only the dedicated resource group and the resources listed above. Any Modify, Delete, Replace, dependency-resource mutation, collector reference, or unrelated resource type is blocking.
+An accepted plan must create only the dedicated resource group and its declared resources. Any Modify, Delete, Replace, dependency-resource mutation, collector reference, or unrelated resource type is blocking.
 
-## Expected outputs
-
-- target resource-group name;
-- VM and public-IP resource IDs;
-- public FQDN;
-- health and run URLs;
-- exact What-If assessment with `deployment_authorized: false`;
-- evidence manifest binding the artifact to the dispatch SHA.
-
-## Failure and rollback behavior
+## Failure, rollback, and cleanup
 
 Planning failures perform no Azure mutation. Repository rollback is a PR revert.
 
 A later failed deployment must capture subscription and resource-group deployment operations plus target inventory. It must not infer zero partial mutation from a failed command.
 
-## Cleanup and decommissioning
-
-Cleanup is a separate destructive decision. The intended order is:
-
-1. withhold the frontend endpoint;
-2. verify no consumers depend on the API;
-3. delete the dedicated workload resource group;
-4. verify the resource group and public IP no longer exist;
-5. capture final cost and deletion evidence;
-6. retain sanitized deployment and validation records.
-
-Cleanup of legacy collector-hosted or Microsoft.Web residue is outside this subproject.
+Cleanup is a separate destructive decision. Delete only the dedicated workload resource group after consumer checks, endpoint withdrawal, cost capture, and deletion verification. Cleanup of legacy collector-hosted or Microsoft.Web residue remains outside this subproject.
