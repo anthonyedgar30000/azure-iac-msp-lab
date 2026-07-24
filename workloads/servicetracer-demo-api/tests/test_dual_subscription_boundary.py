@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[3]
 WORKFLOW = ROOT / ".github" / "workflows" / "servicetracer-demo-api-subproject-plan.yml"
 README = ROOT / "workloads" / "servicetracer-demo-api" / "README.md"
 RUNBOOK = ROOT / "docs" / "runbooks" / "servicetracer-demo-api-payg-subscription-boundary.md"
+ASSESSOR = ROOT / "workloads" / "servicetracer-demo-api" / "scripts" / "assess_target_readiness.py"
 
 
 class ServiceTracerDemoApiDualSubscriptionBoundaryTests(unittest.TestCase):
@@ -37,7 +38,7 @@ class ServiceTracerDemoApiDualSubscriptionBoundaryTests(unittest.TestCase):
         dependency_login = self.workflow.index("Log in to dependency subscription")
         dependency_capture = self.workflow.index("Capture read-only ServiceTracer dependency state")
         target_login = self.workflow.index("Log in to target Azure Plan subscription")
-        target_capture = self.workflow.index("Capture target provider, policy, quota, SKU, and resource state")
+        target_capture = self.workflow.index("Capture and assess target provider, policy, quota, SKU, and resource state")
         what_if = self.workflow.index("Validate and capture target-subscription What-If")
         self.assertLess(dependency_login, dependency_capture)
         self.assertLess(dependency_capture, target_login)
@@ -53,11 +54,19 @@ class ServiceTracerDemoApiDualSubscriptionBoundaryTests(unittest.TestCase):
         self.assertNotIn("az group delete", self.workflow)
         self.assertNotIn("az resource delete", self.workflow)
 
-    def test_quota_and_sku_fail_closed_before_what_if(self) -> None:
+    def test_typed_readiness_fails_closed_after_complete_inventory(self) -> None:
+        self.assertTrue(ASSESSOR.is_file())
+        self.assertIn("target-readiness-assessment.json", self.workflow)
+        self.assertIn("blocked_target_readiness", ASSESSOR.read_text(encoding="utf-8"))
+        target_inventory = self.workflow.index('az group show --name "$target_resource_group"')
+        readiness_assessment = self.workflow.index("assess_target_readiness.py")
+        what_if = self.workflow.index("Validate and capture target-subscription What-If")
+        self.assertLess(target_inventory, readiness_assessment)
+        self.assertLess(readiness_assessment, what_if)
+        self.assertIn('.status=="ready_for_arm_what_if"', self.workflow)
+        self.assertIn("Target readiness rejected", self.workflow)
         self.assertIn("vm-size-assessment.json", self.workflow)
         self.assertIn("compute-quota-assessment.json", self.workflow)
-        self.assertIn(".unrestricted_records>0", self.workflow)
-        self.assertIn(".sufficient==true", self.workflow)
 
     def test_documentation_preserves_manual_setup_boundary(self) -> None:
         readme = README.read_text(encoding="utf-8")
