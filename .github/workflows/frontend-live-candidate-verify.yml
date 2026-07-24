@@ -1,0 +1,123 @@
+name: Frontend live candidate browser verification
+
+on:
+  push:
+    branches:
+      - agent/integrate-demo-api-frontend
+    paths:
+      - .github/workflows/frontend-live-candidate-verify.yml
+      - scripts/verify_frontend_live_candidate.mjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-live-candidate-pr84
+  cancel-in-progress: false
+
+jobs:
+  browser-verification:
+    name: Browser, CORS, and live transaction evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact branch head
+        uses: actions/checkout@v4
+
+      - name: Validate bounded authorization
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          record = json.loads(
+              Path('.project/reconciliations/frontend-api-demo-lab-integration.json').read_text(
+                  encoding='utf-8'
+              )
+          )
+          authority = record['authority']
+          grant = authority['bounded_browser_validation_grant']
+          assert grant['grant_id'] == 'pr84-live-candidate-browser-validation-20260724'
+          assert grant['status'] == 'authorized_not_yet_consumed'
+          assert authority['pull_request_merge_authorized'] is False
+          assert authority['azure_authentication_authorized'] is False
+          assert authority['azure_mutations_authorized'] is False
+          assert authority['guest_commands_authorized'] is False
+          assert any('attempts set to 20' in item for item in grant['permitted_operations'])
+          PY
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install bounded browser client
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts puppeteer-core@24.16.0
+          CHROME_PATH="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || true)"
+          test -n "$CHROME_PATH"
+          echo "CHROME_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+          node --check scripts/verify_frontend_live_candidate.mjs
+
+      - name: Run exact-origin browser verification
+        env:
+          VERIFICATION_OUTPUT_DIR: browser-evidence
+        run: |
+          set -euo pipefail
+          mkdir -p browser-evidence /tmp/frontend-live-candidate
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
+            -keyout /tmp/frontend-live-candidate/key.pem \
+            -out /tmp/frontend-live-candidate/cert.pem \
+            -subj '/CN=anthonyedgar30000.github.io' \
+            -addext 'subjectAltName=DNS:anthonyedgar30000.github.io' \
+            >/tmp/frontend-live-candidate/openssl.log 2>&1
+          echo '127.0.0.1 anthonyedgar30000.github.io' | sudo tee -a /etc/hosts >/dev/null
+
+          sudo python3 - "$GITHUB_WORKSPACE/docs" \
+            /tmp/frontend-live-candidate/cert.pem \
+            /tmp/frontend-live-candidate/key.pem \
+            >/tmp/frontend-live-candidate/server.log 2>&1 <<'PY' &
+          import http.server
+          import os
+          import ssl
+          import sys
+
+          os.chdir(sys.argv[1])
+          server = http.server.ThreadingHTTPServer(
+              ('127.0.0.1', 443),
+              http.server.SimpleHTTPRequestHandler,
+          )
+          context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+          context.load_cert_chain(certfile=sys.argv[2], keyfile=sys.argv[3])
+          server.socket = context.wrap_socket(server.socket, server_side=True)
+          server.serve_forever()
+          PY
+          SERVER_PID=$!
+          trap 'sudo kill "$SERVER_PID" 2>/dev/null || true' EXIT
+
+          for _ in $(seq 1 30); do
+            if curl --fail --silent --show-error --insecure \
+              --resolve anthonyedgar30000.github.io:443:127.0.0.1 \
+              https://anthonyedgar30000.github.io/report-source.json \
+              >/tmp/frontend-live-candidate/report-source.json; then
+              break
+            fi
+            sleep 1
+          done
+          test -s /tmp/frontend-live-candidate/report-source.json
+
+          node scripts/verify_frontend_live_candidate.mjs \
+            >browser-evidence/frontend-live-candidate-verification.stdout.json
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-live-candidate-browser-evidence
+          path: |
+            browser-evidence/
+            /tmp/frontend-live-candidate/server.log
+            /tmp/frontend-live-candidate/openssl.log
+          if-no-files-found: error
+          retention-days: 90
