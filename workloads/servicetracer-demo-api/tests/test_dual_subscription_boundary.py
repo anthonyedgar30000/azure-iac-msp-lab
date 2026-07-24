@@ -68,6 +68,19 @@ class ServiceTracerDemoApiDualSubscriptionBoundaryTests(unittest.TestCase):
         self.assertIn("vm-size-assessment.json", self.workflow)
         self.assertIn("compute-quota-assessment.json", self.workflow)
 
+    def test_resource_group_absence_is_not_inferred_from_generic_failure(self) -> None:
+        self.assertIn("existing-target-resource-group.error.txt", self.workflow)
+        self.assertIn("group_show_exit_status", self.workflow)
+        self.assertIn("ResourceGroupNotFound", self.workflow)
+        self.assertIn("observation_failed", self.workflow)
+        self.assertIn("resource_list_exit_status", self.workflow)
+        self.assertNotIn(
+            'az group show --name "$target_resource_group" --output json > "$ARTIFACT_DIR/existing-target-resource-group.json" 2>/dev/null',
+            self.workflow,
+        )
+        self.assertIn("target_resource_group_observation_failed", ASSESSOR.read_text(encoding="utf-8"))
+        self.assertIn("target_resource_inventory_not_authoritative", ASSESSOR.read_text(encoding="utf-8"))
+
     def test_documentation_preserves_manual_setup_boundary(self) -> None:
         readme = README.read_text(encoding="utf-8")
         runbook = RUNBOOK.read_text(encoding="utf-8")
