@@ -1,0 +1,82 @@
+{
+  "schema_version": "project.post-merge-pr82-shared-state-reconciliation.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "recorded_on": "2026-07-24",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "baseline": {
+    "main": "5dfa3b76a9fb975002d9cd702a892a0f678c88c5",
+    "pull_request": 82,
+    "source_head": "a85970061879ef4a900564d18e9631630e95b11e",
+    "merge_commit": "5dfa3b76a9fb975002d9cd702a892a0f678c88c5",
+    "open_pull_requests_observed_before_branch": [],
+    "source_head_ci": [
+      {
+        "run_id": 30112308916,
+        "workflow": "CI",
+        "conclusion": "success"
+      },
+      {
+        "run_id": 30112309167,
+        "workflow": "ServiceTracer demo API post-deployment evidence",
+        "conclusion": "success"
+      }
+    ],
+    "merge_commit_pr_workflow_runs_observed": false,
+    "source_head_vs_merge_changed_file_count": 0
+  },
+  "problem": {
+    "classification": "shared_state_view_stale",
+    "description": "The dedicated post-deployment evidence proves a running West US 2 deployment, while older shared state still presents the consumed East US planner rejection as the current deployment view.",
+    "azure_contradiction": false,
+    "historical_evidence_invalidated": false
+  },
+  "resolution": {
+    "canonical_current_view_added": ".project/current-reality.json",
+    "primary_handoff_updated": ".project/handoffs/current-state.md",
+    "deployment_history_event_appended": "independent-demo-api-post-deployment-inventory-20260724T163938Z",
+    "historical_planner_evidence_preserved": true,
+    "shared_interpretation": "The East US planner record is historical candidate evidence. The latest deployment evidence is the authenticated West US 2 inventory, combined with the protected public-runtime record."
+  },
+  "evidence": {
+    "post_deployment_inventory": ".project/evidence/servicetracer-demo-api-post-deployment-inventory-20260724T163938Z.json",
+    "public_runtime": ".project/evidence/servicetracer-demo-api-live-verification-30086152352.json",
+    "deployment_source_ref": "8b3d55c616d8820edd523f77021a35fe24167bd0",
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "location": "westus2",
+    "vm": "vm-st-demo-api-mst-dev",
+    "vm_size": "Standard_F1als_v7",
+    "vm_state": "VM running",
+    "deployment_state": "Succeeded",
+    "public_api_healthy": true,
+    "backend_transaction_success_verified": false,
+    "effective_rbac": "not_observed",
+    "backup": "not_observed",
+    "actual_cost": "not_observed"
+  },
+  "scope": {
+    "paths": [
+      ".project/current-reality.json",
+      ".project/reconciliations/post-merge-pr82-shared-state.json",
+      ".project/handoffs/current-state.md",
+      ".project/deployment-history.jsonl",
+      "docs/reviews/post-merge-pr82-shared-state-reconciliation.md",
+      "scripts/validate_post_merge_pr82_shared_state.py",
+      "tests/test_post_merge_pr82_shared_state.py",
+      ".github/workflows/post-merge-pr82-shared-state.yml"
+    ],
+    "azure_authentication_performed": false,
+    "azure_mutations_performed": false
+  },
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_mutations_authorized": false,
+    "guest_commands_authorized": false,
+    "transaction_replay_authorized": false,
+    "cleanup_authorized": false
+  },
+  "rollback": "Close or revert this repository-only pull request. No Azure rollback is required."
+}
