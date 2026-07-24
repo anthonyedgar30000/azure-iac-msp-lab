@@ -16,6 +16,7 @@ ALLOWED_ORIGIN = os.environ.get(
     "SERVICETRACER_ALLOWED_ORIGIN", "https://anthonyedgar30000.github.io"
 )
 SOURCE_ID = os.environ.get("SERVICETRACER_SOURCE_ID", "collector-hosted-demo-api")
+HOSTING_MODEL = os.environ.get("SERVICETRACER_HOSTING_MODEL", "collector_vm_systemd")
 LISTEN_ADDRESS = os.environ.get("SERVICETRACER_DEMO_API_LISTEN", "127.0.0.1")
 LISTEN_PORT = int(os.environ.get("SERVICETRACER_DEMO_API_PORT", "8090"))
 MAX_REQUEST_BYTES = 4096
@@ -68,7 +69,7 @@ class DemoApiHandler(BaseHTTPRequestHandler):
                 "status": "healthy" if configured else "misconfigured",
                 "schema_version": "servicetracer.demo-api-health.v1",
                 "backend_target_configured": configured,
-                "hosting_model": "collector_vm_systemd",
+                "hosting_model": HOSTING_MODEL,
             },
             HTTPStatus.OK if configured else HTTPStatus.SERVICE_UNAVAILABLE,
         )
