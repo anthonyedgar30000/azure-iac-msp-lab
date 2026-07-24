@@ -10,6 +10,7 @@ declared_in_code != deployed_in_azure
 deployment_succeeded != service_validated
 public_API_healthy != backend_transaction_successful
 resource_exists != securely_configured
+not_observed != false
 not_observed != absent
 ```
 
@@ -26,6 +27,23 @@ local working tree: not observed
 ```
 
 PR #82 promoted authenticated post-deployment inventory from exact source head `a85970061879ef4a900564d18e9631630e95b11e`. Full CI run `30112308916` and dedicated evidence workflow run `30112309167` passed on that source head. GitHub reported no file-content difference between the tested source head and the final merge commit.
+
+## Preserved planner evidence anchors
+
+The following historical planner anchors remain required evidence and are preserved verbatim:
+
+```text
+authorization reconciliation merge: 92b0c3b1064158684a4b280348c77eeedba6dfc3
+planner run: 30064289707
+planner artifact: 8585693830
+planner artifact SHA-256: 7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22
+requested candidate: Standard_B2ats_v2 / eastus
+restriction: NotAvailableForSubscription
+VM family: standardBasv2Family
+typed readiness control: PR #73
+```
+
+These markers prove preservation of the earlier candidate evidence. They do not describe the later West US 2 deployment.
 
 ## Resolved independent ServiceTracer demo API state
 
