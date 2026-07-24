@@ -37,7 +37,7 @@ on:
       vm_size:
         description: 'Candidate VM size; cost and quota are planning evidence'
         required: true
-        default: Standard_B1s
+        default: Standard_B2ats_v2
         type: string
       maximum_monthly_cost_cad:
         description: 'Human planning ceiling only; no price claim is inferred'
@@ -252,6 +252,7 @@ jobs:
           LAB_ENVIRONMENT: ${{ inputs.environment }}
           LOCATION: ${{ inputs.location }}
           DNS_LABEL: ${{ inputs.dns_label }}
+          VM_SIZE: ${{ inputs.vm_size }}
         run: |
           {
             echo '## ServiceTracer demo API independent workload plan'
@@ -260,6 +261,7 @@ jobs:
             echo "- Ref: \`$GITHUB_REF\`"
             echo "- Target resource group: \`rg-st-demo-api-${LAB_ENVIRONMENT}-${LOCATION}\`"
             echo "- DNS label: \`$DNS_LABEL\`"
+            echo "- VM size: \`$VM_SIZE\`"
             echo '- Azure authentication authorized: `true` for read-only planning'
             echo '- Azure mutations authorized: `false`'
             echo '- Deployment authorized: `false`'
