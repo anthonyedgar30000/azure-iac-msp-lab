@@ -1,0 +1,129 @@
+name: ServiceTracer demo API live verification
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/servicetracer-demo-api-live-verify.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: servicetracer-demo-api-live-verification
+  cancel-in-progress: false
+
+env:
+  BASE_URL: https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com
+  ALLOWED_ORIGIN: https://anthonyedgar30000.github.io
+  EVIDENCE_DIR: servicetracer-demo-api-live-verification-evidence
+
+jobs:
+  verify:
+    name: Verify public TLS, CORS, and transaction flow
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+
+      - name: Verify health, CORS, and two backend transactions
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+
+          printf '%s\n' "$GITHUB_SHA" > "$EVIDENCE_DIR/repository-sha.txt"
+          printf '%s\n' "$BASE_URL" > "$EVIDENCE_DIR/base-url.txt"
+          date -u +'%Y-%m-%dT%H:%M:%SZ' > "$EVIDENCE_DIR/observed-at.txt"
+
+          curl --fail --silent --show-error \
+            --retry 6 --retry-delay 5 --retry-all-errors \
+            --connect-timeout 10 --max-time 45 \
+            -D "$EVIDENCE_DIR/health-headers.txt" \
+            "$BASE_URL/api/health" \
+            > "$EVIDENCE_DIR/health.json"
+
+          curl --fail --silent --show-error \
+            --retry 3 --retry-delay 3 --retry-all-errors \
+            --connect-timeout 10 --max-time 30 \
+            -X OPTIONS \
+            -D "$EVIDENCE_DIR/cors-headers.txt" \
+            -o /dev/null \
+            -H "Origin: $ALLOWED_ORIGIN" \
+            -H 'Access-Control-Request-Method: POST' \
+            "$BASE_URL/api/demo/run"
+
+          grep -Eqi "^access-control-allow-origin:[[:space:]]*${ALLOWED_ORIGIN//./\\.}[[:space:]]*$" \
+            "$EVIDENCE_DIR/cors-headers.txt"
+          grep -Eqi '^access-control-allow-methods:.*POST' \
+            "$EVIDENCE_DIR/cors-headers.txt"
+
+          curl --fail --silent --show-error \
+            --retry 3 --retry-delay 3 --retry-all-errors \
+            --connect-timeout 10 --max-time 60 \
+            -X POST \
+            -D "$EVIDENCE_DIR/transaction-headers.txt" \
+            -H "Origin: $ALLOWED_ORIGIN" \
+            -H 'Content-Type: application/json' \
+            --data '{"attempts":2}' \
+            "$BASE_URL/api/demo/run" \
+            > "$EVIDENCE_DIR/transaction.json"
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("servicetracer-demo-api-live-verification-evidence")
+          health = json.loads((root / "health.json").read_text(encoding="utf-8"))
+          response = json.loads((root / "transaction.json").read_text(encoding="utf-8"))
+
+          assert health == {
+              "status": "healthy",
+              "schema_version": "servicetracer.demo-api-health.v1",
+              "backend_target_configured": True,
+              "hosting_model": "dedicated_vm_subproject",
+          }, health
+
+          assert response["schema_version"] == "servicetracer.demo-api-response.v1"
+          assert response["source"]["id"] == "st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com"
+          assert response["source"]["transport"] == "azure-load-balancer-correlated-transactions"
+          assert response["report"]["incident"]["attempts"] == 2
+
+          transactions = response["transactions"]
+          assert len(transactions) == 2
+          for transaction in transactions:
+              assert transaction["backend"] in {"VPN-01", "VPN-02"}, transaction
+              assert isinstance(transaction["http_status"], int) and transaction["http_status"] > 0, transaction
+              assert transaction["transaction_status"] in {"successful", "failed"}, transaction
+              assert "transport_error" not in transaction, transaction
+
+          summary = {
+              "status": "verified",
+              "health_verified": True,
+              "tls_verified": True,
+              "cors_verified": True,
+              "transaction_flow_verified": True,
+              "attempts": len(transactions),
+              "observed_backends": sorted({item["backend"] for item in transactions}),
+              "deployment_mutation_performed": False,
+          }
+          (root / "verification-summary.json").write_text(
+              json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+          )
+          PY
+
+          find "$EVIDENCE_DIR" -type f ! -name artifact-manifest.sha256 -print0 \
+            | sort -z \
+            | xargs -0 sha256sum \
+            > "$EVIDENCE_DIR/artifact-manifest.sha256"
+
+          cat "$EVIDENCE_DIR/verification-summary.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: servicetracer-demo-api-live-verification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_DIR }}
+          if-no-files-found: error
+          retention-days: 30
