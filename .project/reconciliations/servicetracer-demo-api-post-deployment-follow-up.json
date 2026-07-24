@@ -1,0 +1,39 @@
+{
+  "schema_version": "project.servicetracer-demo-api-post-deployment-follow-up.v1",
+  "recorded_on": "2026-07-24",
+  "status": "repository_plan_only",
+  "target": {
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "location": "westus2",
+    "vm": "vm-st-demo-api-mst-dev"
+  },
+  "source_evidence": ".project/evidence/servicetracer-demo-api-post-deployment-inventory-20260724T163938Z.json",
+  "defects": {
+    "rbac": {
+      "observed_state": "observation_failed",
+      "correction": "Use a scoped role assignment list with --include-inherited and without --all."
+    },
+    "cost": {
+      "observed_state": "observation_failed",
+      "correction": "Group Cost Management usage by ResourceId only; preserve Currency from returned columns rather than grouping by it."
+    },
+    "backup": {
+      "observed_state": "not_observed_tool_unavailable",
+      "correction": "Enumerate Recovery Services vaults and AzureIaasVM protected items using existing Azure CLI commands; do not install extensions."
+    }
+  },
+  "execution_boundary": {
+    "azure_authentication_authorized": false,
+    "azure_mutations_authorized": false,
+    "guest_commands_authorized": false,
+    "transaction_replay_authorized": false,
+    "execution_authorized": false
+  },
+  "success_criteria": [
+    "RBAC observation returns assignments or an authoritative empty result.",
+    "Month-to-date cost observation returns data or an authoritative empty result without an invalid grouping.",
+    "Backup observation examines existing Recovery Services vaults without installing tools and preserves not_observed on query failure.",
+    "No Azure mutation, guest command, transaction replay, deployment, or cleanup occurs."
+  ],
+  "rollback": "No Azure rollback is required for a read-only observation. Delete local evidence if it contains identifiers that were not sanitized."
+}
