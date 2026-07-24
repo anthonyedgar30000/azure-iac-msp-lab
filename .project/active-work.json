@@ -100,6 +100,18 @@
       "authorized_on": "2026-07-22",
       "authorization_source": "Explicit user instruction for the separately bounded read-only publication planner",
       "protected_environment": "azure-lab",
+      "required_commit_semantics": "exact_40_character_reviewed_commit_checked_out_and_verified",
+      "required_confirmation": "PLAN-PUBLICATION:<resource-group>:vm-stcollector-<prefix>-<environment>",
+      "permitted_azure_operations": [
+        "az account show",
+        "az group show",
+        "az vm show",
+        "az storage account list",
+        "az role assignment list",
+        "az deployment group validate",
+        "az deployment group what-if"
+      ],
+      "state_semantics": "bounded_exception_to_false_defaults",
       "claim_boundary": "This durable grant does not authorize independent demo API planning, deployment, cleanup, guest commands, or Azure mutation."
     }
   ],
