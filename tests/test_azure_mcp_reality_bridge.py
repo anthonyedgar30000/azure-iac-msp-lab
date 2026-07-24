@@ -23,15 +23,41 @@ class AzureMcpRealityBridgeContractTests(unittest.TestCase):
     def test_repository_contract_is_valid(self) -> None:
         validator.validate_contract(copy.deepcopy(self.contract))
 
+    def test_selected_architecture_remains_unimplemented(self) -> None:
+        self.assertEqual(
+            self.contract["client_paths"]["selection"]["selected_client_path"],
+            "openai_responses_api",
+        )
+        self.assertFalse(self.contract["client_paths"]["selection"]["configured"])
+        self.assertEqual(self.contract["hosting"]["selected_service"], "azure_container_apps")
+        self.assertFalse(self.contract["hosting"]["deployed"])
+        self.assertEqual(
+            self.contract["authentication"]["server_to_azure"]["selected_model"],
+            "managed_identity_shared_service_identity",
+        )
+        self.assertFalse(self.contract["authentication"]["server_to_azure"]["implemented"])
+
     def test_azure_authentication_cannot_be_pre_authorized(self) -> None:
         changed = copy.deepcopy(self.contract)
         changed["authority"]["azure_authentication_authorized"] = True
         with self.assertRaises(validator.ContractError):
             validator.validate_contract(changed)
 
+    def test_openai_execution_cannot_be_pre_authorized(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["client_paths"]["openai_responses_api"]["api_execution_authorized"] = True
+        with self.assertRaises(validator.ContractError):
+            validator.validate_contract(changed)
+
     def test_tool_cannot_be_pre_admitted_without_inventory_evidence(self) -> None:
         changed = copy.deepcopy(self.contract)
         changed["tool_admission"]["allowed_tool_names"] = ["subscription_list"]
+        with self.assertRaises(validator.ContractError):
+            validator.validate_contract(changed)
+
+    def test_namespace_cannot_be_pre_admitted(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["tool_admission"]["namespace_allowlist"] = ["subscription"]
         with self.assertRaises(validator.ContractError):
             validator.validate_contract(changed)
 
@@ -45,6 +71,12 @@ class AzureMcpRealityBridgeContractTests(unittest.TestCase):
     def test_default_subscription_inference_remains_denied(self) -> None:
         changed = copy.deepcopy(self.contract)
         changed["azure_scope"]["default_subscription_inference_allowed"] = True
+        with self.assertRaises(validator.ContractError):
+            validator.validate_contract(changed)
+
+    def test_cloud_shell_preflight_is_not_execution_authority(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["cloud_shell_package"]["preflight_execution_authorized"] = True
         with self.assertRaises(validator.ContractError):
             validator.validate_contract(changed)
 

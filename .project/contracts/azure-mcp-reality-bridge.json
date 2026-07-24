@@ -1,9 +1,11 @@
 {
-  "schema_version": "servicetracer.azure-mcp-reality-bridge.v1",
+  "schema_version": "servicetracer.azure-mcp-reality-bridge.v2",
   "status": "repository_contract_only",
-  "objective": "Provide a governed remote Azure MCP evidence channel for reconciling GitHub-declared infrastructure with time-bounded Azure observations without granting implicit Azure mutation authority.",
+  "objective": "Provide a governed remote Azure MCP evidence channel for reconciling GitHub-declared infrastructure with time-bounded Azure observations through an OpenAI Responses API client without granting implicit Azure mutation authority.",
   "canonical_distinctions": [
-    "mcp_endpoint_deployed != chatgpt_connected",
+    "mcp_endpoint_deployed != openai_client_connected",
+    "client_path_selected != client_configured",
+    "hosting_path_selected != hosting_deployed",
     "tool_advertised != tool_authorized",
     "read_only_annotation != effective_least_privilege",
     "azure_observed != repository_declared",
@@ -20,26 +22,46 @@
     "endpoint_url": null
   },
   "hosting": {
-    "candidate_service": "azure_container_apps",
+    "selected_service": "azure_container_apps",
+    "architecture_selected": true,
+    "deployment_interface": "azure_cloud_shell",
+    "deployment_interface_selected": true,
     "gateway_candidate": "azure_api_management",
-    "architecture_selected": false,
+    "template_candidate": "azmcp-copilot-studio-aca-mi",
+    "template_source_commit": null,
+    "template_inventory_digest": null,
+    "container_image_version": null,
     "region_selected": false,
     "resource_group_selected": false,
     "cost_estimate_observed": false,
-    "quota_observed": false
+    "quota_observed": false,
+    "deployed": false
   },
   "client_paths": {
+    "selection": {
+      "selected_client_path": "openai_responses_api",
+      "selected_on": "2026-07-24",
+      "selection_basis": "explicit_human_decision",
+      "configured": false,
+      "connection_observed": false
+    },
     "openai_responses_api": {
+      "selected": true,
       "platform_support_observed": true,
       "configured": false,
-      "requires_separate_api_project_and_billing": true
+      "requires_separate_api_project_and_billing": true,
+      "api_project_observed": false,
+      "api_key_observed": false,
+      "api_execution_authorized": false
     },
     "chatgpt_custom_app": {
-      "availability": "plan_and_workspace_dependent",
+      "selected": false,
+      "availability": "not_required_for_selected_path",
       "configured": false,
       "current_connection_observed": false
     },
     "ide_mcp_clients": {
+      "selected": false,
       "examples": [
         "github_copilot",
         "visual_studio_code",
@@ -49,17 +71,21 @@
     }
   },
   "authentication": {
-    "selected_model": null,
-    "candidate_models": [
-      "oauth_identity_passthrough",
-      "managed_identity_shared_service_identity"
-    ],
+    "client_to_server": {
+      "selected_model": "entra_oauth",
+      "implemented": false,
+      "client_identity_observed": false,
+      "server_application_observed": false,
+      "admin_consent_observed": false
+    },
+    "server_to_azure": {
+      "selected_model": "managed_identity_shared_service_identity",
+      "implemented": false,
+      "managed_identity_observed": false,
+      "effective_rbac_observed": false
+    },
     "anonymous_access_allowed": false,
-    "static_long_lived_secret_allowed": false,
-    "client_identity_observed": false,
-    "server_identity_observed": false,
-    "federated_credentials_observed": false,
-    "admin_consent_observed": false
+    "static_long_lived_secret_allowed": false
   },
   "azure_scope": {
     "tenant_id": null,
@@ -70,6 +96,10 @@
   },
   "tool_admission": {
     "default_policy": "deny",
+    "server_read_only_required": true,
+    "disable_user_confirmation_allowed": false,
+    "server_mode_selected": false,
+    "namespace_allowlist": [],
     "required_annotations": {
       "read_only": true,
       "destructive": false,
@@ -109,10 +139,19 @@
     ],
     "admission_rule": "A tool becomes callable only after exact-version discovery, annotation review, effective-RBAC review, bounded-scope review, and explicit human approval of its exact name."
   },
+  "cloud_shell_package": {
+    "preflight_script": "scripts/azure_mcp_cloud_shell_preflight.sh",
+    "runbook": "docs/runbooks/openai-api-azure-mcp-cloud-shell.md",
+    "preflight_package_present": true,
+    "preflight_execution_authorized": false,
+    "deployment_command_committed": false,
+    "azure_deployment_authorized": false
+  },
   "authority": {
     "repository_design_authorized": true,
     "pull_request_creation_authorized": true,
     "pull_request_merge_authorized": false,
+    "cloud_shell_preflight_execution_authorized": false,
     "azure_authentication_authorized": false,
     "azure_resource_creation_authorized": false,
     "entra_application_mutation_authorized": false,
@@ -120,8 +159,8 @@
     "azure_rbac_mutation_authorized": false,
     "api_management_mutation_authorized": false,
     "container_apps_mutation_authorized": false,
-    "chatgpt_app_registration_authorized": false,
-    "openai_api_execution_authorized": false
+    "openai_api_execution_authorized": false,
+    "cleanup_authorized": false
   },
   "evidence_contract": {
     "required_request_context": [
@@ -155,8 +194,9 @@
   },
   "success_criteria": [
     "The remote endpoint is reachable over TLS and exposes Streamable HTTP at /mcp.",
-    "Authentication resolves the intended tenant and identity model.",
-    "The exact tool inventory is captured and hashed.",
+    "The OpenAI Responses API client authenticates to the exact intended Entra resource.",
+    "The managed identity resolves to the intended tenant and bounded Azure scope.",
+    "The exact Azure MCP Server version, container image, and tool inventory are captured and hashed.",
     "Only explicitly admitted read-only, non-secret tools are callable.",
     "Subscription and resource scopes cannot silently widen.",
     "A known Azure observation is reconciled against an exact Git commit.",
@@ -165,6 +205,9 @@
   ],
   "failure_and_rollback": {
     "fail_closed_conditions": [
+      "template_source_unpinned",
+      "template_digest_changed",
+      "container_image_unpinned",
       "tool_inventory_changed",
       "tool_annotation_missing_or_changed",
       "tenant_or_subscription_mismatch",
@@ -174,7 +217,7 @@
       "evidence_digest_missing",
       "prompt_injection_or_untrusted_tool_output_detected"
     ],
-    "rollback_action": "Disable the client connection, revoke or remove the federated/OAuth path, remove endpoint ingress, preserve redacted evidence, and leave Azure workload resources unchanged unless separately authorized.",
+    "rollback_action": "Before deployment, discard the Cloud Shell working directory. After a separately authorized deployment, disable ingress and the OpenAI client, remove Azure resources and Entra objects through a separately reviewed cleanup plan, and preserve redacted evidence.",
     "cleanup_authorized": false
   }
 }

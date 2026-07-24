@@ -1,4 +1,4 @@
-name: Azure MCP post-merge synchronization
+name: Azure MCP architecture and Cloud Shell plan
 
 on:
   pull_request:
@@ -9,6 +9,10 @@ on:
       - ".project/handoffs/azure-mcp-current-state.md"
       - ".project/contracts/azure-mcp-reality-bridge.json"
       - ".project/reconciliations/azure-mcp-pr74.json"
+      - ".project/reconciliations/post-merge-pr75-pr77.json"
+      - ".project/reconciliations/openai-api-azure-mcp-cloud-shell-plan.json"
+      - "docs/runbooks/openai-api-azure-mcp-cloud-shell.md"
+      - "scripts/azure_mcp_cloud_shell_preflight.sh"
       - "scripts/validate_azure_mcp_post_merge_sync.py"
       - "tests/test_azure_mcp_post_merge_sync.py"
       - ".github/workflows/azure-mcp-post-merge-sync.yml"
@@ -22,6 +26,10 @@ on:
       - ".project/handoffs/azure-mcp-current-state.md"
       - ".project/contracts/azure-mcp-reality-bridge.json"
       - ".project/reconciliations/azure-mcp-pr74.json"
+      - ".project/reconciliations/post-merge-pr75-pr77.json"
+      - ".project/reconciliations/openai-api-azure-mcp-cloud-shell-plan.json"
+      - "docs/runbooks/openai-api-azure-mcp-cloud-shell.md"
+      - "scripts/azure_mcp_cloud_shell_preflight.sh"
       - "scripts/validate_azure_mcp_post_merge_sync.py"
       - "tests/test_azure_mcp_post_merge_sync.py"
       - ".github/workflows/azure-mcp-post-merge-sync.yml"
@@ -42,8 +50,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate post-merge synchronization
+      - name: Validate Azure MCP architecture and Cloud Shell plan
         run: python scripts/validate_azure_mcp_post_merge_sync.py
 
-      - name: Run synchronization regression tests
+      - name: Check Cloud Shell script syntax
+        run: bash -n scripts/azure_mcp_cloud_shell_preflight.sh
+
+      - name: Run Azure MCP regression tests
         run: python -m unittest tests/test_azure_mcp_post_merge_sync.py -v
