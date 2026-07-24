@@ -56,7 +56,7 @@ def classify(
     compute_usage: list[dict[str, Any]],
     network_usage: list[dict[str, Any]],
     target_resource_group_state: dict[str, Any],
-    existing_target_resources: list[dict[str, Any]],
+    existing_target_resources: Any,
 ) -> dict[str, Any]:
     matching = [record for record in sku_records if record.get("name") == vm_size]
     unrestricted = [record for record in matching if not (record.get("restrictions") or [])]
@@ -79,6 +79,27 @@ def classify(
         _usage_record(network_usage, "IPv4StandardSkuPublicIpAddresses"), 1
     )
 
+    resource_group_status = target_resource_group_state.get("status", "not_observed")
+    state_evidence_authoritative = (
+        target_resource_group_state.get("evidence_authoritative") is True
+    )
+    explicit_absence_observed = (
+        resource_group_status == "not_present"
+        and target_resource_group_state.get("error_code") == "ResourceGroupNotFound"
+        and state_evidence_authoritative
+    )
+    existing_group_observed = (
+        resource_group_status == "observed_existing"
+        and _as_int(target_resource_group_state.get("group_show_exit_status")) == 0
+        and _as_int(target_resource_group_state.get("resource_list_exit_status")) == 0
+        and state_evidence_authoritative
+    )
+    resource_group_observed = explicit_absence_observed or existing_group_observed
+    resources_authoritative = isinstance(existing_target_resources, list) and resource_group_observed
+    existing_resource_count = (
+        len(existing_target_resources) if resources_authoritative else None
+    )
+
     checks = {
         "compute_provider_registered": provider_compute.get("registrationState") == "Registered",
         "network_provider_registered": provider_network.get("registrationState") == "Registered",
@@ -88,6 +109,8 @@ def classify(
         "total_regional_vcpu_quota_sufficient": total_quota["sufficient"],
         "vm_family_vcpu_quota_sufficient": family_quota["sufficient"],
         "standard_ipv4_public_ip_quota_sufficient": standard_public_ip_quota["sufficient"],
+        "target_resource_group_state_observed": resource_group_observed,
+        "target_resource_inventory_authoritative": resources_authoritative,
     }
 
     reason_map = {
@@ -99,6 +122,8 @@ def classify(
         "total_regional_vcpu_quota_sufficient": "total_regional_vcpu_quota_insufficient",
         "vm_family_vcpu_quota_sufficient": "vm_family_vcpu_quota_insufficient",
         "standard_ipv4_public_ip_quota_sufficient": "standard_ipv4_public_ip_quota_insufficient",
+        "target_resource_group_state_observed": "target_resource_group_observation_failed",
+        "target_resource_inventory_authoritative": "target_resource_inventory_not_authoritative",
     }
     blocking_reasons = [reason_map[name] for name, passed in checks.items() if not passed]
 
@@ -125,8 +150,20 @@ def classify(
             "standard_ipv4_public_ips": standard_public_ip_quota,
         },
         "target_resource_group": {
-            "status": target_resource_group_state.get("status", "not_observed"),
-            "existing_resource_count": len(existing_target_resources),
+            "status": resource_group_status,
+            "stage": target_resource_group_state.get("stage"),
+            "error_code": target_resource_group_state.get("error_code"),
+            "group_show_exit_status": target_resource_group_state.get(
+                "group_show_exit_status"
+            ),
+            "resource_list_exit_status": target_resource_group_state.get(
+                "resource_list_exit_status"
+            ),
+            "evidence_authoritative": target_resource_group_state.get(
+                "evidence_authoritative", False
+            ),
+            "resources_authoritative": resources_authoritative,
+            "existing_resource_count": existing_resource_count,
         },
         "azure_mutations_authorized": False,
         "azure_mutations_performed": False,
