@@ -1,0 +1,35 @@
+{
+  "schema_version": "project.azure-verify-only-execution.v1",
+  "execution_id": "servicetracer-demo-api-extension-write-verify-only-20260725-2",
+  "recorded_on": "2026-07-25",
+  "authorized": true,
+  "authorization_record": ".project/authorizations/servicetracer-demo-api-extension-write-verify-only-20260725-2.json",
+  "reviewed_package_head": "c53093ec5a9c84dbe1abb450a0079e01b2865bda",
+  "reviewed_ci_run_id": 30160596671,
+  "scope": {
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "region": "westus2",
+    "vm": "vm-st-demo-api-mst-dev",
+    "extension": "servicetracer-demo-api"
+  },
+  "authority": {
+    "azure_login": true,
+    "control_plane_read": true,
+    "arm_validate": true,
+    "arm_what_if": true,
+    "public_health_get": true,
+    "resource_mutation": false,
+    "application_deployment": false,
+    "vm_command": false,
+    "service_restart": false,
+    "transaction_replay": false,
+    "rbac_mutation": false,
+    "network_mutation": false,
+    "pull_request_merge": false,
+    "github_pages_publication": false,
+    "cleanup": false
+  },
+  "assumption": "The RBAC bootstrap success remains assumed_not_evidenced until this protected OIDC validation and extension-only What-If produce durable evidence.",
+  "termination": "This one-shot grant is consumed when the protected workflow attempts Azure verification, regardless of success or failure. It does not authorize retry or deployment.",
+  "claim_boundary": "verification_attempt_authorized != deployment_authorized"
+}

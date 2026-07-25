@@ -1,0 +1,67 @@
+{
+  "schema_version": "project.azure-verify-only-authorization.v1",
+  "authorization_id": "servicetracer-demo-api-extension-write-verify-only-20260725-2",
+  "recorded_on": "2026-07-25",
+  "status": "authorized_not_consumed",
+  "authorization_source": "Explicit governed control message: Proceed authorized",
+  "objective": "Verify that the protected GitHub OIDC target identity has effective permission to update the existing ServiceTracer demo API VM extension without mutating Azure.",
+  "source_binding": {
+    "base_commit": "6c53a78cfcec9dede2d0dbbd5e102b11a90035b1",
+    "branch": "agent/verify-extension-write-permission-20260725",
+    "rule": "Commit a separate one-shot execution marker only after exact-head pull-request CI succeeds for the reviewed verification package."
+  },
+  "scope": {
+    "subscription": "AZURE_TARGET_SUBSCRIPTION_ID",
+    "tenant": "AZURE_TENANT_ID",
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "region": "westus2",
+    "vm": "vm-st-demo-api-mst-dev",
+    "extension": "servicetracer-demo-api",
+    "allowed_operations": [
+      "Azure workload-identity login",
+      "control-plane reads",
+      "GET /api/health",
+      "ARM deployment group validate",
+      "ARM deployment group what-if",
+      "sanitized evidence upload"
+    ]
+  },
+  "authority": {
+    "repository_verification_package": true,
+    "pull_request_creation": true,
+    "azure_login": true,
+    "control_plane_read": true,
+    "arm_validate": true,
+    "arm_what_if": true,
+    "public_health_get": true,
+    "sanitized_evidence_upload": true,
+    "resource_mutation": false,
+    "application_deployment": false,
+    "vm_command": false,
+    "service_restart": false,
+    "transaction_replay": false,
+    "rbac_mutation": false,
+    "network_mutation": false,
+    "pull_request_merge": false,
+    "github_pages_publication": false,
+    "cleanup": false
+  },
+  "assumptions": {
+    "rbac_bootstrap_success": "assumed_not_evidenced",
+    "assignment_existence_is_not_effective_permission": true,
+    "successful_arm_validation_and_extension_only_what_if_are_required": true
+  },
+  "success_criteria": [
+    "Exact-head pull-request CI succeeds for the reviewed package head.",
+    "Protected target OIDC login succeeds in the expected subscription and tenant.",
+    "ARM validation succeeds for the existing extension-only template.",
+    "What-If contains exactly one material Modify for the existing servicetracer-demo-api extension.",
+    "Resource inventory remains seven resources before and after.",
+    "Public API health remains HTTP-successful and healthy.",
+    "No Azure mutation, workload deployment, transaction replay, merge, publication, or cleanup occurs."
+  ],
+  "failure_behavior": "Fail closed, upload available sanitized evidence, consume the one-shot grant, and preserve effective permission as unverified.",
+  "cost_implication": "No recurring Azure resource is created. GitHub Actions execution and Azure control-plane requests may use ordinary platform capacity; no compute, disk, public IP, network, or quota-consuming resource change is authorized.",
+  "termination": "The grant is consumed when the protected verification workflow attempts Azure verification, regardless of success or failure. Retry requires new explicit authorization.",
+  "claim_boundary": "Verification authorized != deployment authorized. Successful verification does not renew the previously consumed deployment grant."
+}
