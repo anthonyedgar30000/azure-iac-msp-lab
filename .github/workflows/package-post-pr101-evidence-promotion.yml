@@ -1,0 +1,89 @@
+name: Package complete post-PR101 evidence promotion
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/package-post-pr101-evidence-promotion.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  package:
+    name: Reuse validated renderer and include hidden files
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BASE_MAIN: 129cc8e6cbef471c56db6c410b2b775967eadc9a
+      DEPLOYED_SOURCE: 8b3d55c616d8820edd523f77021a35fe24167bd0
+      GENERATOR_SOURCE: 907c14b9b61abf8260aa5257e47cbe35dbe39999
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract and execute the validated render steps
+        run: |
+          set -euo pipefail
+          ruby - <<'RB'
+          require 'yaml'
+
+          workflow = YAML.load_file('.github/workflows/render-post-pr101-evidence-promotion.yml')
+          required = [
+            'Restore and patch reviewed generator',
+            'Render canonical files in the runner only',
+            'Reconcile generated files to the post-PR101 baseline',
+            'Validate rendered canonical state',
+            'Build review artifact',
+          ]
+          steps = workflow.fetch('jobs').fetch('render').fetch('steps')
+          selected = required.map do |name|
+            step = steps.find { |candidate| candidate['name'] == name }
+            raise "missing validated render step: #{name}" unless step && step['run']
+            step
+          end
+
+          File.open('/tmp/reuse-validated-render.sh', 'w') do |file|
+            file.puts '#!/usr/bin/env bash'
+            file.puts 'set -euo pipefail'
+            selected.each do |step|
+              file.puts
+              file.puts "# #{step['name']}"
+              file.puts step.fetch('run')
+            end
+          end
+          RB
+          chmod +x /tmp/reuse-validated-render.sh
+          /tmp/reuse-validated-render.sh
+          test "$(cat /tmp/post-pr101-promotion/validation-overall-exit-code.txt)" = "0"
+
+      - name: Verify complete artifact file set
+        run: |
+          set -euo pipefail
+          for path in \
+            /tmp/post-pr101-promotion/.project/current-reality.json \
+            /tmp/post-pr101-promotion/.project/lab-v1-completion-gate.json \
+            /tmp/post-pr101-promotion/.project/handoffs/current-state.md \
+            /tmp/post-pr101-promotion/.project/reconciliations/post-pr99-protected-verification-evidence.json \
+            /tmp/post-pr101-promotion/.project/reconciliations/post-pr100-normalization-20260725.json \
+            /tmp/post-pr101-promotion/.github/workflows/recover-pr92-protected-verification-evidence.yml \
+            /tmp/post-pr101-promotion/docs/lab-v1-completion-gate.md \
+            /tmp/post-pr101-promotion/scripts/validate_post_merge_pr86_pr88_current_reality.py \
+            /tmp/post-pr101-promotion/tests/test_post_merge_pr86_pr88_current_reality.py \
+            /tmp/post-pr101-promotion/infra/tests/test_lab_v1_completion_gate.py \
+            /tmp/post-pr101-promotion/infra/tests/test_pr92_protected_verification_recovery.py; do
+            test -f "$path"
+          done
+
+      - name: Upload complete review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: complete-post-pr101-canonical-evidence-promotion-${{ github.run_id }}
+          path: /tmp/post-pr101-promotion
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
