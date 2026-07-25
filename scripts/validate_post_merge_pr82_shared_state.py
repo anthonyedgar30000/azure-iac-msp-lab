@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Validate that the bounded PR #82 reconciliation remains preserved historically."""
+"""Validate that the bounded PR #82 reconciliation remains preserved historically.
+
+Machine verification terminates in structured JSON and JSONL evidence. Human-facing
+Markdown may change wording or punctuation without changing the governed facts.
+"""
 
 from __future__ import annotations
 
@@ -9,7 +13,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CURRENT = ROOT / ".project/current-reality.json"
 RECONCILIATION = ROOT / ".project/reconciliations/post-merge-pr82-shared-state.json"
-HANDOFF = ROOT / ".project/handoffs/current-state.md"
 HISTORY = ROOT / ".project/deployment-history.jsonl"
 POST_DEPLOYMENT = ROOT / ".project/evidence/servicetracer-demo-api-post-deployment-inventory-20260724T163938Z.json"
 PUBLIC_RUNTIME = ROOT / ".project/evidence/servicetracer-demo-api-live-verification-30086152352.json"
@@ -37,14 +40,13 @@ def require(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
-def main() -> None:
-    current = load_json(CURRENT)
-    reconciliation = load_json(RECONCILIATION)
-    inventory = load_json(POST_DEPLOYMENT)
-    runtime = load_json(PUBLIC_RUNTIME)
-    handoff = HANDOFF.read_text(encoding="utf-8")
-    history = load_history()
-
+def validate_structured_state(
+    current: dict,
+    reconciliation: dict,
+    inventory: dict,
+    runtime: dict,
+    history: list[dict],
+) -> None:
     require(current["schema_version"] == "project.current-reality.v1", "unexpected current-reality schema")
     require(len(current["repository_state"]["observed_head"]) == 40, "current repository watermark missing")
     require(current["repository_state"]["latest_merged_pull_request"] >= 82, "PR #82 disappeared from repository history")
@@ -68,6 +70,12 @@ def main() -> None:
     require(operations["recovery_tested"] is False, "recovery test fabricated")
     require(operations["metric_alert_count"] == 0, "metric-alert observation changed")
     require(operations["action_group_count"] == 0, "action-group observation changed")
+
+    authority = current["authority"]
+    require(authority["azure_authentication_authorized"] is False, "Azure authentication authority broadened")
+    require(authority["azure_mutations_authorized"] is False, "Azure mutation authority broadened")
+    require(authority["transaction_replay_authorized"] is False, "transaction replay authority broadened")
+    require(authority["cleanup_authorized"] is False, "cleanup authority broadened")
 
     historical = current["historical_planner_evidence"]
     require(historical["run_id"] == 30064289707, "historical planner evidence lost")
@@ -97,15 +105,15 @@ def main() -> None:
     require(matching[0]["repository_commit"] == PR82_MERGE, "historical deployment-history watermark changed")
     require(matching[0]["azure_mutations_performed"] is False, "history mutation boundary regressed")
 
-    for required in (
-        PR82_MERGE,
-        "rg-st-demo-api-dev-westus2",
-        "Standard_F1als_v7",
-        "backend transaction success verified = false",
-        "Azure authentication authorized: false",
-    ):
-        require(required in handoff, f"handoff missing {required!r}")
 
+def main() -> None:
+    validate_structured_state(
+        current=load_json(CURRENT),
+        reconciliation=load_json(RECONCILIATION),
+        inventory=load_json(POST_DEPLOYMENT),
+        runtime=load_json(PUBLIC_RUNTIME),
+        history=load_history(),
+    )
     print("PR #82 shared-state reconciliation historical validation passed")
 
 
