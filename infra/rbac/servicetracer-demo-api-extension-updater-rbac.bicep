@@ -22,16 +22,6 @@ resource targetResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' exi
   name: resourceGroupName
 }
 
-resource targetVm 'Microsoft.Compute/virtualMachines@2024-07-01' existing = {
-  scope: targetResourceGroup
-  name: vmName
-}
-
-resource targetExtension 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' existing = {
-  parent: targetVm
-  name: extensionName
-}
-
 resource extensionUpdaterRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
   name: roleDefinitionGuid
   properties: {
@@ -54,18 +44,18 @@ resource extensionUpdaterRole 'Microsoft.Authorization/roleDefinitions@2022-04-0
   }
 }
 
-resource extensionUpdaterAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(targetExtension.id, principalId, extensionUpdaterRole.id)
-  scope: targetExtension
-  properties: {
-    roleDefinitionId: extensionUpdaterRole.id
+module extensionUpdaterAssignment './modules/servicetracer-demo-api-extension-role-assignment.bicep' = {
+  name: 'servicetracer-demo-api-extension-updater-assignment'
+  scope: targetResourceGroup
+  params: {
+    vmName: vmName
+    extensionName: extensionName
     principalId: principalId
-    principalType: 'ServicePrincipal'
-    description: 'GitHub OIDC target identity may update only the existing ServiceTracer demo API extension.'
+    roleDefinitionId: extensionUpdaterRole.id
   }
 }
 
 output roleDefinitionId string = extensionUpdaterRole.id
-output roleAssignmentId string = extensionUpdaterAssignment.id
-output assignmentScope string = targetExtension.id
+output roleAssignmentId string = extensionUpdaterAssignment.outputs.roleAssignmentId
+output assignmentScope string = extensionUpdaterAssignment.outputs.assignmentScope
 output grantedAction string = allowedAction
