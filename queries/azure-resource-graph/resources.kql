@@ -1,0 +1,14 @@
+Resources
+| project
+    recordKind = 'resource',
+    id = tolower(id),
+    name,
+    type = tolower(type),
+    subscriptionId = tolower(subscriptionId),
+    resourceGroup = tolower(resourceGroup),
+    location = tolower(location),
+    kind = tostring(kind),
+    skuName = tostring(sku.name),
+    managedBy = tolower(tostring(managedBy)),
+    tags
+| order by id asc

@@ -1,0 +1,38 @@
+Resources
+| where type =~ 'microsoft.compute/virtualmachines'
+| extend nicCount = array_length(properties.networkProfile.networkInterfaces)
+| mv-expand nic = properties.networkProfile.networkInterfaces
+| project
+    recordKind = 'vm_nic',
+    vmId = tolower(id),
+    nicId = tolower(tostring(nic.id)),
+    primary = tobool(nic.properties.primary),
+    subscriptionId = tolower(subscriptionId)
+| union (
+    Resources
+    | where type =~ 'microsoft.compute/virtualmachines'
+    | extend osDiskId = tolower(tostring(properties.storageProfile.osDisk.managedDisk.id))
+    | where isnotempty(osDiskId)
+    | project
+        recordKind = 'vm_disk',
+        vmId = tolower(id),
+        diskId = osDiskId,
+        diskRole = 'os',
+        lun = int(null),
+        subscriptionId = tolower(subscriptionId)
+)
+| union (
+    Resources
+    | where type =~ 'microsoft.compute/virtualmachines'
+    | mv-expand dataDisk = properties.storageProfile.dataDisks
+    | extend diskId = tolower(tostring(dataDisk.managedDisk.id))
+    | where isnotempty(diskId)
+    | project
+        recordKind = 'vm_disk',
+        vmId = tolower(id),
+        diskId,
+        diskRole = 'data',
+        lun = toint(dataDisk.lun),
+        subscriptionId = tolower(subscriptionId)
+)
+| order by recordKind asc, vmId asc

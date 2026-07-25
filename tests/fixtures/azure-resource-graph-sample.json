@@ -1,0 +1,140 @@
+{
+  "metadata": {
+    "observed_at_utc": "2026-07-25T02:00:00Z",
+    "subscriptions": [
+      "11111111-1111-1111-1111-111111111111"
+    ],
+    "query_complete": true
+  },
+  "results": {
+    "resources": [
+      {
+        "recordKind": "resource",
+        "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Compute/virtualMachines/vm-demo",
+        "name": "vm-demo",
+        "type": "microsoft.compute/virtualmachines",
+        "subscriptionId": "11111111-1111-1111-1111-111111111111",
+        "resourceGroup": "rg-demo",
+        "location": "westus2",
+        "kind": null,
+        "skuName": null,
+        "managedBy": null,
+        "tags": {"workload": "servicetracer"}
+      },
+      {
+        "recordKind": "resource",
+        "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Network/networkInterfaces/nic-demo",
+        "name": "nic-demo",
+        "type": "microsoft.network/networkinterfaces",
+        "subscriptionId": "11111111-1111-1111-1111-111111111111",
+        "resourceGroup": "rg-demo",
+        "location": "westus2",
+        "kind": null,
+        "skuName": null,
+        "managedBy": null,
+        "tags": {}
+      },
+      {
+        "recordKind": "resource",
+        "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Network/virtualNetworks/vnet-demo",
+        "name": "vnet-demo",
+        "type": "microsoft.network/virtualnetworks",
+        "subscriptionId": "11111111-1111-1111-1111-111111111111",
+        "resourceGroup": "rg-demo",
+        "location": "westus2",
+        "kind": null,
+        "skuName": null,
+        "managedBy": null,
+        "tags": {}
+      },
+      {
+        "recordKind": "resource",
+        "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Network/networkSecurityGroups/nsg-demo",
+        "name": "nsg-demo",
+        "type": "microsoft.network/networksecuritygroups",
+        "subscriptionId": "11111111-1111-1111-1111-111111111111",
+        "resourceGroup": "rg-demo",
+        "location": "westus2",
+        "kind": null,
+        "skuName": null,
+        "managedBy": null,
+        "tags": {}
+      },
+      {
+        "recordKind": "resource",
+        "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Compute/disks/osdisk-demo",
+        "name": "osdisk-demo",
+        "type": "microsoft.compute/disks",
+        "subscriptionId": "11111111-1111-1111-1111-111111111111",
+        "resourceGroup": "rg-demo",
+        "location": "westus2",
+        "kind": null,
+        "skuName": "Premium_LRS",
+        "managedBy": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Compute/virtualMachines/vm-demo",
+        "tags": {}
+      },
+      {
+        "recordKind": "resource",
+        "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Network/publicIPAddresses/pip-demo",
+        "name": "pip-demo",
+        "type": "microsoft.network/publicipaddresses",
+        "subscriptionId": "11111111-1111-1111-1111-111111111111",
+        "resourceGroup": "rg-demo",
+        "location": "westus2",
+        "kind": null,
+        "skuName": "Standard",
+        "managedBy": null,
+        "tags": {}
+      }
+    ],
+    "vm_attachments": [
+      {
+        "recordKind": "vm_nic",
+        "vmId": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Compute/virtualMachines/vm-demo",
+        "nicId": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Network/networkInterfaces/nic-demo",
+        "primary": true,
+        "subscriptionId": "11111111-1111-1111-1111-111111111111"
+      },
+      {
+        "recordKind": "vm_disk",
+        "vmId": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Compute/virtualMachines/vm-demo",
+        "diskId": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Compute/disks/osdisk-demo",
+        "diskRole": "os",
+        "lun": null,
+        "subscriptionId": "11111111-1111-1111-1111-111111111111"
+      }
+    ],
+    "nic_ip_configurations": [
+      {
+        "recordKind": "nic_ip_configuration",
+        "nicId": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Network/networkInterfaces/nic-demo",
+        "ipConfigurationName": "ipconfig1",
+        "privateIpAddress": "10.20.40.10",
+        "privateIpAllocationMethod": "Static",
+        "subnetId": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Network/virtualNetworks/vnet-demo/subnets/snet-ops",
+        "publicIpId": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Network/publicIPAddresses/pip-demo",
+        "nicNsgId": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Network/networkSecurityGroups/nsg-demo",
+        "backendPoolIds": [
+          {
+            "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Network/loadBalancers/lb-demo/backendAddressPools/pool-demo"
+          }
+        ],
+        "primary": true,
+        "subscriptionId": "11111111-1111-1111-1111-111111111111"
+      }
+    ],
+    "subnets": [
+      {
+        "recordKind": "subnet",
+        "vnetId": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Network/virtualNetworks/vnet-demo",
+        "subnetId": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Network/virtualNetworks/vnet-demo/subnets/snet-ops",
+        "subnetName": "snet-ops",
+        "addressPrefix": "10.20.40.0/24",
+        "addressPrefixes": [],
+        "subnetNsgId": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-demo/providers/Microsoft.Network/networkSecurityGroups/nsg-demo",
+        "routeTableId": "",
+        "subscriptionId": "11111111-1111-1111-1111-111111111111"
+      }
+    ]
+  }
+}
