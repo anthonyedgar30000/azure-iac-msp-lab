@@ -1,0 +1,77 @@
+{
+  "schema_version": "project.repository-reconciliation-authorization.v1",
+  "authorization_id": "post-pr99-protected-evidence-promotion-20260725",
+  "recorded_on": "2026-07-25",
+  "status": "consumed_failed_validation",
+  "human_instruction": "Anthony Edgar instructed the project to proceed after reviewing the merged PR #99 check result.",
+  "objective": "Promote the recovered PR #92 protected verification evidence into canonical project state and make nonessential PR-comment publication non-blocking.",
+  "baseline": {
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "719fe25db340fecbcc24599d6cf3c7ac1eee80dd",
+    "latest_merged_pull_request": 99,
+    "open_pull_requests_observed": [],
+    "local_working_tree": "not_observed",
+    "deployed_source_ref": "8b3d55c616d8820edd523f77021a35fe24167bd0",
+    "main_ahead_by_commits": 191,
+    "main_behind_by_commits": 0
+  },
+  "evidence": {
+    "historical_protected_run_id": 30160680313,
+    "historical_protected_artifact_id": 8620163872,
+    "historical_protected_artifact_digest": "sha256:9da1e4f3b12de2d4702ab3ea8c4b47b0169d4030a3bccf4762e2f1aa81ba5b04",
+    "recovery_run_id": 30171257533,
+    "recovery_run_conclusion": "failure_due_only_to_pull_request_comment_publication",
+    "recovery_validation_step_conclusion": "success",
+    "recovery_summary_upload_conclusion": "success",
+    "execution_head_ci_run_id": 30171259207,
+    "execution_head_ci_conclusion": "success",
+    "repository_evidence_path": ".project/evidence/pr92-protected-verification-recovery-30171257533.json"
+  },
+  "permitted_paths": [
+    ".project/current-reality.json",
+    ".project/lab-v1-completion-gate.json",
+    ".project/handoffs/current-state.md",
+    ".project/reconciliations/post-pr99-protected-verification-evidence.json",
+    ".github/workflows/recover-pr92-protected-verification-evidence.yml",
+    "docs/lab-v1-completion-gate.md",
+    "scripts/validate_post_merge_pr86_pr88_current_reality.py",
+    "tests/test_post_merge_pr86_pr88_current_reality.py",
+    "infra/tests/test_lab_v1_completion_gate.py",
+    "infra/tests/test_pr92_protected_verification_recovery.py",
+    ".project/executions/post-pr99-protected-evidence-promotion-20260725.json"
+  ],
+  "authority": {
+    "repository_read": true,
+    "repository_branch_write": true,
+    "repository_state_reconciliation": true,
+    "deterministic_test_update": true,
+    "temporary_self_applying_workflow": true,
+    "pull_request_creation": true,
+    "pull_request_merge": false,
+    "workflow_dispatch_or_rerun": false,
+    "azure_authentication": false,
+    "azure_query": false,
+    "azure_mutation": false,
+    "deployment": false,
+    "rbac_mutation": false,
+    "guest_command": false,
+    "transaction_replay": false,
+    "network_mutation": false,
+    "cleanup": false
+  },
+  "one_shot": {
+    "branch": "agent/promote-pr99-evidence",
+    "consumed_when": "The temporary repository-only workflow attempts the authorized canonical-state update.",
+    "consumed_by_workflow_run_id": 30175620132,
+    "outcome": "state_generation_succeeded_validation_failed_before_commit",
+    "repository_commit_created": false,
+    "retry_authorized": false
+  },
+  "failure": {
+    "failed_step": "Validate promoted state",
+    "preserved_state": "No generated canonical-state changes were committed.",
+    "identified_cause": "The generated handoff omitted historical planner markers required by .project/validate.py."
+  },
+  "claim_boundary": "Recovered protected evidence may satisfy the verification and effective-permission criteria. This consumed grant did not commit the promotion, deploy the timeout correction, verify the corrected runtime, renew a deployment grant, or authorize Azure access."
+}

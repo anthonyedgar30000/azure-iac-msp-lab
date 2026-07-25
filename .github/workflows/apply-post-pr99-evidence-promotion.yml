@@ -1,0 +1,186 @@
+name: Apply corrected post-PR99 protected evidence promotion
+
+on:
+  push:
+    branches:
+      - agent/promote-pr99-evidence
+    paths:
+      - .project/executions/post-pr99-protected-evidence-promotion-corrected-20260725.json
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: post-pr99-protected-evidence-promotion-corrected
+  cancel-in-progress: false
+
+env:
+  AUTHORIZATION_FILE: .project/authorizations/post-pr99-protected-evidence-promotion-corrected-20260725.json
+  EXECUTION_FILE: .project/executions/post-pr99-protected-evidence-promotion-corrected-20260725.json
+
+jobs:
+  promote:
+    name: Promote recovered evidence into canonical project state
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact corrected promotion head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+
+      - name: Validate corrected one-shot authority and source binding
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/agent/promote-pr99-evidence'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$GITHUB_EVENT_NAME" = 'push'
+          python3 -m py_compile scripts/apply_post_pr99_evidence_promotion.py
+
+          jq -e '
+            .schema_version == "project.repository-reconciliation-authorization.v1" and
+            .authorization_id == "post-pr99-protected-evidence-promotion-corrected-20260725" and
+            .status == "authorized_not_consumed" and
+            .baseline.base_commit == "719fe25db340fecbcc24599d6cf3c7ac1eee80dd" and
+            .baseline.pull_request == 100 and
+            .baseline.prior_attempt_workflow_run_id == 30175620132 and
+            .correction.required_historical_markers == [
+              "92b0c3b1064158684a4b280348c77eeedba6dfc3",
+              "30064289707",
+              "8585693830",
+              "7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22",
+              "NotAvailableForSubscription",
+              "standardBasv2Family",
+              "PR #73"
+            ] and
+            .authority.repository_state_reconciliation == true and
+            .authority.deterministic_test_update == true and
+            .authority.temporary_self_applying_workflow == true and
+            .authority.temporary_workflow_self_removal == true and
+            .authority.temporary_script_self_removal == true and
+            .authority.pull_request_merge == false and
+            .authority.workflow_dispatch_or_rerun == false and
+            .authority.rerun_workflow_run_30175620132 == false and
+            .authority.azure_authentication == false and
+            .authority.azure_query == false and
+            .authority.azure_mutation == false and
+            .authority.deployment == false and
+            .one_shot.retry_authorized == false
+          ' "$AUTHORIZATION_FILE" >/dev/null
+
+          reviewed_head="$(jq -r '.reviewed_package_head' "$EXECUTION_FILE")"
+          test "$(git rev-parse HEAD^)" = "$reviewed_head"
+          jq -e --arg authorization "$AUTHORIZATION_FILE" --arg reviewed_head "$reviewed_head" '
+            .schema_version == "project.repository-reconciliation-execution.v1" and
+            .execution_id == "post-pr99-protected-evidence-promotion-corrected-20260725" and
+            .authorized == true and
+            .authorization_record == $authorization and
+            .reviewed_package_head == $reviewed_head and
+            .prohibited_rerun_workflow_run_id == 30175620132 and
+            .authority.repository_state_reconciliation == true and
+            .authority.repository_branch_write == true and
+            .authority.pull_request_merge == false and
+            .authority.workflow_dispatch_or_rerun == false and
+            .authority.azure_authentication == false and
+            .authority.azure_query == false and
+            .authority.azure_mutation == false and
+            .authority.deployment == false
+          ' "$EXECUTION_FILE" >/dev/null
+
+      - name: Require corrected package CI success
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          reviewed_head="$(jq -r '.reviewed_package_head' "$EXECUTION_FILE")"
+          reviewed_ci_run="$(jq -r '.reviewed_ci_run_id' "$EXECUTION_FILE")"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${reviewed_ci_run}" > /tmp/reviewed-ci.json
+          jq -e --arg reviewed_head "$reviewed_head" '
+            .name == "CI" and
+            .head_sha == $reviewed_head and
+            .status == "completed" and
+            .conclusion == "success"
+          ' /tmp/reviewed-ci.json >/dev/null
+
+      - name: Preserve required historical handoff markers
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("scripts/apply_post_pr99_evidence_promotion.py")
+          text = path.read_text(encoding="utf-8")
+          needle = '''Usage may lag and is not a final invoice or forecast.
+
+          ## Cleanup and optional capability boundaries
+          '''
+          replacement = '''Usage may lag and is not a final invoice or forecast.
+
+          ## Preserved historical planner evidence
+
+          ```text
+          authorization reconciliation merge: 92b0c3b1064158684a4b280348c77eeedba6dfc3
+          planner run: 30064289707
+          planner artifact: 8585693830
+          planner artifact SHA-256: 7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22
+          candidate restriction: NotAvailableForSubscription
+          VM family: standardBasv2Family
+          typed readiness control: PR #73
+          status: readiness rejected before ARM validation and What-If
+          current deployment view: false
+          ```
+
+          ## Cleanup and optional capability boundaries
+          '''
+          if text.count(needle) != 1:
+              raise SystemExit("expected exactly one historical-handoff insertion point")
+          path.write_text(text.replace(needle, replacement), encoding="utf-8")
+          PY
+          python3 -m py_compile scripts/apply_post_pr99_evidence_promotion.py
+
+      - name: Apply deterministic canonical-state update
+        run: |
+          set -euo pipefail
+          python3 scripts/apply_post_pr99_evidence_promotion.py
+
+      - name: Validate promoted state
+        run: |
+          set -euo pipefail
+          python3 .project/validate.py
+          python3 scripts/validate_post_merge_pr86_pr88_current_reality.py
+          python3 tests/test_post_merge_pr86_pr88_current_reality.py
+          python3 infra/tests/test_lab_v1_completion_gate.py
+          python3 infra/tests/test_pr92_protected_verification_recovery.py
+
+          handoff=.project/handoffs/current-state.md
+          for marker in \
+            92b0c3b1064158684a4b280348c77eeedba6dfc3 \
+            30064289707 \
+            8585693830 \
+            7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22 \
+            NotAvailableForSubscription \
+            standardBasv2Family \
+            'PR #73'; do
+            grep -F -- "$marker" "$handoff" >/dev/null
+          done
+
+      - name: Commit bounded corrected repository-only promotion
+        run: |
+          set -euo pipefail
+          test ! -e .github/workflows/apply-post-pr99-evidence-promotion.yml
+          test ! -e scripts/apply_post_pr99_evidence_promotion.py
+
+          allowed='^(.project/current-reality.json|.project/lab-v1-completion-gate.json|.project/handoffs/current-state.md|.project/reconciliations/post-pr99-protected-verification-evidence.json|.github/workflows/recover-pr92-protected-verification-evidence.yml|docs/lab-v1-completion-gate.md|scripts/validate_post_merge_pr86_pr88_current_reality.py|tests/test_post_merge_pr86_pr88_current-reality.py|tests/test_post_merge_pr86_pr88_current_reality.py|infra/tests/test_lab_v1_completion_gate.py|infra/tests/test_pr92_protected_verification_recovery.py|.github/workflows/apply-post-pr99-evidence-promotion.yml|scripts/apply_post_pr99_evidence_promotion.py)$'
+          changed="$(git status --short | sed -E 's/^.. //' | sort -u)"
+          test -n "$changed"
+          while IFS= read -r path; do
+            [[ "$path" =~ $allowed ]] || { echo "unexpected changed path: $path" >&2; exit 1; }
+          done <<< "$changed"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'state: promote PR99 protected verification evidence'
+          git push origin HEAD:agent/promote-pr99-evidence

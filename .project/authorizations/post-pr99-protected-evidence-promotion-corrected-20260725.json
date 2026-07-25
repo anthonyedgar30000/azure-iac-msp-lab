@@ -1,0 +1,79 @@
+{
+  "schema_version": "project.repository-reconciliation-authorization.v1",
+  "authorization_id": "post-pr99-protected-evidence-promotion-corrected-20260725",
+  "recorded_on": "2026-07-25",
+  "status": "authorized_not_consumed",
+  "human_instruction": "Authorize one corrected repository-only promotion attempt for PR #100. Preserve all required historical handoff markers, complete deterministic validation, remove the temporary write workflow and promotion script before review, and do not access Azure, rerun workflow run 30175620132, deploy, merge, or mutate infrastructure.",
+  "objective": "Complete the PR #99 protected-evidence promotion after correcting the generated handoff while preserving the failed first attempt as consumed history.",
+  "baseline": {
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "719fe25db340fecbcc24599d6cf3c7ac1eee80dd",
+    "pull_request": 100,
+    "branch": "agent/promote-pr99-evidence",
+    "prior_attempt_workflow_run_id": 30175620132,
+    "prior_attempt_outcome": "failed_validation_before_repository_commit",
+    "local_working_tree": "not_observed",
+    "deployed_source_ref": "8b3d55c616d8820edd523f77021a35fe24167bd0"
+  },
+  "correction": {
+    "defect": "The generated current-state handoff omitted historical planner markers required by .project/validate.py.",
+    "required_historical_markers": [
+      "92b0c3b1064158684a4b280348c77eeedba6dfc3",
+      "30064289707",
+      "8585693830",
+      "7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22",
+      "NotAvailableForSubscription",
+      "standardBasv2Family",
+      "PR #73"
+    ],
+    "method": "Patch only the temporary promotion script's generated handoff template in the new runner, then execute the existing deterministic promotion and full validation suite."
+  },
+  "evidence": {
+    "historical_protected_run_id": 30160680313,
+    "historical_protected_artifact_id": 8620163872,
+    "historical_protected_artifact_digest": "sha256:9da1e4f3b12de2d4702ab3ea8c4b47b0169d4030a3bccf4762e2f1aa81ba5b04",
+    "recovery_run_id": 30171257533,
+    "repository_evidence_path": ".project/evidence/pr92-protected-verification-recovery-30171257533.json"
+  },
+  "authority": {
+    "repository_read": true,
+    "repository_branch_write": true,
+    "repository_state_reconciliation": true,
+    "deterministic_test_update": true,
+    "temporary_self_applying_workflow": true,
+    "temporary_workflow_self_removal": true,
+    "temporary_script_self_removal": true,
+    "pull_request_creation": false,
+    "pull_request_merge": false,
+    "workflow_dispatch_or_rerun": false,
+    "rerun_workflow_run_30175620132": false,
+    "azure_authentication": false,
+    "azure_query": false,
+    "azure_mutation": false,
+    "deployment": false,
+    "rbac_mutation": false,
+    "guest_command": false,
+    "transaction_replay": false,
+    "network_mutation": false,
+    "cleanup": false
+  },
+  "completion_conditions": [
+    "all required historical handoff markers are present",
+    ".project/validate.py passes",
+    "post-PR99 validator passes",
+    "current-reality tests pass",
+    "Lab v1 gate tests pass",
+    "PR92 recovery tests pass",
+    "temporary write workflow is absent from final branch tree",
+    "temporary promotion script is absent from final branch tree",
+    "no Azure operation occurred",
+    "no pull-request merge occurred"
+  ],
+  "one_shot": {
+    "trigger_path": ".project/executions/post-pr99-protected-evidence-promotion-corrected-20260725.json",
+    "consumed_when": "The corrected temporary workflow attempts the canonical-state update, regardless of outcome.",
+    "retry_authorized": false
+  },
+  "claim_boundary": "Corrected repository-only promotion != Azure access or infrastructure mutation. New corrected workflow run != rerun of workflow run 30175620132. Effective permission verified != deployment authorized."
+}

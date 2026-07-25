@@ -1,0 +1,56 @@
+{
+  "schema_version": "project.repository-reconciliation-execution.v1",
+  "execution_id": "post-pr99-protected-evidence-promotion-20260725",
+  "recorded_on": "2026-07-25",
+  "authorized": true,
+  "authorization_record": ".project/authorizations/post-pr99-protected-evidence-promotion-20260725.json",
+  "reviewed_package_head": "5b5e2710c2e8b2599068ef8b7c7c1afc8611438e",
+  "reviewed_ci_run_id": 30175566327,
+  "workflow_run_id": 30175620132,
+  "outcome": "failed_validation_before_repository_commit",
+  "scope": {
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "branch": "agent/promote-pr99-evidence",
+    "base_commit": "719fe25db340fecbcc24599d6cf3c7ac1eee80dd",
+    "historical_protected_run_id": 30160680313,
+    "historical_protected_artifact_id": 8620163872,
+    "recovery_run_id": 30171257533
+  },
+  "authority": {
+    "repository_state_reconciliation": true,
+    "repository_branch_write": true,
+    "deterministic_test_update": true,
+    "temporary_workflow_self_removal": true,
+    "pull_request_merge": false,
+    "workflow_dispatch_or_rerun": false,
+    "azure_authentication": false,
+    "azure_query": false,
+    "azure_mutation": false,
+    "deployment": false,
+    "rbac_mutation": false,
+    "guest_command": false,
+    "transaction_replay": false,
+    "network_mutation": false,
+    "cleanup": false
+  },
+  "step_results": {
+    "authority_and_source_binding": "success",
+    "reviewed_package_ci_requirement": "success",
+    "deterministic_state_generation": "success",
+    "promoted_state_validation": "failure",
+    "repository_commit": "skipped"
+  },
+  "repository_effect": {
+    "canonical_state_commit_created": false,
+    "generated_runner_changes_persisted": false,
+    "temporary_workflow_removed": false,
+    "temporary_script_removed": false
+  },
+  "failure": {
+    "classification": "repository_validation_defect",
+    "identified_cause": "The generated handoff omitted historical planner markers required by .project/validate.py.",
+    "azure_effect": "none"
+  },
+  "termination": "This grant was consumed by workflow run 30175620132. It does not authorize retry, PR merge, Azure access, or deployment.",
+  "claim_boundary": "Repository evidence promotion attempt failed before commit != recovered protected evidence failed. Effective permission verified != deployment authorized."
+}
