@@ -3,7 +3,7 @@ name: Deploy ServiceTracer timeout fix by direct extension PUT
 on:
   push:
     branches:
-      - fix/supersede-deployment-submitter-rbac-with-direct-put
+      - fix/pr104-direct-extension-put-remediation
     paths:
       - .project/authorizations/servicetracer-demo-api-timeout-fix-direct-put-retry-20260725.json
 
@@ -45,7 +45,7 @@ jobs:
       - name: Validate bounded authorization and source
         run: |
           set -euo pipefail
-          test "$GITHUB_REF" = 'refs/heads/fix/supersede-deployment-submitter-rbac-with-direct-put'
+          test "$GITHUB_REF" = 'refs/heads/fix/pr104-direct-extension-put-remediation'
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           python3 -m py_compile \
             workloads/servicetracer-demo-api/scripts/assert_vm_instance_view.py \
@@ -56,7 +56,7 @@ jobs:
           jq -e '
             .schema_version == "project.azure-deployment-authorization-direct-extension-put.v1" and
             .authorized == true and
-            .source_binding.branch == "fix/supersede-deployment-submitter-rbac-with-direct-put" and
+            .source_binding.branch == "fix/pr104-direct-extension-put-remediation" and
             .prior_attempt.workflow_run_id == 30178082566 and
             .prior_attempt.authorization_consumed == true and
             .prior_attempt.extension_mutation_performed == false and
@@ -84,7 +84,7 @@ jobs:
           for _ in $(seq 1 180); do
             gh api -X GET \
               "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs" \
-              -f branch='fix/supersede-deployment-submitter-rbac-with-direct-put' \
+              -f branch='fix/pr104-direct-extension-put-remediation' \
               -f event='pull_request' \
               -F per_page=30 > /tmp/ci-runs.json
             run_id="$(jq -r --arg sha "$GITHUB_SHA" '.workflow_runs | map(select(.head_sha == $sha)) | .[0].id // empty' /tmp/ci-runs.json)"

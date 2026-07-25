@@ -30,16 +30,6 @@ The parser-safe preflight worked. Azure login, current-state observation, ARM va
 
 The workflow then used the same wrapper for rollback, so rollback failed at the same authorization boundary. Resource inventory remained seven resources. No corrected post-deployment health contract was observed.
 
-## Repository supersession
-
-PR #106 merged a repository-only alternative that would add `Microsoft.Resources/deployments/write` at resource-group scope. No RBAC mutation or retry evidence has been observed for that path. This increment removes that unexecuted package before it becomes operational, preserving one future deployment method.
-
-```text
-PR106 repository package merged != RBAC applied
-RBAC plan present != deployment path accepted
-direct extension PUT selected != retry authorized
-```
-
 ## Corrected method
 
 The prepared workflow will:

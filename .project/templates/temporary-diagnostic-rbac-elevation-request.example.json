@@ -1,0 +1,122 @@
+{
+  "schema_version": "project.azure-temporary-diagnostic-elevation-request.v1",
+  "status": "template_only",
+  "authorized": false,
+  "recorded_on": "2026-07-25",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "purpose": "Determine whether an already-recorded Azure failure boundary is caused by insufficient RBAC without converting broad temporary access into the durable permission design.",
+  "authorization_source": "No operational authorization. Copy this template into a new incident-specific record only after explicit human approval.",
+  "scope": {
+    "subscription": "protected_target_subscription",
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "location": "westus2",
+    "scope_must_equal_exact_resource_group": true,
+    "subscription_scope_allowed": false,
+    "management_group_scope_allowed": false,
+    "tenant_scope_allowed": false
+  },
+  "principal": {
+    "type": "human_user",
+    "named_identity_required": true,
+    "object_id": "REDACTED_REQUIRED",
+    "shared_account_allowed": false,
+    "service_principal_allowed": false,
+    "managed_identity_allowed": false
+  },
+  "role": {
+    "name": "Contributor",
+    "built_in_role_id": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+    "owner_allowed": false,
+    "user_access_administrator_allowed": false,
+    "permanent_active_assignment_allowed": false
+  },
+  "activation": {
+    "mechanism": "Microsoft Entra Privileged Identity Management",
+    "maximum_duration_minutes": 60,
+    "require_mfa": true,
+    "require_approval": true,
+    "require_business_justification": true,
+    "require_ticket_reference": true,
+    "require_notifications": true,
+    "manual_deactivation_required": true,
+    "fresh_authentication_after_activation_required": true,
+    "fresh_authentication_after_deactivation_required": true
+  },
+  "diagnostic_test": {
+    "mode": "observe_only_or_single_exact_mutation",
+    "max_attempts": 1,
+    "hypothesis": "REQUIRED",
+    "baseline_failure_reference": "REQUIRED",
+    "exact_command_workflow_or_api_digest": "REQUIRED",
+    "expected_success_boundary": "REQUIRED",
+    "expected_resource_count_before_and_after": 7,
+    "mutation_authorized": false,
+    "automatic_retry_authorized": false,
+    "unrelated_resource_exploration_authorized": false
+  },
+  "authority": {
+    "pim_configuration": false,
+    "eligible_assignment_creation": false,
+    "role_activation": false,
+    "azure_authentication": false,
+    "read_only_observation": false,
+    "diagnostic_mutation": false,
+    "rbac_mutation": false,
+    "network_mutation": false,
+    "resource_creation": false,
+    "resource_deletion": false,
+    "rollback": false,
+    "retry": false,
+    "cleanup": false,
+    "pull_request_merge": false
+  },
+  "preconditions": [
+    "original failure is preserved with identity scope time source and exact error",
+    "one falsifiable authorization hypothesis is recorded",
+    "PIM license and eligible assignment are independently verified",
+    "role settings enforce one-hour maximum MFA justification ticket and approval",
+    "exact resource-group scope is independently verified",
+    "test source or command digest is immutable",
+    "mutation authority is separately explicit when the test crosses a mutation boundary",
+    "rollback or recovery authority is separately explicit when needed"
+  ],
+  "evidence_required": [
+    "original failure record",
+    "incident-specific authorization record",
+    "PIM activation request and approval metadata",
+    "hashed operator tenant and subscription identifiers",
+    "exact resource-group scope",
+    "effective permissions before during and after elevation",
+    "resource inventory before and after",
+    "diagnostic output and exit status",
+    "target resource state before and after",
+    "activation deactivation and expiry timestamps",
+    "SHA-256 evidence manifest"
+  ],
+  "stop_conditions": [
+    "PIM is unavailable or unlicensed",
+    "eligible assignment is missing",
+    "approval is denied or expires",
+    "identity role source or scope differs from the approved record",
+    "effective access is not observed after one refresh",
+    "unexpected mutation occurs",
+    "deactivation or access termination cannot be verified"
+  ],
+  "termination": {
+    "manual_deactivation_immediately_after_test": true,
+    "verify_active_assignment_absent_or_expired": true,
+    "verify_broad_effective_permissions_absent": true,
+    "close_authorization_as_consumed": true,
+    "automatic_expiry_alone_is_sufficient_evidence": false
+  },
+  "claim_boundaries": [
+    "temporary_broad_access_succeeds != broad_access_required_permanently",
+    "RBAC_assignment != effective_least_privilege",
+    "role_activation != diagnostic_mutation_authorized",
+    "diagnostic_attempt_terminal != retry_authorized",
+    "deactivation_requested != access_terminated",
+    "assignment_expired != cached_access_immediately_absent",
+    "template_present != operational_authority"
+  ]
+}

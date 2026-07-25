@@ -140,13 +140,12 @@ class DirectExtensionPutRetryTests(unittest.TestCase):
         self.assertTrue(record["preflight"]["arm_validation_succeeded"])
         self.assertTrue(record["preflight"]["extension_only_what_if_accepted"])
         self.assertFalse(record["result"]["extension_mutation_performed"])
-        self.assertEqual(record["result"]["corrected_runtime_status"], "not_deployed")
+        self.assertEqual(
+            record["result"]["corrected_runtime_status"], "not_deployed"
+        )
         self.assertEqual(record["result"]["post_attempt_health"], "not_observed")
         self.assertEqual(record["authorization"]["status"], "consumed_terminal_failure")
         self.assertFalse(record["authority"]["deployment_retry"])
-        self.assertEqual(record["supersession"]["merged_repository_package_pull_request"], 106)
-        self.assertFalse(record["supersession"]["azure_rbac_mutation_observed"])
-        self.assertTrue(record["remediation_decision"]["supersedes_pr106_repository_path"])
 
     def test_python_compiles(self):
         subprocess.run(["python", "-m", "py_compile", str(BUILDER)], check=True)
