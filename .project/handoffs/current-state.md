@@ -11,6 +11,7 @@ ARM_authorization_failure != Azure_resource_mutation
 public_API_healthy != corrected_runtime_deployed
 role_assignment_exists != effective_required_action_granted
 historical_planner_evidence != current_deployment_state
+not_observed != false
 not_observed != absent
 ```
 
@@ -108,6 +109,7 @@ observed backend: VPN-02
 backend statuses: 503, 503
 failure boundary: radius_response
 exact root cause claimed: false
+backend transaction success verified = false
 live 20-attempt replay performed: false
 full workload operationally verified: false
 ```
@@ -170,8 +172,14 @@ Quota is not availability, reservation, cost, or authorization.
 The earlier protected planner run remains valid historical evidence only:
 
 ```text
+authorization reconciliation merge: 92b0c3b1064158684a4b280348c77eeedba6dfc3
 planner run: 30064289707
+planner artifact: 8585693830
+planner artifact SHA-256: 7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22
 candidate: Standard_B2ats_v2 / eastus
+restriction: NotAvailableForSubscription
+VM family: standardBasv2Family
+typed readiness control: PR #73
 status: readiness rejected before ARM validation and What-If
 current deployment view: false
 ```
