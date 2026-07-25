@@ -101,7 +101,7 @@ def main() -> None:
         PR82_MERGE,
         "rg-st-demo-api-dev-westus2",
         "Standard_F1als_v7",
-        "backend transaction success verified: false",
+        "backend transaction success verified = false",
         "Azure authentication authorized: false",
     ):
         require(required in handoff, f"handoff missing {required!r}")
