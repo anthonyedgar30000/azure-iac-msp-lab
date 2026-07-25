@@ -1,0 +1,56 @@
+{
+  "schema_version": "project.azure-verify-only-authorization.v1",
+  "authorization_id": "servicetracer-demo-api-extension-write-verify-only-20260725",
+  "status": "authorized_not_consumed",
+  "objective": "Verify that the protected GitHub OIDC target identity can authorize the existing ServiceTracer demo API VM extension update without mutating Azure.",
+  "scope": {
+    "subscription": "AZURE_TARGET_SUBSCRIPTION_ID",
+    "tenant": "AZURE_TENANT_ID",
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "region": "westus2",
+    "vm": "vm-st-demo-api-mst-dev",
+    "extension": "servicetracer-demo-api",
+    "allowed_operations": [
+      "Azure workload-identity login",
+      "control-plane reads",
+      "GET /api/health",
+      "ARM deployment group validate",
+      "ARM deployment group what-if",
+      "sanitized evidence upload"
+    ]
+  },
+  "authority": {
+    "azure_login": true,
+    "control_plane_read": true,
+    "arm_validate": true,
+    "arm_what_if": true,
+    "public_health_get": true,
+    "resource_mutation": false,
+    "application_deployment": false,
+    "vm_command": false,
+    "service_restart": false,
+    "transaction_replay": false,
+    "rbac_mutation": false,
+    "network_mutation": false,
+    "pull_request_merge": false,
+    "github_pages_publication": false,
+    "cleanup": false
+  },
+  "assumptions": {
+    "rbac_bootstrap_success": "assumed_by_human_authority_not_yet_durably_verified",
+    "assignment_existence_is_not_effective_permission": true,
+    "successful_what_if_is_required": true
+  },
+  "success_criteria": [
+    "Exact-head pull-request CI succeeds.",
+    "Protected target OIDC login succeeds in the expected subscription and tenant.",
+    "ARM validation succeeds for the existing extension-only template.",
+    "What-If contains exactly one material Modify for the existing servicetracer-demo-api extension.",
+    "Resource inventory remains seven resources before and after.",
+    "Public API health remains HTTP-successful and healthy.",
+    "No Azure mutation, workload deployment, transaction replay, merge, publication, or cleanup occurs."
+  ],
+  "failure_behavior": "Fail closed, upload available sanitized evidence, and preserve effective permission as unverified.",
+  "cost_implication": "No recurring Azure resource is created. GitHub Actions execution and Azure control-plane requests may incur only ordinary platform usage; no compute, disk, public IP, network, or quota-consuming resource change is authorized.",
+  "claim_boundary": "This authorization permits verification only. A successful result does not authorize deployment and does not renew the previously consumed deployment grant."
+}
