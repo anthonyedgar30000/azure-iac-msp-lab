@@ -40,6 +40,13 @@ class ExtensionUpdaterRbacBootstrapTests(unittest.TestCase):
         self.assertNotIn("az group delete", source)
         self.assertNotIn("az role assignment delete", source)
 
+    def test_scoped_role_assignment_queries_do_not_use_all(self) -> None:
+        source = BOOTSTRAP.read_text(encoding="utf-8")
+        self.assertIn('--scope "$rg_id"', source)
+        self.assertIn('--scope "$extension_id"', source)
+        self.assertIn("--include-inherited", source)
+        self.assertNotIn("--all", source)
+
     def test_principal_resolution_is_unique_and_existing(self) -> None:
         source = BOOTSTRAP.read_text(encoding="utf-8")
         self.assertIn("ServiceTracer Demo API What-If Planner v1", source)
