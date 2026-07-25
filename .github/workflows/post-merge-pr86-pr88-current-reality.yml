@@ -1,0 +1,52 @@
+name: Post-merge PR 86 and PR 88 current-reality reconciliation
+
+on:
+  pull_request:
+    paths:
+      - ".project/current-reality.json"
+      - ".project/handoffs/current-state.md"
+      - ".project/reconciliations/post-merge-pr86-pr88-current-reality.json"
+      - "docs/reviews/post-merge-pr86-pr88-current-reality.md"
+      - "scripts/validate_post_merge_pr84_current_reality.py"
+      - "tests/test_post_merge_pr84_current_reality.py"
+      - "scripts/validate_post_merge_pr86_pr88_current_reality.py"
+      - "tests/test_post_merge_pr86_pr88_current_reality.py"
+      - ".github/workflows/post-merge-pr86-pr88-current-reality.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".project/current-reality.json"
+      - ".project/handoffs/current-state.md"
+      - ".project/reconciliations/post-merge-pr86-pr88-current-reality.json"
+      - "docs/reviews/post-merge-pr86-pr88-current-reality.md"
+      - "scripts/validate_post_merge_pr84_current_reality.py"
+      - "tests/test_post_merge_pr84_current_reality.py"
+      - "scripts/validate_post_merge_pr86_pr88_current_reality.py"
+      - "tests/test_post_merge_pr86_pr88_current_reality.py"
+      - ".github/workflows/post-merge-pr86-pr88-current-reality.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact workflow commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate PR 86 and PR 88 reconciliation
+        run: python scripts/validate_post_merge_pr86_pr88_current_reality.py
+
+      - name: Run reconciliation regression tests
+        run: python -m unittest tests/test_post_merge_pr86_pr88_current_reality.py -v
+
+      - name: Preserve PR 84 historical validation
+        run: python -m unittest tests/test_post_merge_pr84_current_reality.py -v
