@@ -1,0 +1,66 @@
+// Bounded inventory for ServiceTracer resource-group cleanup candidates.
+// Execute only with an explicit subscription list. No shared query is created.
+let coreRg = 'rg-servicetracer-dev-westus2';
+let independentRg = 'rg-st-demo-api-dev-westus2';
+let appiName = 'appi-demo-api-mst-dev';
+let storageName = 'storfxczr3fewce';
+let publicIpName = 'pip-st-demo-api-mst-dev';
+let loadBalancerName = 'lb-st-demo-api-mst-dev';
+let operationsNsgName = 'nsg-operations-mst-dev';
+let httpRuleName = 'Allow-Demo-API-HTTP-From-Internet';
+let httpsRuleName = 'Allow-Demo-API-HTTPS-From-Internet';
+let extensionName = 'servicetracer-demo-api';
+union
+(
+  resources
+  | where resourceGroup =~ coreRg
+  | where
+      (type =~ 'microsoft.insights/components' and name =~ appiName)
+      or (type =~ 'microsoft.storage/storageaccounts' and name =~ storageName)
+      or (type =~ 'microsoft.network/publicipaddresses' and name =~ publicIpName)
+      or (type =~ 'microsoft.network/loadbalancers' and name =~ loadBalancerName)
+      or (type =~ 'microsoft.compute/virtualmachines/extensions' and name endswith strcat('/', extensionName))
+  | project recordKind='candidate', id=tolower(id), name, type=tolower(type), resourceGroup=tolower(resourceGroup), location,
+      skuName=tostring(sku.name), kind, managedBy=tolower(tostring(managedBy)), tags,
+      publicIpConfigurationId=iff(type =~ 'microsoft.network/publicipaddresses', tolower(tostring(properties.ipConfiguration.id)), ''),
+      provisioningState=tostring(properties.provisioningState)
+),
+(
+  resources
+  | where resourceGroup =~ coreRg and type =~ 'microsoft.network/loadbalancers'
+  | mv-expand frontend = properties.frontendIPConfigurations
+  | extend referencedPublicIpId = tolower(tostring(frontend.properties.publicIPAddress.id))
+  | where isnotempty(referencedPublicIpId)
+  | project recordKind='public_ip_reference', id=tolower(id), name, type=tolower(type), resourceGroup=tolower(resourceGroup),
+      relationship='load_balancer_frontend', referencedPublicIpId
+),
+(
+  resources
+  | where resourceGroup =~ coreRg and type =~ 'microsoft.network/networkinterfaces'
+  | mv-expand ipconfig = properties.ipConfigurations
+  | extend referencedPublicIpId = tolower(tostring(ipconfig.properties.publicIPAddress.id))
+  | where isnotempty(referencedPublicIpId)
+  | project recordKind='public_ip_reference', id=tolower(id), name, type=tolower(type), resourceGroup=tolower(resourceGroup),
+      relationship='nic_ip_configuration', referencedPublicIpId
+),
+(
+  resources
+  | where resourceGroup =~ coreRg and type =~ 'microsoft.network/networksecuritygroups'
+  | where name =~ operationsNsgName
+  | mv-expand rule = properties.securityRules
+  | extend ruleName = tostring(rule.name)
+  | where ruleName in~ (httpRuleName, httpsRuleName)
+  | project recordKind='nsg_rule', id=strcat(tolower(id), '/securityrules/', tolower(ruleName)), name=ruleName,
+      parentName=name, type='microsoft.network/networksecuritygroups/securityrules', resourceGroup=tolower(resourceGroup),
+      access=tostring(rule.properties.access), direction=tostring(rule.properties.direction), protocol=tostring(rule.properties.protocol),
+      sourceAddressPrefix=tostring(rule.properties.sourceAddressPrefix), destinationAddressPrefix=tostring(rule.properties.destinationAddressPrefix),
+      destinationPortRange=tostring(rule.properties.destinationPortRange), priority=toint(rule.properties.priority)
+),
+(
+  resources
+  | where resourceGroup in~ (coreRg, independentRg)
+  | extend tagsText = tolower(tostring(tags))
+  | where tagsText contains tolower(appiName) or tagsText contains tolower(storageName) or tagsText contains tolower(publicIpName)
+  | project recordKind='tag_reference', id=tolower(id), name, type=tolower(type), resourceGroup=tolower(resourceGroup), tags
+)
+| order by recordKind asc, id asc
