@@ -65,7 +65,6 @@ planner_role_id="$(az role definition list --name "$PLANNER_ROLE_NAME" --query '
 az role assignment list \
   --scope "$rg_id" \
   --include-inherited \
-  --all \
   -o json > "$evidence/inherited-role-assignments.json"
 
 mapfile -t principal_ids < <(
@@ -163,7 +162,6 @@ az role assignment list \
   --scope "$extension_id" \
   --assignee-object-id "$principal_id" \
   --role "$role_definition_id" \
-  --all \
   -o json > "$evidence/role-assignment-after.json"
 
 jq -e --arg role_id "$role_definition_id" --arg rg_id "$rg_id" '
