@@ -1,0 +1,60 @@
+{
+  "schema_version": "project.github-actions-evidence-recovery-authorization.v1",
+  "authorization_id": "pr92-protected-verification-evidence-recovery-20260725",
+  "recorded_on": "2026-07-25",
+  "status": "authorized_not_consumed",
+  "human_instruction": "Anthony Edgar instructed the project to proceed after all intended repository pull requests were merged or resolved.",
+  "dependent_gate": "p0-protected-verification-evidence",
+  "objective": "Recover and inspect the exact historical PR #92 protected verify-only workflow run and sanitized artifact without rerunning Azure verification.",
+  "scope": {
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "target_pull_request": 92,
+    "target_source_head": "5b5af74d57fb5fd87ece2a34239cc6f29d04b12b",
+    "target_branch": "agent/verify-extension-write-permission-20260725",
+    "target_workflow_file": "servicetracer-demo-api-extension-write-verify-only-2.yml",
+    "target_workflow_name": "Verify ServiceTracer demo API extension write permission attempt 2",
+    "expected_exact_head_ci_run": 30160681565,
+    "expected_artifact_name_pattern": "servicetracer-demo-api-extension-write-verify-only-2-<run-id>"
+  },
+  "authority": {
+    "github_actions_metadata_read": true,
+    "historical_artifact_download": true,
+    "local_artifact_integrity_validation": true,
+    "sanitized_summary_artifact_upload": true,
+    "sanitized_pull_request_comment": true,
+    "raw_artifact_republication": false,
+    "workflow_dispatch": false,
+    "workflow_rerun": false,
+    "workflow_cancellation": false,
+    "azure_authentication": false,
+    "azure_query": false,
+    "azure_mutation": false,
+    "rbac_mutation": false,
+    "deployment": false,
+    "transaction_replay": false,
+    "guest_command": false,
+    "network_mutation": false,
+    "cleanup": false,
+    "pull_request_merge": false
+  },
+  "evidence_requirements": [
+    "exact historical workflow run identity and URL",
+    "exact source SHA and branch",
+    "run status, conclusion, attempt, and timestamps",
+    "artifact identity, digest, size, expiry state, and run binding",
+    "artifact manifest verification",
+    "exact-head CI linkage",
+    "ARM validation and extension-only What-If result when present",
+    "before and after resource inventory comparison when present",
+    "public health before and after when present",
+    "explicit no-mutation and no-deployment boundary",
+    "missing or conflicting evidence preserved as unverified"
+  ],
+  "one_shot": {
+    "trigger_branch": "agent/recover-pr92-protected-evidence-20260725",
+    "trigger_path": ".project/executions/pr92-protected-verification-evidence-recovery-20260725.json",
+    "consumed_when": "The recovery workflow attempts to enumerate the exact historical run and artifact, regardless of recovery outcome.",
+    "retry_authorized": false
+  },
+  "claim_boundary": "Historical GitHub evidence recovery != new Azure verification. Recovered run success != deployment authorization. Missing evidence != failed permission."
+}
