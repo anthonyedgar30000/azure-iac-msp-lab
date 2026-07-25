@@ -1,0 +1,90 @@
+{
+  "schema_version": "project.post-merge-reconciliation.v1",
+  "recorded_on": "2026-07-25",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "trigger": {
+    "control_message": "proceed",
+    "bounded_interpretation": "Reconcile durable repository state after PR #84 merged; do not authenticate to Azure, mutate Azure, change RBAC, replay transactions, publish Pages, merge this reconciliation, or clean up resources."
+  },
+  "baseline": {
+    "main": "c96d9cbb765a023921fa819cf7d99c957e8ad608",
+    "latest_merged_pull_request": 84,
+    "pr84_source_head": "5c938a7e07da3a22b27bb5ac5aa52b7ccf22ba37",
+    "pr84_merge_commit": "c96d9cbb765a023921fa819cf7d99c957e8ad608",
+    "pr84_exact_head_ci_run_id": 30137351716,
+    "source_vs_merge_file_content_difference_observed": false,
+    "open_pull_requests_observed_before_branch_creation": [],
+    "local_working_tree": "not_observed"
+  },
+  "problem": {
+    "classification": "canonical_shared_state_stale_after_pr84_merge",
+    "stale_main": "5dfa3b76a9fb975002d9cd702a892a0f678c88c5",
+    "stale_latest_merged_pull_request": 82,
+    "azure_contradiction": false,
+    "claim_boundary": "The stale repository watermark did not negate newer PR #84 evidence or prove any Azure state change."
+  },
+  "repository_state": {
+    "timeout_fix_merged_into_main": true,
+    "frontend_integration_merged_into_main": true,
+    "deployed_source_ref": "8b3d55c616d8820edd523f77021a35fe24167bd0",
+    "main_ahead_of_deployed_source_by_commits": 83,
+    "main_behind_deployed_source_by_commits": 0,
+    "workload_source_or_iac_drift_observed": true
+  },
+  "azure_evidence": {
+    "latest_observed_through": "2026-07-25T00:47:40Z",
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "resource_count": 7,
+    "vm_state": "VM running",
+    "existing_extension_state": "Succeeded",
+    "public_health": "HTTP 200 / healthy",
+    "health_contract": "pre_timeout_fix_contract",
+    "corrected_timeout_fields_observed": false,
+    "deployment_grant_status": "consumed_blocked",
+    "missing_action": "Microsoft.Compute/virtualMachines/extensions/write",
+    "what_if_result_observed": false,
+    "deployment_step_executed": false,
+    "azure_resource_mutation_performed": false,
+    "rollback_performed": false
+  },
+  "resolution": {
+    "current_reality_refreshed": true,
+    "primary_handoff_refreshed": true,
+    "pr82_historical_evidence_preserved": true,
+    "historical_planner_evidence_preserved": true,
+    "merged_state_separated_from_deployed_state": true,
+    "cost_and_quota_observations_promoted": true,
+    "effective_rbac_boundary_preserved": true,
+    "backup_unknowns_preserved": true
+  },
+  "canonical_distinctions": [
+    "merged_into_main != deployed_to_VM",
+    "deployment_authorized != deployment_possible_with_current_identity",
+    "ARM_authorization_failure != Azure_resource_mutation",
+    "public_API_healthy != corrected_runtime_deployed",
+    "role_assignment_exists != effective_required_action_granted",
+    "historical_planner_evidence != current_deployment_state",
+    "not_observed != absent"
+  ],
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_mutations_authorized": false,
+    "azure_rbac_mutations_authorized": false,
+    "guest_commands_authorized": false,
+    "transaction_replay_authorized": false,
+    "github_pages_publication_authorized": false,
+    "cleanup_authorized": false
+  },
+  "rollback": {
+    "repository": "Close or revert this reconciliation pull request.",
+    "azure": "No Azure rollback is required because this reconciliation performs no Azure operation."
+  },
+  "next_gate": {
+    "status": "separate_authorization_required",
+    "operation": "choose_authorized_extension_deployment_identity_path"
+  }
+}
