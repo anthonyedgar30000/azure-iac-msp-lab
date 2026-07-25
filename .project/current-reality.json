@@ -5,11 +5,26 @@
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "repository_state": {
     "default_branch": "main",
-    "observed_head": "c96d9cbb765a023921fa819cf7d99c957e8ad608",
-    "latest_merged_pull_request": 84,
+    "observed_head": "726c42ea1dddf402a42d8d0c591c660ebc50733f",
+    "latest_merged_pull_request": 88,
     "open_pull_requests_observed": [],
     "local_working_tree": "not_observed",
-    "claim_boundary": "GitHub state was resolved live after PR #84 merged. No local checkout was available, and this record is not a continuously refreshed dashboard."
+    "exact_head_ci": {
+      "pr86_source_head": "8df0a5af4b522ceeff16c0d9d1adfc978e66d559",
+      "pr86_ci_run_id": 30141965628,
+      "pr86_ci_conclusion": "success",
+      "pr88_source_head": "5e05d050cace2210c9b47103fe100eceb759cd0e",
+      "pr88_ci_run_ids": [30142555135, 30142555107, 30142555131],
+      "pr88_ci_conclusions": ["success", "success", "success"]
+    },
+    "merge_result_ci": {
+      "pr86_merge_commit": "67d1aa9c784825e835097f684ddf629727ca5e22",
+      "pr86_merge_commit_run": "not_observed",
+      "pr88_merge_commit": "726c42ea1dddf402a42d8d0c591c660ebc50733f",
+      "pr88_merge_commit_run": "not_observed",
+      "final_combined_main_ci": "not_observed"
+    },
+    "claim_boundary": "GitHub state was resolved live after PRs #86 and #88 merged. Exact source-head CI passed, but no workflow result was observed directly on either final merge commit or the final combined main composition. No local checkout was available, and this record is not a continuously refreshed dashboard."
   },
   "evidence_anchors": {
     "post_deployment_inventory": ".project/evidence/servicetracer-demo-api-post-deployment-inventory-20260724T163938Z.json",
@@ -22,7 +37,15 @@
     "pr84_source_head": "5c938a7e07da3a22b27bb5ac5aa52b7ccf22ba37",
     "pr84_merge_commit": "c96d9cbb765a023921fa819cf7d99c957e8ad608",
     "pr84_ci_run_id": 30137351716,
-    "pr84_source_vs_merge_file_content_difference_observed": false
+    "pr84_source_vs_merge_file_content_difference_observed": false,
+    "pr86_source_head": "8df0a5af4b522ceeff16c0d9d1adfc978e66d559",
+    "pr86_merge_commit": "67d1aa9c784825e835097f684ddf629727ca5e22",
+    "pr86_ci_run_id": 30141965628,
+    "pr86_source_vs_merge_file_content_difference_observed": false,
+    "pr88_source_head": "5e05d050cace2210c9b47103fe100eceb759cd0e",
+    "pr88_merge_commit": "726c42ea1dddf402a42d8d0c591c660ebc50733f",
+    "pr88_ci_run_ids": [30142555135, 30142555107, 30142555131],
+    "pr88_merge_commit_ci_observed": false
   },
   "independent_demo_api": {
     "component": "independent-servicetracer-demo-api",
@@ -46,12 +69,14 @@
     },
     "repository_reconciliation": {
       "deployed_source_ref_differs_from_main": true,
-      "main_ahead_by_commits": 83,
+      "main_ahead_by_commits": 134,
       "main_behind_by_commits": 0,
       "workload_source_or_iac_path_changed": true,
       "timeout_fix_merged_into_main": true,
       "timeout_fix_deployed": false,
-      "interpretation": "Current main contains runtime, installer, frontend, deployment-control, evidence, and governance changes after the deployed source. The timeout correction is repository authority but is not active in the observed Azure runtime."
+      "rbac_package_merged_into_main": true,
+      "cleanup_plan_merged_into_main": true,
+      "interpretation": "Current main contains runtime, installer, frontend, deployment-control, RBAC, cleanup-planning, evidence, and governance changes after the deployed source. The timeout correction and narrow RBAC package are repository authority but are not established as active in Azure."
     },
     "runtime": {
       "latest_public_observed_at": "2026-07-25T00:47:40Z",
@@ -68,13 +93,8 @@
       "attempts": 2,
       "successful_attempts": 0,
       "failed_attempts": 2,
-      "observed_backends": [
-        "VPN-02"
-      ],
-      "backend_http_statuses": [
-        503,
-        503
-      ],
+      "observed_backends": ["VPN-02"],
+      "backend_http_statuses": [503, 503],
       "failure_boundary": "radius_response",
       "exact_root_cause_claimed": false,
       "live_twenty_attempt_replay_performed": false,
@@ -90,7 +110,7 @@
       "deployment_step_executed": false,
       "azure_resource_mutation_performed": false,
       "rollback_performed": false,
-      "claim_boundary": "Deployment authorization did not make deployment possible with the protected identity. No RBAC broadening was authorized or performed."
+      "claim_boundary": "The historical deployment attempt was blocked before mutation. Later repository RBAC packaging and an asserted operator apply do not retroactively prove effective permission or authorize deployment."
     },
     "frontend": {
       "integration_merged_into_main": true,
@@ -110,16 +130,16 @@
       "metric_alert_count": 0,
       "action_group_count": 0,
       "alert_delivery_verified": false,
-      "effective_rbac": "assignments_observed_effectiveness_not_verified",
-      "observed_inherited_roles": [
-        "Owner",
-        "Reader",
-        "ServiceTracer Demo API What-If Planner v1"
-      ],
-      "required_extension_write_effective": false,
+      "effective_rbac": "assignments_observed_bootstrap_execution_conflicting_effectiveness_unverified",
+      "observed_inherited_roles": ["Owner", "Reader", "ServiceTracer Demo API What-If Planner v1"],
+      "extension_updater_role_definition_observed": false,
+      "extension_updater_role_assignment_observed": false,
+      "required_extension_write_effective": "unverified",
       "effective_least_privilege_verified": false,
-      "backup": "recovery_services_vaults_zero_other_methods_not_observed",
+      "backup": "intentionally_out_of_scope_for_lab_v1",
+      "backup_scope": "intentionally_out_of_scope_for_lab_v1",
       "recovery_services_vault_count": 0,
+      "other_backup_methods": "not_observed",
       "recovery_tested": false,
       "actual_cost": "observed_time_bounded",
       "month_to_date_actual_cost": {
@@ -132,27 +152,80 @@
     "quota_snapshot": {
       "captured_at": "2026-07-25T00:47:40Z",
       "standard_falsv7_family_vcpus": "not_returned_by_filtered_query",
-      "total_regional_vcpus": {
-        "current": 1,
-        "limit": 10
-      },
-      "standard_ipv4_public_ips": {
-        "current": 1,
-        "limit": 20
-      }
+      "total_regional_vcpus": {"current": 1, "limit": 10},
+      "standard_ipv4_public_ips": {"current": 1, "limit": 20}
     },
     "resolved_state": {
       "repository_implemented": true,
       "repository_timeout_fix_merged": true,
+      "repository_rbac_package_merged": true,
+      "repository_cleanup_plan_merged": true,
       "deployed": true,
       "deployment_verified": true,
       "control_plane_running": true,
       "public_api_verified": true,
       "corrected_runtime_deployed": false,
       "backend_transaction_success_verified": false,
+      "extension_write_permission_verified": false,
+      "cleanup_dependency_collection_executed": false,
       "operationally_verified": false,
-      "claim_boundary": "The original deployment and public API health remain verified. The merged timeout correction is not deployed; backend success, live corrected frontend rendering, least privilege, alert delivery, backup recovery, and full service validation remain unresolved."
+      "claim_boundary": "The original deployment and public API health remain verified and time-bounded. The merged timeout correction is not deployed; RBAC execution is conflicting and effectiveness unverified; cleanup dependency collection has not run; backend success, live corrected frontend rendering, least privilege, alert delivery, and full service validation remain unresolved."
     }
+  },
+  "rbac_reconciliation": {
+    "package": {
+      "pull_request": 86,
+      "source_head": "8df0a5af4b522ceeff16c0d9d1adfc978e66d559",
+      "merge_commit": "67d1aa9c784825e835097f684ddf629727ca5e22",
+      "repository_package_merged": true,
+      "role_name": "ServiceTracer Demo API Extension Updater v1",
+      "allowed_actions": ["Microsoft.Compute/virtualMachines/extensions/write"],
+      "assignable_scope": "rg-st-demo-api-dev-westus2",
+      "assignment_scope": "vm-st-demo-api-mst-dev/extensions/servicetracer-demo-api"
+    },
+    "preserved_source_claims": [
+      {"source": "PR #86 narrative", "claim": "Operator ran --apply and instructed the project to assume success.", "verification_status": "asserted_not_durably_evidenced"},
+      {"source": ".project/reconciliations/servicetracer-demo-api-extension-updater-rbac-bootstrap.json", "claim": "Azure RBAC bootstrap executed = false.", "verification_status": "repository_record"},
+      {"source": ".project/authorizations/servicetracer-demo-api-extension-updater-rbac-bootstrap-20260725.json", "claim": "Authorization status = authorized_not_consumed.", "verification_status": "repository_record"},
+      {"source": ".project/executions/servicetracer-demo-api-extension-write-verify-only-20260725.json", "claim": "Bootstrap success is assumed pending protected effective-permission evidence.", "verification_status": "repository_record"}
+    ],
+    "resolved_state": {
+      "execution_truth": "conflicting",
+      "apply_attempt_asserted": true,
+      "apply_success": "assumed_not_evidenced",
+      "role_definition_observed": false,
+      "role_assignment_observed": false,
+      "effective_target_identity_permission": "unverified",
+      "protected_verify_only_outcome": "not_observed",
+      "deployment_authorized": false
+    },
+    "claim_boundary": "Conflicting repository claims are preserved. Source silence and missing durable evidence do not prove failure or absence, and an asserted attempt does not prove successful RBAC creation or effective permission."
+  },
+  "resource_group_cleanup": {
+    "pull_request": 88,
+    "source_head": "5e05d050cace2210c9b47103fe100eceb759cd0e",
+    "merge_commit": "726c42ea1dddf402a42d8d0c591c660ebc50733f",
+    "repository_plan_merged": true,
+    "resource_group_relationship": "peer_operational_boundaries_not_nested_layers",
+    "core_resource_group": "rg-servicetracer-dev-westus2",
+    "independent_demo_api_resource_group": "rg-st-demo-api-dev-westus2",
+    "independent_demo_api_protected": true,
+    "cleanup_candidates": [
+      "appi-demo-api-mst-dev",
+      "storfxczr3fewce",
+      "pip-st-demo-api-mst-dev",
+      "lb-st-demo-api-mst-dev",
+      "nsg-operations-mst-dev/Allow-Demo-API-HTTP-From-Internet",
+      "nsg-operations-mst-dev/Allow-Demo-API-HTTPS-From-Internet",
+      "vm-stcollector-mst-dev/extensions/servicetracer-demo-api"
+    ],
+    "dependency_collection_executed": false,
+    "candidate_current_presence": "not_freshly_observed",
+    "candidate_orphan_status": "not_established",
+    "azure_cleanup_authorized": false,
+    "azure_cleanup_performed": false,
+    "iac_declaration_removal_authorized": false,
+    "claim_boundary": "The merged plan defines candidates and protected boundaries. It does not establish that any candidate is currently present, absent, orphaned, safe to delete, or authorized for cleanup."
   },
   "historical_planner_evidence": {
     "run_id": 30064289707,
@@ -166,15 +239,19 @@
   "shared_state_resolution": {
     "canonical_current_view": ".project/current-reality.json",
     "primary_handoff": ".project/handoffs/current-state.md",
-    "latest_reconciliation": ".project/reconciliations/post-merge-pr84-current-reality.json",
+    "latest_reconciliation": ".project/reconciliations/post-merge-pr86-pr88-current-reality.json",
     "canonical_distinctions": [
       "merged_into_main != deployed_to_VM",
-      "deployment_authorized != deployment_possible_with_current_identity",
-      "ARM_authorization_failure != Azure_resource_mutation",
-      "public_API_healthy != corrected_runtime_deployed",
-      "role_assignment_exists != effective_required_action_granted",
+      "repository_RBAC_package != Azure_RBAC_observed",
+      "RBAC_apply_asserted != RBAC_apply_succeeded",
+      "role_assignment_observed != effective_permission_verified",
+      "cleanup_plan_merged != cleanup_query_executed",
+      "cleanup_candidate != orphaned_resource",
+      "resource_groups_are_peers != resource_groups_are_nested",
+      "out_of_scope != missing_control",
       "historical_planner_evidence != current_deployment_state",
-      "not_observed != absent"
+      "not_observed != absent",
+      "conflicting != false"
     ]
   },
   "authority": {
@@ -185,18 +262,19 @@
     "azure_authentication_authorized": false,
     "azure_mutations_authorized": false,
     "azure_rbac_mutations_authorized": false,
+    "resource_graph_query_authorized": false,
     "guest_commands_authorized": false,
     "transaction_replay_authorized": false,
     "github_pages_publication_authorized": false,
     "cleanup_authorized": false
   },
   "next_gate": {
-    "operation": "choose_authorized_extension_deployment_identity_path",
+    "operation": "choose_one_new_exact_read_only_observation_gate",
     "execution_authorized": false,
     "options": [
-      "Use an already-authorized human Azure identity for the same extension-only deployment with What-If, health verification, evidence, and rollback.",
-      "Design and separately authorize a dedicated least-privilege identity for validation, What-If, and the existing VM extension write scope."
+      "Authorize one exact-commit protected verify-only run to observe whether the target OIDC identity has effective extension-write permission.",
+      "Authorize one exact-commit read-only Resource Graph dependency collection for the seven cleanup candidates."
     ],
-    "claim_boundary": "This reconciliation does not authorize Azure authentication, RBAC changes, deployment, replay, Pages publication, merge, or cleanup."
+    "claim_boundary": "This reconciliation authorizes neither option and does not authorize Azure mutation, deployment, replay, publication, cleanup, or PR merge."
   }
 }
