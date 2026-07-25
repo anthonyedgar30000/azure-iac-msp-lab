@@ -1,0 +1,158 @@
+{
+  "schema_version": "project.stategraph-adoption.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "recorded_on": "2026-07-25",
+  "decision": {
+    "capability": "Stategraph",
+    "status": "accepted_optional_capability_execution_deferred",
+    "architecture_bucket": "azure_resource_plan_and_iac_tooling",
+    "build_priority": "Design For",
+    "new_architecture_bucket_required": false,
+    "governing_question": "Does Stategraph help push the MSP demo lab forward faster and with more confidence?"
+  },
+  "current_boundary": {
+    "active_iac_path": "Bicep",
+    "active_workload": "independent_servicetracer_demo_api",
+    "terraform_or_opentofu_root_declared_by_inspected_authority": false,
+    "terraform_state_available_for_adoption": false,
+    "stategraph_in_current_deployment_path": false,
+    "duplicate_bicep_to_terraform_translation_authorized": false,
+    "claim_boundary": "The inspected repository authority declares the active ServiceTracer workload through Bicep. This record does not prove that no Terraform file exists anywhere outside the inspected authority and performs no fresh Azure or Stategraph operation."
+  },
+  "lab_v1_alignment": {
+    "completion_gate": ".project/lab-v1-completion-gate.json",
+    "parallel_feature_expansion_allowed": false,
+    "admission_rule": "A working Stategraph increment may enter Build Now only for a genuine Terraform/OpenTofu change that satisfies the Lab v1 scope-admission rule, or after P0 through P2 completion.",
+    "must_not_delay_higher_priority_criterion": true,
+    "current_disposition": "design_for_until_admitted_real_increment"
+  },
+  "operating_model": {
+    "optional": true,
+    "non_authoritative_until_explicitly_promoted": true,
+    "standard_terraform_or_opentofu_fallback_required": true,
+    "stategraph_failure_blocks_standard_fallback": false,
+    "synthetic_benchmark_required": false,
+    "separate_research_project_required": false,
+    "ordinary_real_changes_are_the_evaluation_context": true
+  },
+  "phases": [
+    {
+      "phase": 0,
+      "name": "capability_check",
+      "operations": [
+        "confirm_real_terraform_or_opentofu_root",
+        "record_exact_tool_and_provider_versions",
+        "run_standard_validation_first",
+        "run_stategraph_diagnostics_in_shadow_mode",
+        "preserve_sanitized_diagnostics_and_limitations"
+      ],
+      "state_import_authorized_by_this_record": false,
+      "plan_authorized_by_this_record": false,
+      "apply_authorized_by_this_record": false
+    },
+    {
+      "phase": 1,
+      "name": "reversible_state_round_trip",
+      "preconditions": [
+        "separate_exact_authorization",
+        "approved_state_backup",
+        "isolated_environment",
+        "sensitive_state_handling_review"
+      ],
+      "required_proof": [
+        "controlled_import",
+        "immediate_export",
+        "resource_address_comparison",
+        "lineage_and_serial_assessment",
+        "standard_fallback_resume_test"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "shadow_planning",
+      "required_outputs": [
+        "standard_plan",
+        "stategraph_plan",
+        "action_comparison",
+        "dependency_and_blast_radius_comparison",
+        "timing_and_operator_clarity_observation",
+        "preserved_disagreements"
+      ],
+      "stategraph_plan_is_accepted_plan": false,
+      "deployment_authorized_by_plan_agreement": false
+    },
+    {
+      "phase": 3,
+      "name": "optional_bounded_execution",
+      "preconditions": [
+        "successful_diagnostics",
+        "successful_round_trip_export",
+        "repeated_shadow_plan_usefulness",
+        "exact_head_review",
+        "separate_identity_scope_method_and_time_bound_authorization"
+      ],
+      "first_execution_scope": "one_low_risk_real_increment",
+      "normal_validation_evidence_rollback_cleanup_and_cost_controls_required": true
+    }
+  ],
+  "evaluation": {
+    "primary_measure": "practical_lab_advancement",
+    "signals": [
+      "change_lead_time",
+      "dependency_investigation_effort",
+      "blast_radius_usefulness",
+      "missed_or_misleading_relationships",
+      "plan_disagreements",
+      "confidence_gained_or_lost",
+      "fallback_or_export_effort",
+      "evidence_quality_preserved_or_improved"
+    ],
+    "success_condition": [
+      "useful_in_real_changes",
+      "reversible",
+      "confidence_increased",
+      "governance_not_weakened"
+    ],
+    "failure_disposition": "remain_optional_or_remove"
+  },
+  "stop_conditions": [
+    "unsupported_repository_constructs",
+    "import_export_equivalence_not_established",
+    "sensitive_state_handling_unclear_or_unacceptable",
+    "material_plan_disagreement_without_deterministic_resolution",
+    "workflow_friction_exceeds_useful_context",
+    "standard_fallback_not_immediately_usable",
+    "disproportionate_cost_or_deployment_requirements",
+    "competition_with_higher_priority_lab_v1_criterion"
+  ],
+  "authority": {
+    "strategy_documentation": true,
+    "machine_readable_decision": true,
+    "deterministic_test": true,
+    "branch_creation": true,
+    "draft_pull_request_creation": true,
+    "pull_request_merge": false,
+    "workflow_dispatch_or_rerun": false,
+    "stategraph_account_creation": false,
+    "stategraph_installation_or_authentication": false,
+    "stategraph_import_export_plan_or_apply": false,
+    "terraform_or_opentofu_state_access_or_migration": false,
+    "azure_authentication_or_query": false,
+    "azure_mutation_or_deployment": false,
+    "rbac_network_policy_monitoring_or_cleanup_mutation": false
+  },
+  "canonical_boundaries": [
+    "Bicep_current_path != Terraform_state_available",
+    "strategy_accepted != execution_authorized",
+    "Design_For != Build_Now",
+    "optional_capability != operational_authority",
+    "Stategraph_plan != accepted_plan",
+    "plan_agreement != deployment_authority",
+    "Stategraph_record != Azure_reality"
+  ],
+  "next_gate": {
+    "operation": "identify_first_genuine_admitted_terraform_or_opentofu_increment",
+    "first_step": "prove_standard_terraform_or_opentofu_path_then_run_stategraph_diagnostics_in_shadow_mode",
+    "execution_authorized": false
+  }
+}
