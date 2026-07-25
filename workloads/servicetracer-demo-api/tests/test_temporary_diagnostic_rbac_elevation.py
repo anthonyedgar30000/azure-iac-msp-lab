@@ -82,11 +82,24 @@ def test_runbook_preserves_diagnostic_and_durable_permission_boundary() -> None:
     assert "deactivation_requested != access_terminated" in runbook
 
 
-def test_reconciliation_keeps_current_durable_repair_unchanged() -> None:
+def test_runbook_identifies_direct_put_as_current_preferred_path() -> None:
+    runbook = RUNBOOK.read_text(encoding="utf-8")
+    assert "direct Compute API `PUT`" in runbook
+    assert "Microsoft.Compute/virtualMachines/extensions/write" in runbook
+    assert "does not require `Microsoft.Resources/deployments/write`" in runbook
+    assert "resource_group_wrapper_failed != extension_write_failed" in runbook
+
+
+def test_reconciliation_tracks_direct_put_without_changing_diagnostic_policy() -> None:
     reconciliation = load_json(RECONCILIATION)
-    assert reconciliation["repository_observation"]["observed_main_head"] == "d548d116cf3cfa8f7927ac2ab65403ba34626aa3"
-    assert reconciliation["repository_observation"]["latest_reviewed_source_ci_conclusion"] == "success"
+    assert reconciliation["schema_version"] == "project.reconciliation.v2"
+    assert reconciliation["repository_observation"]["observed_main_head"] == "8368e20e474915c6e04162d707b68ee26f835304"
+    assert reconciliation["repository_observation"]["diagnostic_process_pull_request"]["exact_head_ci_conclusion"] == "success"
+    assert reconciliation["repository_observation"]["direct_put_pull_request"]["exact_head_ci_conclusion"] == "success"
+    assert reconciliation["declared_repository_state"]["preferred_retry_method"] == "direct_Compute_API_PUT_to_exact_existing_VM_extension"
+    assert reconciliation["declared_repository_state"]["Microsoft_Resources_deployments_write_required_for_preferred_path"] is False
     assert reconciliation["decision"]["durable_permission_design_changed"] is False
+    assert reconciliation["decision"]["current_durable_path"] == "direct_extension_resource_PUT_using_extension_scoped_write"
     assert reconciliation["decision"]["diagnostic_role"] == "Contributor"
     assert reconciliation["decision"]["maximum_activation_minutes"] == 60
     assert reconciliation["decision"]["maximum_test_attempts"] == 1

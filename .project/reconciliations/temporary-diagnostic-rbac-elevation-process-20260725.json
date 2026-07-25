@@ -1,29 +1,50 @@
 {
-  "schema_version": "project.reconciliation.v1",
+  "schema_version": "project.reconciliation.v2",
   "recorded_on": "2026-07-25",
   "project": "ServiceTracer — Governed Azure Operations Lab",
-  "objective": "Add a repeatable temporary broad-RBAC diagnostic process without authorizing Azure elevation or changing the durable least-privilege repair.",
+  "objective": "Add a repeatable temporary broad-RBAC diagnostic process without authorizing Azure elevation or replacing the current direct-extension-PUT least-privilege path.",
   "repository_observation": {
     "repository": "anthonyedgar30000/azure-iac-msp-lab",
     "default_branch": "main",
-    "observed_main_head": "d548d116cf3cfa8f7927ac2ab65403ba34626aa3",
-    "latest_merged_pull_request": 106,
-    "latest_merged_pull_request_title": "Prepare deployment-submitter RBAC and truthful rollback workflow",
-    "latest_reviewed_source_head": "3fcacda82f574e50df850090948d1ab17bb2f411",
-    "latest_reviewed_source_ci_run": 30178762870,
-    "latest_reviewed_source_ci_conclusion": "success",
+    "observed_main_head": "8368e20e474915c6e04162d707b68ee26f835304",
+    "latest_observed_merge": {
+      "pull_request": 104,
+      "merge_commit": "8368e20e474915c6e04162d707b68ee26f835304",
+      "qualification": "chronologically_latest_merge_observed_not_highest_pr_number"
+    },
+    "diagnostic_process_pull_request": {
+      "pull_request": 109,
+      "source_head": "6526aba9e38fae71710c07a431b04a1f7990b3b5",
+      "merge_commit": "86e30a46e6e3a07c1bb80f383b54cfcb5222fd09",
+      "exact_head_ci_run": 30179308316,
+      "exact_head_ci_conclusion": "success"
+    },
+    "direct_put_pull_request": {
+      "pull_request": 107,
+      "source_head": "46278d4fc001663ffa42d18ea306820d359803ff",
+      "merge_commit": "d0442fbc0335b0cb34e6533a6218d6cb8e7f7851",
+      "exact_head_ci_run": 30179171875,
+      "exact_head_ci_conclusion": "success"
+    },
+    "open_pull_requests_observed": [108],
+    "open_pull_request_108": "duplicate_or_supersession_work_remains_unresolved_live",
     "merge_commit_ci": "not_observed",
-    "open_pull_requests_observed": [104],
-    "open_pull_request_104_state": "draft_consumed_authorization_record_for_prior_attempt",
     "local_working_tree": "not_observed",
-    "claim_boundary": "Live GitHub state was queried before the repository write. No local clone or operator working tree was available, and merge-result CI was not observed."
+    "claim_boundary": "This is a bounded live-GitHub observation. No local operator working tree or merge-result CI was available. Later repository events are not represented automatically."
   },
   "declared_repository_state": {
-    "durable_repair": "two independent custom-role capabilities",
-    "extension_permission": "Microsoft.Compute/virtualMachines/extensions/write at the exact extension resource",
-    "deployment_submission_permission": "Microsoft.Resources/deployments/write at rg-st-demo-api-dev-westus2",
-    "future_workload_workflow": "present but inert until a separate authorization marker is added",
-    "evidence_anchor": "docs/reviews/timeout-deployment-submitter-rbac-and-workflow-repair.md"
+    "preferred_retry_method": "direct_Compute_API_PUT_to_exact_existing_VM_extension",
+    "validation_method": "Bicep_validation_and_extension_only_WhatIf_retained",
+    "required_target_action": "Microsoft.Compute/virtualMachines/extensions/write",
+    "resource_group_deployment_wrapper_required": false,
+    "Microsoft_Resources_deployments_write_required_for_preferred_path": false,
+    "historical_deployment_submitter_package_present": true,
+    "historical_deployment_submitter_package_status": "not_the_preferred_direct_PUT_path_and_must_not_be_applied_without_separate_authority",
+    "future_direct_put_workflow": "present_but_inert_without_a_fresh_exact_source_authorization_marker",
+    "evidence_anchors": [
+      "docs/reviews/pr104-protected-deployment-failure.md",
+      ".project/reconciliations/servicetracer-demo-api-pr104-deployment-wrapper-failure-20260725.json"
+    ]
   },
   "latest_material_azure_evidence": {
     "fresh_live_query_performed_for_this_increment": false,
@@ -41,7 +62,7 @@
     "what_if": "accepted_exactly_one_extension_modify",
     "deployment_submission": "rejected_missing_Microsoft.Resources_deployments_write",
     "extension_mutation_proven": false,
-    "rollback_submission": "rejected_same_permission",
+    "rollback_submission": "rejected_same_wrapper_permission",
     "extension_provisioning_state_after": "Succeeded",
     "regional_vcpu_usage": "1/10",
     "month_to_date_cost": {
@@ -49,7 +70,7 @@
       "pre_tax": 2.842043785276267,
       "qualification": "time_bounded_subject_to_billing_lag_not_invoice_or_forecast"
     },
-    "claim_boundary": "This evidence establishes the terminal state of the consumed workflow attempt, not current Azure state or current effective permissions."
+    "claim_boundary": "This evidence proves the consumed wrapper-based attempt's terminal state, not current Azure state, current effective permissions, or execution of the direct-PUT path."
   },
   "decision": {
     "status": "accepted_repository_process",
@@ -63,7 +84,8 @@
     "owner_role_allowed": false,
     "standing_contributor_fallback_allowed": false,
     "durable_permission_design_changed": false,
-    "interpretation": "Temporary broad elevation may isolate an authorization cause in future ambiguous incidents. It does not replace the current narrow extension-updater and deployment-submitter design and does not prove the minimum permanent permission."
+    "current_durable_path": "direct_extension_resource_PUT_using_extension_scoped_write",
+    "interpretation": "Temporary broad elevation may isolate authorization causes in future ambiguous incidents. The current wrapper failure is already isolated, and the preferred repository retry path bypasses the wrapper with an exact extension PUT."
   },
   "intended_architecture": {
     "flow": [
@@ -104,8 +126,9 @@
       "activation maximum is 60 minutes with MFA approval justification and ticket controls",
       "test is limited to one attempt",
       "all operational authority fields remain false",
+      "runbook identifies direct extension PUT as the current preferred path",
       "runbook distinguishes diagnostic evidence from durable least privilege",
-      "no active authorization marker or Azure workflow is added"
+      "no active diagnostic authorization marker or Azure elevation workflow is added"
     ],
     "future_operational_evidence_required": [
       "PIM activation and approval metadata",
@@ -117,7 +140,7 @@
     ]
   },
   "failure_and_rollback": {
-    "repository_failure": "close the pull request or revert repository commits; no Azure rollback required",
+    "repository_failure": "close or revert the repository repair; no Azure rollback required",
     "pim_unavailable": "stop without creating standing broad access",
     "scope_identity_or_role_mismatch": "deactivate and stop before diagnostic execution",
     "unexpected_mutation": "stop and invoke only a separately authorized rollback or recovery plan",
@@ -155,6 +178,8 @@
   "claim_boundaries": [
     "temporary_broad_access_succeeds != broad_access_required_permanently",
     "RBAC_assignment != effective_least_privilege",
+    "resource_group_wrapper_failed != extension_write_failed",
+    "direct_PUT_declared != direct_PUT_executed",
     "PIM_eligibility != activation_authorized",
     "role_activation != diagnostic_mutation_authorized",
     "diagnostic_attempt_terminal != retry_authorized",
