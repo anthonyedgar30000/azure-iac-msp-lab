@@ -1,0 +1,46 @@
+{
+  "schema_version": "project.github-actions-evidence-recovery-execution.v1",
+  "execution_id": "pr92-protected-verification-evidence-recovery-20260725",
+  "recorded_on": "2026-07-25",
+  "authorized": true,
+  "authorization_record": ".project/authorizations/pr92-protected-verification-evidence-recovery-20260725.json",
+  "reviewed_package_head": "582e77ffa301e47b9ef003d33474bcd2540f9671",
+  "reviewed_ci_run_id": 30171211077,
+  "scope": {
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "target_pull_request": 92,
+    "target_source_head": "5b5af74d57fb5fd87ece2a34239cc6f29d04b12b",
+    "target_branch": "agent/verify-extension-write-permission-20260725",
+    "target_workflow_file": "servicetracer-demo-api-extension-write-verify-only-2.yml",
+    "target_workflow_name": "Verify ServiceTracer demo API extension write permission attempt 2",
+    "expected_exact_head_ci_run": 30160681565
+  },
+  "authority": {
+    "github_actions_metadata_read": true,
+    "historical_artifact_download": true,
+    "local_artifact_integrity_validation": true,
+    "sanitized_summary_artifact_upload": true,
+    "sanitized_pull_request_comment": true,
+    "raw_artifact_republication": false,
+    "workflow_dispatch": false,
+    "workflow_rerun": false,
+    "workflow_cancellation": false,
+    "azure_authentication": false,
+    "azure_query": false,
+    "azure_mutation": false,
+    "rbac_mutation": false,
+    "deployment": false,
+    "transaction_replay": false,
+    "guest_command": false,
+    "network_mutation": false,
+    "cleanup": false,
+    "pull_request_merge": false
+  },
+  "termination": {
+    "one_shot": true,
+    "consumed_when": "The recovery workflow attempts to enumerate the exact historical run and artifact, regardless of success, failure, missing evidence, or artifact expiry.",
+    "retry_authorized": false,
+    "next_operation_authorized": false
+  },
+  "claim_boundary": "This execution recovers existing GitHub evidence only. It does not rerun Azure verification, prove deployment, renew a deployment grant, or authorize any Azure operation."
+}
