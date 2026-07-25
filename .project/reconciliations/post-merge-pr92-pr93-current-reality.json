@@ -1,0 +1,102 @@
+{
+  "schema_version": "project.post-merge-current-reality-reconciliation.v1",
+  "recorded_on": "2026-07-25",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "baseline": {
+    "main": "665e051375594d11e58e434231bd06775dbdc560",
+    "latest_merged_pull_request": 92,
+    "also_merged_pull_request": 93,
+    "open_pull_requests_observed": [],
+    "local_working_tree": "not_observed",
+    "deployed_source_ref": "8b3d55c616d8820edd523f77021a35fe24167bd0",
+    "main_ahead_by_commits": 158,
+    "main_behind_by_commits": 0
+  },
+  "pull_requests": {
+    "pr92": {
+      "title": "Verify effective extension write permission without mutation",
+      "source_head": "5b5af74d57fb5fd87ece2a34239cc6f29d04b12b",
+      "merge_commit": "665e051375594d11e58e434231bd06775dbdc560",
+      "reviewed_package_head": "c53093ec5a9c84dbe1abb450a0079e01b2865bda",
+      "reviewed_package_ci_run": 30160596671,
+      "reviewed_package_ci_conclusion": "success",
+      "execution_head_ci_run": 30160681565,
+      "execution_head_ci_conclusion": "success",
+      "operator_ui_check_rollup": "all_checks_passed",
+      "protected_verify_only_run_id": "not_observed",
+      "protected_verify_only_artifact": "not_observed",
+      "effective_permission_result": "unverified",
+      "azure_mutation_claimed": false
+    },
+    "pr93": {
+      "title": "Decouple PR82 historical validation from handoff prose",
+      "source_head": "eecb5c872f76cb5e51df6f5451d5a61b79d87bba",
+      "merge_commit": "99dc79c7093fa4cd5655c2d5a65095dd796f9f75",
+      "ci_runs": [30160683469, 30160683486],
+      "ci_conclusions": ["success", "success"],
+      "azure_action_performed": false
+    },
+    "merge_order": [93, 92],
+    "final_main_contains_both": true
+  },
+  "authority_reconciliation": {
+    "recorded_pr_authority": {
+      "pr92_merge_authorized": false,
+      "pr93_merge_authorized": false
+    },
+    "observed_operator_action": {
+      "pr92_merged": true,
+      "pr93_merged": true,
+      "actor": "repository owner through GitHub UI"
+    },
+    "resolution": "The merges are accepted as live repository reality and recorded as explicit human operator actions. They are not retroactively rewritten as having been inside the earlier repository-agent grants."
+  },
+  "azure_boundary": {
+    "latest_durable_observation": "2026-07-25T00:47:40Z",
+    "fresh_azure_inventory_performed": false,
+    "fresh_resource_graph_query_performed": false,
+    "fresh_rbac_query_performed": false,
+    "fresh_runtime_test_performed": false,
+    "azure_mutation_performed": false,
+    "timeout_fix_deployed": false,
+    "effective_extension_write_permission": "unverified",
+    "claim_boundary": "Green repository checks and merged verification code do not by themselves establish the protected Azure What-If result or effective permission."
+  },
+  "resolved_state": {
+    "repository_watermark_stale_before_reconciliation": true,
+    "repository_verification_package_merged": true,
+    "structured_historical_validator_fix_merged": true,
+    "pr92_check_rollup_observed_success": true,
+    "named_protected_verifier_outcome_observed": false,
+    "effective_extension_write_permission_verified": false,
+    "timeout_fix_deployed": false,
+    "deployment_authorized": false,
+    "full_workload_operationally_verified": false
+  },
+  "canonical_distinctions": [
+    "checks_green != protected_Azure_artifact_inspected",
+    "verification_package_merged != effective_permission_verified",
+    "merged_into_main != deployed_to_VM",
+    "human_operator_merge != prior_agent_merge_authority",
+    "not_observed != failed",
+    "not_observed != false"
+  ],
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_mutations_authorized": false,
+    "azure_rbac_mutations_authorized": false,
+    "resource_graph_query_authorized": false,
+    "transaction_replay_authorized": false,
+    "github_pages_publication_authorized": false,
+    "cleanup_authorized": false
+  },
+  "next_gate": {
+    "operation": "inspect_or_promote_exact_protected_verify_only_evidence",
+    "execution_authorized": false,
+    "claim_boundary": "A new Azure verification attempt, deployment, replay, RBAC change, cleanup, publication, or merge requires separate explicit authorization."
+  }
+}
