@@ -16,21 +16,31 @@ failure_disappears != root_cause_fully_proven
 
 ## Current ServiceTracer boundary
 
-The observed ServiceTracer timeout-correction attempt already established a specific failure boundary:
+The consumed ServiceTracer timeout-correction attempt established a specific failure boundary:
 
 - ARM validation succeeded;
 - extension-only What-If succeeded;
-- resource-group deployment submission was rejected because `Microsoft.Resources/deployments/write` was not effective;
+- the resource-group deployment wrapper was rejected because `Microsoft.Resources/deployments/write` was not effective;
 - the existing VM extension remained in its prior successful state;
 - the resource inventory remained seven;
 - no workload mutation was proven.
 
-The durable repository repair therefore remains the two-capability design already declared on `main`:
+The current preferred retry path declared on `main` is therefore:
 
-1. extension update permission at the exact extension resource;
-2. deployment submission permission at the exact resource group.
+1. retain Bicep validation and extension-only What-If;
+2. build the exact existing Custom Script extension payload deterministically;
+3. perform forward and rollback writes with a direct Compute API `PUT` to the exact extension resource;
+4. rely only on the already-bounded `Microsoft.Compute/virtualMachines/extensions/write` capability.
 
-The process in this runbook is available for future ambiguous incidents. It is not active authorization to elevate access for the current workload.
+The earlier deployment-submitter package remains repository history, but the direct-PUT path does not require `Microsoft.Resources/deployments/write` and must not broaden RBAC merely to preserve the wrapper.
+
+```text
+resource_group_wrapper_failed != extension_write_failed
+wrapper_permission_available != wrapper_permission_required_for_durable_design
+narrow_direct_path_available != broad_diagnostic_test_required_now
+```
+
+Temporary diagnostic elevation remains available for future ambiguous incidents. It is not active authorization for the current workload, and it is not needed to explain the already-isolated wrapper failure.
 
 ## Intended architecture
 
@@ -71,9 +81,9 @@ The activation scope must equal the exact affected resource group. Subscription,
 - Microsoft Entra ID P2 or Microsoft Entra ID Governance licensing for PIM.
 - A pre-existing eligible assignment for the named human operator.
 - PIM role settings configured for the exact role and resource group.
-- A recorded original failure containing identity, scope, command or workflow, timestamp, correlation information, and exact error.
-- A diagnostic hypothesis stated before activation.
-- A separately approved test plan and, when applicable, separate mutation authority.
+- A preserved original failure with identity, scope, immutable source, timestamp, correlation information, exact error, target state, and mutation classification.
+- One falsifiable diagnostic hypothesis stated before activation.
+- A separately approved test plan and, when applicable, separate mutation and rollback authority.
 - A reliable operator able to terminate and verify the elevation.
 
 License availability and current PIM configuration are not established by this repository increment.
@@ -89,17 +99,15 @@ Required PIM controls for the resource-group `Contributor` role:
 - approval by a separate approver where practical;
 - activation and assignment notifications;
 - no permanent active assignment;
-- no group, service-principal, or managed-identity substitution without a separate design review.
+- no shared account, service-principal, or managed-identity substitution.
 
-The operator must use their named user identity. Shared accounts are prohibited.
-
-The account creating or configuring the eligible assignment requires separate administrative authority such as `Owner` or `User Access Administrator`. That administrative setup is not authorized by this runbook or by the inert request template.
+The account configuring eligibility requires separate administrative authority such as `Owner` or `User Access Administrator`. This runbook and its inert template do not grant that authority.
 
 ## Network paths
 
 No network topology, NSG, route, firewall, public endpoint, DNS, or private-link change is part of diagnostic elevation.
 
-If the exact diagnostic test would alter network configuration, it requires a separate network-mutation authorization and is outside this ordinary process.
+A test that changes network configuration requires a separate network-mutation authorization and falls outside this ordinary process.
 
 ## Security controls
 
@@ -113,7 +121,7 @@ If the exact diagnostic test would alter network configuration, it requires a se
 - Inspect effective permissions before the diagnostic test.
 - Stop on any scope, identity, role, source, approval, or evidence mismatch.
 - Do not explore unrelated resources while elevated.
-- Manually deactivate immediately after the test even when automatic expiry remains pending.
+- Manually deactivate immediately after the test.
 - Acquire another fresh session and verify broad access is no longer effective.
 - Preserve evidence without exposing tenant IDs, subscription IDs, principal object IDs, tokens, or credentials.
 
@@ -121,23 +129,15 @@ If the exact diagnostic test would alter network configuration, it requires a se
 
 The role assignment itself does not create a recurring Azure workload resource. PIM requires qualifying Microsoft Entra licensing, which may carry licensing cost.
 
-The diagnostic test can still trigger normal Azure charges if it creates or modifies billable resources. The test must therefore preserve an explicit resource-count boundary and prohibit unrelated resource creation.
+The diagnostic test can still trigger ordinary Azure charges if it creates or modifies billable resources. The test must preserve an explicit resource-count boundary and prohibit unrelated resource creation.
 
-No compute quota change is required merely to activate a role. The latest bounded ServiceTracer evidence observed regional vCPU usage of `1 / 10`; this is time-qualified evidence, not current quota truth.
+No compute quota change is required merely to activate a role. The latest bounded ServiceTracer evidence observed regional vCPU usage of `1 / 10`; that is time-qualified evidence, not current quota truth.
 
 ## Diagnostic procedure
 
 ### 1. Preserve the original failure
 
-Record:
-
-- operator or workload identity type;
-- affected subscription and resource group, using hashed identifiers in durable evidence;
-- exact failed command or workflow run and immutable source;
-- timestamp and correlation ID when available;
-- exact denied action and scope;
-- resource inventory and target-resource state;
-- whether any mutation or partial mutation was observed.
+Record the identity type, exact scope, immutable source, timestamp, denied action, correlation ID when available, resource inventory, target-resource state, and whether any mutation was observed.
 
 Do not elevate first and reconstruct the failure later.
 
@@ -150,23 +150,13 @@ The resource-group deployment wrapper fails because the executing identity lacks
 Microsoft.Resources/deployments/write at rg-st-demo-api-dev-westus2.
 ```
 
-The hypothesis must describe the expected difference between the baseline and elevated tests.
+The hypothesis must describe the expected difference between baseline and elevated tests.
 
 ### 3. Approve a bounded request
 
-Start from `.project/templates/temporary-diagnostic-rbac-elevation-request.example.json` and create a new, incident-specific authorization record.
+Start from `.project/templates/temporary-diagnostic-rbac-elevation-request.example.json` and create a new incident-specific authorization record.
 
-The committed template is deliberately inert. A real request must identify:
-
-- named human operator;
-- exact resource group;
-- role;
-- one-hour expiry;
-- exact test digest;
-- whether the test is read-only or mutating;
-- rollback or recovery boundary;
-- required approver;
-- evidence destination.
+The committed template is deliberately inert. A real request must identify the named operator, exact resource group, role, one-hour expiry, exact test digest, test mode, rollback boundary, approver, and evidence destination.
 
 Repository documentation, CI, or this runbook do not authorize activation.
 
@@ -174,20 +164,13 @@ Repository documentation, CI, or this runbook do not authorize activation.
 
 In Microsoft Entra Privileged Identity Management, activate the eligible Azure resource role for the shortest supported duration, no longer than one hour.
 
-Supply the approved ticket reference and justification. Complete MFA and approval requirements. Confirm that the active assignment is scoped only to the intended resource group.
+Supply the approved ticket reference and justification, complete MFA and approval, and confirm that the assignment is scoped only to the intended resource group.
 
 Do not substitute a normal standing role assignment when PIM is unavailable. Escalate instead.
 
 ### 5. Refresh and verify effective access
 
-Use a fresh Azure CLI or portal authentication session after activation. Verify:
-
-- expected tenant and subscription;
-- exact resource-group scope;
-- active time-bound role assignment;
-- effective permissions;
-- activation start and expiry;
-- no broader assignment than approved.
+Use a fresh Azure CLI or portal authentication session. Verify the expected tenant, subscription, exact scope, time-bound assignment, activation expiry, and effective permissions.
 
 Example read-only observations:
 
@@ -208,8 +191,6 @@ Hash or redact protected identifiers before durable publication.
 
 Run only the command, workflow, or API operation bound to the approved digest.
 
-There are two modes:
-
 - `observe_only`: queries, validation, and What-If only;
 - `single_exact_mutation`: one explicitly authorized mutation needed to cross the observed failure boundary.
 
@@ -221,21 +202,14 @@ Do not retry automatically. A terminal result consumes the diagnostic grant.
 
 | Baseline | Elevated test | Interpretation |
 |---|---|---|
-| failed | succeeded | Insufficient authorization is supported as a cause of the tested failure boundary. The minimum durable action remains unresolved until narrower testing succeeds. |
-| failed | failed with same denial | The activation may be ineffective, stale, incorrectly scoped, or blocked by another authorization control. Stop and reobserve. |
-| failed | failed differently | Authorization may have exposed the next failure boundary. Preserve both results; do not collapse them into success. |
-| mutation observed outside the test boundary | any | Stop, treat as an operational incident, and follow the separately authorized rollback or recovery procedure. |
+| failed | succeeded | Insufficient authorization is supported as a cause of the tested boundary. The minimum durable action remains unresolved until narrower testing succeeds. |
+| failed | same denial | Activation may be ineffective, stale, incorrectly scoped, or blocked by another control. Stop and reobserve. |
+| failed | different failure | Elevation may have exposed the next boundary. Preserve both results; do not call this success. |
+| unexpected mutation | any | Stop, treat as an operational incident, and use only separately authorized rollback or recovery. |
 
 ### 8. Terminate the elevation
 
-Manually deactivate the PIM role immediately after the diagnostic test. Do not wait for automatic expiry merely because the test completed quickly.
-
-Open a fresh authentication session and verify:
-
-- the active assignment is absent or expired;
-- broad effective actions are no longer present;
-- the target resource group remains within the expected inventory boundary;
-- no unrelated deployment, role, policy, network, or resource mutation occurred.
+Manually deactivate immediately after the test. Open a fresh authentication session and verify the assignment is absent or expired, broad effective actions are absent, inventory remains bounded, and no unrelated mutation occurred.
 
 ```text
 deactivation_requested != access_terminated
@@ -244,62 +218,54 @@ assignment_expired != cached_access_immediately_absent
 
 ### 9. Design and verify the durable permission
 
-Use the diagnostic evidence to test the narrowest candidate permission through a custom role, direct resource API, or constrained deployment architecture.
+Test the narrowest candidate through a custom role, direct resource API, or constrained deployment architecture.
 
-The permanent result is accepted only after the narrow permission is independently observed as effective and the intended operation succeeds without the broad elevation.
+A durable result is accepted only after the narrow permission is independently observed as effective and the intended operation succeeds without broad elevation.
 
 ## Expected outputs and evidence
 
-Capture a protected evidence package containing:
+Capture a protected package containing:
 
 - original failure record;
-- approved incident-specific authorization record;
+- incident-specific authorization record;
 - exact source or command digest;
-- PIM activation request and approval metadata;
+- PIM activation and approval metadata;
 - hashed operator, tenant, and subscription identifiers;
-- exact resource-group scope;
-- effective permissions before activation, during activation, and after termination;
-- resource inventories before and after;
-- diagnostic command output and exit status;
-- target-resource state before and after;
+- exact scope;
+- effective permissions before, during, and after elevation;
+- inventories and target state before and after;
+- diagnostic output and exit status;
 - mutation and rollback classification;
 - activation, deactivation, and expiry timestamps;
-- SHA-256 manifest for the package.
+- SHA-256 manifest.
 
 Do not commit raw protected PIM exports or unredacted identity values.
 
 ## Failure, rollback, and stop behavior
 
-- PIM unavailable or unlicensed: stop; do not create standing broad access as an undocumented substitute.
-- Eligible assignment missing: stop; PIM setup requires a separate administrative increment.
+- PIM unavailable or unlicensed: stop; do not create standing broad access.
+- Eligible assignment missing: stop; setup requires a separate administrative increment.
 - Approval denied or expired: stop; do not bypass approval.
 - Scope or identity mismatch: deactivate and stop before testing.
-- Effective access not observed: refresh once, then stop if still unresolved.
+- Effective access not observed: refresh once, then stop if unresolved.
 - Diagnostic test fails: preserve evidence; no retry is implied.
 - Unexpected mutation: invoke only a separately authorized rollback or recovery plan.
 - Deactivation cannot be verified: escalate as an access-removal incident.
 
 ## Cleanup and decommissioning
 
-A completed diagnostic session requires:
+A completed session requires manual deactivation, fresh-session verification that the assignment and broad effective access are absent, closure of the authorization as consumed, and protected evidence retention.
 
-1. manual deactivation;
-2. verification of inactive or expired assignment;
-3. verification that broad effective permissions are absent after session refresh;
-4. closure of the diagnostic authorization record as consumed;
-5. evidence retention according to project policy.
-
-The eligible assignment itself may remain only when it is an intentional, reviewed operational capability. Remove stale eligibility when the capability is no longer required.
+The eligible assignment may remain only when it is an intentional, reviewed operational capability. Remove stale eligibility when the capability is no longer required.
 
 ## Authority boundary
 
 Authorized by this repository increment:
 
-- this runbook;
-- an inert request template;
+- runbook and inert request template;
 - deterministic repository tests;
 - reconciliation documentation;
-- draft pull request and ordinary CI.
+- ordinary CI.
 
 Not authorized by this repository increment:
 
@@ -307,8 +273,7 @@ Not authorized by this repository increment:
 - creation of an eligible or active assignment;
 - `Contributor`, `Owner`, or `User Access Administrator` activation;
 - Azure login or query;
-- diagnostic execution;
-- workload mutation;
+- diagnostic execution or workload mutation;
 - rollback, retry, cleanup, or PR merge.
 
 ## Microsoft references
