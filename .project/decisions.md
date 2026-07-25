@@ -10,6 +10,8 @@ repository_declaration != deployed_reality
 promoted_evidence != current_reality
 ```
 
+The governing repository constitution is `.project/constitution.md`.
+
 ## Live repository state is query-only
 
 Current `main`, active branches, open pull requests, write ownership, review state, mergeability, and CI must be queried from Git and GitHub.
@@ -31,6 +33,30 @@ A pull-request description carries the transient branch objective, permitted pat
 - rules for resolving live state.
 
 `.project/repository-events.jsonl` is curated, non-exhaustive history. Absence from that log does not prove that an event did not happen.
+
+## Synchronization Termination Principle
+
+The exact constitutional name is **Synchronization Termination Principle**.
+
+Reality synchronization is bounded by a declared dependent matter. A snapshot is evaluated against the subject, source, scope, time, provenance, and limitations it actually observed; it is not required to contain a future merge or promotion caused by its own publication.
+
+```text
+snapshot != live_dashboard
+snapshot_not_self_referential != stale_defect
+repository_merge != automatic_reconciliation_trigger
+```
+
+The **Material Uncertainty Synchronization Rule** triggers a fresh synchronization only when uncertainty could materially change a current claim, review, decision, authorization boundary, or consequential operation.
+
+Synchronization terminates after the bounded evidence threshold is satisfied or the result is correctly classified as unknown, conflicting, stale, not observable, insufficiently authoritative, blocked, or escalated.
+
+```text
+no_material_uncertainty = no_reconciliation
+no_consequential_operation = no_reality_sync_churn
+reconciliation_merged != reconcile_the_reconciliation
+```
+
+Routine PR merge, branch closure, CI completion, or repository watermark movement does not create a status-only reconciliation obligation. Relevant history may be promoted during a later substantive increment or by separately governed automation.
 
 ## State vocabulary
 
@@ -72,7 +98,7 @@ Authority remains fail-closed unless a current human instruction and exact workf
 
 A durable handoff records architecture, promoted evidence, unresolved gates, failure and rollback behavior, and the safe next decision boundary.
 
-It does not claim that a branch or pull request remains active after merge.
+It does not claim that a branch or pull request remains active after merge, and it is not required to record the merge that published itself.
 
 ## Safety boundary
 
