@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Any
 
 ALLOWED_TYPES = {
     "Microsoft.Authorization/roleDefinitions",
@@ -16,6 +17,33 @@ ALLOWED_CHANGES = {"Create", "Modify", "NoChange", "Ignore"}
 
 def normalize_type(value: str) -> str:
     return value.split("@", 1)[0]
+
+
+def type_from_resource_id(resource_id: str) -> str:
+    """Derive the final provider/type pair from an Azure resource ID."""
+    marker = "/providers/"
+    if marker not in resource_id:
+        return ""
+    provider_path = resource_id.rsplit(marker, 1)[1].strip("/")
+    parts = provider_path.split("/")
+    if len(parts) < 2:
+        return ""
+    return f"{parts[0]}/{parts[1]}"
+
+
+def resolve_resource_type(change: dict[str, Any], resource_id: str) -> str:
+    """Normalize Azure CLI What-If shapes without weakening type enforcement."""
+    candidates: list[Any] = [change.get("resourceType")]
+    for payload_key in ("after", "before"):
+        payload = change.get(payload_key)
+        if isinstance(payload, dict):
+            candidates.append(payload.get("type"))
+
+    for candidate in candidates:
+        if isinstance(candidate, str) and candidate.strip():
+            return normalize_type(candidate.strip())
+
+    return normalize_type(type_from_resource_id(resource_id))
 
 
 def main() -> int:
@@ -33,8 +61,14 @@ def main() -> int:
 
     accepted = []
     for change in changes:
+        if not isinstance(change, dict):
+            raise SystemExit("What-If changes array contains a non-object entry")
+
         resource_id = change.get("resourceId") or ""
-        resource_type = normalize_type(change.get("resourceType") or "")
+        if not isinstance(resource_id, str) or not resource_id:
+            raise SystemExit("What-If change has no resourceId")
+
+        resource_type = resolve_resource_type(change, resource_id)
         change_type = change.get("changeType") or ""
 
         if change_type not in ALLOWED_CHANGES:
