@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -71,6 +73,64 @@ class ExtensionUpdaterRbacBootstrapTests(unittest.TestCase):
         self.assertIn("expected at most two mutating RBAC resources", source)
         self.assertIn("prohibited change type", source)
         self.assertIn("role assignment escaped extension scope", source)
+
+    def test_what_if_assertion_accepts_full_resource_payload_shape(self) -> None:
+        subscription = "/subscriptions/00000000-0000-0000-0000-000000000000"
+        extension_scope = (
+            f"{subscription}/resourceGroups/rg-st-demo-api-dev-westus2"
+            "/providers/Microsoft.Compute/virtualMachines/vm-st-demo-api-mst-dev"
+            "/extensions/servicetracer-demo-api"
+        )
+        role_definition_id = (
+            f"{subscription}/providers/Microsoft.Authorization/roleDefinitions/{ROLE_GUID}"
+        )
+        role_assignment_id = (
+            f"{extension_scope}/providers/Microsoft.Authorization/roleAssignments/"
+            "11111111-1111-1111-1111-111111111111"
+        )
+        payload = {
+            "status": "Succeeded",
+            "changes": [
+                {
+                    "resourceId": role_definition_id,
+                    "changeType": "Create",
+                    "after": {"type": "Microsoft.Authorization/roleDefinitions"},
+                },
+                {
+                    "resourceId": role_assignment_id,
+                    "changeType": "Create",
+                    "after": {"type": "Microsoft.Authorization/roleAssignments"},
+                },
+            ],
+        }
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp = Path(temp_dir)
+            what_if = temp / "what-if.json"
+            output = temp / "assessment.json"
+            what_if.write_text(json.dumps(payload), encoding="utf-8")
+
+            completed = subprocess.run(
+                [
+                    "python3",
+                    str(ASSERTION),
+                    str(what_if),
+                    "--role-definition-guid",
+                    ROLE_GUID,
+                    "--extension-scope",
+                    extension_scope,
+                    "--output",
+                    str(output),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            assessment = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(assessment["status"], "accepted_bounded_rbac_bootstrap")
+            self.assertEqual(len(assessment["mutating_changes"]), 2)
 
     def test_authorization_remains_bounded(self) -> None:
         record = json.loads(AUTH.read_text(encoding="utf-8"))
