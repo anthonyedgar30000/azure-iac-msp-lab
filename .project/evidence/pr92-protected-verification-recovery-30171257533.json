@@ -1,0 +1,71 @@
+{
+  "schema_version": "project.pr92-protected-verification-recovery.v1",
+  "status": "effective_extension_write_permission_verified",
+  "target": {
+    "pull_request": 92,
+    "workflow_run_id": 30160680313,
+    "workflow_run_url": "https://github.com/anthonyedgar30000/azure-iac-msp-lab/actions/runs/30160680313",
+    "workflow_name": "Verify ServiceTracer demo API extension write permission attempt 2",
+    "event": "push",
+    "head_branch": "agent/verify-extension-write-permission-20260725",
+    "head_sha": "5b5af74d57fb5fd87ece2a34239cc6f29d04b12b",
+    "run_attempt": 1,
+    "run_status": "completed",
+    "run_conclusion": "success",
+    "created_at": "2026-07-25T13:56:32Z",
+    "updated_at": "2026-07-25T13:58:37Z"
+  },
+  "artifact": {
+    "id": 8620163872,
+    "name": "servicetracer-demo-api-extension-write-verify-only-2-30160680313",
+    "digest": "sha256:9da1e4f3b12de2d4702ab3ea8c4b47b0169d4030a3bccf4762e2f1aa81ba5b04",
+    "size_in_bytes": 11106,
+    "expired": false
+  },
+  "inspection": {
+    "manifest_present": true,
+    "manifest_verified": true,
+    "manifest_failures": [],
+    "missing_success_files": [],
+    "available_filenames": [
+      "artifact-manifest.sha256",
+      "backend-transaction-url.txt",
+      "exact-head-ci.json",
+      "extension-id.sha256",
+      "extension-role-assignments-observation.error.txt",
+      "extension-role-assignments-observation.json",
+      "health-after.json",
+      "health-before.json",
+      "permission-verification.json",
+      "rbac-observation-status.json",
+      "resource-group.json",
+      "resources-after.json",
+      "resources-before.json",
+      "role-definition-observation.error.txt",
+      "role-definition-observation.json",
+      "subscription.sha256",
+      "summary.json",
+      "tenant.sha256",
+      "validation.json",
+      "vm-instance-view.json",
+      "what-if.json"
+    ],
+    "success_checks": {
+      "exact_head_ci": true,
+      "permission_record": true,
+      "summary_record": true,
+      "resource_inventory": true,
+      "public_health": true
+    }
+  },
+  "effective_extension_write_permission_verified": true,
+  "arm_validation_succeeded": true,
+  "extension_only_what_if_accepted": true,
+  "resource_count_preserved": true,
+  "public_health_preserved": true,
+  "azure_mutation_performed": false,
+  "application_deployment_performed": false,
+  "transaction_replay_performed": false,
+  "deployment_authorized": false,
+  "claim_boundary": "The recovered protected run proves that the dedicated target identity could authorize the proposed VM extension write through successful ARM validation and an accepted extension-only What-If. No Azure mutation or deployment was performed or authorized."
+}
