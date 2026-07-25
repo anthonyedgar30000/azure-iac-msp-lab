@@ -1,0 +1,282 @@
+name: Deploy ServiceTracer timeout fix after deployment-submitter RBAC
+
+on:
+  push:
+    branches:
+      - fix/timeout-deployment-submitter-rbac
+    paths:
+      - .project/authorizations/servicetracer-demo-api-timeout-fix-deployment-after-deployment-submitter-rbac-20260725.json
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+concurrency:
+  group: servicetracer-demo-api-timeout-fix-deployment
+  cancel-in-progress: false
+
+env:
+  RESOURCE_GROUP: rg-st-demo-api-dev-westus2
+  VM_NAME: vm-st-demo-api-mst-dev
+  EXTENSION_NAME: servicetracer-demo-api
+  FQDN: st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com
+  ORIGINAL_DEPLOYMENT_NAME: servicetracer-demo-api-dev
+  TEMPLATE_FILE: workloads/servicetracer-demo-api/infra/update-existing-extension.bicep
+  EVIDENCE_DIR: servicetracer-demo-api-timeout-fix-after-deployment-submitter-rbac-evidence
+  PREVIOUS_TRUSTED_SOURCE_REF: 8b3d55c616d8820edd523f77021a35fe24167bd0
+  SOURCE_REPOSITORY: https://github.com/anthonyedgar30000/azure-iac-msp-lab.git
+  ALLOWED_ORIGIN: https://anthonyedgar30000.github.io
+
+jobs:
+  deploy:
+    name: Deploy exact timeout fix after effective permission verification
+    runs-on: ubuntu-latest
+    environment: azure-api-payg
+    timeout-minutes: 45
+    steps:
+      - name: Check out exact authorized head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Validate bounded authorization and immutable source
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/fix/timeout-deployment-submitter-rbac'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python3 -m py_compile \
+            workloads/servicetracer-demo-api/scripts/assert_vm_instance_view.py \
+            workloads/servicetracer-demo-api/scripts/assert_effective_arm_permissions.py \
+            workloads/servicetracer-demo-api/scripts/assert_extension_update_what_if.py
+          bash -n workloads/servicetracer-demo-api/scripts/install.sh
+          marker='.project/authorizations/servicetracer-demo-api-timeout-fix-deployment-after-deployment-submitter-rbac-20260725.json'
+          jq -e '
+            .schema_version == "project.azure-deployment-authorization-retry.v3" and
+            .authorized == true and
+            .source_binding.branch == "fix/timeout-deployment-submitter-rbac" and
+            .prior_attempt.workflow_run_id == 30178082566 and
+            .prior_attempt.failure_stage == "deployment_submission_authorization" and
+            .prior_attempt.azure_mutation_performed == false and
+            .preconditions.deployment_submitter_rbac_applied == true and
+            .preconditions.effective_permissions_must_be_reobserved == true and
+            .scope.only_existing_extension_update == true and
+            .authority.deployment == true and
+            .authority.rollback_on_observed_extension_mutation == true and
+            .authority.transaction_replay == false and
+            .authority.rbac_mutation == false and
+            .authority.network_mutation == false and
+            .authority.cleanup == false and
+            .authority.pull_request_merge == false
+          ' "$marker" >/dev/null
+
+      - name: Require exact-head pull-request CI success
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+          for _ in $(seq 1 180); do
+            gh api -X GET \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs" \
+              -f branch='fix/timeout-deployment-submitter-rbac' \
+              -f event='pull_request' \
+              -F per_page=30 > /tmp/ci-runs.json
+            run_id="$(jq -r --arg sha "$GITHUB_SHA" '.workflow_runs | map(select(.head_sha == $sha)) | .[0].id // empty' /tmp/ci-runs.json)"
+            status="$(jq -r --arg sha "$GITHUB_SHA" '.workflow_runs | map(select(.head_sha == $sha)) | .[0].status // empty' /tmp/ci-runs.json)"
+            conclusion="$(jq -r --arg sha "$GITHUB_SHA" '.workflow_runs | map(select(.head_sha == $sha)) | .[0].conclusion // empty' /tmp/ci-runs.json)"
+            [[ -n "$run_id" && "$status" == completed ]] && break
+            sleep 8
+          done
+          test -n "${run_id:-}"
+          test "$status" = completed
+          test "$conclusion" = success
+          jq -n --argjson run_id "$run_id" --arg source_head "$GITHUB_SHA" \
+            '{status:"success",run_id:$run_id,source_head:$source_head}' > "$EVIDENCE_DIR/exact-head-ci.json"
+
+      - name: Log in to protected target subscription
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_TARGET_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_TARGET_SUBSCRIPTION_ID }}
+
+      - name: Preflight current Azure reality, effective permissions, and accepted What-If
+        env:
+          EXPECTED_SUBSCRIPTION_ID: ${{ secrets.AZURE_TARGET_SUBSCRIPTION_ID }}
+          EXPECTED_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+          account_id="$(az account show --query id -o tsv)"
+          tenant_id="$(az account show --query tenantId -o tsv)"
+          test "$account_id" = "$EXPECTED_SUBSCRIPTION_ID"
+          test "$tenant_id" = "$EXPECTED_TENANT_ID"
+          test "$(az account show --query state -o tsv)" = Enabled
+          printf '%s' "$account_id" | sha256sum | awk '{print $1}' > "$EVIDENCE_DIR/subscription.sha256"
+          printf '%s' "$tenant_id" | sha256sum | awk '{print $1}' > "$EVIDENCE_DIR/tenant.sha256"
+
+          rg_id="$(az group show -g "$RESOURCE_GROUP" --query id -o tsv)"
+          az group show -g "$RESOURCE_GROUP" --query '{name:name,location:location,provisioningState:properties.provisioningState}' -o json > "$EVIDENCE_DIR/resource-group.json"
+          az resource list -g "$RESOURCE_GROUP" --query '[].{name:name,type:type,location:location}' -o json > "$EVIDENCE_DIR/resources-before.json"
+          test "$(jq 'length' "$EVIDENCE_DIR/resources-before.json")" = 7
+
+          az rest --method get \
+            --uri "${rg_id}/providers/Microsoft.Authorization/permissions?api-version=2022-04-01" -o json \
+            > "$EVIDENCE_DIR/effective-permissions.json"
+          python3 workloads/servicetracer-demo-api/scripts/assert_effective_arm_permissions.py \
+            "$EVIDENCE_DIR/effective-permissions.json" \
+            --require Microsoft.Resources/deployments/write \
+            --require Microsoft.Compute/virtualMachines/extensions/write \
+            --output "$EVIDENCE_DIR/effective-permissions-assessment.json"
+
+          az vm get-instance-view -g "$RESOURCE_GROUP" -n "$VM_NAME" -o json > /tmp/vm-instance-view.json
+          python3 workloads/servicetracer-demo-api/scripts/assert_vm_instance_view.py /tmp/vm-instance-view.json
+          jq '{name,location,provisioningState,hardwareProfile,identity:{type:.identity.type},instanceView:{statuses:(.statuses // .instanceView.statuses // []),extensions:[.instanceView.extensions[]? | {name,type,typeHandlerVersion,statuses}]}}' \
+            /tmp/vm-instance-view.json > "$EVIDENCE_DIR/vm-instance-view-before.json"
+
+          vm_id="$(az vm show -g "$RESOURCE_GROUP" -n "$VM_NAME" --query id -o tsv)"
+          extension_id="${vm_id}/extensions/${EXTENSION_NAME}"
+          printf '%s\n' "$extension_id" > "$EVIDENCE_DIR/extension-id.txt"
+          az resource show --ids "$extension_id" --api-version 2024-07-01 \
+            --query '{id:id,provisioningState:properties.provisioningState,forceUpdateTag:properties.forceUpdateTag}' -o json \
+            > "$EVIDENCE_DIR/extension-before.json"
+
+          az deployment group show -g "$RESOURCE_GROUP" -n "$ORIGINAL_DEPLOYMENT_NAME" --query properties.parameters -o json > /tmp/current-parameters.json
+          backend_url="$(jq -r '.backendTransactionUrl.value // empty' /tmp/current-parameters.json)"
+          test "$(jq -r '.allowedOrigin.value // empty' /tmp/current-parameters.json)" = "$ALLOWED_ORIGIN"
+          test "$(jq -r '.sourceRepository.value // empty' /tmp/current-parameters.json)" = "$SOURCE_REPOSITORY"
+          [[ "$backend_url" =~ ^https://[A-Za-z0-9.:-]+/transaction$ ]]
+          printf '%s\n' "$backend_url" > "$EVIDENCE_DIR/backend-transaction-url.txt"
+
+          curl --fail --silent --show-error --connect-timeout 10 --max-time 45 "https://${FQDN}/api/health" > "$EVIDENCE_DIR/health-before.json"
+          jq -e '.status == "healthy" and .hosting_model == "dedicated_vm_subproject"' "$EVIDENCE_DIR/health-before.json" >/dev/null
+
+          installer_uri="https://raw.githubusercontent.com/anthonyedgar30000/azure-iac-msp-lab/${GITHUB_SHA}/workloads/servicetracer-demo-api/scripts/install.sh"
+          force_tag="timeout-fix-rbac-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          printf '%s\n' "$installer_uri" > "$EVIDENCE_DIR/installer-uri.txt"
+          printf '%s\n' "$force_tag" > "$EVIDENCE_DIR/force-update-tag.txt"
+          params=(vmName="$VM_NAME" sourceRepository="$SOURCE_REPOSITORY" sourceRef="$GITHUB_SHA" installerUri="$installer_uri" publicFqdn="$FQDN" backendTransactionUrl="$backend_url" allowedOrigin="$ALLOWED_ORIGIN" forceUpdateTag="$force_tag")
+
+          az deployment group validate -g "$RESOURCE_GROUP" --name "st-timeout-fix-rbac-validate-${GITHUB_RUN_ID}" \
+            --template-file "$TEMPLATE_FILE" --parameters "${params[@]}" -o json > "$EVIDENCE_DIR/validation.json"
+          az deployment group what-if -g "$RESOURCE_GROUP" --name "st-timeout-fix-rbac-whatif-${GITHUB_RUN_ID}" \
+            --template-file "$TEMPLATE_FILE" --parameters "${params[@]}" \
+            --no-pretty-print --result-format FullResourcePayloads -o json > /tmp/what-if.json
+          python3 workloads/servicetracer-demo-api/scripts/assert_extension_update_what_if.py \
+            /tmp/what-if.json --subscription-id "$EXPECTED_SUBSCRIPTION_ID" --resource-group "$RESOURCE_GROUP" \
+            --vm-name "$VM_NAME" --output "$EVIDENCE_DIR/what-if-assessment.json"
+
+      - name: Apply extension update and use evidence-based rollback semantics
+        run: |
+          set +e
+          backend_url="$(cat "$EVIDENCE_DIR/backend-transaction-url.txt")"
+          installer_uri="$(cat "$EVIDENCE_DIR/installer-uri.txt")"
+          force_tag="$(cat "$EVIDENCE_DIR/force-update-tag.txt")"
+          extension_id="$(cat "$EVIDENCE_DIR/extension-id.txt")"
+          deployment_name="servicetracer-timeout-fix-rbac-${GITHUB_RUN_ID}"
+          params=(vmName="$VM_NAME" sourceRepository="$SOURCE_REPOSITORY" sourceRef="$GITHUB_SHA" installerUri="$installer_uri" publicFqdn="$FQDN" backendTransactionUrl="$backend_url" allowedOrigin="$ALLOWED_ORIGIN" forceUpdateTag="$force_tag")
+
+          az deployment group create -g "$RESOURCE_GROUP" --name "$deployment_name" \
+            --template-file "$TEMPLATE_FILE" --parameters "${params[@]}" -o json \
+            > "$EVIDENCE_DIR/deployment-result.json" 2> "$EVIDENCE_DIR/deployment.error.txt"
+          deploy_status=$?
+
+          az deployment group show -g "$RESOURCE_GROUP" -n "$deployment_name" -o json \
+            > "$EVIDENCE_DIR/deployment-observed.json" 2> "$EVIDENCE_DIR/deployment-observed.error.txt"
+          deployment_observed_status=$?
+          az resource show --ids "$extension_id" --api-version 2024-07-01 \
+            --query '{id:id,provisioningState:properties.provisioningState,forceUpdateTag:properties.forceUpdateTag}' -o json \
+            > "$EVIDENCE_DIR/extension-after.json" 2> "$EVIDENCE_DIR/extension-after.error.txt"
+          extension_observed_status=$?
+
+          attempted_tag_observed=false
+          if [[ "$extension_observed_status" = 0 ]] && [[ "$(jq -r '.forceUpdateTag // empty' "$EVIDENCE_DIR/extension-after.json")" = "$force_tag" ]]; then
+            attempted_tag_observed=true
+          fi
+
+          corrected_health=false
+          if [[ "$deploy_status" = 0 ]]; then
+            for _ in $(seq 1 50); do
+              if curl --fail --silent --show-error --connect-timeout 10 --max-time 45 "https://${FQDN}/api/health" \
+                > "$EVIDENCE_DIR/health-after.json" 2> "$EVIDENCE_DIR/health-after.error.txt" && \
+                jq -e '.status=="healthy" and .hosting_model=="dedicated_vm_subproject" and .backend_timeout_seconds==10 and .max_parallel_transactions==10 and .max_attempts==50 and .estimated_max_execution_seconds==50' \
+                  "$EVIDENCE_DIR/health-after.json" >/dev/null; then
+                corrected_health=true
+                break
+              fi
+              sleep 8
+            done
+          fi
+
+          az resource list -g "$RESOURCE_GROUP" --query '[].{name:name,type:type,location:location}' -o json > "$EVIDENCE_DIR/resources-after.json"
+          resource_count="$(jq 'length' "$EVIDENCE_DIR/resources-after.json")"
+          extension_succeeded=false
+          [[ "$extension_observed_status" = 0 ]] && [[ "$(jq -r '.provisioningState // empty' "$EVIDENCE_DIR/extension-after.json")" = Succeeded ]] && extension_succeeded=true
+
+          if [[ "$deploy_status" = 0 && "$corrected_health" = true && "$extension_succeeded" = true && "$resource_count" = 7 ]]; then
+            jq -n --arg source_ref "$GITHUB_SHA" \
+              '{status:"deployed_and_health_verified",source_ref:$source_ref,deployment_submission_accepted:true,extension_mutation_observed:true,rollback_required:false,rollback_attempted:false,rollback_verified:false,resource_count_preserved:7,transaction_replay_performed:false}' \
+              > "$EVIDENCE_DIR/deployment-summary.json"
+            exit 0
+          fi
+
+          rollback_required=false
+          if [[ "$attempted_tag_observed" = true || "$deploy_status" = 0 ]]; then
+            rollback_required=true
+          fi
+          rollback_attempted=false
+          rollback_submission_accepted=false
+          rollback_verified=false
+
+          if [[ "$rollback_required" = true ]]; then
+            rollback_attempted=true
+            rollback_installer="https://raw.githubusercontent.com/anthonyedgar30000/azure-iac-msp-lab/${PREVIOUS_TRUSTED_SOURCE_REF}/workloads/servicetracer-demo-api/scripts/install.sh"
+            rollback_tag="timeout-fix-rbac-rollback-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            rollback_name="servicetracer-timeout-fix-rbac-rollback-${GITHUB_RUN_ID}"
+            rollback_params=(vmName="$VM_NAME" sourceRepository="$SOURCE_REPOSITORY" sourceRef="$PREVIOUS_TRUSTED_SOURCE_REF" installerUri="$rollback_installer" publicFqdn="$FQDN" backendTransactionUrl="$backend_url" allowedOrigin="$ALLOWED_ORIGIN" forceUpdateTag="$rollback_tag")
+            az deployment group create -g "$RESOURCE_GROUP" --name "$rollback_name" \
+              --template-file "$TEMPLATE_FILE" --parameters "${rollback_params[@]}" -o json \
+              > "$EVIDENCE_DIR/rollback-result.json" 2> "$EVIDENCE_DIR/rollback.error.txt"
+            rollback_status=$?
+            if [[ "$rollback_status" = 0 ]]; then
+              rollback_submission_accepted=true
+              for _ in $(seq 1 50); do
+                if curl --fail --silent --show-error --connect-timeout 10 --max-time 45 "https://${FQDN}/api/health" \
+                  > "$EVIDENCE_DIR/health-after-rollback.json" 2> "$EVIDENCE_DIR/health-after-rollback.error.txt" && \
+                  jq -e '.status=="healthy" and .hosting_model=="dedicated_vm_subproject"' "$EVIDENCE_DIR/health-after-rollback.json" >/dev/null; then
+                  rollback_verified=true
+                  break
+                fi
+                sleep 8
+              done
+            fi
+          fi
+
+          jq -n \
+            --arg attempted_source_ref "$GITHUB_SHA" \
+            --argjson deploy_exit_status "$deploy_status" \
+            --argjson deployment_submission_accepted "$([[ "$deployment_observed_status" = 0 ]] && echo true || echo false)" \
+            --argjson extension_mutation_observed "$attempted_tag_observed" \
+            --argjson rollback_required "$rollback_required" \
+            --argjson rollback_attempted "$rollback_attempted" \
+            --argjson rollback_submission_accepted "$rollback_submission_accepted" \
+            --argjson rollback_verified "$rollback_verified" \
+            '{status:"deployment_failed_or_unverified",attempted_source_ref:$attempted_source_ref,deploy_exit_status:$deploy_exit_status,deployment_submission_accepted:$deployment_submission_accepted,extension_mutation_observed:$extension_mutation_observed,rollback_required:$rollback_required,rollback_attempted:$rollback_attempted,rollback_submission_accepted:$rollback_submission_accepted,rollback_verified:$rollback_verified,transaction_replay_performed:false}' \
+            > "$EVIDENCE_DIR/deployment-summary.json"
+          exit 1
+
+      - name: Build evidence manifest
+        if: always()
+        run: |
+          set -euo pipefail
+          find "$EVIDENCE_DIR" -type f ! -name artifact-manifest.sha256 -print0 | sort -z | xargs -0 -r sha256sum > "$EVIDENCE_DIR/artifact-manifest.sha256"
+
+      - name: Upload deployment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: servicetracer-demo-api-timeout-fix-after-deployment-submitter-rbac-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_DIR }}
+          if-no-files-found: error
+          retention-days: 90
