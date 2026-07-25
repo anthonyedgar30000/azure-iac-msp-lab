@@ -236,9 +236,17 @@ Falsv7 family quota: not returned by the latest filtered query
 
 ## Preserved planner evidence
 
+The earlier protected planner record remains a historical anchor and does not describe the current West US 2 deployment:
+
 ```text
+authorization reconciliation merge: 92b0c3b1064158684a4b280348c77eeedba6dfc3
 planner run: 30064289707
+planner artifact: 8585693830
+planner artifact SHA-256: 7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22
 candidate: Standard_B2ats_v2 / eastus
+restriction: NotAvailableForSubscription
+VM family: standardBasv2Family
+typed readiness control: PR #73
 status: readiness rejected before ARM validation and What-If
 current deployment view: false
 ```
