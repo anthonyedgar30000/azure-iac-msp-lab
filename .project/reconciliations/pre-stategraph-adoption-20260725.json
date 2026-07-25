@@ -1,0 +1,107 @@
+{
+  "schema_version": "project.pre-stategraph-adoption-reconciliation.v1",
+  "recorded_on": "2026-07-25",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "dependent_matter": "Decide how Stategraph may participate in the Azure IaC MSP Lab without bypassing the Lab v1 completion gate or displacing the existing Bicep authority.",
+  "repository_observation": {
+    "default_branch": "main",
+    "observed_head": "7ef16db6c60bb5df853808a7d5ac20dcac7db8b8",
+    "latest_merge_by_time": {
+      "pull_request": 95,
+      "title": "Adopt the Synchronization Termination Principle",
+      "source_head": "f5c4186f8e47046a8c01352664d99d729cbcf474",
+      "source_head_ci_run": 30163381783,
+      "source_head_ci_conclusion": "success",
+      "merge_commit": "7ef16db6c60bb5df853808a7d5ac20dcac7db8b8"
+    },
+    "also_merged": [
+      {
+        "pull_request": 96,
+        "title": "Define Lab v1 completion gate and freeze feature expansion",
+        "source_head": "eea0904c07d817ea23c876deb5bd31afda5e6d5f",
+        "source_head_ci_run": 30163887844,
+        "source_head_ci_conclusion": "success",
+        "merge_commit": "c10c5bfe57eb66a010fba124573aae266274db50"
+      }
+    ],
+    "merge_order": [96, 95],
+    "open_pull_requests_observed_before_branch_creation": [],
+    "local_working_tree": "not_observed",
+    "main_merge_result_ci": "not_observed_through_available_connector",
+    "claim_boundary": "Live GitHub establishes the observed repository head and merged pull requests. Exact source-head CI passed for PRs #95 and #96. No workflow result was observed directly on the final main merge composition through the available connector."
+  },
+  "iac_observation": {
+    "existing_primary_language": "Bicep",
+    "existing_primary_entrypoint": "infra/main.bicep",
+    "existing_ci_contract": ".github/workflows/ci.yml",
+    "terraform_root_observed": false,
+    "stategraph_configuration_observed": false,
+    "stategraph_workflow_observed": false,
+    "interpretation": "Stategraph cannot become an execution dependency of the existing ServiceTracer Bicep path through this increment. Any future working pilot must begin in a separate Terraform root with a standard Terraform fallback."
+  },
+  "lab_v1_gate": {
+    "source": ".project/lab-v1-completion-gate.json",
+    "status": "merged_repository_authority_observed",
+    "stategraph_build_now_admitted": false,
+    "classification": "design_for",
+    "reason": "The gate freezes parallel feature expansion until the ServiceTracer P0-P2 vertical slice is complete unless a new item directly closes a completion criterion, removes a material security or operational credibility defect, or produces required demonstration evidence."
+  },
+  "azure_boundary": {
+    "latest_promoted_observation": "2026-07-25T00:47:40Z",
+    "fresh_azure_authentication_performed": false,
+    "fresh_resource_graph_query_performed": false,
+    "fresh_inventory_performed": false,
+    "fresh_cost_query_performed": false,
+    "fresh_quota_query_performed": false,
+    "azure_mutation_performed": false,
+    "claim_boundary": "This reconciliation promotes no new Azure, runtime, RBAC, cost, quota, or deployment claim. Existing promoted Azure evidence remains time-bounded."
+  },
+  "decision_resolution": {
+    "stategraph_strategy_accepted": true,
+    "current_repository_classification": "design_for",
+    "existing_servicetracer_iac_owner": "Bicep",
+    "future_pilot_owner": "standard Terraform for one isolated resource boundary",
+    "initial_stategraph_mode": "optional advisory shadow",
+    "standard_terraform_fallback_required": true,
+    "stategraph_apply_authorized": false,
+    "existing_bicep_resource_import_authorized": false
+  },
+  "canonical_distinctions": [
+    "optional_capability != required_dependency",
+    "stategraph_shadow != canonical_Terraform_state",
+    "Bicep_declared_resource != Terraform_owned_resource",
+    "repository_adoption != Stategraph_runtime_available",
+    "plan_created != apply_authorized",
+    "repository_merge != Azure_deployment",
+    "not_observed != absent"
+  ],
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "repository_adoption_record_authorized": true,
+    "repository_documentation_authorized": true,
+    "repository_test_authorized": true,
+    "branch_creation_authorized": true,
+    "draft_pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_or_rerun_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "terraform_backend_creation_authorized": false,
+    "terraform_plan_authorized": false,
+    "terraform_apply_authorized": false,
+    "stategraph_tenant_or_state_creation_authorized": false,
+    "stategraph_token_creation_authorized": false,
+    "stategraph_apply_authorized": false
+  },
+  "synchronization_termination": {
+    "material_uncertainty_resolved_for": "repository-only Stategraph adoption classification and architecture boundary",
+    "unresolved_but_nonblocking": [
+      "fresh Azure subscription, tenant, policy, cost, region, and quota state",
+      "Stategraph compatibility with the future exact Terraform pilot",
+      "Terraform backend and identity design",
+      "whether the Lab v1 gate will later admit the pilot as Build Now"
+    ],
+    "next_gate": "Review and merge the repository-only adoption record. Do not begin Terraform or Stategraph implementation until the Lab v1 admission rule is satisfied or a new explicit priority decision admits it."
+  }
+}
