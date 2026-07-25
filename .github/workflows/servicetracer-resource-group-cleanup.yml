@@ -1,0 +1,56 @@
+name: ServiceTracer resource-group cleanup plan
+
+on:
+  pull_request:
+    paths:
+      - ".project/contracts/servicetracer-resource-group-boundary-cleanup.json"
+      - ".project/reconciliations/servicetracer-resource-group-boundary-cleanup-plan.json"
+      - "queries/azure-resource-graph/servicetracer-cleanup-dependencies.kql"
+      - "scripts/servicetracer_resource_group_cleanup.py"
+      - "tests/fixtures/servicetracer-resource-group-cleanup-sample.json"
+      - "tests/test_servicetracer_resource_group_cleanup.py"
+      - "docs/runbooks/servicetracer-resource-group-boundary-cleanup.md"
+      - ".github/workflows/servicetracer-resource-group-cleanup.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".project/contracts/servicetracer-resource-group-boundary-cleanup.json"
+      - ".project/reconciliations/servicetracer-resource-group-boundary-cleanup-plan.json"
+      - "queries/azure-resource-graph/servicetracer-cleanup-dependencies.kql"
+      - "scripts/servicetracer_resource_group_cleanup.py"
+      - "tests/fixtures/servicetracer-resource-group-cleanup-sample.json"
+      - "tests/test_servicetracer_resource_group_cleanup.py"
+      - "docs/runbooks/servicetracer-resource-group-boundary-cleanup.md"
+      - ".github/workflows/servicetracer-resource-group-cleanup.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact workflow commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate cleanup contract
+        run: python scripts/servicetracer_resource_group_cleanup.py --validate-contract-only
+
+      - name: Run cleanup assessment tests
+        run: python -m unittest tests/test_servicetracer_resource_group_cleanup.py -v
+
+      - name: Compile collector
+        run: python -m py_compile scripts/servicetracer_resource_group_cleanup.py
+
+      - name: Exercise fixture assessment
+        run: |
+          python scripts/servicetracer_resource_group_cleanup.py \
+            --input tests/fixtures/servicetracer-resource-group-cleanup-sample.json \
+            --output /tmp/servicetracer-cleanup-assessment.json
