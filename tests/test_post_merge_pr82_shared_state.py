@@ -26,14 +26,18 @@ class PostMergePr82SharedStateTests(unittest.TestCase):
         api = state["independent_demo_api"]
         self.assertTrue(api["resolved_state"]["deployed"])
         self.assertTrue(api["resolved_state"]["public_api_verified"])
+        self.assertFalse(api["resolved_state"]["corrected_runtime_deployed"])
         self.assertFalse(api["resolved_state"]["backend_transaction_success_verified"])
         self.assertFalse(api["resolved_state"]["operationally_verified"])
-        self.assertEqual(api["security_and_operations"]["effective_rbac"], "not_observed")
-        self.assertEqual(api["security_and_operations"]["backup"], "not_observed")
-        self.assertEqual(api["security_and_operations"]["actual_cost"], "not_observed")
+        self.assertFalse(api["security_and_operations"]["effective_least_privilege_verified"])
+        self.assertFalse(api["security_and_operations"]["recovery_tested"])
 
-    def test_historical_planner_record_is_not_erased(self) -> None:
+    def test_historical_pr82_and_planner_records_are_not_erased(self) -> None:
         state = json.loads((ROOT / ".project/current-reality.json").read_text(encoding="utf-8"))
+        self.assertEqual(
+            state["evidence_anchors"]["pr82_merge_commit"],
+            "5dfa3b76a9fb975002d9cd702a892a0f678c88c5",
+        )
         historical = state["historical_planner_evidence"]
         self.assertEqual(historical["run_id"], 30064289707)
         self.assertTrue(historical["preserved"])
@@ -44,13 +48,18 @@ class PostMergePr82SharedStateTests(unittest.TestCase):
         authority = state["authority"]
         self.assertTrue(authority["repository_reconciliation_authorized"])
         self.assertTrue(authority["pull_request_creation_authorized"])
-        self.assertFalse(authority["pull_request_merge_authorized"])
-        self.assertFalse(authority["workflow_dispatch_authorized"])
-        self.assertFalse(authority["azure_authentication_authorized"])
-        self.assertFalse(authority["azure_mutations_authorized"])
-        self.assertFalse(authority["guest_commands_authorized"])
-        self.assertFalse(authority["transaction_replay_authorized"])
-        self.assertFalse(authority["cleanup_authorized"])
+        for key in (
+            "pull_request_merge_authorized",
+            "workflow_dispatch_authorized",
+            "azure_authentication_authorized",
+            "azure_mutations_authorized",
+            "azure_rbac_mutations_authorized",
+            "guest_commands_authorized",
+            "transaction_replay_authorized",
+            "github_pages_publication_authorized",
+            "cleanup_authorized",
+        ):
+            self.assertFalse(authority[key], key)
 
 
 if __name__ == "__main__":
