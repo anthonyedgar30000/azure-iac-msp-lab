@@ -1,0 +1,68 @@
+{
+  "schema_version": "servicetracer.resource-group-cleanup-evidence.v1",
+  "metadata": {
+    "observed_at_utc": "2026-07-25T04:00:00Z",
+    "source_commit": "24b04906d0936af856eb03a68ab87b4c7a3d65c3",
+    "subscription_id_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "tenant_id_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "resource_groups": ["rg-servicetracer-dev-westus2", "rg-st-demo-api-dev-westus2"],
+    "query_complete": true,
+    "azure_authentication_performed": true,
+    "azure_control_plane_queried": true,
+    "azure_mutations_authorized": false,
+    "azure_mutations_performed": false,
+    "cleanup_authorized": false
+  },
+  "resource_graph_records": [
+    {
+      "recordKind": "candidate",
+      "id": "/subscriptions/sub/resourcegroups/rg-servicetracer-dev-westus2/providers/microsoft.insights/components/appi-demo-api-mst-dev",
+      "name": "appi-demo-api-mst-dev",
+      "type": "microsoft.insights/components",
+      "resourceGroup": "rg-servicetracer-dev-westus2"
+    },
+    {
+      "recordKind": "candidate",
+      "id": "/subscriptions/sub/resourcegroups/rg-servicetracer-dev-westus2/providers/microsoft.storage/storageaccounts/storfxczr3fewce",
+      "name": "storfxczr3fewce",
+      "type": "microsoft.storage/storageaccounts",
+      "resourceGroup": "rg-servicetracer-dev-westus2"
+    },
+    {
+      "recordKind": "candidate",
+      "id": "/subscriptions/sub/resourcegroups/rg-servicetracer-dev-westus2/providers/microsoft.network/publicipaddresses/pip-st-demo-api-mst-dev",
+      "name": "pip-st-demo-api-mst-dev",
+      "type": "microsoft.network/publicipaddresses",
+      "resourceGroup": "rg-servicetracer-dev-westus2"
+    },
+    {
+      "recordKind": "public_ip_reference",
+      "id": "/subscriptions/sub/resourcegroups/rg-servicetracer-dev-westus2/providers/microsoft.network/loadbalancers/lb-example",
+      "name": "lb-example",
+      "type": "microsoft.network/loadbalancers",
+      "resourceGroup": "rg-servicetracer-dev-westus2",
+      "relationship": "load_balancer_frontend",
+      "referencedPublicIpId": "/subscriptions/sub/resourcegroups/rg-servicetracer-dev-westus2/providers/microsoft.network/publicipaddresses/pip-st-demo-api-mst-dev"
+    },
+    {
+      "recordKind": "nsg_rule",
+      "id": "/subscriptions/sub/resourcegroups/rg-servicetracer-dev-westus2/providers/microsoft.network/networksecuritygroups/nsg-operations-mst-dev/securityrules/allow-demo-api-http-from-internet",
+      "name": "Allow-Demo-API-HTTP-From-Internet",
+      "parentName": "nsg-operations-mst-dev",
+      "type": "microsoft.network/networksecuritygroups/securityrules",
+      "resourceGroup": "rg-servicetracer-dev-westus2"
+    },
+    {
+      "recordKind": "nsg_rule",
+      "id": "/subscriptions/sub/resourcegroups/rg-servicetracer-dev-westus2/providers/microsoft.network/networksecuritygroups/nsg-operations-mst-dev/securityrules/allow-demo-api-https-from-internet",
+      "name": "Allow-Demo-API-HTTPS-From-Internet",
+      "parentName": "nsg-operations-mst-dev",
+      "type": "microsoft.network/networksecuritygroups/securityrules",
+      "resourceGroup": "rg-servicetracer-dev-westus2"
+    }
+  ],
+  "deployment_records": [
+    {"name": "collector-demo-api-dev", "provisioningState": "Failed"}
+  ],
+  "claim_boundary": "fixture"
+}
