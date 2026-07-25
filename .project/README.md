@@ -2,15 +2,18 @@
 
 This directory preserves governed project memory for humans and AI-assisted work. GitHub, CI, workflow artifacts, and Azure remain the live authorities. `.project/` stores durable declarations, promoted evidence, authority boundaries, and curated history so their meaning survives across conversations.
 
+The repository-level constitution is [`.project/constitution.md`](constitution.md).
+
 ## Read order before changing the project
 
-1. Read `active-work.json` for the accepted substantive baseline, latest promoted repository event, declared repository capabilities, authority defaults, promoted operational evidence, and live-resolution rules.
-2. Read `repository-events.jsonl` for curated merge events. It is durable history, not an exhaustive mirror of GitHub.
-3. Read `workstream-catalog.json` to place the work in one of the six canonical ServiceTracer streams.
-4. Read `environment-state.json` and the latest entry in `deployment-history.jsonl`.
-5. Read `handoffs/current-state.md`.
-6. Query live GitHub for the current default-branch head, branches, open pull requests, reviews, threads, mergeability, and exact-head CI.
-7. Query fresh authenticated Azure state before making deployment, cost, quota, RBAC, guest-health, rollback, recovery, or service-validation claims.
+1. Read `constitution.md` for the governing evidence, authority, infrastructure-increment, and synchronization-termination rules.
+2. Read `active-work.json` for the accepted substantive baseline, latest promoted repository event, declared repository capabilities, authority defaults, promoted operational evidence, and live-resolution rules.
+3. Read `repository-events.jsonl` for curated merge events. It is durable history, not an exhaustive mirror of GitHub.
+4. Read `workstream-catalog.json` to place the work in one of the six canonical ServiceTracer streams.
+5. Read `environment-state.json` and the latest entry in `deployment-history.jsonl`.
+6. Read `handoffs/current-state.md`.
+7. Query live GitHub for the current default-branch head, branches, open pull requests, reviews, threads, mergeability, and exact-head CI.
+8. Query fresh authenticated Azure state before making deployment, cost, quota, RBAC, guest-health, rollback, recovery, or service-validation claims.
 
 ## Repository-state model
 
@@ -47,6 +50,35 @@ current_pull_request
 ```
 
 This prevents a pull request from merging a document that immediately and falsely says its own branch or pull request is still active.
+
+## Synchronization termination
+
+The exact constitutional name is **Synchronization Termination Principle**.
+
+A current-reality record, handoff, reconciliation, or evidence digest is a bounded time-qualified observation, not a live dashboard. Its observed subject, source revision, and later promotion event may differ.
+
+```text
+snapshot != live_dashboard
+snapshot_not_self_referential != stale_defect
+repository_merge != automatic_reconciliation_trigger
+```
+
+The **Material Uncertainty Synchronization Rule** determines when a fresh bounded synchronization is required. Routine merge, closure, CI completion, or snapshot publication does not independently trigger another reconciliation.
+
+Stop the synchronization after the declared evidence threshold is met or the result is correctly preserved as unknown, conflicting, stale, not observable, blocked, or escalated.
+
+```text
+no_material_uncertainty
+→ no_reconciliation
+
+no_consequential_operation
+→ no_reality_sync_churn
+
+reconciliation_merged
+!= reconcile_the_reconciliation
+```
+
+A later substantive increment may promote relevant history. Do not open a status-only pull request merely to make a snapshot record the merge that published it.
 
 ## Work ownership
 
@@ -113,8 +145,10 @@ resource_exists != securely_configured
 
 - One bounded feature branch owns one increment.
 - Resolve live GitHub and Azure state before proposing or writing.
+- Read and preserve the repository constitution.
 - Do not persist current branch, current PR, current head, or current CI as self-updating truth.
 - Preserve repository history without presenting it as current runtime state.
+- Do not create recursive status-only reconciliation work without a new materiality justification.
 - Never expose secrets, tokens, private keys, SAS values, customer evidence, or unredacted protected artifacts.
 - Moving a conversation between ChatGPT projects changes conversational context only; it changes neither GitHub nor Azure authority.
 
