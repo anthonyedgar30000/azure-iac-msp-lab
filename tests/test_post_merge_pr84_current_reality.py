@@ -21,6 +21,19 @@ class PostMergePr84CurrentRealityTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("validation passed", result.stdout)
 
+    def test_pr84_anchor_survives_newer_repository_state(self) -> None:
+        state = json.loads((ROOT / ".project/current-reality.json").read_text(encoding="utf-8"))
+        self.assertGreaterEqual(state["repository_state"]["latest_merged_pull_request"], 84)
+        anchors = state["evidence_anchors"]
+        self.assertEqual(
+            anchors["pr84_merge_commit"],
+            "c96d9cbb765a023921fa819cf7d99c957e8ad608",
+        )
+        self.assertEqual(
+            anchors["pr84_source_head"],
+            "5c938a7e07da3a22b27bb5ac5aa52b7ccf22ba37",
+        )
+
     def test_merged_repository_is_not_collapsed_into_deployed_runtime(self) -> None:
         state = json.loads((ROOT / ".project/current-reality.json").read_text(encoding="utf-8"))
         api = state["independent_demo_api"]
@@ -42,16 +55,12 @@ class PostMergePr84CurrentRealityTests(unittest.TestCase):
         self.assertFalse(deployment["azure_resource_mutation_performed"])
         self.assertFalse(deployment["rollback_performed"])
 
-    def test_publication_and_replay_remain_unverified_or_unauthorized(self) -> None:
+    def test_newer_rbac_claim_does_not_rewrite_historical_attempt(self) -> None:
         state = json.loads((ROOT / ".project/current-reality.json").read_text(encoding="utf-8"))
-        api = state["independent_demo_api"]
-        self.assertFalse(api["frontend"]["github_pages_publication_verified_after_merge"])
-        self.assertFalse(api["frontend"]["live_browser_rendering_of_corrected_api_verified"])
-        self.assertFalse(api["runtime"]["live_twenty_attempt_replay_performed"])
-        authority = state["authority"]
-        self.assertFalse(authority["transaction_replay_authorized"])
-        self.assertFalse(authority["github_pages_publication_authorized"])
-        self.assertFalse(authority["azure_rbac_mutations_authorized"])
+        operations = state["independent_demo_api"]["security_and_operations"]
+        self.assertEqual(operations["required_extension_write_effective"], "unverified")
+        self.assertFalse(operations["extension_updater_role_definition_observed"])
+        self.assertFalse(operations["extension_updater_role_assignment_observed"])
 
 
 if __name__ == "__main__":
