@@ -1,0 +1,127 @@
+{
+  "schema_version": "project.servicetracer-pr104-deployment-wrapper-failure.v1",
+  "recorded_on": "2026-07-25",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "repository_baseline": {
+    "default_branch": "main",
+    "observed_head": "d548d116cf3cfa8f7927ac2ab65403ba34626aa3",
+    "latest_merged_pull_request": 106,
+    "open_pull_requests_observed": [104, 107],
+    "authorization_source_head": "10f0a0b1533cf739c93623b881549241ba9e67c3",
+    "local_working_tree": "not_available_connector_only"
+  },
+  "protected_run": {
+    "workflow": "Deploy ServiceTracer timeout fix after parser repair",
+    "run_id": 30178082566,
+    "run_attempt": 1,
+    "head_sha": "10f0a0b1533cf739c93623b881549241ba9e67c3",
+    "head_branch": "fix/timeout-vm-instance-view-preflight",
+    "status": "completed",
+    "conclusion": "failure",
+    "artifact_id": 8624795161,
+    "artifact_name": "servicetracer-demo-api-timeout-fix-parser-repair-30178082566-1",
+    "artifact_digest": "sha256:8a29de9ca1cacb98c7d540d9361dbdf4f198b5d5df9ab8bb0328f5aedcb4059d"
+  },
+  "preflight": {
+    "exact_head_ci_run_id": 30178095309,
+    "exact_head_ci_conclusion": "success",
+    "bounded_authorization_validated": true,
+    "azure_login_succeeded": true,
+    "resource_group_observed": "rg-st-demo-api-dev-westus2",
+    "resource_count_before": 7,
+    "vm_running_observed": true,
+    "public_health_before_succeeded": true,
+    "arm_validation_succeeded": true,
+    "extension_only_what_if_accepted": true,
+    "what_if_change_type": "Modify",
+    "what_if_material_change_count": 1,
+    "what_if_scope_escape_observed": false,
+    "what_if_delete_or_replace_observed": false
+  },
+  "failure": {
+    "stage": "resource_group_deployment_wrapper_create",
+    "command_family": "az deployment group create",
+    "missing_action": "Microsoft.Resources/deployments/write",
+    "failed_scope": "rg-st-demo-api-dev-westus2/providers/Microsoft.Resources/deployments/servicetracer-timeout-fix-parser-30178082566",
+    "category": "deployment_method_permission_mismatch",
+    "parser_repair_failed": false,
+    "extension_write_permission_disproven": false,
+    "claim_boundary": "The identity passed ARM validation and extension-only What-If but could not create the resource-group deployment wrapper required by az deployment group create. This does not contradict the historical proof of effective Microsoft.Compute/virtualMachines/extensions/write permission."
+  },
+  "result": {
+    "forward_deployment_exit_status": 1,
+    "extension_mutation_performed": false,
+    "resource_count_after": 7,
+    "resource_inventory_before_after_identical": true,
+    "rollback_attempted": true,
+    "rollback_method": "same_resource_group_deployment_wrapper",
+    "rollback_exit_status": 1,
+    "rollback_verified": false,
+    "corrected_runtime_status": "not_deployed",
+    "post_attempt_health": "not_observed",
+    "transaction_replay_performed": false,
+    "full_workload_operationally_verified": false
+  },
+  "authorization": {
+    "source_marker": ".project/authorizations/servicetracer-demo-api-timeout-fix-deployment-after-parser-fix-20260725.json",
+    "status": "consumed_terminal_failure",
+    "retry_under_same_grant": false,
+    "reason": "The protected workflow began, authenticated, performed consequential Azure preflight, and reached a terminal outcome."
+  },
+  "supersession": {
+    "merged_repository_package_pull_request": 106,
+    "merge_commit": "d548d116cf3cfa8f7927ac2ab65403ba34626aa3",
+    "prepared_method": "resource_group_deployment_wrapper_plus_new_deployment_submitter_role",
+    "azure_rbac_mutation_observed": false,
+    "deployment_retry_observed": false,
+    "disposition": "superseded_before_operational_execution",
+    "reason": "A direct extension resource PUT uses the existing proven extension-scoped write permission and avoids adding a second resource-group-scoped role solely for deployment wrapper creation."
+  },
+  "remediation_decision": {
+    "selected_method": "direct_virtual_machine_extension_create_or_update",
+    "transport": "Azure Resource Manager REST PUT",
+    "target_resource_type": "Microsoft.Compute/virtualMachines/extensions",
+    "required_existing_action": "Microsoft.Compute/virtualMachines/extensions/write",
+    "resource_group_deployment_wrapper_required": false,
+    "bicep_validate_and_what_if_preserved": true,
+    "forward_and_rollback_methods_aligned": true,
+    "broad_resource_group_deployment_permission_added": false,
+    "supersedes_pr106_repository_path": true,
+    "reason": "Use the already-proven extension-scoped permission for the exact extension resource rather than broadening the identity with Microsoft.Resources/deployments/write."
+  },
+  "authority": {
+    "repository_reconciliation": true,
+    "repository_workflow_repair": true,
+    "deterministic_tests": true,
+    "remove_unexecuted_pr106_repository_path": true,
+    "draft_pull_request_creation": true,
+    "pull_request_merge": false,
+    "fresh_authorization_marker": false,
+    "workflow_dispatch_or_rerun": false,
+    "azure_authentication": false,
+    "azure_query": false,
+    "deployment_retry": false,
+    "azure_mutation": false,
+    "rbac_mutation": false,
+    "network_mutation": false,
+    "transaction_replay": false,
+    "cleanup": false
+  },
+  "next_gate": {
+    "operation": "review_direct_extension_put_remediation_and_obtain_fresh_exact_commit_deployment_authorization",
+    "execution_authorized": false,
+    "required_future_marker": ".project/authorizations/servicetracer-demo-api-timeout-fix-direct-put-retry-20260725.json",
+    "claim_boundary": "This repository increment records the consumed PR #104 attempt, removes the unexecuted PR #106 RBAC path, and prepares an inert least-privilege retry path. It performs no Azure operation and does not renew deployment authority."
+  },
+  "canonical_distinctions": [
+    "extension_write_permission_verified != resource_group_deployment_wrapper_permission",
+    "PR106_repository_package_merged != RBAC_applied",
+    "ARM_validation_succeeded != deployment_succeeded",
+    "accepted_extension_only_What_If != extension_mutated",
+    "rollback_attempted != rollback_verified",
+    "failed_wrapper_creation != corrected_runtime_deployed",
+    "consumed_authorization != retry_authorized",
+    "not_observed != false"
+  ]
+}
