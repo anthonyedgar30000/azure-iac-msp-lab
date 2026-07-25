@@ -1,0 +1,62 @@
+name: Azure Resource Graph semantic inventory
+
+on:
+  pull_request:
+    paths:
+      - ".project/contracts/azure-resource-graph-semantic-inventory.json"
+      - "docs/architecture/azure-resource-graph-semantic-inventory.md"
+      - "queries/azure-resource-graph/**"
+      - "scripts/azure_resource_graph_semantic_inventory.py"
+      - "tests/fixtures/azure-resource-graph-sample.json"
+      - "tests/test_azure_resource_graph_semantic_inventory.py"
+      - ".github/workflows/azure-resource-graph-semantic-inventory.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".project/contracts/azure-resource-graph-semantic-inventory.json"
+      - "docs/architecture/azure-resource-graph-semantic-inventory.md"
+      - "queries/azure-resource-graph/**"
+      - "scripts/azure_resource_graph_semantic_inventory.py"
+      - "tests/fixtures/azure-resource-graph-sample.json"
+      - "tests/test_azure_resource_graph_semantic_inventory.py"
+      - ".github/workflows/azure-resource-graph-semantic-inventory.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact workflow commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate repository-only contract
+        run: python scripts/azure_resource_graph_semantic_inventory.py --validate-contract-only
+
+      - name: Run adapter regression tests
+        run: python -m unittest tests/test_azure_resource_graph_semantic_inventory.py -v
+
+      - name: Build deterministic fixture graph
+        run: |
+          python scripts/azure_resource_graph_semantic_inventory.py \
+            --input tests/fixtures/azure-resource-graph-sample.json \
+            --output /tmp/azure-infrastructure-graph.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          graph = json.loads(Path('/tmp/azure-infrastructure-graph.json').read_text(encoding='utf-8'))
+          assert graph['schema_version'] == 'servicetracer.infrastructure-graph.v1'
+          assert len(graph['nodes']) == 11
+          assert len(graph['edges']) == 19
+          assert len(graph['graph_digest']) == 64
+          print(graph['graph_digest'])
+          PY

@@ -1,0 +1,91 @@
+{
+  "schema_version": "servicetracer.azure-resource-graph-semantic-inventory.v1",
+  "status": "repository_adapter_only",
+  "objective": "Convert bounded Azure Resource Graph observations into a deterministic infrastructure node-and-edge model for semantic zoom without implying deployment, service validation, effective least privilege, or mutation authority.",
+  "source": {
+    "service": "azure_resource_graph",
+    "interface": "az_graph_query_or_resource_graph_rest",
+    "rest_api_version": "2024-04-01",
+    "cli_extension": "resource-graph",
+    "query_scope_requires_explicit_subscription_ids": true,
+    "default_subscription_inference_allowed": false,
+    "cross_subscription_discovery_allowed": false,
+    "allow_partial_scopes": false
+  },
+  "query_package": {
+    "directory": "queries/azure-resource-graph",
+    "queries": [
+      "resources.kql",
+      "vm-attachments.kql",
+      "nic-ip-configurations.kql",
+      "subnets.kql"
+    ],
+    "shared_query_resource_creation_required": false,
+    "query_execution_authorized": false
+  },
+  "graph_contract": {
+    "output_schema": "servicetracer.infrastructure-graph.v1",
+    "node_identity": "lowercase Azure resource ID or deterministic synthetic scope ID",
+    "edge_identity": "sha256(source|relationship|target)",
+    "required_node_kinds": [
+      "subscription",
+      "resource_group",
+      "resource"
+    ],
+    "required_relationships": [
+      "contains",
+      "attached_to",
+      "connected_to",
+      "protected_by",
+      "uses",
+      "exposes"
+    ],
+    "unknown_reference_policy": "preserve_as_unresolved_reference_node",
+    "duplicate_policy": "merge_identical_identity_and_preserve_conflicts",
+    "secret_redaction_required": true,
+    "raw_properties_allowed_in_normalized_output": false
+  },
+  "canonical_distinctions": [
+    "resource_graph_observed != deployed_from_current_main",
+    "resource_listed != securely_configured",
+    "relationship_inferred != network_path_verified",
+    "private_ip_observed != guest_interface_verified",
+    "public_ip_observed != endpoint_reachable",
+    "role_assignment_listed != effective_least_privilege",
+    "query_succeeded != complete_subscription_visibility",
+    "not_observed != absent",
+    "adapter_implemented != Azure_query_executed"
+  ],
+  "authority": {
+    "repository_implementation_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "azure_authentication_authorized": false,
+    "resource_graph_query_execution_authorized": false,
+    "azure_resource_mutation_authorized": false,
+    "azure_rbac_mutation_authorized": false,
+    "mcp_hosting_mutation_authorized": false,
+    "openai_api_execution_authorized": false,
+    "cleanup_authorized": false
+  },
+  "validation": {
+    "fixture_required": true,
+    "deterministic_output_required": true,
+    "duplicate_edge_rejection_required": true,
+    "scope_mismatch_rejection_required": true,
+    "raw_secret_marker_rejection_required": true
+  },
+  "failure_and_rollback": {
+    "fail_closed_conditions": [
+      "subscription_scope_missing",
+      "subscription_scope_mismatch",
+      "malformed_resource_id",
+      "unsupported_query_payload",
+      "raw_secret_marker_detected",
+      "nondeterministic_output",
+      "query_result_truncated_without_continuation_evidence"
+    ],
+    "rollback": "Close or revert the repository-only change. No Azure rollback is required because this increment performs no Azure authentication, query execution, resource mutation, deployment, or cleanup.",
+    "cleanup_authorized": false
+  }
+}

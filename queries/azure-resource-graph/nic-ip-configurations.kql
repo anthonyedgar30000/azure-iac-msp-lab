@@ -1,0 +1,17 @@
+Resources
+| where type =~ 'microsoft.network/networkinterfaces'
+| extend nicNsgId = tolower(tostring(properties.networkSecurityGroup.id))
+| mv-expand ipConfiguration = properties.ipConfigurations
+| project
+    recordKind = 'nic_ip_configuration',
+    nicId = tolower(id),
+    ipConfigurationName = tostring(ipConfiguration.name),
+    privateIpAddress = tostring(ipConfiguration.properties.privateIPAddress),
+    privateIpAllocationMethod = tostring(ipConfiguration.properties.privateIPAllocationMethod),
+    subnetId = tolower(tostring(ipConfiguration.properties.subnet.id)),
+    publicIpId = tolower(tostring(ipConfiguration.properties.publicIPAddress.id)),
+    nicNsgId,
+    backendPoolIds = ipConfiguration.properties.loadBalancerBackendAddressPools,
+    primary = tobool(ipConfiguration.properties.primary),
+    subscriptionId = tolower(subscriptionId)
+| order by nicId asc, ipConfigurationName asc
