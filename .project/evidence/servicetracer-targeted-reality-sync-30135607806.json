@@ -1,0 +1,200 @@
+{
+  "schema_version": "project.servicetracer-targeted-reality-sync.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "recorded_on": "2026-07-24",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "source_execution": {
+    "workflow": "ServiceTracer targeted reality synchronization",
+    "run_id": 30135607806,
+    "source_head": "386e740849dc68e90a74e9ab9793a25c7510f560",
+    "status": "completed",
+    "conclusion": "success",
+    "artifact_id": 8612668183,
+    "artifact_name": "servicetracer-targeted-reality-sync-30135607806-1",
+    "artifact_sha256": "804fdb48325ba01f70e94444b6b36fd3236d688506b3d3b7f9b858a392f274a1",
+    "observed_from": "2026-07-25T00:09:46Z",
+    "observed_through": "2026-07-25T00:10:06Z"
+  },
+  "evidence_promotion": {
+    "workflow": "ServiceTracer targeted reality evidence promotion",
+    "run_id": 30135643327,
+    "head": "5ebc34c77e75427c317acd9a280714a863ea4880",
+    "conclusion": "success",
+    "artifact_id": 8612670810,
+    "artifact_name": "servicetracer-targeted-reality-promoted-evidence",
+    "artifact_sha256": "c8df577700d83dd83d6df3c5ce070ae7e33883b55a86d666a0f076061f2fcd68"
+  },
+  "authority": {
+    "authorization_source": "Explicit governed control message: proceed",
+    "azure_authentication_authorized": true,
+    "read_only_control_plane_queries_authorized": true,
+    "guest_read_only_command_authorized": true,
+    "public_health_get_authorized": true,
+    "transaction_replay_authorized": false,
+    "azure_resource_configuration_mutations_authorized": false,
+    "deployment_authorized": false,
+    "service_restart_authorized": false,
+    "github_pages_publication_authorized": false,
+    "pull_request_merge_authorized": false,
+    "cleanup_authorized": false
+  },
+  "azure_context": {
+    "subscription_name": "Azure subscription 1",
+    "subscription_sha256": "262d05105062731302e7121dd53aed5f97bf644e86f84aa6d86efd322b4f5104",
+    "tenant_sha256": "26ba6e04f1a9cde8b97b64734498f4cbe81d5dcbf7b0f451d81570817c2967bc",
+    "state": "Enabled"
+  },
+  "resource_inventory": {
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "location": "westus2",
+    "resource_group_provisioning_state": "Succeeded",
+    "resource_count": 7,
+    "resource_types": [
+      "Microsoft.Network/publicIPAddresses",
+      "Microsoft.Network/networkSecurityGroups",
+      "Microsoft.Network/virtualNetworks",
+      "Microsoft.Network/networkInterfaces",
+      "Microsoft.Compute/virtualMachines",
+      "Microsoft.Compute/disks",
+      "Microsoft.Compute/virtualMachines/extensions"
+    ],
+    "vm": {
+      "name": "vm-st-demo-api-mst-dev",
+      "size": "Standard_F1als_v7",
+      "power_state": "VM running",
+      "provisioning_state": "Succeeded",
+      "identity_type": "SystemAssigned",
+      "fqdn": "st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com"
+    },
+    "deployment": {
+      "name": "servicetracer-demo-api-dev",
+      "state": "Succeeded",
+      "timestamp": "2026-07-24T09:28:47.774684+00:00",
+      "duration": "PT2M5.2306076S"
+    }
+  },
+  "public_runtime": {
+    "status": "observed",
+    "http_status": 200,
+    "health_status": "healthy",
+    "schema_version": "servicetracer.demo-api-health.v1",
+    "backend_target_configured": true,
+    "hosting_model": "dedicated_vm_subproject",
+    "cors_origin": "https://anthonyedgar30000.github.io",
+    "transaction_replay_performed": false,
+    "corrected_health_contract_fields_observed": false,
+    "missing_corrected_fields": [
+      "backend_timeout_seconds",
+      "max_parallel_transactions",
+      "max_attempts",
+      "estimated_max_execution_seconds"
+    ],
+    "interpretation": "The observed public process does not expose the health fields added by the PR #84 timeout fix. The corrected runtime is therefore not established as active."
+  },
+  "quota": {
+    "location": "westus2",
+    "standard_falsv7_family_vcpus": {
+      "current": 1,
+      "limit": 10
+    },
+    "total_regional_vcpus": {
+      "current": 1,
+      "limit": 10
+    },
+    "standard_ipv4_public_ips": {
+      "current": 1,
+      "limit": 20
+    },
+    "claim_boundary": "Quota is not availability, reservation, cost, or deployment authorization."
+  },
+  "cost": {
+    "status": "observed",
+    "query_type": "ActualCost",
+    "timeframe": "MonthToDate",
+    "currency": "CAD",
+    "pre_tax_cost": 0.734335248846279,
+    "resource_breakdown": [
+      {
+        "resource_type": "Microsoft.Compute/disks",
+        "pre_tax_cost": 0.0250558242816
+      },
+      {
+        "resource_type": "Microsoft.Compute/virtualMachines",
+        "pre_tax_cost": 0.648600227898012
+      },
+      {
+        "resource_type": "Microsoft.Network/publicIPAddresses",
+        "pre_tax_cost": 0.0606791966666666
+      }
+    ],
+    "claim_boundary": "Month-to-date usage data may lag and is not an invoice or forecast."
+  },
+  "rbac": {
+    "status": "observed",
+    "raw_assignment_rows": 4,
+    "unique_assignment_tuples": 3,
+    "all_observed_assignments_inherited": true,
+    "observed_role_names": [
+      "Owner",
+      "Reader",
+      "ServiceTracer Demo API What-If Planner v1"
+    ],
+    "principal_identifiers": "sha256_only",
+    "effective_least_privilege_verified": false,
+    "deny_assignments_evaluated": false,
+    "claim_boundary": "Role assignments were observed. Effective permissions, duplicate-row cause, deny assignments, and least privilege remain unverified."
+  },
+  "backup": {
+    "status": "observed",
+    "recovery_services_vault_count": 0,
+    "matching_azure_iaas_vm_backup_item_count": 0,
+    "backup_item_observed": false,
+    "recovery_tested": false,
+    "claim_boundary": "No Recovery Services AzureIaasVM item was observed in the target subscription. This does not exclude another backup method or prove recoverability."
+  },
+  "guest_observation": {
+    "command_attempted": true,
+    "command_executed": false,
+    "status": "observation_failed",
+    "failure_code": "AuthorizationFailed",
+    "missing_action": "Microsoft.Compute/virtualMachines/runCommand/action",
+    "deployed_source_ref": "not_observed",
+    "nginx_proxy_read_timeout_seconds": "not_observed",
+    "service_state": "not_observed",
+    "local_health": "not_observed",
+    "interpretation": "The protected target identity could read the Azure control plane but could not invoke VM Run Command. This preserves the permission boundary and leaves guest state unknown."
+  },
+  "resolved_state": {
+    "azure_authentication_succeeded": true,
+    "resource_inventory_refreshed": true,
+    "vm_running": true,
+    "public_health_verified": true,
+    "month_to_date_actual_cost_observed": true,
+    "rbac_assignments_observed": true,
+    "effective_least_privilege_verified": false,
+    "recovery_services_backup_observed": false,
+    "recovery_tested": false,
+    "guest_state_observed": false,
+    "repository_timeout_fix_deployed": false,
+    "live_twenty_attempt_replay_verified": false,
+    "full_workload_operationally_verified": false
+  },
+  "mutations_and_actions": {
+    "azure_resource_configuration_mutations_performed": false,
+    "deployment_performed": false,
+    "service_restart_performed": false,
+    "transaction_replay_performed": false,
+    "github_pages_publication_performed": false,
+    "pull_request_merge_performed": false,
+    "cleanup_performed": false
+  },
+  "canonical_distinctions": [
+    "resource_inventory_refreshed != guest_state_observed",
+    "public_health_verified != corrected_runtime_deployed",
+    "role_assignments_observed != effective_least_privilege_verified",
+    "backup_item_not_observed != all_backup_methods_absent",
+    "actual_cost_observed != invoice_finalized",
+    "guest_authorization_failed != VM_or_service_failed"
+  ],
+  "next_gate": "Review and merge remain separate. Deploying the exact reviewed timeout fix requires explicit deployment authorization. A live transaction replay requires a separate authorization after deployment evidence is captured."
+}
