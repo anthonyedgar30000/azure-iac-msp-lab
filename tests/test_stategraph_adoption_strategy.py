@@ -45,7 +45,7 @@ class StategraphAdoptionStrategyTests(unittest.TestCase):
 
         self.assertTrue(operating_model["standard_terraform_or_opentofu_fallback_required"])
         self.assertFalse(operating_model["stategraph_failure_blocks_standard_fallback"])
-        self.assertIn("standard Terraform/OpenTofu remains the fallback", self.strategy)
+        self.assertIn("Standard Terraform/OpenTofu remains the fallback", self.strategy)
 
     def test_no_stategraph_or_azure_execution_is_authorized(self) -> None:
         authority = self.decision["authority"]
