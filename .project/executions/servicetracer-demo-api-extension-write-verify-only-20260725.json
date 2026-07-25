@@ -1,0 +1,33 @@
+{
+  "schema_version": "project.azure-verify-only-execution.v1",
+  "execution_id": "servicetracer-demo-api-extension-write-verify-only-20260725",
+  "authorized": true,
+  "authorization_record": ".project/authorizations/servicetracer-demo-api-extension-write-verify-only-20260725.json",
+  "reviewed_package_head": "1d962b7eca14a5b8e684c6db270b024709319c3a",
+  "reviewed_ci_run_id": 30141213716,
+  "scope": {
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "region": "westus2",
+    "vm": "vm-st-demo-api-mst-dev",
+    "extension": "servicetracer-demo-api"
+  },
+  "authority": {
+    "azure_login": true,
+    "control_plane_read": true,
+    "arm_validate": true,
+    "arm_what_if": true,
+    "public_health_get": true,
+    "resource_mutation": false,
+    "application_deployment": false,
+    "vm_command": false,
+    "service_restart": false,
+    "transaction_replay": false,
+    "rbac_mutation": false,
+    "network_mutation": false,
+    "pull_request_merge": false,
+    "github_pages_publication": false,
+    "cleanup": false
+  },
+  "assumption": "The human authority instructed the project to assume the RBAC bootstrap succeeded. The protected OIDC What-If is required to replace that assumption with effective-permission evidence.",
+  "termination": "This one-shot grant is consumed when the protected workflow attempts Azure verification, regardless of success or failure. It does not authorize retry or deployment."
+}
