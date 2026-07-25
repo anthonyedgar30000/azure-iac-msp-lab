@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / "workloads/servicetracer-demo-api/scripts/assert_vm_instance_view.py"
 FIXTURE = ROOT / "workloads/servicetracer-demo-api/tests/fixtures/vm-instance-view-nested-statuses.json"
+NO_STATUSES_FIXTURE = ROOT / "workloads/servicetracer-demo-api/tests/fixtures/vm-instance-view-no-statuses.json"
 RETRY_WORKFLOW = ROOT / ".github/workflows/servicetracer-demo-api-timeout-fix-deploy-retry.yml"
 PARSER_WORKFLOW = ROOT / ".github/workflows/servicetracer-demo-api-timeout-fix-deploy-after-parser-fix.yml"
 AUTHORIZATION = ROOT / ".project/authorizations/servicetracer-demo-api-timeout-fix-deployment-after-parser-fix-20260725.json"
@@ -30,6 +33,28 @@ def test_top_level_statuses_remain_supported() -> None:
 
 def test_missing_statuses_fail_closed() -> None:
     assert module.extract_statuses({"instanceView": {"statuses": None}}) == []
+
+
+def test_cli_accepts_observed_nested_azure_shape() -> None:
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), str(FIXTURE)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "VM running state verified" in result.stdout
+
+
+def test_cli_rejects_missing_status_collection() -> None:
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), str(NO_STATUSES_FIXTURE)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1
+    assert "no usable VM status collection" in result.stderr
 
 
 def test_historical_retry_workflow_is_null_safe_for_both_cli_shapes() -> None:
