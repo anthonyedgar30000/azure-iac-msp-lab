@@ -62,8 +62,12 @@ jobs:
           test "$(cat /tmp/post-pr101-promotion/validation-overall-exit-code.txt)" = "0"
 
       - name: Verify complete artifact file set
+        id: verify
+        continue-on-error: true
         run: |
-          set -euo pipefail
+          set +e
+          find /tmp/post-pr101-promotion -print | sort
+          missing=0
           for path in \
             /tmp/post-pr101-promotion/.project/current-reality.json \
             /tmp/post-pr101-promotion/.project/lab-v1-completion-gate.json \
@@ -76,10 +80,15 @@ jobs:
             /tmp/post-pr101-promotion/tests/test_post_merge_pr86_pr88_current_reality.py \
             /tmp/post-pr101-promotion/infra/tests/test_lab_v1_completion_gate.py \
             /tmp/post-pr101-promotion/infra/tests/test_pr92_protected_verification_recovery.py; do
-            test -f "$path"
+            if [[ ! -f "$path" ]]; then
+              echo "missing expected path: $path" >&2
+              missing=1
+            fi
           done
+          exit "$missing"
 
       - name: Upload complete review artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: complete-post-pr101-canonical-evidence-promotion-${{ github.run_id }}
@@ -87,3 +96,9 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
+
+      - name: Fail closed when file-set verification failed
+        if: always()
+        run: |
+          set -euo pipefail
+          test '${{ steps.verify.outcome }}' = 'success'
