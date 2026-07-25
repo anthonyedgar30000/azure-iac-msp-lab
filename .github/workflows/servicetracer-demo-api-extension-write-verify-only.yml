@@ -1,0 +1,222 @@
+name: Verify ServiceTracer demo API extension write permission
+
+on:
+  push:
+    branches:
+      - agent/bootstrap-extension-updater-rbac
+    paths:
+      - .project/executions/servicetracer-demo-api-extension-write-verify-only-20260725.json
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+concurrency:
+  group: servicetracer-demo-api-extension-write-verify-only
+  cancel-in-progress: false
+
+env:
+  RESOURCE_GROUP: rg-st-demo-api-dev-westus2
+  VM_NAME: vm-st-demo-api-mst-dev
+  EXTENSION_NAME: servicetracer-demo-api
+  FQDN: st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com
+  ORIGINAL_DEPLOYMENT_NAME: servicetracer-demo-api-dev
+  TEMPLATE_FILE: workloads/servicetracer-demo-api/infra/update-existing-extension.bicep
+  EVIDENCE_DIR: servicetracer-demo-api-extension-write-verify-only-evidence
+  SOURCE_REPOSITORY: https://github.com/anthonyedgar30000/azure-iac-msp-lab.git
+  ALLOWED_ORIGIN: https://anthonyedgar30000.github.io
+
+jobs:
+  verify:
+    name: Verify effective extension write permission without mutation
+    runs-on: ubuntu-latest
+    environment: azure-api-payg
+    timeout-minutes: 35
+    steps:
+      - name: Check out exact verification head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Validate bounded verify-only authorization
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/agent/bootstrap-extension-updater-rbac'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python3 -m py_compile workloads/servicetracer-demo-api/scripts/assert_extension_write_permission_verify_only.py
+          marker='.project/executions/servicetracer-demo-api-extension-write-verify-only-20260725.json'
+          jq -e '
+            .schema_version == "project.azure-verify-only-execution.v1" and
+            .authorized == true and
+            .scope.resource_group == "rg-st-demo-api-dev-westus2" and
+            .scope.vm == "vm-st-demo-api-mst-dev" and
+            .scope.extension == "servicetracer-demo-api" and
+            .authority.azure_login == true and
+            .authority.control_plane_read == true and
+            .authority.arm_validate == true and
+            .authority.arm_what_if == true and
+            .authority.public_health_get == true and
+            .authority.resource_mutation == false and
+            .authority.application_deployment == false and
+            .authority.vm_command == false and
+            .authority.service_restart == false and
+            .authority.transaction_replay == false and
+            .authority.rbac_mutation == false and
+            .authority.network_mutation == false and
+            .authority.pull_request_merge == false and
+            .authority.github_pages_publication == false and
+            .authority.cleanup == false
+          ' "$marker" >/dev/null
+
+      - name: Require exact-head pull-request CI success
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+          run_id=''
+          status=''
+          conclusion=''
+          for _ in $(seq 1 180); do
+            gh api -X GET \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs" \
+              -f branch='agent/bootstrap-extension-updater-rbac' \
+              -f event='pull_request' \
+              -F per_page=30 > /tmp/ci-runs.json
+            run_id="$(jq -r --arg sha "$GITHUB_SHA" '.workflow_runs | map(select(.head_sha == $sha)) | .[0].id // empty' /tmp/ci-runs.json)"
+            if [[ -n "$run_id" ]]; then
+              status="$(jq -r --arg sha "$GITHUB_SHA" '.workflow_runs | map(select(.head_sha == $sha)) | .[0].status' /tmp/ci-runs.json)"
+              conclusion="$(jq -r --arg sha "$GITHUB_SHA" '.workflow_runs | map(select(.head_sha == $sha)) | .[0].conclusion // ""' /tmp/ci-runs.json)"
+              [[ "$status" == completed ]] && break
+            fi
+            sleep 8
+          done
+          test -n "$run_id"
+          test "$status" = completed
+          test "$conclusion" = success
+          jq -n --argjson run_id "$run_id" --arg source_head "$GITHUB_SHA" \
+            '{status:"success",run_id:$run_id,source_head:$source_head}' > "$EVIDENCE_DIR/exact-head-ci.json"
+
+      - name: Log in to protected target subscription
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_TARGET_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_TARGET_SUBSCRIPTION_ID }}
+
+      - name: Verify effective extension write permission without mutation
+        env:
+          EXPECTED_SUBSCRIPTION_ID: ${{ secrets.AZURE_TARGET_SUBSCRIPTION_ID }}
+          EXPECTED_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+
+          account_id="$(az account show --query id -o tsv)"
+          tenant_id="$(az account show --query tenantId -o tsv)"
+          account_state="$(az account show --query state -o tsv)"
+          test "$account_id" = "$EXPECTED_SUBSCRIPTION_ID"
+          test "$tenant_id" = "$EXPECTED_TENANT_ID"
+          test "$account_state" = Enabled
+          printf '%s' "$account_id" | sha256sum | awk '{print $1}' > "$EVIDENCE_DIR/subscription.sha256"
+          printf '%s' "$tenant_id" | sha256sum | awk '{print $1}' > "$EVIDENCE_DIR/tenant.sha256"
+
+          az group show -g "$RESOURCE_GROUP" \
+            --query '{name:name,location:location,provisioningState:properties.provisioningState}' -o json \
+            > "$EVIDENCE_DIR/resource-group.json"
+          jq -e '.location=="westus2" and .provisioningState=="Succeeded"' "$EVIDENCE_DIR/resource-group.json" >/dev/null
+
+          az resource list -g "$RESOURCE_GROUP" \
+            --query '[].{name:name,type:type,location:location}' -o json \
+            > "$EVIDENCE_DIR/resources-before.json"
+          test "$(jq 'length' "$EVIDENCE_DIR/resources-before.json")" = 7
+
+          az vm get-instance-view -g "$RESOURCE_GROUP" -n "$VM_NAME" -o json > /tmp/vm-instance-view.json
+          jq -e '((.statuses // .instanceView.statuses // []) | any(.code == "PowerState/running"))' \
+            /tmp/vm-instance-view.json >/dev/null
+          jq '{name,location,provisioningState,hardwareProfile,identity:{type:.identity.type},instanceView:{statuses:.instanceView.statuses,extensions:[.instanceView.extensions[]? | {name,type,typeHandlerVersion,statuses}]}}' \
+            /tmp/vm-instance-view.json > "$EVIDENCE_DIR/vm-instance-view.json"
+
+          extension_id="$(az vm extension show -g "$RESOURCE_GROUP" --vm-name "$VM_NAME" -n "$EXTENSION_NAME" --query id -o tsv)"
+          test -n "$extension_id"
+          printf '%s' "$extension_id" | sha256sum | awk '{print $1}' > "$EVIDENCE_DIR/extension-id.sha256"
+
+          set +e
+          az role definition list --name 'ServiceTracer Demo API Extension Updater v1' -o json \
+            > "$EVIDENCE_DIR/role-definition-observation.json" 2> "$EVIDENCE_DIR/role-definition-observation.error.txt"
+          role_definition_status=$?
+          az role assignment list --scope "$extension_id" -o json \
+            > "$EVIDENCE_DIR/extension-role-assignments-observation.json" 2> "$EVIDENCE_DIR/extension-role-assignments-observation.error.txt"
+          role_assignment_status=$?
+          set -e
+          jq -n --argjson role_definition_query_exit_status "$role_definition_status" \
+            --argjson role_assignment_query_exit_status "$role_assignment_status" \
+            '{role_definition_query_exit_status:$role_definition_query_exit_status,role_assignment_query_exit_status:$role_assignment_query_exit_status,claim_boundary:"Assignment observation is supplementary. Effective permission is established only by successful ARM validation and accepted extension-only What-If."}' \
+            > "$EVIDENCE_DIR/rbac-observation-status.json"
+
+          az deployment group show -g "$RESOURCE_GROUP" -n "$ORIGINAL_DEPLOYMENT_NAME" \
+            --query properties.parameters -o json > /tmp/current-parameters.json
+          backend_url="$(jq -r '.backendTransactionUrl.value // empty' /tmp/current-parameters.json)"
+          current_origin="$(jq -r '.allowedOrigin.value // empty' /tmp/current-parameters.json)"
+          current_repo="$(jq -r '.sourceRepository.value // empty' /tmp/current-parameters.json)"
+          test "$current_origin" = "$ALLOWED_ORIGIN"
+          test "$current_repo" = "$SOURCE_REPOSITORY"
+          [[ "$backend_url" =~ ^https://[A-Za-z0-9.:-]+/transaction$ ]]
+          printf '%s\n' "$backend_url" > "$EVIDENCE_DIR/backend-transaction-url.txt"
+
+          curl --fail --silent --show-error --connect-timeout 10 --max-time 45 \
+            "https://${FQDN}/api/health" > "$EVIDENCE_DIR/health-before.json"
+          jq -e '.status == "healthy" and .hosting_model == "dedicated_vm_subproject"' \
+            "$EVIDENCE_DIR/health-before.json" >/dev/null
+
+          installer_uri="https://raw.githubusercontent.com/anthonyedgar30000/azure-iac-msp-lab/${GITHUB_SHA}/workloads/servicetracer-demo-api/scripts/install.sh"
+          force_tag="verify-only-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          params=(vmName="$VM_NAME" sourceRepository="$SOURCE_REPOSITORY" sourceRef="$GITHUB_SHA" installerUri="$installer_uri" publicFqdn="$FQDN" backendTransactionUrl="$backend_url" allowedOrigin="$ALLOWED_ORIGIN" forceUpdateTag="$force_tag")
+
+          az deployment group validate -g "$RESOURCE_GROUP" \
+            --name "st-extension-write-verify-validate-${GITHUB_RUN_ID}" \
+            --template-file "$TEMPLATE_FILE" --parameters "${params[@]}" -o json \
+            > "$EVIDENCE_DIR/validation.json"
+
+          az deployment group what-if -g "$RESOURCE_GROUP" \
+            --name "st-extension-write-verify-whatif-${GITHUB_RUN_ID}" \
+            --template-file "$TEMPLATE_FILE" --parameters "${params[@]}" \
+            --no-pretty-print --result-format FullResourcePayloads -o json \
+            > "$EVIDENCE_DIR/what-if.json"
+
+          python3 workloads/servicetracer-demo-api/scripts/assert_extension_write_permission_verify_only.py \
+            "$EVIDENCE_DIR/what-if.json" \
+            --subscription-id "$EXPECTED_SUBSCRIPTION_ID" \
+            --resource-group "$RESOURCE_GROUP" \
+            --vm-name "$VM_NAME" \
+            --output "$EVIDENCE_DIR/permission-verification.json"
+
+          az resource list -g "$RESOURCE_GROUP" \
+            --query '[].{name:name,type:type,location:location}' -o json \
+            > "$EVIDENCE_DIR/resources-after.json"
+          test "$(jq 'length' "$EVIDENCE_DIR/resources-after.json")" = 7
+          jq -S 'sort_by(.type,.name)' "$EVIDENCE_DIR/resources-before.json" > /tmp/resources-before.normalized.json
+          jq -S 'sort_by(.type,.name)' "$EVIDENCE_DIR/resources-after.json" > /tmp/resources-after.normalized.json
+          cmp /tmp/resources-before.normalized.json /tmp/resources-after.normalized.json
+
+          curl --fail --silent --show-error --connect-timeout 10 --max-time 45 \
+            "https://${FQDN}/api/health" > "$EVIDENCE_DIR/health-after.json"
+          jq -e '.status == "healthy" and .hosting_model == "dedicated_vm_subproject"' \
+            "$EVIDENCE_DIR/health-after.json" >/dev/null
+
+          jq -n --arg source_head "$GITHUB_SHA" \
+            '{status:"effective_extension_write_permission_verified",source_head:$source_head,arm_validation_succeeded:true,extension_only_what_if_accepted:true,resource_count_preserved:7,public_health_preserved:true,azure_mutation_performed:false,application_deployment_performed:false,transaction_replay_performed:false,deployment_authorized:false}' \
+            > "$EVIDENCE_DIR/summary.json"
+
+          find "$EVIDENCE_DIR" -type f ! -name artifact-manifest.sha256 -print0 \
+            | sort -z | xargs -0 -r sha256sum > "$EVIDENCE_DIR/artifact-manifest.sha256"
+
+      - name: Upload sanitized verify-only evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: servicetracer-demo-api-extension-write-verify-only-${{ github.run_id }}
+          path: ${{ env.EVIDENCE_DIR }}
+          retention-days: 30
+          if-no-files-found: warn
