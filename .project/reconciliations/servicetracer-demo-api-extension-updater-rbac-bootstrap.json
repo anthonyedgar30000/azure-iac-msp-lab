@@ -1,0 +1,42 @@
+{
+  "schema_version": "project.servicetracer-extension-updater-rbac-bootstrap.v1",
+  "recorded_on": "2026-07-25",
+  "repository_baseline": {
+    "base_pull_request": 85,
+    "base_head": "3397874eb9142928716b668acd1993c04e0ec8b8",
+    "stacked_branch": "agent/bootstrap-extension-updater-rbac",
+    "local_working_tree": "not_observed"
+  },
+  "problem": {
+    "classification": "deployment_identity_missing_exact_extension_write",
+    "missing_action": "Microsoft.Compute/virtualMachines/extensions/write",
+    "prior_deployment_mutation_performed": false
+  },
+  "design": {
+    "role_name": "ServiceTracer Demo API Extension Updater v1",
+    "role_definition_guid": "a94875a8-373d-531e-bfe0-b213fd936082",
+    "actions": [
+      "Microsoft.Compute/virtualMachines/extensions/write"
+    ],
+    "assignable_scope": "rg-st-demo-api-dev-westus2",
+    "assignment_scope": "vm-st-demo-api-mst-dev/extensions/servicetracer-demo-api",
+    "target_principal": "unique_existing_what_if_planner_service_principal",
+    "implementation": "subscription-scope Bicep executed by an already-authorized human Azure RBAC administrator"
+  },
+  "current_state": {
+    "repository_package_implemented": true,
+    "azure_rbac_bootstrap_authorized": true,
+    "azure_rbac_bootstrap_executed": false,
+    "role_definition_observed": false,
+    "role_assignment_observed": false,
+    "effective_target_identity_permission_verified": false,
+    "deployment_authorized": false
+  },
+  "canonical_distinctions": [
+    "RBAC_bootstrap_authorized != RBAC_bootstrap_executed",
+    "role_assignment_exists != effective_permission_verified",
+    "effective_permission_verified != deployment_authorized",
+    "custom_role_assignable_scope != role_assignment_scope"
+  ],
+  "next_gate": "Run the reviewed Cloud Shell plan and apply under an existing authorized human Azure RBAC administrator, then return sanitized evidence for promotion."
+}
