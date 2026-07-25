@@ -1,0 +1,74 @@
+{
+  "schema_version": "project.timeout-direct-put-convergence.v1",
+  "recorded_on": "2026-07-25",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "repository_baseline": {
+    "default_branch": "main",
+    "observed_head": "8368e20e474915c6e04162d707b68ee26f835304",
+    "latest_merge_by_time": 104,
+    "also_merged_pull_requests": [106, 107, 109],
+    "local_working_tree": "not_available_connector_only"
+  },
+  "terminal_attempt": {
+    "pull_request": 104,
+    "authorization_source": "10f0a0b1533cf739c93623b881549241ba9e67c3",
+    "protected_run_id": 30178082566,
+    "protected_run_conclusion": "failure",
+    "artifact_id": 8624795161,
+    "artifact_digest": "sha256:8a29de9ca1cacb98c7d540d9361dbdf4f198b5d5df9ab8bb0328f5aedcb4059d",
+    "azure_login_succeeded": true,
+    "arm_validation_succeeded": true,
+    "extension_only_what_if_accepted": true,
+    "extension_mutation_performed": false,
+    "rollback_attempted": true,
+    "rollback_verified": false,
+    "corrected_runtime_deployed": false,
+    "post_attempt_health": "not_observed",
+    "authorization_status": "consumed_terminal_failure"
+  },
+  "repository_paths": {
+    "deployment_submitter_rbac_package_pull_request": 106,
+    "deployment_submitter_rbac_applied": "not_observed",
+    "deployment_retry_through_wrapper": "not_observed",
+    "direct_extension_put_package_pull_request": 107,
+    "direct_extension_put_workflow": ".github/workflows/servicetracer-demo-api-timeout-fix-direct-extension-put.yml",
+    "direct_extension_payload_builder": "workloads/servicetracer-demo-api/scripts/build_vm_extension_payload.py",
+    "direct_extension_put_tests": "workloads/servicetracer-demo-api/tests/test_direct_extension_put_retry.py"
+  },
+  "decision": {
+    "selected_method": "direct_extension_resource_put",
+    "target_resource_type": "Microsoft.Compute/virtualMachines/extensions",
+    "required_action": "Microsoft.Compute/virtualMachines/extensions/write",
+    "bicep_validation_preserved": true,
+    "extension_only_what_if_preserved": true,
+    "forward_and_rollback_method_aligned": true,
+    "resource_group_deployment_wrapper_required": false,
+    "additional_deployment_submitter_role_required": false,
+    "pr106_repository_package_removed": true,
+    "reason": "The direct extension resource operation uses the already-proven extension-scoped permission and avoids a second resource-group-scoped role used only to create ARM deployment wrapper records."
+  },
+  "inert_boundary": {
+    "future_authorization_marker": ".project/authorizations/servicetracer-demo-api-timeout-fix-direct-put-retry-20260725.json",
+    "marker_present": false,
+    "deployment_retry_authorized": false,
+    "workflow_dispatch_or_rerun_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_mutation_authorized": false,
+    "rbac_mutation_authorized": false,
+    "pull_request_merge_authorized": false
+  },
+  "canonical_distinctions": [
+    "PR106_repository_package_merged != RBAC_applied",
+    "direct_PUT_workflow_merged != deployment_authorized",
+    "extension_write_permission_verified != corrected_runtime_deployed",
+    "rollback_attempted != rollback_verified",
+    "consumed_authorization != retry_authorized",
+    "not_observed != false"
+  ],
+  "next_gate": {
+    "operation": "review_repository_convergence_and_exact_head_ci",
+    "execution_authorized": false,
+    "claim_boundary": "This convergence removes an unexecuted alternative repository path. It performs no Azure operation and does not create, renew, or broaden deployment authority."
+  }
+}
