@@ -1,0 +1,165 @@
+{
+  "schema_version": "project.reconciliation.v1",
+  "recorded_on": "2026-07-25",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "objective": "Add a repeatable temporary broad-RBAC diagnostic process without authorizing Azure elevation or changing the durable least-privilege repair.",
+  "repository_observation": {
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "default_branch": "main",
+    "observed_main_head": "d548d116cf3cfa8f7927ac2ab65403ba34626aa3",
+    "latest_merged_pull_request": 106,
+    "latest_merged_pull_request_title": "Prepare deployment-submitter RBAC and truthful rollback workflow",
+    "latest_reviewed_source_head": "3fcacda82f574e50df850090948d1ab17bb2f411",
+    "latest_reviewed_source_ci_run": 30178762870,
+    "latest_reviewed_source_ci_conclusion": "success",
+    "merge_commit_ci": "not_observed",
+    "open_pull_requests_observed": [104],
+    "open_pull_request_104_state": "draft_consumed_authorization_record_for_prior_attempt",
+    "local_working_tree": "not_observed",
+    "claim_boundary": "Live GitHub state was queried before the repository write. No local clone or operator working tree was available, and merge-result CI was not observed."
+  },
+  "declared_repository_state": {
+    "durable_repair": "two independent custom-role capabilities",
+    "extension_permission": "Microsoft.Compute/virtualMachines/extensions/write at the exact extension resource",
+    "deployment_submission_permission": "Microsoft.Resources/deployments/write at rg-st-demo-api-dev-westus2",
+    "future_workload_workflow": "present but inert until a separate authorization marker is added",
+    "evidence_anchor": "docs/reviews/timeout-deployment-submitter-rbac-and-workflow-repair.md"
+  },
+  "latest_material_azure_evidence": {
+    "fresh_live_query_performed_for_this_increment": false,
+    "reason": "No Azure connector or separately authorized Azure login was available or required for this repository-only governance increment.",
+    "protected_workflow_run": 30178082566,
+    "artifact_id": 8624795161,
+    "artifact_sha256": "8a29de9ca1cacb98c7d540d9361dbdf4f198b5d5df9ab8bb0328f5aedcb4059d",
+    "source_head": "10f0a0b1533cf739c93623b881549241ba9e67c3",
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "location": "westus2",
+    "resource_count_before_and_after": 7,
+    "vm": "vm-st-demo-api-mst-dev",
+    "extension": "servicetracer-demo-api",
+    "arm_validation": "succeeded",
+    "what_if": "accepted_exactly_one_extension_modify",
+    "deployment_submission": "rejected_missing_Microsoft.Resources_deployments_write",
+    "extension_mutation_proven": false,
+    "rollback_submission": "rejected_same_permission",
+    "extension_provisioning_state_after": "Succeeded",
+    "regional_vcpu_usage": "1/10",
+    "month_to_date_cost": {
+      "currency": "CAD",
+      "pre_tax": 2.842043785276267,
+      "qualification": "time_bounded_subject_to_billing_lag_not_invoice_or_forecast"
+    },
+    "claim_boundary": "This evidence establishes the terminal state of the consumed workflow attempt, not current Azure state or current effective permissions."
+  },
+  "decision": {
+    "status": "accepted_repository_process",
+    "process_name": "Temporary diagnostic RBAC elevation",
+    "preferred_mechanism": "Microsoft Entra Privileged Identity Management",
+    "diagnostic_role": "Contributor",
+    "principal_type": "named_human_user",
+    "maximum_activation_minutes": 60,
+    "scope": "exact_affected_resource_group",
+    "maximum_test_attempts": 1,
+    "owner_role_allowed": false,
+    "standing_contributor_fallback_allowed": false,
+    "durable_permission_design_changed": false,
+    "interpretation": "Temporary broad elevation may isolate an authorization cause in future ambiguous incidents. It does not replace the current narrow extension-updater and deployment-submitter design and does not prove the minimum permanent permission."
+  },
+  "intended_architecture": {
+    "flow": [
+      "preserve original failure",
+      "record falsifiable authorization hypothesis",
+      "approve incident-specific request",
+      "activate Contributor through PIM at exact resource group",
+      "refresh session and verify effective access",
+      "execute one exact test",
+      "manually deactivate",
+      "refresh session and verify broad access absent",
+      "design and verify narrower durable permission"
+    ],
+    "network_change": false,
+    "resource_creation": false,
+    "resource_deletion": false,
+    "workload_change": false
+  },
+  "dependencies": [
+    "Microsoft Entra ID P2 or Microsoft Entra ID Governance licensing",
+    "pre-existing eligible assignment for the named human operator",
+    "PIM role settings enforcing MFA justification ticket approval and one-hour maximum",
+    "separate administrative authority to configure eligibility",
+    "separate mutation and rollback authority when the exact diagnostic test crosses those boundaries"
+  ],
+  "cost_and_quota": {
+    "new_recurring_azure_resource_cost": false,
+    "possible_entra_licensing_cost": true,
+    "diagnostic_operation_may_create_normal_azure_charges": true,
+    "quota_change_required_for_role_activation": false,
+    "license_availability_observed": false
+  },
+  "validation": {
+    "repository_tests_required": [
+      "request template remains authorized false and template only",
+      "role is Contributor and Owner is prohibited",
+      "scope is exact resource group and broader scopes are prohibited",
+      "activation maximum is 60 minutes with MFA approval justification and ticket controls",
+      "test is limited to one attempt",
+      "all operational authority fields remain false",
+      "runbook distinguishes diagnostic evidence from durable least privilege",
+      "no active authorization marker or Azure workflow is added"
+    ],
+    "future_operational_evidence_required": [
+      "PIM activation and approval metadata",
+      "effective permissions before during and after activation",
+      "resource inventory before and after",
+      "exact test digest and output",
+      "manual deactivation and access-termination evidence",
+      "SHA-256 evidence manifest"
+    ]
+  },
+  "failure_and_rollback": {
+    "repository_failure": "close the pull request or revert repository commits; no Azure rollback required",
+    "pim_unavailable": "stop without creating standing broad access",
+    "scope_identity_or_role_mismatch": "deactivate and stop before diagnostic execution",
+    "unexpected_mutation": "stop and invoke only a separately authorized rollback or recovery plan",
+    "deactivation_unverified": "escalate as an access-removal incident",
+    "retry": "not_authorized_by_failure"
+  },
+  "cleanup": {
+    "repository_increment": "no Azure cleanup required",
+    "future_session": [
+      "manual deactivation",
+      "fresh-session verification of inactive or expired assignment",
+      "verification broad effective permissions are absent",
+      "authorization record closed as consumed",
+      "protected evidence retained"
+    ]
+  },
+  "authority": {
+    "repository_files": true,
+    "repository_tests": true,
+    "draft_pull_request": true,
+    "ordinary_ci": true,
+    "pull_request_merge": false,
+    "azure_authentication": false,
+    "azure_query": false,
+    "pim_configuration": false,
+    "eligible_assignment_creation": false,
+    "role_activation": false,
+    "rbac_mutation": false,
+    "diagnostic_execution": false,
+    "workload_mutation": false,
+    "rollback": false,
+    "retry": false,
+    "cleanup": false
+  },
+  "claim_boundaries": [
+    "temporary_broad_access_succeeds != broad_access_required_permanently",
+    "RBAC_assignment != effective_least_privilege",
+    "PIM_eligibility != activation_authorized",
+    "role_activation != diagnostic_mutation_authorized",
+    "diagnostic_attempt_terminal != retry_authorized",
+    "deactivation_requested != access_terminated",
+    "repository_process_present != operational_authority",
+    "latest_workflow_evidence != current_Azure_state"
+  ]
+}
