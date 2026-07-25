@@ -237,13 +237,15 @@ class PR92ProtectedVerificationRecoveryTests(unittest.TestCase):
         self.assertIn("issues: write", workflow)
         self.assertIn("gh run download", workflow)
         self.assertIn("sanitized recovery summary", workflow.lower())
+        self.assertIn(".authority.workflow_rerun == false", workflow)
+        self.assertIn(".authority.azure_authentication == false", workflow)
         self.assertNotIn("azure/login", workflow)
         self.assertNotIn("id-token: write", workflow)
         self.assertNotIn("workflow_dispatch:", workflow)
-        self.assertNotIn("rerun", workflow.lower())
-        self.assertNotIn("re-run", workflow.lower())
-        self.assertNotIn(" az ", workflow)
+        self.assertNotIn("gh run rerun", workflow)
         self.assertNotIn("/rerun", workflow)
+        self.assertNotIn("/attempts", workflow)
+        self.assertNotIn(" az ", workflow)
 
 
 if __name__ == "__main__":
