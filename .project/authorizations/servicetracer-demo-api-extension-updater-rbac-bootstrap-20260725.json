@@ -1,0 +1,42 @@
+{
+  "schema_version": "project.azure-rbac-bootstrap-authorization.v1",
+  "recorded_on": "2026-07-25",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "authorization_source": "Explicit governed control message: Granted",
+  "status": "authorized_not_consumed",
+  "scope": {
+    "target_resource_group": "rg-st-demo-api-dev-westus2",
+    "target_vm": "vm-st-demo-api-mst-dev",
+    "target_extension": "servicetracer-demo-api",
+    "role_name": "ServiceTracer Demo API Extension Updater v1",
+    "role_definition_guid": "a94875a8-373d-531e-bfe0-b213fd936082",
+    "role_assignable_scope": "target_resource_group_only",
+    "role_assignment_scope": "target_extension_resource_only",
+    "actions": [
+      "Microsoft.Compute/virtualMachines/extensions/write"
+    ]
+  },
+  "principal_resolution": {
+    "method": "Resolve the unique ServicePrincipal holding ServiceTracer Demo API What-If Planner v1 in the target resource-group hierarchy.",
+    "zero_matches": "fail_closed",
+    "multiple_matches": "fail_closed",
+    "identifiers_in_durable_evidence": "sha256_only"
+  },
+  "authority": {
+    "azure_authentication": true,
+    "read_only_preflight": true,
+    "role_definition_create": true,
+    "role_assignment_create": true,
+    "deny_assignment_read_attempt": true,
+    "application_deployment": false,
+    "vm_mutation": false,
+    "guest_command": false,
+    "network_mutation": false,
+    "transaction_replay": false,
+    "github_pages_publication": false,
+    "pull_request_merge": false,
+    "cleanup": false
+  },
+  "verification_boundary": "Role-definition and assignment existence must be verified after apply. Effective use by the target OIDC identity remains a separate protected preflight and does not authorize deployment.",
+  "rollback": "Remove only the exact assignment, then remove the custom role only after confirming no assignments reference it."
+}
