@@ -5,7 +5,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
 RETRY = ROOT / '.github' / 'workflows' / 'servicetracer-demo-api-timeout-fix-deploy-retry.yml'
-PROMOTE = ROOT / '.github' / 'workflows' / 'servicetracer-demo-api-timeout-fix-retry-evidence-promote.yml'
+EVIDENCE = ROOT / '.project' / 'evidence' / 'servicetracer-demo-api-timeout-fix-deployment-blocked-20260724.json'
 
 
 class TimeoutFixDeploymentRetryTests(unittest.TestCase):
@@ -37,12 +37,12 @@ class TimeoutFixDeploymentRetryTests(unittest.TestCase):
         ):
             self.assertIn(field, source)
 
-    def test_promotion_accepts_only_bounded_success_or_evidenced_rollback(self):
-        source = PROMOTE.read_text(encoding='utf-8')
-        self.assertIn("accepted_extension_only_modify", source)
-        self.assertIn("deployed_and_health_verified", source)
-        self.assertIn("deployment_failed_or_unverified", source)
-        self.assertIn("rollback_performed", source)
+    def test_temporary_promotion_was_replaced_by_durable_evidence(self):
+        self.assertTrue(EVIDENCE.is_file())
+        source = EVIDENCE.read_text(encoding='utf-8')
+        self.assertIn('consumed_blocked', source)
+        self.assertIn('Microsoft.Compute/virtualMachines/extensions/write', source)
+        self.assertIn('"azure_resource_mutation_performed": false', source)
 
 
 if __name__ == '__main__':
