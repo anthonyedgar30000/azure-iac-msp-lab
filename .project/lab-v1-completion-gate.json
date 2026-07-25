@@ -1,0 +1,173 @@
+{
+  "schema_version": "project.lab-v1-completion-gate.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "recorded_on": "2026-07-25",
+  "governing_objective": "Complete and evidence-lock one production-shaped ServiceTracer workload from infrastructure-as-code declaration through deployment, security, runtime validation, monitoring, cost observation, and portfolio demonstration.",
+  "decision_status": "proposed_repository_authority_pending_review_and_merge",
+  "scope_control": {
+    "rule": "No new Build Now idea is admitted unless it directly closes a Lab v1 completion criterion, removes a material security or operational credibility defect, or produces evidence required by the final demonstration.",
+    "non_admitted_disposition": "design_for_or_future_vision",
+    "parallel_feature_expansion_allowed": false,
+    "new_workload_allowed": false,
+    "new_governance_abstraction_allowed": false
+  },
+  "priority_order": [
+    {
+      "priority": "P0",
+      "name": "Complete the golden path",
+      "exit_criteria": [
+        {
+          "criterion_id": "p0-protected-verification-evidence",
+          "requirement": "Recover and inspect the exact existing PR #92 protected verify-only run and sanitized artifact, or obtain a separate explicit grant for one new exact-commit verify-only attempt if the existing result cannot be recovered.",
+          "current_status": "exact_protected_run_and_artifact_not_observed",
+          "mutation_required": false
+        },
+        {
+          "criterion_id": "p0-effective-extension-permission",
+          "requirement": "Establish effective Microsoft.Compute/virtualMachines/extensions/write permission for the dedicated target identity through accepted extension-only ARM validation and What-If evidence.",
+          "current_status": "unverified",
+          "mutation_required": false
+        },
+        {
+          "criterion_id": "p0-timeout-correction-deployment",
+          "requirement": "Deploy the already-merged timeout correction from an exact reviewed commit through the governed workflow after a fresh explicit deployment authorization.",
+          "current_status": "repository_merged_not_deployed",
+          "mutation_required": true
+        },
+        {
+          "criterion_id": "p0-runtime-contract",
+          "requirement": "Verify TLS, HTTP health, corrected timeout fields, CORS, and stable public endpoint behaviour after deployment.",
+          "current_status": "pre_timeout_fix_health_verified_corrected_contract_unverified",
+          "mutation_required": false
+        },
+        {
+          "criterion_id": "p0-servicetracer-scenario",
+          "requirement": "Execute and preserve a bounded 20-transaction demonstration in which VPN-01 supplies the healthy comparison, VPN-02 supplies the intended failing path, and ServiceTracer localizes the fault boundary without claiming an unsupported exact root cause.",
+          "current_status": "not_performed",
+          "mutation_required": false
+        },
+        {
+          "criterion_id": "p0-browser-demonstration",
+          "requirement": "Verify the public operator console renders the live corrected API result through explicit endpoint activation without changing the safe fixture default.",
+          "current_status": "not_verified",
+          "mutation_required": false
+        },
+        {
+          "criterion_id": "p0-evidence-lock",
+          "requirement": "Capture source binding, CI, authorization, deployment, control-plane, endpoint, transaction, browser, and sanitized portfolio evidence with explicit observation times and claim boundaries.",
+          "current_status": "incomplete",
+          "mutation_required": false
+        }
+      ]
+    },
+    {
+      "priority": "P1",
+      "name": "Make the workload credibly operable",
+      "entry_condition": "All P0 criteria are evidenced or correctly blocked with an explicit human decision.",
+      "exit_criteria": [
+        "Enable the minimum useful supported diagnostic path for the Lab v1 workload.",
+        "Create one meaningful metric or availability alert and independently verify delivery through an action group.",
+        "Verify effective least privilege for the deployment and verification identities.",
+        "Capture a time-bounded actual-cost observation in CAD with its billing-lag limitation.",
+        "Document restart, redeployment, failure classification, rollback boundary, and cleanup or decommissioning procedure."
+      ],
+      "explicit_exclusion": {
+        "backup_and_recovery_services": "intentionally_out_of_scope_for_lab_v1",
+        "disaster_recovery_rehearsal": "future_revision"
+      }
+    },
+    {
+      "priority": "P2",
+      "name": "Package the portfolio proof",
+      "entry_condition": "P0 and P1 evidence is available.",
+      "required_story": [
+        "exact GitHub commit",
+        "exact-head CI",
+        "reviewed ARM What-If",
+        "explicit human deployment authority",
+        "Azure deployment",
+        "healthy corrected API",
+        "bounded synthetic service failure",
+        "deterministic ServiceTracer localization",
+        "verified alert or operational evidence",
+        "bounded technician handoff",
+        "cost observation",
+        "cleanup or decommissioning procedure"
+      ]
+    }
+  ],
+  "frozen_until_p0_p2_complete": [
+    "zoomable hyperscaler or infrastructure-universe dashboard",
+    "broader Azure Resource Graph visualization",
+    "multicloud control plane",
+    "additional workloads",
+    "full collector replacement",
+    "recovery rehearsal and disaster recovery",
+    "automated cleanup execution",
+    "MSP multi-customer tenancy",
+    "HELIX integration",
+    "new governance engines or authority abstractions",
+    "additional dashboards",
+    "additional AI agents"
+  ],
+  "completion_definition": {
+    "rule": "Lab v1 is complete only when the same exact source lineage is connected to reviewed IaC, authorized deployment, deployed Azure resources, corrected runtime behaviour, bounded ServiceTracer transaction evidence, effective security evidence, verified monitoring delivery, time-bounded cost evidence, and a reproducible portfolio demonstration.",
+    "boundaries": [
+      "merged_into_main != deployed_to_Azure",
+      "deployment_succeeded != service_validated",
+      "resource_exists != securely_configured",
+      "RBAC_assignment != effective_least_privilege",
+      "monitoring_enabled != alerts_verified",
+      "estimated_cost != actual_cost",
+      "fixture_demo != live_demo",
+      "backup_intentionally_out_of_scope != backup_verified"
+    ]
+  },
+  "creation_baseline": {
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "630bbd8c9c37a3985a70dbe6bffe10437672a59d",
+    "open_pull_requests_observed": [
+      {
+        "pull_request": 95,
+        "title": "Adopt the Synchronization Termination Principle",
+        "relationship": "separate_non_overlapping_constitutional_increment"
+      }
+    ],
+    "local_working_tree": "not_observed",
+    "base_merge_commit_ci": "not_observed",
+    "azure_query_performed_for_this_increment": false
+  },
+  "evidence_inputs": {
+    "canonical_current_view": ".project/current-reality.json",
+    "current_handoff": ".project/handoffs/current-state.md",
+    "public_runtime_evidence": ".project/evidence/servicetracer-demo-api-live-verification-30086152352.json",
+    "protected_verification_pull_request": 92,
+    "protected_verification_exact_head_ci_run": 30160681565,
+    "latest_promoted_cost_observation_cad": 0.734335248846279,
+    "latest_promoted_cost_observed_at": "2026-07-25T00:47:40Z",
+    "claim_boundary": "These inputs are repository-promoted, time-bounded evidence. This completion-gate increment performs no fresh Azure authentication or query and does not promote any unresolved Azure claim."
+  },
+  "authority": {
+    "repository_gate_documentation": true,
+    "repository_gate_test": true,
+    "branch_creation": true,
+    "draft_pull_request_creation": true,
+    "pull_request_merge": false,
+    "workflow_dispatch_or_rerun": false,
+    "azure_authentication": false,
+    "azure_query": false,
+    "azure_mutation": false,
+    "deployment": false,
+    "rbac_mutation": false,
+    "guest_command": false,
+    "transaction_replay": false,
+    "endpoint_publication": false,
+    "cleanup": false
+  },
+  "next_gate": {
+    "operation": "review_and_merge_lab_v1_completion_gate",
+    "after_merge_first_operational_gate": "inspect_existing_pr92_protected_verify_only_run_and_artifact",
+    "claim_boundary": "Merging this repository-only scope decision does not authorize any GitHub Actions rerun, Azure authentication, deployment, transaction replay, monitoring change, cleanup, or other operational action."
+  }
+}
