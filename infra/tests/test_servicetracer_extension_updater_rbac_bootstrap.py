@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 BICEP = ROOT / "infra/rbac/servicetracer-demo-api-extension-updater-rbac.bicep"
+ASSIGNMENT_MODULE = ROOT / "infra/rbac/modules/servicetracer-demo-api-extension-role-assignment.bicep"
 BOOTSTRAP = ROOT / "scripts/bootstrap_servicetracer_extension_updater_rbac.sh"
 ASSERTION = ROOT / "scripts/assert_servicetracer_extension_updater_rbac_what_if.py"
 AUTH = ROOT / ".project/authorizations/servicetracer-demo-api-extension-updater-rbac-bootstrap-20260725.json"
@@ -26,7 +27,16 @@ class ExtensionUpdaterRbacBootstrapTests(unittest.TestCase):
         self.assertNotIn("Microsoft.Authorization/roleAssignments/write", source)
         self.assertNotIn("Microsoft.Network/", source)
         self.assertRegex(source, r"assignableScopes:\s*\[\s*targetResourceGroup\.id\s*\]")
-        self.assertRegex(source, r"scope:\s*targetExtension")
+
+    def test_cross_scope_resources_are_composed_through_module(self) -> None:
+        main_source = BICEP.read_text(encoding="utf-8")
+        module_source = ASSIGNMENT_MODULE.read_text(encoding="utf-8")
+        self.assertIn("targetScope = 'subscription'", main_source)
+        self.assertIn("targetScope = 'resourceGroup'", module_source)
+        self.assertIn("./modules/servicetracer-demo-api-extension-role-assignment.bicep", main_source)
+        self.assertRegex(main_source, r"module\s+extensionUpdaterAssignment[\s\S]+scope:\s*targetResourceGroup")
+        self.assertRegex(module_source, r"scope:\s*targetExtension")
+        self.assertNotIn("scope: targetExtension", main_source)
 
     def test_bootstrap_is_what_if_gated_and_does_not_deploy_workload(self) -> None:
         source = BOOTSTRAP.read_text(encoding="utf-8")
