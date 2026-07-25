@@ -1,0 +1,227 @@
+name: Recover PR92 protected verification evidence
+
+on:
+  push:
+    branches:
+      - agent/recover-pr92-protected-evidence-20260725
+    paths:
+      - .project/executions/pr92-protected-verification-evidence-recovery-20260725.json
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+  issues: write
+
+concurrency:
+  group: pr92-protected-verification-evidence-recovery
+  cancel-in-progress: false
+
+env:
+  AUTHORIZATION_FILE: .project/authorizations/pr92-protected-verification-evidence-recovery-20260725.json
+  EXECUTION_FILE: .project/executions/pr92-protected-verification-evidence-recovery-20260725.json
+  TARGET_HEAD: 5b5af74d57fb5fd87ece2a34239cc6f29d04b12b
+  TARGET_BRANCH: agent/verify-extension-write-permission-20260725
+  TARGET_WORKFLOW_FILE: servicetracer-demo-api-extension-write-verify-only-2.yml
+  TARGET_WORKFLOW_NAME: Verify ServiceTracer demo API extension write permission attempt 2
+  TARGET_CI_RUN: '30160681565'
+  SUMMARY_DIR: pr92-protected-verification-recovery-evidence
+
+jobs:
+  recover:
+    name: Recover and inspect historical protected evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact recovery head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+
+      - name: Validate one-shot recovery authority and source binding
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/agent/recover-pr92-protected-evidence-20260725'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python3 -m py_compile scripts/validate_pr92_protected_verification_artifact.py
+
+          jq -e '
+            .schema_version == "project.github-actions-evidence-recovery-authorization.v1" and
+            .authorization_id == "pr92-protected-verification-evidence-recovery-20260725" and
+            .status == "authorized_not_consumed" and
+            .dependent_gate == "p0-protected-verification-evidence" and
+            .scope.target_pull_request == 92 and
+            .scope.target_source_head == "5b5af74d57fb5fd87ece2a34239cc6f29d04b12b" and
+            .scope.target_branch == "agent/verify-extension-write-permission-20260725" and
+            .scope.target_workflow_file == "servicetracer-demo-api-extension-write-verify-only-2.yml" and
+            .scope.expected_exact_head_ci_run == 30160681565 and
+            .authority.github_actions_metadata_read == true and
+            .authority.historical_artifact_download == true and
+            .authority.local_artifact_integrity_validation == true and
+            .authority.sanitized_summary_artifact_upload == true and
+            .authority.sanitized_pull_request_comment == true and
+            .authority.raw_artifact_republication == false and
+            .authority.workflow_dispatch == false and
+            .authority.workflow_rerun == false and
+            .authority.azure_authentication == false and
+            .authority.azure_query == false and
+            .authority.azure_mutation == false and
+            .authority.deployment == false and
+            .authority.pull_request_merge == false and
+            .one_shot.retry_authorized == false
+          ' "$AUTHORIZATION_FILE" >/dev/null
+
+          reviewed_head="$(jq -r '.reviewed_package_head' "$EXECUTION_FILE")"
+          reviewed_ci_run="$(jq -r '.reviewed_ci_run_id' "$EXECUTION_FILE")"
+          test "$(git rev-parse HEAD^)" = "$reviewed_head"
+          jq -e --arg authorization "$AUTHORIZATION_FILE" --arg reviewed_head "$reviewed_head" '
+            .schema_version == "project.github-actions-evidence-recovery-execution.v1" and
+            .execution_id == "pr92-protected-verification-evidence-recovery-20260725" and
+            .authorized == true and
+            .authorization_record == $authorization and
+            .reviewed_package_head == $reviewed_head and
+            .scope.target_source_head == "5b5af74d57fb5fd87ece2a34239cc6f29d04b12b" and
+            .scope.target_pull_request == 92 and
+            .authority.github_actions_metadata_read == true and
+            .authority.historical_artifact_download == true and
+            .authority.sanitized_pull_request_comment == true and
+            .authority.workflow_dispatch == false and
+            .authority.workflow_rerun == false and
+            .authority.azure_authentication == false and
+            .authority.azure_query == false and
+            .authority.azure_mutation == false and
+            .authority.deployment == false
+          ' "$EXECUTION_FILE" >/dev/null
+          test "$reviewed_ci_run" -gt 0
+
+      - name: Require reviewed package CI success
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          reviewed_head="$(jq -r '.reviewed_package_head' "$EXECUTION_FILE")"
+          reviewed_ci_run="$(jq -r '.reviewed_ci_run_id' "$EXECUTION_FILE")"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${reviewed_ci_run}" > /tmp/reviewed-ci-run.json
+          jq -e --arg reviewed_head "$reviewed_head" '
+            .name == "CI" and
+            .head_sha == $reviewed_head and
+            .status == "completed" and
+            .conclusion == "success"
+          ' /tmp/reviewed-ci-run.json >/dev/null
+
+      - name: Resolve exact historical run and artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$SUMMARY_DIR" /tmp/recovered-artifact
+
+          gh api -X GET \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/${TARGET_WORKFLOW_FILE}/runs" \
+            -f branch="$TARGET_BRANCH" \
+            -f event=push \
+            -F per_page=100 > /tmp/target-runs.json
+
+          jq -e --arg target_head "$TARGET_HEAD" --arg target_name "$TARGET_WORKFLOW_NAME" '
+            [.workflow_runs[] | select(
+              .head_sha == $target_head and
+              .head_branch == "agent/verify-extension-write-permission-20260725" and
+              .event == "push" and
+              .name == $target_name
+            )] | length == 1
+          ' /tmp/target-runs.json >/dev/null
+
+          jq --arg target_head "$TARGET_HEAD" --arg target_name "$TARGET_WORKFLOW_NAME" '
+            [.workflow_runs[] | select(
+              .head_sha == $target_head and
+              .head_branch == "agent/verify-extension-write-permission-20260725" and
+              .event == "push" and
+              .name == $target_name
+            )][0]
+          ' /tmp/target-runs.json > /tmp/target-run.json
+
+          target_run_id="$(jq -r '.id' /tmp/target-run.json)"
+          artifact_name="servicetracer-demo-api-extension-write-verify-only-2-${target_run_id}"
+          gh api -X GET \
+            "repos/${GITHUB_REPOSITORY}/actions/runs/${target_run_id}/artifacts" \
+            -F per_page=100 > /tmp/target-artifacts.json
+          jq -e --arg artifact_name "$artifact_name" '
+            [.artifacts[] | select(.name == $artifact_name)] | length == 1
+          ' /tmp/target-artifacts.json >/dev/null
+          jq --arg artifact_name "$artifact_name" '
+            [.artifacts[] | select(.name == $artifact_name)][0]
+          ' /tmp/target-artifacts.json > /tmp/target-artifact.json
+          jq -e '.expired == false' /tmp/target-artifact.json >/dev/null
+
+          gh run download "$target_run_id" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name "$artifact_name" \
+            --dir /tmp/recovered-artifact
+
+          python3 scripts/validate_pr92_protected_verification_artifact.py \
+            --run-json /tmp/target-run.json \
+            --artifact-json /tmp/target-artifact.json \
+            --artifact-dir /tmp/recovered-artifact \
+            --output "$SUMMARY_DIR/recovery-summary.json"
+
+      - name: Publish sanitized recovery result to the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          summary="$SUMMARY_DIR/recovery-summary.json"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path("pr92-protected-verification-recovery-evidence/recovery-summary.json").read_text())
+          target = data["target"]
+          artifact = data["artifact"]
+          inspection = data["inspection"]
+          body = f"""<!-- pr92-protected-verification-recovery -->
+          ## PR #92 protected verification evidence recovered
+
+          ```text
+          historical run: {target['workflow_run_id']}
+          run conclusion: {target['run_conclusion']}
+          exact source: {target['head_sha']}
+          artifact: {artifact['name']}
+          artifact id: {artifact['id']}
+          artifact digest: {artifact.get('digest')}
+          manifest verified: {inspection['manifest_verified']}
+          recovery status: {data['status']}
+          effective extension write permission verified: {data['effective_extension_write_permission_verified']}
+          ARM validation succeeded: {data['arm_validation_succeeded']}
+          extension-only What-If accepted: {data['extension_only_what_if_accepted']}
+          resource inventory preserved: {data['resource_count_preserved']}
+          public health preserved: {data['public_health_preserved']}
+          Azure mutation performed: {data['azure_mutation_performed']}
+          deployment authorized: {data['deployment_authorized']}
+          missing success files: {inspection['missing_success_files']}
+          ```
+
+          Run: {target['workflow_run_url']}
+
+          Claim boundary: {data['claim_boundary']}
+          """
+          Path('/tmp/recovery-comment.md').write_text(body, encoding='utf-8')
+          PY
+
+          owner="${GITHUB_REPOSITORY%%/*}"
+          pr_number="$(gh api -X GET "repos/${GITHUB_REPOSITORY}/pulls" \
+            -f state=open \
+            -f head="${owner}:${GITHUB_REF_NAME}" \
+            -F per_page=10 \
+            --jq 'if length == 1 then .[0].number else error("expected exactly one open recovery PR") end')"
+          jq -n --rawfile body /tmp/recovery-comment.md '{body:$body}' \
+            | gh api -X POST "repos/${GITHUB_REPOSITORY}/issues/${pr_number}/comments" --input - >/dev/null
+
+      - name: Upload sanitized recovery summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr92-protected-verification-recovery-${{ github.run_id }}
+          path: ${{ env.SUMMARY_DIR }}
+          retention-days: 90
+          if-no-files-found: warn
