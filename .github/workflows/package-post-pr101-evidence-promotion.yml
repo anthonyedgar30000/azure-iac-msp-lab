@@ -47,18 +47,18 @@ jobs:
             step
           end
 
-          File.open('/tmp/reuse-validated-render.sh', 'w') do |file|
-            file.puts '#!/usr/bin/env bash'
-            file.puts 'set -euo pipefail'
-            selected.each do |step|
-              file.puts
-              file.puts "# #{step['name']}"
+          selected.each_with_index do |step, index|
+            path = "/tmp/reuse-validated-render-step-#{index}.sh"
+            File.open(path, 'w') do |file|
+              file.puts '#!/usr/bin/env bash'
+              file.puts 'set -euo pipefail'
               file.puts step.fetch('run')
             end
+            puts "Executing validated step: #{step['name']}"
+            success = system('bash', path)
+            raise "validated render step failed: #{step['name']}" unless success
           end
           RB
-          chmod +x /tmp/reuse-validated-render.sh
-          /tmp/reuse-validated-render.sh
           test "$(cat /tmp/post-pr101-promotion/validation-overall-exit-code.txt)" = "0"
 
       - name: Verify complete artifact file set
