@@ -2,5 +2,9 @@
   "schema_version": "servicetracer.report-source.v1",
   "live_report_url": "",
   "live_demo_api_url": "",
-  "fallback_report_url": "technician-handoff-report.json"
+  "candidate_demo_api_url": "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+  "fallback_report_url": "technician-handoff-report.json",
+  "activation_status": "candidate_frontend_integration",
+  "evidence_anchor": ".project/evidence/servicetracer-demo-api-live-verification-30086152352.json",
+  "claim_boundary": "The candidate endpoint is activated only by an explicit ?api= URL. The default frontend remains on the controlled fixture until browser rendering is verified; candidate configuration does not prove current reachability or browser success."
 }

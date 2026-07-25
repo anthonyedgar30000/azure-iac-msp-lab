@@ -1,0 +1,120 @@
+{
+  "schema_version": "project.servicetracer-targeted-reality-sync.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "recorded_on": "2026-07-24",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "repository_state": {
+    "main_observed_head": "8b870b399d9e64b65472916a28373e051551ba02",
+    "latest_merged_pull_request": 83,
+    "active_pull_request": 84,
+    "pull_request_state": "open_draft_unmerged",
+    "targeted_sync_source_head": "386e740849dc68e90a74e9ab9793a25c7510f560",
+    "evidence_commit_parent": "7aa5bbff0aa5cdf549311af5484e5382e3dc4e28",
+    "local_working_tree": "not_observed"
+  },
+  "evidence": {
+    "path": ".project/evidence/servicetracer-targeted-reality-sync-30135607806.json",
+    "source_run_id": 30135607806,
+    "source_artifact_id": 8612668183,
+    "source_artifact_sha256": "804fdb48325ba01f70e94444b6b36fd3236d688506b3d3b7f9b858a392f274a1",
+    "promotion_run_id": 30135643327,
+    "promotion_artifact_id": 8612670810,
+    "promotion_artifact_sha256": "c8df577700d83dd83d6df3c5ce070ae7e33883b55a86d666a0f076061f2fcd68"
+  },
+  "synchronized_state": {
+    "azure_context_verified": true,
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "location": "westus2",
+    "resource_count": 7,
+    "vm_name": "vm-st-demo-api-mst-dev",
+    "vm_size": "Standard_F1als_v7",
+    "vm_power_state": "VM running",
+    "vm_provisioning_state": "Succeeded",
+    "public_api_health_http_status": 200,
+    "public_api_health_status": "healthy",
+    "month_to_date_actual_cost": {
+      "status": "observed",
+      "amount": 0.734335248846279,
+      "currency": "CAD",
+      "usage_may_lag": true
+    },
+    "quota": {
+      "standard_falsv7_family_vcpus": "1/10",
+      "total_regional_vcpus": "1/10",
+      "standard_ipv4_public_ips": "1/20"
+    },
+    "rbac": {
+      "status": "observed",
+      "raw_rows": 4,
+      "unique_assignment_tuples": 3,
+      "roles": [
+        "Owner",
+        "Reader",
+        "ServiceTracer Demo API What-If Planner v1"
+      ],
+      "all_observed_assignments_inherited": true,
+      "effective_least_privilege_verified": false
+    },
+    "backup": {
+      "recovery_services_vault_count": 0,
+      "azure_iaas_vm_backup_item_observed": false,
+      "recovery_tested": false,
+      "other_backup_methods": "not_observed"
+    },
+    "guest": {
+      "run_command_authorized_by_human": true,
+      "run_command_allowed_by_effective_identity": false,
+      "failure": "AuthorizationFailed",
+      "deployed_source_ref": "not_observed",
+      "nginx_timeout": "not_observed",
+      "service_state": "not_observed"
+    },
+    "runtime_fix": {
+      "repository_timeout_fix_implemented": true,
+      "repository_timeout_fix_ci_verified": true,
+      "corrected_health_fields_observed_on_public_api": false,
+      "deployed_timeout_fix_verified": false,
+      "interpretation": "The public API remains healthy but does not expose the corrected PR #84 health contract. The reviewed timeout fix is not established as active in the running process."
+    },
+    "integration": {
+      "live_twenty_attempt_replay_verified": false,
+      "live_frontend_rendering_verified": false,
+      "github_pages_candidate_published": false,
+      "full_workload_operationally_verified": false
+    }
+  },
+  "authority_consumed": {
+    "azure_authentication": true,
+    "read_only_control_plane_queries": true,
+    "guest_read_only_command_attempt": true,
+    "public_health_get": true
+  },
+  "authority_not_granted_or_not_performed": {
+    "azure_resource_configuration_mutation": false,
+    "deployment": false,
+    "service_restart": false,
+    "transaction_replay": false,
+    "github_pages_publication": false,
+    "pull_request_merge": false,
+    "cleanup": false
+  },
+  "claim_boundaries": [
+    "declared_in_code != deployed_in_azure",
+    "public_API_healthy != timeout_fix_deployed",
+    "RBAC_assignment_observed != effective_least_privilege_verified",
+    "zero_recovery_services_vaults != all_backup_methods_absent",
+    "guest_run_command_denied != guest_service_failed",
+    "month_to_date_actual_cost != final_invoice"
+  ],
+  "next_gate": {
+    "operation": "deploy_exact_reviewed_timeout_fix",
+    "authorized": false,
+    "preconditions": [
+      "resolve exact PR head and exact-head CI",
+      "review targeted synchronization evidence",
+      "explicitly authorize deployment to the running API workload",
+      "capture deployment and rollback evidence",
+      "separately authorize a bounded live transaction replay after deployment"
+    ]
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "schema_version": "project.frontend-live-candidate-browser-verification.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "recorded_on": "2026-07-24",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "component": "frontend-api-demo-lab-integration",
+  "source_execution": {
+    "workflow": "Frontend live candidate browser verification",
+    "run_id": 30128947155,
+    "job_id": 89598920368,
+    "source_head": "a9c7f4f1826b1cf2a8944a3a7575f07ce54f9d1b",
+    "status": "completed",
+    "conclusion": "failure",
+    "source_artifact_id": 8610358857,
+    "source_artifact_sha256": "d75268678ca8eefcfac25a51c1c6b9e6a0c2713e9207f38188bb10ed048ab417",
+    "promotion_run_id": 30129169345,
+    "promotion_artifact_id": 8610413977,
+    "promotion_artifact_sha256": "2985eaad3b8887965168a7daf022634be22b33eaf0bce054e18911c85b72afc9"
+  },
+  "browser_scope": {
+    "emulated_origin": "https://anthonyedgar30000.github.io",
+    "pull_request_content_served_from_runner_loopback": true,
+    "actual_github_pages_deployment_verified": false,
+    "candidate_run_url": "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+    "candidate_health_url": "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/health"
+  },
+  "observations": {
+    "local_frontend_loaded": true,
+    "frontend_assets_loaded": true,
+    "controlled_fixture_loaded": true,
+    "api_health_verified": true,
+    "api_health_http_status": 200,
+    "api_health_schema_verified": true,
+    "backend_target_configured_verified": true,
+    "health_cors_origin_exact_match": true,
+    "cors_preflight_verified": true,
+    "cors_preflight_http_status": 204,
+    "cors_post_method_allowed": true,
+    "transaction_post_attempted": true,
+    "transaction_http_response_observed": false,
+    "live_twenty_attempt_response_verified": false,
+    "live_backend_distribution_verified": false,
+    "browser_rendering_of_live_response_verified": false,
+    "fixture_fallback_used": true,
+    "frontend_fail_closed_behavior_verified": true
+  },
+  "frontend_fallback_render": {
+    "incident_state": "More evidence required",
+    "report_source": "Controlled demo fixture — API unavailable",
+    "run_result": "Fixture analysis complete",
+    "rendered_fixture_attempts": 2,
+    "rendered_fixture_successes": 1,
+    "rendered_fixture_failures": 1,
+    "vpn_01_state": "Not observed",
+    "vpn_02_state": "Not observed",
+    "suspect_backend": "Not established",
+    "healthy_comparison_backend": "Not established",
+    "investigation_boundary": "Not established",
+    "technician_workflow_visible": false
+  },
+  "failure": {
+    "boundary": "candidate_transaction_response",
+    "message": "browser did not observe the transaction response",
+    "failure_observed_at": "2026-07-24T21:49:52Z",
+    "exact_root_cause_claimed": false,
+    "claim_boundary": "The browser completed health and preflight validation, then the live POST path failed to produce an observable HTTP response. This does not establish whether the failure occurred in browser networking, Nginx, the API process, the load balancer, or a backend."
+  },
+  "repository_timeout_analysis": {
+    "api_attempts_requested": 20,
+    "api_execution_model": "sequential",
+    "backend_request_timeout_seconds": 10,
+    "theoretical_worst_case_seconds": 200,
+    "nginx_proxy_read_timeout_seconds": 45,
+    "timeout_budget_mismatch_present": true,
+    "inference": "The repository contract permits a 20-attempt request to require longer than the configured Nginx read timeout. The approximately fifty-second browser failure is consistent with this mismatch, but the live root cause remains unverified."
+  },
+  "artifact_hashes": {
+    "browser_screenshot_sha256": "a9e67159dea92fb137a29c121408680cc226893e618cb456b82cf2236918f8b6",
+    "source_job_log_sha256": "7269122bc306a3c908dbcfdb6b87a37e5c0f15a20dc14b78d4ed146af933070c",
+    "local_server_log_sha256": "a1285d30f17016b43d1c731d06ef8442d5157853076e337cfca4cb974067fbaa"
+  },
+  "authority_and_mutation": {
+    "bounded_browser_validation_grant_consumed": true,
+    "additional_transaction_replay_authorized": false,
+    "pull_request_merge_authorized": false,
+    "github_pages_publication_performed": false,
+    "azure_authentication_performed": false,
+    "azure_mutations_performed": false,
+    "guest_commands_performed": false
+  },
+  "canonical_distinctions": [
+    "health_verified != transaction_response_verified",
+    "CORS_preflight_verified != POST_completed",
+    "frontend_fail_closed_verified != live_integration_complete",
+    "repository_timeout_mismatch != proven_live_root_cause",
+    "branch_browser_rendered != GitHub_Pages_deployed"
+  ],
+  "next_gate": "Use the governed fix control to authorize a bounded repository correction for the transaction timeout budget and verify it without silently granting deployment, guest-command, merge, or additional live replay authority."
+}

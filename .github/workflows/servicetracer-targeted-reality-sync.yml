@@ -1,0 +1,103 @@
+name: ServiceTracer targeted reality synchronization
+
+on:
+  push:
+    branches:
+      - agent/integrate-demo-api-frontend
+    paths:
+      - .github/workflows/servicetracer-targeted-reality-sync.yml
+      - scripts/servicetracer_demo_api_readonly_follow_up.py
+      - scripts/servicetracer_targeted_reality_sync.py
+      - scripts/servicetracer_targeted_reality_sync_v2.py
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: servicetracer-targeted-reality-sync
+  cancel-in-progress: false
+
+env:
+  EVIDENCE_ROOT: servicetracer-targeted-reality-sync-evidence
+
+jobs:
+  verify-only:
+    name: Refresh Azure and guest evidence without mutation
+    runs-on: ubuntu-latest
+    environment: azure-api-payg
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact authorized branch head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Validate bounded verify-only package
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/agent/integrate-demo-api-frontend'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python3 -m py_compile \
+            scripts/servicetracer_demo_api_readonly_follow_up.py \
+            scripts/servicetracer_targeted_reality_sync.py \
+            scripts/servicetracer_targeted_reality_sync_v2.py
+          mkdir -p "$EVIDENCE_ROOT"
+          jq -n \
+            --arg repository_sha "$GITHUB_SHA" \
+            --arg authorization_source 'Explicit governed control message: proceed' \
+            '{schema_version:"servicetracer.targeted-reality-sync-request.v1",repository_sha:$repository_sha,authorization_source:$authorization_source,azure_authentication_authorized:true,read_only_control_plane_queries_authorized:true,guest_read_only_command_authorized:true,public_health_get_authorized:true,transaction_replay_authorized:false,azure_resource_configuration_mutations_authorized:false,deployment_authorized:false,service_restart_authorized:false,github_pages_publication_authorized:false,pull_request_merge_authorized:false,cleanup_authorized:false}' \
+            > "$EVIDENCE_ROOT/authorization.json"
+
+      - name: Log in to the target subscription with protected workload identity
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_TARGET_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_TARGET_SUBSCRIPTION_ID }}
+
+      - name: Collect targeted read-only evidence
+        env:
+          EXPECTED_TARGET_SUBSCRIPTION_ID: ${{ secrets.AZURE_TARGET_SUBSCRIPTION_ID }}
+          EXPECTED_AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: |
+          set +e
+          SERVICETRACER_FOLLOWUP_WORKDIR="$PWD/$EVIDENCE_ROOT/control-plane-follow-up" \
+            python3 scripts/servicetracer_demo_api_readonly_follow_up.py
+          followup_status=$?
+
+          SERVICETRACER_SYNC_EVIDENCE_DIR="$PWD/$EVIDENCE_ROOT/targeted-sync" \
+            python3 scripts/servicetracer_targeted_reality_sync_v2.py
+          targeted_status=$?
+
+          printf 'FOLLOWUP_STATUS=%s\nTARGETED_STATUS=%s\n' \
+            "$followup_status" "$targeted_status" \
+            > "$EVIDENCE_ROOT/execution-status.env"
+          exit 0
+
+      - name: Build artifact manifest
+        if: always()
+        run: |
+          set -euo pipefail
+          find "$EVIDENCE_ROOT" -type f ! -name artifact-manifest.sha256 -print0 \
+            | sort -z \
+            | xargs -0 -r sha256sum \
+            > "$EVIDENCE_ROOT/artifact-manifest.sha256"
+
+      - name: Upload targeted synchronization evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: servicetracer-targeted-reality-sync-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.EVIDENCE_ROOT }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Enforce successful collection
+        run: |
+          set -euo pipefail
+          source "$EVIDENCE_ROOT/execution-status.env"
+          test "$FOLLOWUP_STATUS" = '0'
+          test "$TARGETED_STATUS" = '0'
+          test -f "$EVIDENCE_ROOT/control-plane-follow-up/evidence/summary.json"
+          test -f "$EVIDENCE_ROOT/targeted-sync/summary.json"

@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import json
+import os
 import ssl
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+
+BACKEND_TIMEOUT_SECONDS = float(
+    os.environ.get("SERVICETRACER_BACKEND_TIMEOUT_SECONDS", "10")
+)
 
 
 def _tls_context() -> ssl.SSLContext:
@@ -29,7 +34,11 @@ def run_transaction(backend_transaction_url: str, correlation_id: str) -> dict:
     raw_body = b""
 
     try:
-        with urlopen(request, context=_tls_context(), timeout=10) as response:
+        with urlopen(
+            request,
+            context=_tls_context(),
+            timeout=BACKEND_TIMEOUT_SECONDS,
+        ) as response:
             status_code = response.status
             raw_body = response.read()
     except HTTPError as exc:

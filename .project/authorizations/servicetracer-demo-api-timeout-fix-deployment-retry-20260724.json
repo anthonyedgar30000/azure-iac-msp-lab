@@ -1,0 +1,64 @@
+{
+  "schema_version": "project.azure-deployment-authorization-retry.v1",
+  "recorded_on": "2026-07-24",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "authorized": true,
+  "authorization_source": "Existing explicit governed deployment grant; bounded retry after pre-mutation observer failure",
+  "prior_attempt": {
+    "run_id": 30136642571,
+    "source_head": "9ab616c23ee9814aabcd71180b0edbbf2b53d83a",
+    "status": "preflight_observation_failed",
+    "failure": "Azure instance-view power state was nested under instanceView.statuses while the observer queried a nullable top-level statuses field.",
+    "arm_validation_performed": false,
+    "what_if_performed": false,
+    "azure_mutation_performed": false,
+    "deployment_performed": false,
+    "rollback_performed": false
+  },
+  "retry_source_binding": {
+    "rule": "Retry only the immutable github.sha containing this marker after exact-head pull-request CI succeeds.",
+    "branch": "agent/integrate-demo-api-frontend",
+    "previous_trusted_source_ref": "8b3d55c616d8820edd523f77021a35fe24167bd0"
+  },
+  "scope": {
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "location": "westus2",
+    "vm": "vm-st-demo-api-mst-dev",
+    "extension": "servicetracer-demo-api",
+    "only_existing_extension_update": true,
+    "expected_resource_count_before_and_after": 7
+  },
+  "authority": {
+    "azure_authentication": true,
+    "read_only_preflight": true,
+    "arm_validation": true,
+    "arm_what_if": true,
+    "deployment": true,
+    "existing_vm_extension_update": true,
+    "service_reinstallation_and_restart_by_installer": true,
+    "rollback_on_failed_verification": true,
+    "public_health_get": true,
+    "transaction_replay": false,
+    "pull_request_merge": false,
+    "github_pages_publication": false,
+    "cleanup": false,
+    "rbac_mutation": false,
+    "network_mutation": false,
+    "vm_replacement": false,
+    "resource_deletion": false
+  },
+  "expected_runtime_contract": {
+    "backend_timeout_seconds": 10,
+    "max_parallel_transactions": 10,
+    "max_attempts": 50,
+    "estimated_max_execution_seconds": 50,
+    "nginx_proxy_read_timeout_seconds": 75
+  },
+  "claim_boundaries": [
+    "retry_authorized != scope_expansion_authorized",
+    "deployment_authorized != transaction_replay_authorized",
+    "extension_update_authorized != network_or_RBAC_mutation_authorized",
+    "deployment_succeeded != full_workload_operationally_verified"
+  ]
+}

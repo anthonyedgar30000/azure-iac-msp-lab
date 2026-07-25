@@ -1,0 +1,139 @@
+{
+  "schema_version": "project.servicetracer-demo-api-timeout-fix-deployment-blocked.v1",
+  "recorded_on": "2026-07-24",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "component": "independent-servicetracer-demo-api",
+  "authorization": {
+    "source": "Explicit governed control message: granted",
+    "scope": "Deploy the exact PR #84 timeout-budget fix through the existing VM Custom Script extension, verify public health, and roll back on failed post-deployment verification.",
+    "transaction_replay_authorized": false,
+    "pull_request_merge_authorized": false,
+    "github_pages_publication_authorized": false,
+    "rbac_mutation_authorized": false,
+    "network_mutation_authorized": false,
+    "cleanup_authorized": false,
+    "final_status": "consumed_blocked"
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "workflow": "Deploy ServiceTracer demo API timeout fix",
+      "run_id": 30136642571,
+      "source_head": "9ab616c23ee9814aabcd71180b0edbbf2b53d83a",
+      "source_artifact_id": 8613031621,
+      "source_artifact_sha256": "a151fb612cefc4ddc12c05b0fd8612a92aa5dc2ac0568750f17bf01081f4de61",
+      "promotion_run_id": 30136643804,
+      "promotion_artifact_id": 8613034797,
+      "promotion_artifact_sha256": "c02fec0d875daf236793a08c428c0309f9be2891c4b446c91c83bee507a8a9b3",
+      "status": "preflight_observation_failed",
+      "failure_boundary": "vm_power_state_observer",
+      "failure": "The Azure instance-view payload stored VM power state under instanceView.statuses while the observer queried a nullable top-level statuses field.",
+      "azure_authentication_performed": true,
+      "read_only_inventory_performed": true,
+      "arm_validation_result_observed": false,
+      "what_if_result_observed": false,
+      "azure_resource_mutation_performed": false,
+      "deployment_performed": false,
+      "rollback_performed": false
+    },
+    {
+      "attempt": 2,
+      "workflow": "Retry ServiceTracer demo API timeout fix deployment",
+      "run_id": 30137044763,
+      "source_head": "4020cc7b12202b9c1e2f0681024ccb6a62319721",
+      "exact_head_ci_run_id": 30137045924,
+      "source_artifact_id": 8613168767,
+      "source_artifact_sha256": "33784167548a83bb4c85265c05a820c7166fc47062d84ee5fce16b24674adaab",
+      "promotion_run_id": 30137045912,
+      "promotion_artifact_id": 8613172108,
+      "promotion_artifact_sha256": "04df3512facc192f7018f8cf418362caa9e5811430ebfdc5d1ff6c9baf3466f5",
+      "status": "authorization_blocked_before_mutation",
+      "failure_boundary": "extension_write_authorization",
+      "azure_error_code": "InvalidTemplateDeployment",
+      "missing_action": "Microsoft.Compute/virtualMachines/extensions/write",
+      "scope": "rg-st-demo-api-dev-westus2/vm-st-demo-api-mst-dev/extensions/servicetracer-demo-api",
+      "azure_authentication_performed": true,
+      "read_only_preflight_performed": true,
+      "arm_validation_or_authorization_evaluation_attempted": true,
+      "what_if_result_observed": false,
+      "deployment_step_executed": false,
+      "azure_resource_mutation_performed": false,
+      "deployment_performed": false,
+      "rollback_performed": false
+    }
+  ],
+  "fresh_preflight_observations": {
+    "observed_through": "2026-07-25T00:47:40Z",
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "location": "westus2",
+    "resource_group_provisioning_state": "Succeeded",
+    "resource_count": 7,
+    "vm": "vm-st-demo-api-mst-dev",
+    "vm_size": "Standard_F1als_v7",
+    "vm_power_state": "VM running",
+    "vm_provisioning_state": "Succeeded",
+    "existing_extension_provisioning_state": "Succeeded",
+    "public_health_http_status": 200,
+    "public_health_status": "healthy",
+    "public_health_contract": "pre_timeout_fix_contract",
+    "corrected_health_fields_observed": false,
+    "quota": {
+      "total_regional_vcpus": {
+        "current": 1,
+        "limit": 10
+      },
+      "standard_ipv4_public_ips": {
+        "current": 1,
+        "limit": 20
+      },
+      "standard_falsv7_family_vcpus": "not_returned_by_filtered_query"
+    },
+    "month_to_date_actual_cost": {
+      "status": "observed",
+      "currency": "CAD",
+      "pre_tax_cost": 0.734335248846279,
+      "resource_breakdown": [
+        {
+          "resource_type": "Microsoft.Compute/disks",
+          "pre_tax_cost": 0.0250558242816
+        },
+        {
+          "resource_type": "Microsoft.Compute/virtualMachines",
+          "pre_tax_cost": 0.648600227898012
+        },
+        {
+          "resource_type": "Microsoft.Network/publicIPAddresses",
+          "pre_tax_cost": 0.0606791966666666
+        }
+      ],
+      "claim_boundary": "Usage may lag and is not a final invoice or forecast."
+    }
+  },
+  "resolved_state": {
+    "repository_timeout_fix_implemented": true,
+    "repository_timeout_fix_ci_verified": true,
+    "azure_deployment_authorized": true,
+    "azure_deployment_succeeded": false,
+    "azure_resource_mutation_performed": false,
+    "deployed_timeout_fix_verified": false,
+    "public_api_remains_healthy": true,
+    "live_twenty_attempt_replay_performed": false,
+    "full_workload_operationally_verified": false
+  },
+  "canonical_distinctions": [
+    "deployment_authorized != deployment_possible_with_current_identity",
+    "ARM_authorization_failure != Azure_resource_mutation",
+    "public_API_healthy != corrected_runtime_deployed",
+    "deployment_blocked != rollback_required",
+    "role_assignment_exists != effective_required_action_granted"
+  ],
+  "next_gate": {
+    "status": "separate_authorization_required",
+    "options": [
+      "Authorize an operator-run deployment under an already-authorized human Azure identity while preserving the exact extension-only What-If and evidence contract.",
+      "Authorize design and assignment of a dedicated least-privilege deployment identity that can validate, What-If, and write only the existing VM extension scope."
+    ],
+    "prohibited_inference": "The original deployment grant does not authorize RBAC mutation or silent use of another subscription identity."
+  }
+}

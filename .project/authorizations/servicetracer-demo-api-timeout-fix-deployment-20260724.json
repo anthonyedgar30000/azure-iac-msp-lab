@@ -1,0 +1,60 @@
+{
+  "schema_version": "project.azure-deployment-authorization.v1",
+  "recorded_on": "2026-07-24",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "authorized": true,
+  "authorization_source": "Explicit governed control message: granted",
+  "authorization_interpretation": "Apply the exact reviewed PR #84 timeout-budget fix to the already-running independent ServiceTracer demo API workload, capture deployment and health evidence, and roll back to the previously trusted source if post-deployment verification fails.",
+  "source_binding": {
+    "rule": "Deploy the immutable github.sha containing this authorization marker after its exact-head pull-request CI succeeds.",
+    "branch": "agent/integrate-demo-api-frontend",
+    "previous_trusted_source_ref": "8b3d55c616d8820edd523f77021a35fe24167bd0"
+  },
+  "scope": {
+    "subscription": "protected_target_subscription",
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "location": "westus2",
+    "vm": "vm-st-demo-api-mst-dev",
+    "extension": "servicetracer-demo-api",
+    "only_existing_extension_update": true,
+    "expected_resource_count_before_and_after": 7
+  },
+  "expected_runtime_contract": {
+    "backend_timeout_seconds": 10,
+    "max_parallel_transactions": 10,
+    "max_attempts": 50,
+    "estimated_max_execution_seconds": 50,
+    "nginx_proxy_read_timeout_seconds": 75
+  },
+  "authority": {
+    "azure_authentication": true,
+    "read_only_preflight": true,
+    "arm_validation": true,
+    "arm_what_if": true,
+    "deployment": true,
+    "existing_vm_extension_update": true,
+    "service_reinstallation_and_restart_by_installer": true,
+    "rollback_on_failed_verification": true,
+    "public_health_get": true,
+    "transaction_replay": false,
+    "pull_request_merge": false,
+    "github_pages_publication": false,
+    "cleanup": false,
+    "rbac_mutation": false,
+    "network_mutation": false,
+    "vm_replacement": false,
+    "resource_deletion": false
+  },
+  "failure_behavior": {
+    "what_if_scope_escape": "stop_before_mutation",
+    "deployment_or_health_failure": "reinstall_previous_trusted_source_and_verify_public_health",
+    "authorization_failure": "record_observation_failed_without_claiming_zero_partial_mutation"
+  },
+  "claim_boundaries": [
+    "deployment_authorized != transaction_replay_authorized",
+    "extension_update_authorized != network_or_RBAC_mutation_authorized",
+    "deployment_succeeded != full_workload_operationally_verified",
+    "rollback_attempted != rollback_verified"
+  ]
+}

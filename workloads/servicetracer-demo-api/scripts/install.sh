@@ -25,6 +25,9 @@ CONFIG_ROOT='/etc/servicetracer-demo-api'
 ENV_FILE="${CONFIG_ROOT}/service.env"
 SERVICE_NAME='servicetracer-demo-api.service'
 LOCAL_PORT='8090'
+BACKEND_TIMEOUT_SECONDS='10'
+MAX_PARALLEL_TRANSACTIONS='10'
+PROXY_READ_TIMEOUT_SECONDS='75'
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
@@ -66,6 +69,8 @@ SERVICETRACER_SOURCE_ID=${PUBLIC_FQDN}
 SERVICETRACER_DEMO_API_LISTEN=127.0.0.1
 SERVICETRACER_DEMO_API_PORT=${LOCAL_PORT}
 SERVICETRACER_HOSTING_MODEL=dedicated_vm_subproject
+SERVICETRACER_BACKEND_TIMEOUT_SECONDS=${BACKEND_TIMEOUT_SECONDS}
+SERVICETRACER_MAX_PARALLEL_TRANSACTIONS=${MAX_PARALLEL_TRANSACTIONS}
 EOF_ENV
 chown root:servicetracer-api "$ENV_FILE"
 chmod 0640 "$ENV_FILE"
@@ -122,7 +127,7 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_connect_timeout 5s;
-        proxy_read_timeout 45s;
+        proxy_read_timeout ${PROXY_READ_TIMEOUT_SECONDS}s;
         client_max_body_size 4k;
     }
 
@@ -166,6 +171,8 @@ from pathlib import Path
 payload = json.loads(Path('/tmp/servicetracer-demo-api-health.json').read_text(encoding='utf-8'))
 if payload.get('status') != 'healthy' or payload.get('hosting_model') != 'dedicated_vm_subproject':
     raise SystemExit(f'Unexpected health response: {payload!r}')
+if payload.get('estimated_max_execution_seconds', 0) >= 75:
+    raise SystemExit(f'API execution budget exceeds proxy budget: {payload!r}')
 PY
     exit 0
   fi

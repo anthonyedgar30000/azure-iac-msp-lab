@@ -1,0 +1,169 @@
+{
+  "schema_version": "project.frontend-api-demo-lab-integration.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "recorded_on": "2026-07-24",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "repository_baseline": {
+    "branch_point": "8b870b399d9e64b65472916a28373e051551ba02",
+    "latest_merged_pull_request": 83,
+    "open_pull_requests_observed_before_branch_creation": []
+  },
+  "objective": "Integrate the independently deployed ServiceTracer demo API with the synthetic remote-access lab and the GitHub Pages frontend without claiming unresolved operational controls are complete.",
+  "deferred_operational_issues": [
+    {
+      "issue": "effective_rbac_and_least_privilege",
+      "status": "deferred_not_resolved"
+    },
+    {
+      "issue": "backup_and_recovery_validation",
+      "status": "deferred_not_resolved"
+    },
+    {
+      "issue": "month_to_date_actual_cost",
+      "status": "deferred_not_resolved"
+    },
+    {
+      "issue": "diagnostic_settings_alerts_and_delivery",
+      "status": "deferred_not_resolved"
+    }
+  ],
+  "integration_path": [
+    "GitHub Pages operator console",
+    "HTTPS GET /api/health readiness handshake",
+    "browser-origin CORS preflight",
+    "HTTPS POST /api/demo/run with 20 bounded attempts",
+    "independent ServiceTracer demo API VM",
+    "existing Azure Standard Load Balancer transaction endpoint",
+    "synthetic VPN-01 and VPN-02 backends",
+    "bounded ServiceTracer report rendered by the frontend"
+  ],
+  "candidate_endpoint": "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+  "evidence_anchors": {
+    "public_runtime_verification": ".project/evidence/servicetracer-demo-api-live-verification-30086152352.json",
+    "post_deployment_inventory": ".project/evidence/servicetracer-demo-api-post-deployment-inventory-20260724T163938Z.json",
+    "browser_candidate_verification": ".project/evidence/frontend-live-candidate-browser-verification-30128947155.json"
+  },
+  "frontend_contract": {
+    "health_must_pass_before_post": true,
+    "fallback_fixture_preserved": true,
+    "backend_localization_hardcoded": false,
+    "inconclusive_sample_must_remain_inconclusive": true,
+    "technician_workflow_hidden_until_stable_backend_comparison": true
+  },
+  "timeout_budget_fix": {
+    "authorization_source": "Explicit governed control message: fix",
+    "status": "implemented_in_repository_not_deployed",
+    "failed_gate_run_id": 30128947155,
+    "prior_repository_budget": {
+      "execution_model": "sequential",
+      "backend_timeout_seconds": 10,
+      "frontend_attempts": 20,
+      "frontend_theoretical_max_seconds": 200,
+      "api_max_attempts": 50,
+      "api_theoretical_max_seconds": 500,
+      "nginx_proxy_read_timeout_seconds": 45,
+      "mismatch_present": true
+    },
+    "corrected_repository_budget": {
+      "execution_model": "bounded_parallel_worker_pool",
+      "backend_timeout_seconds": 10,
+      "max_parallel_transactions": 10,
+      "frontend_attempts": 20,
+      "frontend_theoretical_max_seconds": 20,
+      "api_max_attempts": 50,
+      "api_theoretical_max_seconds": 50,
+      "nginx_proxy_read_timeout_seconds": 75,
+      "proxy_safety_margin_seconds": 25,
+      "mismatch_present": false
+    },
+    "changed_paths": [
+      "demo_api/runtime.py",
+      "demo_api/standalone_server.py",
+      "infra/scripts/install_collector_demo_api.sh",
+      "workloads/servicetracer-demo-api/scripts/install.sh",
+      "workloads/servicetracer-demo-api/tests/test_timeout_budget.py"
+    ],
+    "health_contract_additions": [
+      "backend_timeout_seconds",
+      "max_parallel_transactions",
+      "max_attempts",
+      "estimated_max_execution_seconds"
+    ],
+    "deployment_applied": false,
+    "live_replay_after_fix_performed": false,
+    "claim_boundary": "repository_timeout_budget_fixed != deployed_runtime_fixed"
+  },
+  "authority": {
+    "repository_changes_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_mutations_authorized": false,
+    "guest_commands_authorized": false,
+    "transaction_replay_from_agent_default": false,
+    "bounded_browser_validation_grant": {
+      "grant_id": "pr84-live-candidate-browser-validation-20260724",
+      "status": "consumed_failed",
+      "authorized_by": "Anthony Edgar",
+      "authorization_source": "Explicit governed control message: proceed",
+      "authorized_at": "2026-07-24T17:44:12-04:00",
+      "consumed_by_run_id": 30128947155,
+      "consumed_source_head": "a9c7f4f1826b1cf2a8944a3a7575f07ce54f9d1b",
+      "repository_scope": "pull_request_84_exact_head",
+      "permitted_operations": [
+        "serve the pull-request docs tree on runner loopback under the exact allowed browser origin",
+        "GET the candidate /api/health endpoint once",
+        "allow the browser to perform one CORS preflight",
+        "POST one request to /api/demo/run with attempts set to 20",
+        "capture sanitized response metadata, rendered DOM state, console messages, and a screenshot"
+      ],
+      "prohibited_operations": [
+        "GitHub pull-request merge",
+        "GitHub Pages publication",
+        "Azure authentication",
+        "Azure control-plane mutation",
+        "guest command execution",
+        "cleanup",
+        "additional transaction replay outside the bounded verification run"
+      ],
+      "result": "Health and CORS preflight passed. The transaction POST was attempted but no HTTP response was observed, so the frontend correctly fell back to the controlled fixture."
+    },
+    "bounded_timeout_fix_grant": {
+      "status": "consumed_repository_fix",
+      "authorized_by": "Anthony Edgar",
+      "authorization_source": "Explicit governed control message: fix",
+      "permitted_operations": [
+        "diagnose the failed timeout budget",
+        "correct application execution and proxy timeout declarations in repository code",
+        "add regression tests",
+        "run ordinary exact-head CI"
+      ],
+      "prohibited_operations": [
+        "Azure authentication",
+        "Azure deployment or mutation",
+        "guest command execution",
+        "additional live transaction replay",
+        "GitHub Pages publication",
+        "pull-request merge"
+      ]
+    }
+  },
+  "validation": {
+    "static_contract_tests_required": true,
+    "exact_head_ci_required": true,
+    "browser_rendering_verified": false,
+    "health_contract_verified": true,
+    "cors_preflight_verified": true,
+    "transaction_http_response_verified": false,
+    "browser_fail_closed_rendering_verified": true,
+    "browser_rendering_of_live_response_verified": false,
+    "live_twenty_attempt_sample_verified": false,
+    "actual_github_pages_deployment_verified": false,
+    "timeout_budget_mismatch_present_in_repository": false,
+    "timeout_budget_fix_deployed_to_azure": false,
+    "timeout_budget_fix_live_verified": false
+  },
+  "rollback": "Revert the timeout-budget commits to restore sequential execution and the previous installer values. No Azure rollback is required because this fix has not been deployed.",
+  "next_gate": "Pass exact-head CI for the repository fix, then require separate deployment authorization before changing the running Azure workload. Require a separate bounded live-replay authorization after deployment. Merge and publication remain unauthorized."
+}
