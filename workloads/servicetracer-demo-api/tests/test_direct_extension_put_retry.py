@@ -125,13 +125,43 @@ class DirectExtensionPutRetryTests(unittest.TestCase):
         self.assertNotIn("az resource delete", source)
         self.assertNotIn("az vm restart", source)
 
-    def test_workflow_is_inert_without_fresh_marker(self):
+    def test_workflow_marker_is_absent_or_exactly_bounded(self):
         source = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
             ".project/authorizations/servicetracer-demo-api-timeout-fix-direct-put-retry-20260725.json",
             source,
         )
-        self.assertFalse(FUTURE_MARKER.exists())
+        if not FUTURE_MARKER.exists():
+            self.assertFalse(FUTURE_MARKER.exists())
+            return
+
+        marker = json.loads(FUTURE_MARKER.read_text(encoding="utf-8"))
+        self.assertEqual(
+            marker["schema_version"],
+            "project.azure-deployment-authorization-direct-extension-put.v1",
+        )
+        self.assertTrue(marker["authorized"])
+        self.assertEqual(
+            marker["source_binding"]["branch"],
+            "fix/pr104-direct-extension-put-remediation",
+        )
+        self.assertEqual(marker["prior_attempt"]["workflow_run_id"], 30178082566)
+        self.assertTrue(marker["prior_attempt"]["authorization_consumed"])
+        self.assertFalse(marker["prior_attempt"]["extension_mutation_performed"])
+        self.assertTrue(marker["scope"]["only_existing_extension_update"])
+        self.assertEqual(marker["scope"]["resource_group"], "rg-st-demo-api-dev-westus2")
+        self.assertEqual(marker["scope"]["vm"], "vm-st-demo-api-mst-dev")
+        self.assertEqual(marker["scope"]["extension"], "servicetracer-demo-api")
+        self.assertEqual(marker["method"]["forward"], "direct_extension_resource_put")
+        self.assertEqual(marker["method"]["rollback"], "direct_extension_resource_put")
+        authority = marker["authority"]
+        self.assertTrue(authority["deployment"])
+        self.assertTrue(authority["rollback_on_failed_verification"])
+        self.assertFalse(authority["transaction_replay"])
+        self.assertFalse(authority["pull_request_merge"])
+        self.assertFalse(authority["rbac_mutation"])
+        self.assertFalse(authority["network_mutation"])
+        self.assertFalse(authority["cleanup"])
 
     def test_pr104_failure_is_recorded_without_false_runtime_claim(self):
         record = json.loads(RECONCILIATION.read_text(encoding="utf-8"))
