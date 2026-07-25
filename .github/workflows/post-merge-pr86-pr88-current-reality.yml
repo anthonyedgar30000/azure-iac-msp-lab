@@ -1,4 +1,4 @@
-name: Post-merge PR 86 and PR 88 current-reality reconciliation
+name: Current-reality lifecycle reconciliation
 
 on:
   pull_request:
@@ -6,6 +6,7 @@ on:
       - ".project/current-reality.json"
       - ".project/handoffs/current-state.md"
       - ".project/reconciliations/post-merge-pr86-pr88-current-reality.json"
+      - ".project/reconciliations/post-merge-pr92-pr93-current-reality.json"
       - "docs/reviews/post-merge-pr86-pr88-current-reality.md"
       - "scripts/validate_post_merge_pr84_current_reality.py"
       - "tests/test_post_merge_pr84_current_reality.py"
@@ -19,6 +20,7 @@ on:
       - ".project/current-reality.json"
       - ".project/handoffs/current-state.md"
       - ".project/reconciliations/post-merge-pr86-pr88-current-reality.json"
+      - ".project/reconciliations/post-merge-pr92-pr93-current-reality.json"
       - "docs/reviews/post-merge-pr86-pr88-current-reality.md"
       - "scripts/validate_post_merge_pr84_current_reality.py"
       - "tests/test_post_merge_pr84_current_reality.py"
@@ -42,11 +44,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate PR 86 and PR 88 reconciliation
+      - name: Validate latest repository and Azure boundaries
         run: python scripts/validate_post_merge_pr86_pr88_current_reality.py
 
-      - name: Run reconciliation regression tests
+      - name: Run latest reconciliation regression tests
         run: python -m unittest tests/test_post_merge_pr86_pr88_current_reality.py -v
 
       - name: Preserve PR 84 historical validation
         run: python -m unittest tests/test_post_merge_pr84_current_reality.py -v
+
+      - name: Preserve PR 82 structured historical validation
+        run: python -m unittest tests/test_post_merge_pr82_shared_state.py -v
