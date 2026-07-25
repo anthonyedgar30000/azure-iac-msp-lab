@@ -1,0 +1,66 @@
+{
+  "schema_version": "project.post-pr100-normalization.v1",
+  "recorded_on": "2026-07-25",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "baseline": {
+    "base_branch": "main",
+    "base_commit": "907c14b9b61abf8260aa5257e47cbe35dbe39999",
+    "latest_merged_pull_request": 100,
+    "open_pull_requests_observed_before_branch_creation": [],
+    "local_working_tree": "not_observed"
+  },
+  "normalization": {
+    "temporary_write_workflow_removed": true,
+    "temporary_promotion_script_removed": true,
+    "historical_authorization_records_preserved": true,
+    "historical_execution_records_preserved": true,
+    "recovered_pr92_evidence_preserved": true,
+    "canonical_state_promotion_status": "pending_separate_repository_increment"
+  },
+  "preserved_evidence": {
+    "historical_protected_run_id": 30160680313,
+    "historical_protected_artifact_id": 8620163872,
+    "historical_protected_artifact_digest": "sha256:9da1e4f3b12de2d4702ab3ea8c4b47b0169d4030a3bccf4762e2f1aa81ba5b04",
+    "recovery_run_id": 30171257533,
+    "repository_evidence_path": ".project/evidence/pr92-protected-verification-recovery-30171257533.json",
+    "effective_extension_write_permission_verified": true,
+    "azure_mutation_performed": false,
+    "deployment_authorized": false
+  },
+  "removed_paths": [
+    ".github/workflows/apply-post-pr99-evidence-promotion.yml",
+    "scripts/apply_post_pr99_evidence_promotion.py"
+  ],
+  "preserved_paths": [
+    ".project/authorizations/post-pr99-protected-evidence-promotion-20260725.json",
+    ".project/authorizations/post-pr99-protected-evidence-promotion-corrected-20260725.json",
+    ".project/executions/post-pr99-protected-evidence-promotion-20260725.json",
+    ".project/evidence/pr92-protected-verification-recovery-30171257533.json"
+  ],
+  "authority": {
+    "repository_normalization": true,
+    "deterministic_test_update": true,
+    "draft_pull_request_creation": true,
+    "pull_request_merge": false,
+    "workflow_dispatch_or_rerun": false,
+    "azure_authentication": false,
+    "azure_query": false,
+    "azure_mutation": false,
+    "deployment": false,
+    "rbac_mutation": false,
+    "guest_command": false,
+    "transaction_replay": false,
+    "cleanup": false
+  },
+  "canonical_distinctions": [
+    "temporary_workflow_removed != canonical_state_promoted",
+    "recovered_evidence_preserved != corrected_runtime_deployed",
+    "effective_permission_verified != deployment_authorized",
+    "repository_normalized != Azure_reconciled"
+  ],
+  "next_gate": {
+    "operation": "promote_recovered_pr92_evidence_into_canonical_project_state",
+    "execution_authorized": false,
+    "claim_boundary": "This normalization removes temporary repository write machinery only. It performs no Azure access, workflow rerun, deployment, runtime verification, transaction replay, or infrastructure mutation."
+  }
+}
