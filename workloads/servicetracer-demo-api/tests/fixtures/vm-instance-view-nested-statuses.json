@@ -1,0 +1,37 @@
+{
+  "name": "vm-example",
+  "location": "westus2",
+  "provisioningState": "Succeeded",
+  "hardwareProfile": {
+    "vmSize": "Standard_F1als_v7"
+  },
+  "identity": {
+    "type": "SystemAssigned"
+  },
+  "instanceView": {
+    "extensions": [
+      {
+        "name": "example-extension",
+        "statuses": [
+          {
+            "code": "ProvisioningState/succeeded",
+            "displayStatus": "Provisioning succeeded",
+            "level": "Info"
+          }
+        ]
+      }
+    ],
+    "statuses": [
+      {
+        "code": "ProvisioningState/succeeded",
+        "displayStatus": "Provisioning succeeded",
+        "level": "Info"
+      },
+      {
+        "code": "PowerState/running",
+        "displayStatus": "VM running",
+        "level": "Info"
+      }
+    ]
+  }
+}

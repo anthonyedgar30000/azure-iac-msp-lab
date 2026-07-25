@@ -1,0 +1,7 @@
+{
+  "name": "vm-example",
+  "location": "westus2",
+  "instanceView": {
+    "statuses": null
+  }
+}

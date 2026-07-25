@@ -1,0 +1,78 @@
+{
+  "schema_version": "project.timeout-fix-parser-repair.v1",
+  "recorded_on": "2026-07-25",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "baseline": {
+    "base_branch": "main",
+    "base_commit": "6ebddf7d3ed565ca490b0ffa3fe39596e21b49d7",
+    "repair_branch": "fix/timeout-vm-instance-view-preflight",
+    "open_pull_requests_observed_before_branch_creation": [],
+    "local_working_tree": "not_available_connector_only"
+  },
+  "failed_attempt": {
+    "workflow_run_id": 30136642571,
+    "run_attempt": 3,
+    "source_head": "9ab616c23ee9814aabcd71180b0edbbf2b53d83a",
+    "source_branch": "agent/integrate-demo-api-frontend",
+    "job": "Deploy exact timeout fix through existing VM extension",
+    "failed_step": "Preflight current Azure reality and accepted What-If",
+    "error": "jq attempted to iterate over null because it read top-level .statuses while the observed Azure CLI document stored VM statuses under .instanceView.statuses",
+    "artifact_id": 8624354435,
+    "artifact_digest": "sha256:52606c45da9b8fe1d80699d9ee00cd9e256d44f19b628f63f7b845d0c5910777",
+    "vm_running_observed_in_artifact": true,
+    "arm_validation_executed": false,
+    "arm_what_if_executed": false,
+    "deployment_step_executed": false,
+    "azure_mutation_performed": false,
+    "authorization_consumed": true
+  },
+  "root_cause": {
+    "category": "workflow_parser_defect",
+    "azure_login_failed": false,
+    "vm_stopped": false,
+    "observed_status_path": ".instanceView.statuses",
+    "broken_expression": ".statuses | any(.code == \"PowerState/running\")",
+    "required_behavior": "Accept either documented Azure CLI shape, require an explicit PowerState/running code, and fail closed when no usable status collection exists."
+  },
+  "repair": {
+    "parser": "workloads/servicetracer-demo-api/scripts/assert_vm_instance_view.py",
+    "sanitized_fixture": "workloads/servicetracer-demo-api/tests/fixtures/vm-instance-view-nested-statuses.json",
+    "regression_test": "workloads/servicetracer-demo-api/tests/test_vm_instance_view_preflight.py",
+    "prepared_workflow": ".github/workflows/servicetracer-demo-api-timeout-fix-deploy-after-parser-fix.yml",
+    "supports_top_level_statuses": true,
+    "supports_nested_instance_view_statuses": true,
+    "missing_statuses_fail_closed": true,
+    "workflow_inert_without_fresh_authorization": true
+  },
+  "authority": {
+    "repository_parser_repair": true,
+    "repository_tests": true,
+    "prepared_inert_workflow": true,
+    "draft_pull_request_creation": true,
+    "pull_request_merge": false,
+    "workflow_dispatch_or_rerun": false,
+    "fresh_deployment_authorization_marker": false,
+    "azure_authentication": false,
+    "azure_query": false,
+    "arm_validation": false,
+    "arm_what_if": false,
+    "azure_mutation": false,
+    "deployment": false,
+    "rollback": false,
+    "transaction_replay": false,
+    "cleanup": false
+  },
+  "next_gate": {
+    "operation": "review_parser_repair_and_obtain_fresh_exact_commit_deployment_authorization",
+    "execution_authorized": false,
+    "required_authorization_path": ".project/authorizations/servicetracer-demo-api-timeout-fix-deployment-after-parser-fix-20260725.json",
+    "claim_boundary": "This increment repairs and tests the preflight parser and prepares an inert workflow. It does not renew the consumed deployment grant, trigger Azure login, or perform a deployment."
+  },
+  "canonical_distinctions": [
+    "parser_failure != VM_not_running",
+    "preflight_failed_before_What_If != Azure_mutation",
+    "workflow_prepared != deployment_authorized",
+    "authorization_consumed != authorization_renewed",
+    "exact_head_CI_passed != Azure_deployment_succeeded"
+  ]
+}
