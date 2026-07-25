@@ -1,0 +1,64 @@
+{
+  "schema_version": "project.servicetracer-demo-api-timeout-fix-deployment-reconciliation.v1",
+  "recorded_on": "2026-07-24",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "evidence": ".project/evidence/servicetracer-demo-api-timeout-fix-deployment-blocked-20260724.json",
+  "objective": "Apply the exact reviewed PR #84 timeout-budget correction to the running independent API through the existing Custom Script extension.",
+  "result": "blocked_before_mutation",
+  "grant": {
+    "source": "Explicit governed control message: granted",
+    "status": "consumed_blocked",
+    "scope_expanded": false,
+    "rbac_mutation_authorized": false,
+    "transaction_replay_authorized": false,
+    "merge_authorized": false,
+    "github_pages_publication_authorized": false
+  },
+  "attempt_1": {
+    "run_id": 30136642571,
+    "status": "preflight_observer_failed",
+    "corrected_by_retry": true,
+    "azure_mutation_performed": false
+  },
+  "attempt_2": {
+    "run_id": 30137044763,
+    "exact_head_ci_run_id": 30137045924,
+    "status": "extension_write_authorization_blocked",
+    "missing_action": "Microsoft.Compute/virtualMachines/extensions/write",
+    "what_if_result_observed": false,
+    "deployment_step_executed": false,
+    "azure_mutation_performed": false,
+    "rollback_required": false
+  },
+  "current_truth": {
+    "resource_group_observed": true,
+    "resource_count": 7,
+    "vm_running": true,
+    "existing_extension_succeeded": true,
+    "public_health_verified": true,
+    "repository_timeout_fix_ready": true,
+    "deployed_timeout_fix_verified": false,
+    "corrected_health_contract_observed": false,
+    "transaction_replay_performed": false,
+    "operationally_verified": false
+  },
+  "failure_and_rollback": {
+    "failure_boundary": "Azure authorization before extension mutation",
+    "partial_mutation_observed": false,
+    "rollback_performed": false,
+    "rollback_reason": "No Azure resource mutation occurred."
+  },
+  "next_gate": {
+    "operation": "select_authorized_deployment_principal_or_operator_path",
+    "execution_authorized": false,
+    "required_decision": "Use an existing human Azure identity for a bounded operator-run deployment, or separately authorize creation/assignment of a dedicated least-privilege deployment identity.",
+    "claim_boundary": "Deployment permission repair is a separate RBAC/authority increment; it cannot be inferred from the consumed deployment grant."
+  },
+  "canonical_distinctions": [
+    "deployment_authorized != deployment_identity_authorized",
+    "validation_authorization_failure != resource_mutation",
+    "no_mutation != deployment_success",
+    "public_health_verified != timeout_fix_deployed"
+  ]
+}
