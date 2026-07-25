@@ -2,7 +2,9 @@
 
 ## Interpretation boundary
 
-This handoff records the latest durable repository and evidence synthesis reviewed on `2026-07-25`. It is not a continuously refreshed GitHub or Azure dashboard.
+This handoff records repository lifecycle state checked after PR #90 merged and preserves the latest durable Azure evidence reviewed on `2026-07-25`.
+
+It is not a continuously refreshed GitHub or Azure dashboard.
 
 ```text
 merged_into_main != deployed_to_VM
@@ -25,29 +27,38 @@ Resolve live GitHub, exact-head CI, current authority, Azure state, cost, quota,
 
 ```text
 repository: anthonyedgar30000/azure-iac-msp-lab
-main: 726c42ea1dddf402a42d8d0c591c660ebc50733f
-latest merged pull request: 88
-open pull requests observed before reconciliation: none
+main: 8b25ecf1f00a59033955ef67bb3f9b511126f08a
+latest merged pull request: 90
+open pull requests observed before this reconciliation: none
 local working tree: not observed
 ```
 
-PR #86:
+PR #89:
 
 ```text
-source head: 8df0a5af4b522ceeff16c0d9d1adfc978e66d559
-merge commit: 67d1aa9c784825e835097f684ddf629727ca5e22
-exact-head CI: 30141965628 / success
-merge-result CI: not observed
+source head: 3727b67533eb8043a22895a833223fa00fb70d10
+merge commit: 39e214a32ebdac61d22d7b130d4c2f1e5d6f4f53
+full CI: 30145973950 / failure
+dedicated reconciliation: 30145973957 / success
+PR 82 shared-state: 30145973961 / success
+Azure MCP architecture: 30145973948 / success
+failure boundary: workflow-observability handoff anchors
+Azure action performed: false
 ```
 
-PR #88:
+PR #90:
 
 ```text
-source head: 5e05d050cace2210c9b47103fe100eceb759cd0e
-merge commit: 726c42ea1dddf402a42d8d0c591c660ebc50733f
-exact-head CI: 30142555135, 30142555107, 30142555131 / success
+source head: 0e5ae4c68801695241eebef4f05967ec38a894ff
+merge commit: 8b25ecf1f00a59033955ef67bb3f9b511126f08a
+CI: 30146139826 / success
+PR 86 and PR 88 reconciliation: 30146139825 / success
+PR 82 shared-state: 30146139830 / success
+Azure MCP architecture: 30146139832 / success
+changed path: .project/handoffs/current-state.md
+source-to-merge file-content difference observed: false
 merge-result CI: not observed
-final combined-main CI: not observed
+Azure action performed: false
 ```
 
 `not_observed` is not a CI failure.
@@ -55,6 +66,14 @@ final combined-main CI: not observed
 ## Preserved historical repository anchors
 
 ```text
+PR #88 merge: 726c42ea1dddf402a42d8d0c591c660ebc50733f
+PR #88 source head: 5e05d050cace2210c9b47103fe100eceb759cd0e
+PR #88 exact-head CI: 30142555135, 30142555107, 30142555131 / success
+
+PR #86 merge: 67d1aa9c784825e835097f684ddf629727ca5e22
+PR #86 source head: 8df0a5af4b522ceeff16c0d9d1adfc978e66d559
+PR #86 exact-head CI: 30141965628 / success
+
 PR #84 merge: c96d9cbb765a023921fa819cf7d99c957e8ad608
 PR #84 source head: 5c938a7e07da3a22b27bb5ac5aa52b7ccf22ba37
 PR #84 exact-head CI: 30137351716 / success
@@ -66,7 +85,7 @@ PR #82 CI: 30112308916
 
 ## Repository-to-runtime boundary
 
-Current `main` is 134 commits ahead of deployed source `8b3d55c616d8820edd523f77021a35fe24167bd0` and zero behind.
+Current `main` is 146 commits ahead of deployed source `8b3d55c616d8820edd523f77021a35fe24167bd0` and zero behind.
 
 ```text
 deployed_source_ref != current_main
@@ -77,6 +96,7 @@ repository_RBAC_package_merged = true
 Azure_RBAC_effectiveness_verified = false
 repository_cleanup_plan_merged = true
 cleanup_dependency_collection_executed = false
+repository_handoff_repair_merged = true
 ```
 
 ## Latest Azure evidence
@@ -88,6 +108,8 @@ subscription: Azure subscription 1
 resource group: rg-st-demo-api-dev-westus2
 location: westus2
 resources observed: 7
+deployment: servicetracer-demo-api-dev / Succeeded
+deployed source: 8b3d55c616d8820edd523f77021a35fe24167bd0
 VM: vm-st-demo-api-mst-dev
 VM size: Standard_F1als_v7
 VM state: VM running
@@ -99,12 +121,13 @@ health contract: pre-timeout-fix contract
 corrected timeout fields observed: false
 ```
 
-No newer Azure inventory, Resource Graph query, deployment, runtime test, or mutation was performed by PR #86, PR #88, or this reconciliation.
+No newer Azure inventory, Resource Graph query, deployment, runtime test, RBAC verification, or mutation was observed in PR #89, PR #90, or this repository-only reconciliation.
 
 ## Historical timeout-fix deployment outcome
 
 ```text
 deployment grant status: consumed_blocked
+attempts: 2
 missing action at attempt time: Microsoft.Compute/virtualMachines/extensions/write
 What-If result observed: false
 deployment step executed: false
@@ -112,11 +135,11 @@ Azure resource mutation performed: false
 rollback performed: false
 ```
 
-The later RBAC package does not retroactively prove the permission became effective and does not revive deployment authorization.
+The later RBAC package does not retroactively prove that permission became effective and does not revive deployment authorization.
 
 ## RBAC reconciliation
 
-The narrow repository package defines:
+The repository package defines:
 
 ```text
 role: ServiceTracer Demo API Extension Updater v1
@@ -125,7 +148,7 @@ assignable scope: rg-st-demo-api-dev-westus2
 assignment scope: vm-st-demo-api-mst-dev/extensions/servicetracer-demo-api
 ```
 
-Repository sources conflict about execution:
+Repository sources conflict:
 
 ```text
 PR #86 narrative: operator --apply attempt asserted
@@ -147,7 +170,7 @@ protected verify-only outcome: not observed
 deployment authorized: false
 ```
 
-Conflicting claims remain visible. Missing durable evidence does not prove failure or absence.
+Missing durable evidence does not prove failure or absence.
 
 ## Resource-group cleanup boundary
 
@@ -158,7 +181,7 @@ relationship = peer operational boundaries, not nested layers
 independent demo API protected from cleanup = true
 ```
 
-Merged review candidates in the core group:
+Review candidates:
 
 ```text
 appi-demo-api-mst-dev
@@ -189,7 +212,7 @@ observed backend: VPN-02
 backend statuses: 503, 503
 failure boundary: radius_response
 exact root cause claimed: false
-backend transaction success verified = false
+backend transaction success verified: false
 live 20-attempt replay performed: false
 full workload operationally verified: false
 ```
@@ -215,9 +238,7 @@ other backup methods: not observed
 recovery tested: false
 ```
 
-The backup observation is preserved as historical evidence, but backup is not a Lab v1 requirement.
-
-Month-to-date ActualCost observed at the latest preflight:
+Month-to-date ActualCost observed at the latest protected preflight:
 
 ```text
 total: CAD 0.734335248846279
@@ -236,7 +257,7 @@ Falsv7 family quota: not returned by the latest filtered query
 
 ## Preserved planner evidence
 
-The earlier protected planner record remains a historical anchor and does not describe the current West US 2 deployment:
+The earlier protected planner record remains historical evidence and does not describe the current West US 2 deployment:
 
 ```text
 authorization reconciliation merge: 92b0c3b1064158684a4b280348c77eeedba6dfc3
@@ -252,6 +273,8 @@ current deployment view: false
 ```
 
 ## Current authority
+
+This reconciliation is repository-only. Its exact branch and two-file initial objective are declared in the pull request; the existing validator must also be updated because it freezes the PR #88 watermark as current.
 
 ```text
 repository reconciliation authorized: true
