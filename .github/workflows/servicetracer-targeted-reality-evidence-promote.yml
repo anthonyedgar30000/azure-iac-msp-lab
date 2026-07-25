@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 20
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_HEAD: dd46696a7dec8965631eb86d6f852e4b85699fda
+      SOURCE_HEAD: 386e740849dc68e90a74e9ab9793a25c7510f560
       SOURCE_WORKFLOW: servicetracer-targeted-reality-sync.yml
       SOURCE_BRANCH: agent/integrate-demo-api-frontend
     steps:
@@ -83,7 +83,7 @@ jobs:
 
           root = Path('promoted-targeted-reality-evidence')
           source = json.loads((root / 'source-run.json').read_text(encoding='utf-8'))
-          assert source['source_head'] == 'dd46696a7dec8965631eb86d6f852e4b85699fda'
+          assert source['source_head'] == '386e740849dc68e90a74e9ab9793a25c7510f560'
           assert source['conclusion'] == 'success', source
 
           artifact = root / 'artifact'
@@ -112,13 +112,15 @@ jobs:
           assert status == {'FOLLOWUP_STATUS': '0', 'TARGETED_STATUS': '0'}, status
 
           targeted = json.loads((artifact / 'targeted-sync' / 'summary.json').read_text(encoding='utf-8'))
-          assert targeted['schema_version'] == 'servicetracer.targeted-reality-sync.v1'
+          assert targeted['schema_version'] == 'servicetracer.targeted-reality-sync.v2'
           assert targeted['repository_sha'] == source['source_head']
           assert targeted['azure_authentication_performed'] is True
           assert targeted['azure_control_plane_queries_performed'] is True
+          assert targeted['guest_read_only_command_attempted'] is True
           assert targeted['azure_resource_configuration_mutations_performed'] is False
           assert targeted['transaction_replay_performed'] is False
           assert targeted['deployment_performed'] is False
+          assert targeted['service_restart_performed'] is False
           assert targeted['cleanup_performed'] is False
 
           followup = json.loads((artifact / 'control-plane-follow-up' / 'evidence' / 'summary.json').read_text(encoding='utf-8'))
@@ -137,6 +139,7 @@ jobs:
               'targeted-sync/vm.json',
               'targeted-sync/deployments.json',
               'targeted-sync/quota.json',
+              'targeted-sync/cost-month-to-date-retry.json',
               'targeted-sync/public-health.json',
               'targeted-sync/guest.json',
               'artifact-manifest.sha256',
