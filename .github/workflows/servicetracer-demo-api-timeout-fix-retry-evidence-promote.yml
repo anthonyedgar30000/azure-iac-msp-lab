@@ -1,0 +1,101 @@
+name: ServiceTracer timeout fix retry evidence promotion
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .project/authorizations/servicetracer-demo-api-timeout-fix-deployment-retry-20260724.json
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  promote:
+    name: Retrieve exact timeout fix retry evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_HEAD: ${{ github.event.pull_request.head.sha }}
+      SOURCE_BRANCH: agent/integrate-demo-api-frontend
+      SOURCE_WORKFLOW: servicetracer-demo-api-timeout-fix-deploy-retry.yml
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Retrieve exact source run and artifact
+        run: |
+          set -euo pipefail
+          mkdir -p promoted-timeout-fix-retry-evidence
+          run_id=''
+          status=''
+          conclusion=''
+          for _ in $(seq 1 360); do
+            gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/${SOURCE_WORKFLOW}/runs" \
+              -f branch="$SOURCE_BRANCH" -f event=push -F per_page=30 > /tmp/runs.json
+            run_id="$(jq -r --arg sha "$SOURCE_HEAD" '.workflow_runs | map(select(.head_sha==$sha)) | .[0].id // empty' /tmp/runs.json)"
+            if [[ -n "$run_id" ]]; then
+              status="$(jq -r --arg sha "$SOURCE_HEAD" '.workflow_runs | map(select(.head_sha==$sha)) | .[0].status' /tmp/runs.json)"
+              conclusion="$(jq -r --arg sha "$SOURCE_HEAD" '.workflow_runs | map(select(.head_sha==$sha)) | .[0].conclusion // ""' /tmp/runs.json)"
+              [[ "$status" = completed ]] && break
+            fi
+            sleep 8
+          done
+          test -n "$run_id"
+          test "$status" = completed
+          [[ "$conclusion" = success || "$conclusion" = failure ]]
+          jq -n --argjson run_id "$run_id" --arg status "$status" --arg conclusion "$conclusion" --arg source_head "$SOURCE_HEAD" \
+            '{source_run_id:$run_id,status:$status,conclusion:$conclusion,source_head:$source_head}' \
+            > promoted-timeout-fix-retry-evidence/source-run.json
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs" > promoted-timeout-fix-retry-evidence/source-jobs.json
+          job_id="$(jq -r '.jobs | map(select(.name=="Retry exact timeout fix through existing VM extension")) | .[0].id // empty' promoted-timeout-fix-retry-evidence/source-jobs.json)"
+          if [[ -n "$job_id" ]]; then
+            gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${job_id}/logs" > promoted-timeout-fix-retry-evidence/source-job.log || true
+          fi
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts" > /tmp/artifacts.json
+          artifact_id="$(jq -r '.artifacts | map(select(.name | startswith("servicetracer-demo-api-timeout-fix-retry-"))) | .[0].id // empty' /tmp/artifacts.json)"
+          test -n "$artifact_id"
+          jq --argjson selected_artifact_id "$artifact_id" '. + {selected_artifact_id:$selected_artifact_id}' /tmp/artifacts.json \
+            > promoted-timeout-fix-retry-evidence/source-artifacts.json
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > /tmp/retry-evidence.zip
+          unzip -o /tmp/retry-evidence.zip -d promoted-timeout-fix-retry-evidence/artifact
+
+      - name: Validate bounded deployment outcome
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('promoted-timeout-fix-retry-evidence')
+          source = json.loads((root / 'source-run.json').read_text())
+          artifact = root / 'artifact'
+          summary = json.loads((artifact / 'deployment-summary.json').read_text())
+          assessment = json.loads((artifact / 'what-if-assessment.json').read_text())
+          assert assessment['status'] == 'accepted_extension_only_modify'
+          assert assessment['material_change_count'] == 1
+          assert assessment['scope_escape_observed'] is False
+          assert assessment['delete_or_replace_observed'] is False
+          assert summary['transaction_replay_performed'] is False
+          if source['conclusion'] == 'success':
+              assert summary['status'] == 'deployed_and_health_verified', summary
+              assert summary['corrected_health_contract_verified'] is True
+              assert summary['resource_count_preserved'] == 7
+              health = json.loads((artifact / 'health-after.json').read_text())
+              assert health['backend_timeout_seconds'] == 10
+              assert health['max_parallel_transactions'] == 10
+              assert health['max_attempts'] == 50
+              assert health['estimated_max_execution_seconds'] == 50
+          else:
+              assert summary['status'] == 'deployment_failed_or_unverified', summary
+              assert summary['rollback_performed'] is True
+          PY
+
+      - name: Upload promoted retry evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: servicetracer-demo-api-timeout-fix-retry-promoted-evidence
+          path: promoted-timeout-fix-retry-evidence/
+          if-no-files-found: error
+          retention-days: 90
