@@ -1,0 +1,37 @@
+{
+  "schema_version": "project.reconciliation.v1",
+  "reconciliation": "servicetracer-resource-group-boundary-cleanup-plan",
+  "recorded_on": "2026-07-25",
+  "repository_base_commit": "24b04906d0936af856eb03a68ab87b4c7a3d65c3",
+  "trigger": "Portal screenshots showed both the core ServiceTracer resource group and the independent demo API resource group, plus historical demo-API-named residue in the core group.",
+  "resolved_interpretation": {
+    "resource_group_relationship": "peer_operational_boundaries",
+    "merge_resource_groups": false,
+    "move_independent_demo_api_resources": false,
+    "cleanup_target_scope": "exact historical residue candidates in rg-servicetracer-dev-westus2 only",
+    "backup_services": "intentionally_out_of_scope_for_lab_v1"
+  },
+  "evidence_basis": [
+    ".project/environment-state.json legacy partial-resource facts",
+    "docs/reviews/collector-demo-api-deploy-30050103888.md",
+    "docs/reviews/collector-demo-api-what-if-30053018998.md",
+    ".project/current-reality.json",
+    "operator portal screenshots supplied 2026-07-25"
+  ],
+  "known_candidates": [
+    "appi-demo-api-mst-dev",
+    "storfxczr3fewce",
+    "pip-st-demo-api-mst-dev",
+    "lb-st-demo-api-mst-dev",
+    "nsg-operations-mst-dev/Allow-Demo-API-HTTP-From-Internet",
+    "nsg-operations-mst-dev/Allow-Demo-API-HTTPS-From-Internet",
+    "vm-stcollector-mst-dev/extensions/servicetracer-demo-api"
+  ],
+  "claim_boundary": "This record identifies bounded review candidates. It does not establish that any candidate is orphaned, safe to delete, currently present, or currently absent.",
+  "authority": {
+    "repository_change_authorized": true,
+    "azure_query_execution_authorized": false,
+    "azure_cleanup_authorized": false,
+    "pull_request_merge_authorized": false
+  }
+}

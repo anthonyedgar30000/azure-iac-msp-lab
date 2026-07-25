@@ -1,0 +1,71 @@
+{
+  "schema_version": "servicetracer.resource-group-boundary-cleanup.v1",
+  "status": "repository_plan_only",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "repository_base_commit": "24b04906d0936af856eb03a68ab87b4c7a3d65c3",
+  "objective": "Define the peer resource-group ownership boundary and collect bounded read-only dependency evidence before any cleanup of superseded demo-API residue.",
+  "resource_group_model": {
+    "relationship": "peer_operational_boundaries_not_nested_layers",
+    "core": {
+      "name": "rg-servicetracer-dev-westus2",
+      "location": "westus2",
+      "purpose": "Core ServiceTracer lab platform, collector, VPN backends, shared networking, observability, and evidence storage."
+    },
+    "independent_demo_api": {
+      "name": "rg-st-demo-api-dev-westus2",
+      "location": "westus2",
+      "purpose": "Independent public ServiceTracer demo API workload and its dedicated compute and network resources.",
+      "protected_from_this_cleanup": true
+    }
+  },
+  "exact_cleanup_candidates": [
+    {"candidate_id":"legacy-app-insights","resource_group":"rg-servicetracer-dev-westus2","name":"appi-demo-api-mst-dev","type":"microsoft.insights/components","origin":"partial Microsoft.Web deployment residue observed on 2026-07-23","initial_state":"dependency_review_required"},
+    {"candidate_id":"legacy-storage-account","resource_group":"rg-servicetracer-dev-westus2","name":"storfxczr3fewce","type":"microsoft.storage/storageaccounts","origin":"partial Microsoft.Web deployment residue observed on 2026-07-23","initial_state":"dependency_review_required"},
+    {"candidate_id":"collector-demo-public-ip","resource_group":"rg-servicetracer-dev-westus2","name":"pip-st-demo-api-mst-dev","type":"microsoft.network/publicipaddresses","origin":"partial collector-hosted demo API deployment residue observed on 2026-07-23","initial_state":"dependency_review_required"},
+    {"candidate_id":"collector-demo-load-balancer","resource_group":"rg-servicetracer-dev-westus2","name":"lb-st-demo-api-mst-dev","type":"microsoft.network/loadbalancers","origin":"historical collector-hosted target; previously not present in time-bounded evidence","initial_state":"reobservation_required"},
+    {"candidate_id":"collector-demo-http-rule","resource_group":"rg-servicetracer-dev-westus2","name":"Allow-Demo-API-HTTP-From-Internet","parent":"nsg-operations-mst-dev","type":"microsoft.network/networksecuritygroups/securityrules","origin":"partial collector-hosted demo API deployment residue observed on 2026-07-23","initial_state":"dependency_review_required"},
+    {"candidate_id":"collector-demo-https-rule","resource_group":"rg-servicetracer-dev-westus2","name":"Allow-Demo-API-HTTPS-From-Internet","parent":"nsg-operations-mst-dev","type":"microsoft.network/networksecuritygroups/securityrules","origin":"partial collector-hosted demo API deployment residue observed on 2026-07-23","initial_state":"dependency_review_required"},
+    {"candidate_id":"collector-demo-vm-extension","resource_group":"rg-servicetracer-dev-westus2","name":"servicetracer-demo-api","parent":"vm-stcollector-mst-dev","type":"microsoft.compute/virtualmachines/extensions","origin":"historical collector-hosted target; previously not present in time-bounded evidence","initial_state":"reobservation_required"}
+  ],
+  "protected_scope_rules": [
+    "Every resource in rg-st-demo-api-dev-westus2 is protected from this cleanup.",
+    "Only exact allowlisted candidates in rg-servicetracer-dev-westus2 may become cleanup targets.",
+    "Core VPN, collector, load-balancer, network, disk, monitoring, and evidence resources are not cleanup candidates.",
+    "A candidate observed without a dependency is not automatically authorized for deletion."
+  ],
+  "required_evidence": [
+    "explicit subscription and resource-group scope",
+    "candidate presence or not_observed state",
+    "public-IP attachment references",
+    "load-balancer, NIC, NSG-rule, and VM-extension relationships",
+    "tag-based hidden-link references",
+    "relevant deployment records",
+    "exact repository declaration paths",
+    "sanitized evidence manifest and digest"
+  ],
+  "canonical_distinctions": [
+    "resource_groups_are_peers != resource_groups_are_nested",
+    "name_similarity != dependency",
+    "candidate_observed != orphaned",
+    "no_ARG_reference_observed != no_dependency_exists",
+    "historical_not_present != currently_absent",
+    "cleanup_planned != cleanup_authorized",
+    "not_observed != absent"
+  ],
+  "authority": {
+    "repository_cleanup_plan_authorized": true,
+    "pull_request_creation_authorized": true,
+    "azure_authentication_authorized": false,
+    "resource_graph_query_execution_authorized": false,
+    "azure_resource_move_authorized": false,
+    "azure_resource_delete_authorized": false,
+    "azure_resource_update_authorized": false,
+    "iac_declaration_removal_authorized": false,
+    "pull_request_merge_authorized": false
+  },
+  "next_gate": {
+    "operation": "run_exact_commit_read_only_cleanup_dependency_collection",
+    "execution_authorized": false,
+    "success_condition": "Evidence classifies each exact candidate while protecting both current workload boundaries and preserving not_observed states."
+  }
+}
