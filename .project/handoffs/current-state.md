@@ -6,34 +6,59 @@ This handoff records the latest durable repository and evidence synthesis review
 
 ```text
 merged_into_main != deployed_to_VM
-deployment_authorized != deployment_possible_with_current_identity
-ARM_authorization_failure != Azure_resource_mutation
-public_API_healthy != corrected_runtime_deployed
-role_assignment_exists != effective_required_action_granted
+repository_RBAC_package != Azure_RBAC_observed
+RBAC_apply_asserted != RBAC_apply_succeeded
+role_assignment_observed != effective_permission_verified
+cleanup_plan_merged != cleanup_query_executed
+cleanup_candidate != orphaned_resource
+resource_groups_are_peers != resource_groups_are_nested
+out_of_scope != missing_control
 historical_planner_evidence != current_deployment_state
 not_observed != false
 not_observed != absent
+conflicting != false
 ```
 
-Resolve live GitHub, exact-head CI, current authority, Azure state, cost, quota, RBAC, backup, and dependency health before every consequential operation.
+Resolve live GitHub, exact-head CI, current authority, Azure state, cost, quota, RBAC, and dependency health before every consequential operation.
 
 ## Repository watermark
 
 ```text
 repository: anthonyedgar30000/azure-iac-msp-lab
-main: c96d9cbb765a023921fa819cf7d99c957e8ad608
-latest merged pull request: 84
-PR #84 source head: 5c938a7e07da3a22b27bb5ac5aa52b7ccf22ba37
-PR #84 exact-head CI: 30137351716 / success
+main: 726c42ea1dddf402a42d8d0c591c660ebc50733f
+latest merged pull request: 88
 open pull requests observed before reconciliation: none
 local working tree: not observed
 ```
 
-GitHub reported no file-content differences between the tested PR #84 source head and merge commit `c96d9cbb765a023921fa819cf7d99c957e8ad608`. The merge commit itself has no separate status checks.
-
-PR #82 remains a preserved historical shared-state anchor:
+PR #86:
 
 ```text
+source head: 8df0a5af4b522ceeff16c0d9d1adfc978e66d559
+merge commit: 67d1aa9c784825e835097f684ddf629727ca5e22
+exact-head CI: 30141965628 / success
+merge-result CI: not observed
+```
+
+PR #88:
+
+```text
+source head: 5e05d050cace2210c9b47103fe100eceb759cd0e
+merge commit: 726c42ea1dddf402a42d8d0c591c660ebc50733f
+exact-head CI: 30142555135, 30142555107, 30142555131 / success
+merge-result CI: not observed
+final combined-main CI: not observed
+```
+
+`not_observed` is not a CI failure.
+
+## Preserved historical repository anchors
+
+```text
+PR #84 merge: c96d9cbb765a023921fa819cf7d99c957e8ad608
+PR #84 source head: 5c938a7e07da3a22b27bb5ac5aa52b7ccf22ba37
+PR #84 exact-head CI: 30137351716 / success
+
 PR #82 merge: 5dfa3b76a9fb975002d9cd702a892a0f678c88c5
 PR #82 source head: a85970061879ef4a900564d18e9631630e95b11e
 PR #82 CI: 30112308916
@@ -41,18 +66,22 @@ PR #82 CI: 30112308916
 
 ## Repository-to-runtime boundary
 
-Current `main` is 83 commits ahead of deployed source `8b3d55c616d8820edd523f77021a35fe24167bd0` and zero behind. Unlike the earlier governance-only drift, current main now contains runtime, installer, frontend, and deployment-control changes.
+Current `main` is 134 commits ahead of deployed source `8b3d55c616d8820edd523f77021a35fe24167bd0` and zero behind.
 
 ```text
 deployed_source_ref != current_main
 workload_source_or_IaC_drift = observed
 repository_timeout_fix_merged = true
 deployed_timeout_fix_verified = false
+repository_RBAC_package_merged = true
+Azure_RBAC_effectiveness_verified = false
+repository_cleanup_plan_merged = true
+cleanup_dependency_collection_executed = false
 ```
 
-## Fresh Azure state
+## Latest Azure evidence
 
-The newest protected preflight evidence was observed through `2026-07-25T00:47:40Z`:
+The newest durable protected observation remains time-bounded through `2026-07-25T00:47:40Z`:
 
 ```text
 subscription: Azure subscription 1
@@ -70,35 +99,86 @@ health contract: pre-timeout-fix contract
 corrected timeout fields observed: false
 ```
 
-No Azure resource mutation occurred during either timeout-fix deployment attempt.
+No newer Azure inventory, Resource Graph query, deployment, runtime test, or mutation was performed by PR #86, PR #88, or this reconciliation.
 
-## Deployment authorization outcome
-
-Anthony authorized one exact extension-only deployment with post-deployment health verification and rollback on failed verification.
-
-Attempt 1 stopped during preflight because the VM power state was nested under `instanceView.statuses`. The observer was corrected and exact-head CI passed.
-
-Attempt 2 stopped during ARM authorization evaluation because the protected deployment identity lacked:
-
-```text
-Microsoft.Compute/virtualMachines/extensions/write
-```
-
-Therefore:
+## Historical timeout-fix deployment outcome
 
 ```text
 deployment grant status: consumed_blocked
+missing action at attempt time: Microsoft.Compute/virtualMachines/extensions/write
 What-If result observed: false
 deployment step executed: false
 Azure resource mutation performed: false
 rollback performed: false
 ```
 
-No RBAC broadening was authorized or performed.
+The later RBAC package does not retroactively prove the permission became effective and does not revive deployment authorization.
+
+## RBAC reconciliation
+
+The narrow repository package defines:
+
+```text
+role: ServiceTracer Demo API Extension Updater v1
+action: Microsoft.Compute/virtualMachines/extensions/write
+assignable scope: rg-st-demo-api-dev-westus2
+assignment scope: vm-st-demo-api-mst-dev/extensions/servicetracer-demo-api
+```
+
+Repository sources conflict about execution:
+
+```text
+PR #86 narrative: operator --apply attempt asserted
+bootstrap reconciliation: azure_rbac_bootstrap_executed = false
+authorization record: authorized_not_consumed
+verify-only execution record: bootstrap success assumed pending evidence
+```
+
+Canonical resolution:
+
+```text
+RBAC execution truth: conflicting
+apply attempt asserted: true
+apply success: assumed_not_evidenced
+role definition observed: false
+role assignment observed: false
+effective extension write: unverified
+protected verify-only outcome: not observed
+deployment authorized: false
+```
+
+Conflicting claims remain visible. Missing durable evidence does not prove failure or absence.
+
+## Resource-group cleanup boundary
+
+```text
+rg-servicetracer-dev-westus2 = core ServiceTracer platform
+rg-st-demo-api-dev-westus2 = independent public demo API
+relationship = peer operational boundaries, not nested layers
+independent demo API protected from cleanup = true
+```
+
+Merged review candidates in the core group:
+
+```text
+appi-demo-api-mst-dev
+storfxczr3fewce
+pip-st-demo-api-mst-dev
+lb-st-demo-api-mst-dev
+nsg-operations-mst-dev/Allow-Demo-API-HTTP-From-Internet
+nsg-operations-mst-dev/Allow-Demo-API-HTTPS-From-Internet
+vm-stcollector-mst-dev/extensions/servicetracer-demo-api
+```
+
+```text
+dependency collection executed: false
+candidate current presence: not freshly observed
+candidate orphan status: not established
+cleanup authorized: false
+cleanup performed: false
+```
 
 ## Public runtime evidence
-
-The API remains healthy, but the corrected runtime is not active. The latest transaction evidence remains the earlier two-attempt sample:
 
 ```text
 transaction protocol verified: true
@@ -114,17 +194,7 @@ live 20-attempt replay performed: false
 full workload operationally verified: false
 ```
 
-## Frontend state
-
-```text
-frontend integration merged into main: true
-default data mode: fixture
-live API activation: explicit query parameter only
-GitHub Pages publication after merge verified: false
-corrected live browser rendering verified: false
-```
-
-## Security and operations
+## Security, operations, backup, cost, and quota
 
 ```text
 VM identity: SystemAssigned
@@ -137,16 +207,15 @@ metric alerts: 0
 action groups: 0
 alert delivery verified: false
 inherited roles observed: Owner, Reader, ServiceTracer Demo API What-If Planner v1
-effective required extension write: false
+effective required extension write: unverified
 effective least privilege verified: false
+Azure Backup / Recovery Services: intentionally out of scope for Lab v1
 Recovery Services vaults observed: 0
 other backup methods: not observed
 recovery tested: false
 ```
 
-Zero Recovery Services vaults does not prove every possible backup method is absent.
-
-## Cost and quota
+The backup observation is preserved as historical evidence, but backup is not a Lab v1 requirement.
 
 Month-to-date ActualCost observed at the latest preflight:
 
@@ -165,21 +234,11 @@ Standard IPv4 public IPs: 1 / 20
 Falsv7 family quota: not returned by the latest filtered query
 ```
 
-Quota is not availability, reservation, cost, or authorization.
-
 ## Preserved planner evidence
 
-The earlier protected planner run remains valid historical evidence only:
-
 ```text
-authorization reconciliation merge: 92b0c3b1064158684a4b280348c77eeedba6dfc3
 planner run: 30064289707
-planner artifact: 8585693830
-planner artifact SHA-256: 7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22
 candidate: Standard_B2ats_v2 / eastus
-restriction: NotAvailableForSubscription
-VM family: standardBasv2Family
-typed readiness control: PR #73
 status: readiness rejected before ARM validation and What-If
 current deployment view: false
 ```
@@ -194,6 +253,7 @@ workflow dispatch authorized: false
 Azure authentication authorized: false
 Azure mutation authorized: false
 Azure RBAC mutation authorized: false
+Resource Graph query authorized: false
 guest commands authorized: false
 transaction replay authorized: false
 GitHub Pages publication authorized: false
@@ -202,9 +262,9 @@ cleanup authorized: false
 
 ## Next gate
 
-Choose one separately authorized path:
+Choose one new, separately authorized, exact-commit read-only observation:
 
-1. use an already-authorized human Azure identity for the same extension-only deployment while preserving What-If, health verification, evidence, and rollback; or
-2. design and separately authorize a dedicated least-privilege identity for validation, What-If, and write access only to the existing VM extension scope.
+1. protected verify-only observation of effective extension-write permission; or
+2. Resource Graph dependency collection for the seven cleanup candidates.
 
-This reconciliation does not authorize either path.
+This reconciliation authorizes neither path.
