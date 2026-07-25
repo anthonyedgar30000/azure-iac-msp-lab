@@ -1,0 +1,91 @@
+{
+  "schema_version": "project.azure-deployment-authorization-retry.v2",
+  "recorded_on": "2026-07-25",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "authorized": true,
+  "authorization_source": "Explicit human control message: Authorize the exact-commit timeout-fix deployment attempt.",
+  "authorization_interpretation": "Authorize one exact-source attempt to apply the reviewed ServiceTracer timeout-budget correction through the existing VM extension after the parser-safe preflight and exact-head pull-request CI succeed. The grant is consumed when this workflow execution is attempted or reaches a terminal outcome.",
+  "source_binding": {
+    "rule": "Execute only the immutable github.sha containing this authorization marker after exact-head pull-request CI for that same SHA succeeds.",
+    "branch": "fix/timeout-vm-instance-view-preflight",
+    "parser_repair_head": "a60cd86f0e386eccac44ce4c2267b4c17dfe9954",
+    "parser_repair_merge_commit": "50c683d77a7214f167bd9a35a221fdf6c7c0c3bd",
+    "previous_trusted_source_ref": "8b3d55c616d8820edd523f77021a35fe24167bd0"
+  },
+  "prior_attempt": {
+    "workflow_run_id": 30136642571,
+    "run_attempt": 3,
+    "source_head": "9ab616c23ee9814aabcd71180b0edbbf2b53d83a",
+    "failure_stage": "preflight_vm_instance_view_parser",
+    "failure": "Azure CLI returned power state under instanceView.statuses while the consumed workflow iterated the nullable top-level statuses field.",
+    "azure_authentication_succeeded": true,
+    "vm_running_observed": true,
+    "arm_validation_performed": false,
+    "what_if_performed": false,
+    "azure_mutation_performed": false,
+    "deployment_performed": false,
+    "rollback_performed": false
+  },
+  "scope": {
+    "subscription": "protected_target_subscription",
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "location": "westus2",
+    "vm": "vm-st-demo-api-mst-dev",
+    "extension": "servicetracer-demo-api",
+    "only_existing_extension_update": true,
+    "expected_resource_count_before_and_after": 7
+  },
+  "expected_runtime_contract": {
+    "backend_timeout_seconds": 10,
+    "max_parallel_transactions": 10,
+    "max_attempts": 50,
+    "estimated_max_execution_seconds": 50,
+    "nginx_proxy_read_timeout_seconds": 75
+  },
+  "authority": {
+    "azure_authentication": true,
+    "read_only_preflight": true,
+    "arm_validation": true,
+    "arm_what_if": true,
+    "deployment": true,
+    "existing_vm_extension_update": true,
+    "service_reinstallation_and_restart_by_installer": true,
+    "rollback_on_failed_verification": true,
+    "public_health_get": true,
+    "transaction_replay": false,
+    "pull_request_merge": false,
+    "github_pages_publication": false,
+    "cleanup": false,
+    "rbac_mutation": false,
+    "network_mutation": false,
+    "vm_replacement": false,
+    "resource_deletion": false
+  },
+  "failure_behavior": {
+    "authorization_or_source_mismatch": "stop_before_Azure_login_or_mutation",
+    "preflight_or_what_if_rejection": "stop_before_mutation_and_preserve_evidence",
+    "deployment_or_health_failure": "reinstall_previous_trusted_source_and verify_public_health",
+    "rollback_failure": "record_failure_without_claiming_recovery"
+  },
+  "evidence_required": [
+    "exact-head pull-request CI identity and conclusion",
+    "hashed subscription and tenant identity",
+    "resource group and seven-resource inventory before and after",
+    "parser-validated VM running state",
+    "cost and quota observations with explicit uncertainty boundaries",
+    "ARM validation result",
+    "extension-only What-If assessment",
+    "deployment or rollback result",
+    "public health contract verification",
+    "artifact SHA-256 manifest"
+  ],
+  "claim_boundaries": [
+    "authorization_created != deployment_succeeded",
+    "deployment_authorized != transaction_replay_authorized",
+    "extension_update_authorized != network_or_RBAC_mutation_authorized",
+    "deployment_succeeded != full_workload_operationally_verified",
+    "rollback_attempted != rollback_verified",
+    "this_authorization_is_finite_scope_bound_identity_bound_and_non_renewing"
+  ]
+}
