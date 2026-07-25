@@ -1,0 +1,154 @@
+name: ServiceTracer targeted reality evidence promotion
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/servicetracer-targeted-reality-evidence-promote.yml
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  promote:
+    name: Retrieve and validate targeted reality evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_HEAD: dd46696a7dec8965631eb86d6f852e4b85699fda
+      SOURCE_WORKFLOW: servicetracer-targeted-reality-sync.yml
+      SOURCE_BRANCH: agent/integrate-demo-api-frontend
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Retrieve exact source run and artifact
+        run: |
+          set -euo pipefail
+          mkdir -p promoted-targeted-reality-evidence
+          RUN_ID=''
+          STATUS=''
+          CONCLUSION=''
+          for _ in $(seq 1 120); do
+            gh api -X GET \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/${SOURCE_WORKFLOW}/runs" \
+              -f branch="${SOURCE_BRANCH}" \
+              -f event=push \
+              -F per_page=20 \
+              > /tmp/targeted-runs.json
+            RUN_ID="$(jq -r --arg sha "$SOURCE_HEAD" '.workflow_runs | map(select(.head_sha == $sha)) | .[0].id // empty' /tmp/targeted-runs.json)"
+            if [[ -n "$RUN_ID" ]]; then
+              STATUS="$(jq -r --arg sha "$SOURCE_HEAD" '.workflow_runs | map(select(.head_sha == $sha)) | .[0].status' /tmp/targeted-runs.json)"
+              CONCLUSION="$(jq -r --arg sha "$SOURCE_HEAD" '.workflow_runs | map(select(.head_sha == $sha)) | .[0].conclusion // ""' /tmp/targeted-runs.json)"
+              if [[ "$STATUS" == 'completed' ]]; then
+                break
+              fi
+            fi
+            sleep 5
+          done
+          test -n "$RUN_ID"
+          test "$STATUS" = 'completed'
+          jq -n --argjson run_id "$RUN_ID" --arg status "$STATUS" --arg conclusion "$CONCLUSION" --arg source_head "$SOURCE_HEAD" \
+            '{source_run_id:$run_id,status:$status,conclusion:$conclusion,source_head:$source_head}' \
+            > promoted-targeted-reality-evidence/source-run.json
+
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs" \
+            > promoted-targeted-reality-evidence/source-jobs.json
+          JOB_ID="$(jq -r '.jobs | map(select(.name == "Refresh Azure and guest evidence without mutation")) | .[0].id // empty' promoted-targeted-reality-evidence/source-jobs.json)"
+          if [[ -n "$JOB_ID" ]]; then
+            gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${JOB_ID}/logs" \
+              > promoted-targeted-reality-evidence/source-job.log || true
+          fi
+
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts" \
+            > /tmp/targeted-artifacts.json
+          ARTIFACT_ID="$(jq -r '.artifacts | map(select(.name | startswith("servicetracer-targeted-reality-sync-"))) | .[0].id // empty' /tmp/targeted-artifacts.json)"
+          test -n "$ARTIFACT_ID"
+          jq --argjson artifact_id "$ARTIFACT_ID" '. + {selected_artifact_id:$artifact_id}' \
+            /tmp/targeted-artifacts.json \
+            > promoted-targeted-reality-evidence/source-artifacts.json
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" \
+            > /tmp/targeted-reality-evidence.zip
+          unzip -o /tmp/targeted-reality-evidence.zip \
+            -d promoted-targeted-reality-evidence/artifact
+
+      - name: Validate authority and evidence contracts
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('promoted-targeted-reality-evidence')
+          source = json.loads((root / 'source-run.json').read_text(encoding='utf-8'))
+          assert source['source_head'] == 'dd46696a7dec8965631eb86d6f852e4b85699fda'
+          assert source['conclusion'] == 'success', source
+
+          artifact = root / 'artifact'
+          authorization = json.loads((artifact / 'authorization.json').read_text(encoding='utf-8'))
+          assert authorization['repository_sha'] == source['source_head']
+          assert authorization['azure_authentication_authorized'] is True
+          assert authorization['read_only_control_plane_queries_authorized'] is True
+          assert authorization['guest_read_only_command_authorized'] is True
+          assert authorization['public_health_get_authorized'] is True
+          for key in (
+              'transaction_replay_authorized',
+              'azure_resource_configuration_mutations_authorized',
+              'deployment_authorized',
+              'service_restart_authorized',
+              'github_pages_publication_authorized',
+              'pull_request_merge_authorized',
+              'cleanup_authorized',
+          ):
+              assert authorization[key] is False, key
+
+          status = dict(
+              line.split('=', 1)
+              for line in (artifact / 'execution-status.env').read_text(encoding='utf-8').splitlines()
+              if '=' in line
+          )
+          assert status == {'FOLLOWUP_STATUS': '0', 'TARGETED_STATUS': '0'}, status
+
+          targeted = json.loads((artifact / 'targeted-sync' / 'summary.json').read_text(encoding='utf-8'))
+          assert targeted['schema_version'] == 'servicetracer.targeted-reality-sync.v1'
+          assert targeted['repository_sha'] == source['source_head']
+          assert targeted['azure_authentication_performed'] is True
+          assert targeted['azure_control_plane_queries_performed'] is True
+          assert targeted['azure_resource_configuration_mutations_performed'] is False
+          assert targeted['transaction_replay_performed'] is False
+          assert targeted['deployment_performed'] is False
+          assert targeted['cleanup_performed'] is False
+
+          followup = json.loads((artifact / 'control-plane-follow-up' / 'evidence' / 'summary.json').read_text(encoding='utf-8'))
+          assert followup['azure_authentication_performed'] is True
+          assert followup['azure_control_plane_queried'] is True
+          assert followup['azure_mutations_performed'] is False
+          assert followup['guest_commands_performed'] is False
+          assert followup['transaction_replay_performed'] is False
+
+          for relative in (
+              'control-plane-follow-up/evidence/rbac.json',
+              'control-plane-follow-up/evidence/cost-month-to-date.json',
+              'control-plane-follow-up/evidence/backup.json',
+              'targeted-sync/account.json',
+              'targeted-sync/inventory.json',
+              'targeted-sync/vm.json',
+              'targeted-sync/deployments.json',
+              'targeted-sync/quota.json',
+              'targeted-sync/public-health.json',
+              'targeted-sync/guest.json',
+              'artifact-manifest.sha256',
+          ):
+              assert (artifact / relative).is_file(), relative
+          PY
+
+      - name: Upload promoted evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: servicetracer-targeted-reality-promoted-evidence
+          path: promoted-targeted-reality-evidence/
+          if-no-files-found: error
+          retention-days: 90
