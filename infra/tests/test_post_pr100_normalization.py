@@ -34,14 +34,22 @@ class PostPr100NormalizationTests(unittest.TestCase):
         self.assertFalse(evidence["azure_mutation_performed"])
         self.assertFalse(evidence["deployment_authorized"])
 
-    def test_normalization_does_not_claim_canonical_promotion(self) -> None:
+    def test_normalization_tracks_canonical_promotion_transition(self) -> None:
         normalization = self.record["normalization"]
         self.assertTrue(normalization["temporary_write_workflow_removed"])
         self.assertTrue(normalization["temporary_promotion_script_removed"])
-        self.assertEqual(
+        self.assertIn(
             normalization["canonical_state_promotion_status"],
-            "pending_separate_repository_increment",
+            {
+                "pending_separate_repository_increment",
+                "rendered_and_validated_for_followup_review",
+            },
         )
+
+        render_contract = self.record["render_contract"]
+        self.assertFalse(render_contract["repository_write_from_actions"])
+        self.assertFalse(render_contract["azure_access"])
+        self.assertFalse(render_contract["deployment"])
 
     def test_operational_authority_remains_false(self) -> None:
         authority = self.record["authority"]

@@ -17,6 +17,17 @@
     "recovered_pr92_evidence_preserved": true,
     "canonical_state_promotion_status": "pending_separate_repository_increment"
   },
+  "render_contract": {
+    "workflow": ".github/workflows/render-post-pr101-evidence-promotion.yml",
+    "accepted_statuses": [
+      "pending_separate_repository_increment",
+      "rendered_and_validated_for_followup_review"
+    ],
+    "repository_write_from_actions": false,
+    "azure_access": false,
+    "deployment": false,
+    "artifact_required_before_direct_commit": true
+  },
   "preserved_evidence": {
     "historical_protected_run_id": 30160680313,
     "historical_protected_artifact_id": 8620163872,

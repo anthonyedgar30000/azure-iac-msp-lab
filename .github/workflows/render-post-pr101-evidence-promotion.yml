@@ -1,0 +1,303 @@
+name: Render post-PR101 canonical evidence promotion
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/render-post-pr101-evidence-promotion.yml
+      - .project/evidence/pr92-protected-verification-recovery-30171257533.json
+      - .project/reconciliations/post-pr100-normalization-20260725.json
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  render:
+    name: Render and validate canonical evidence promotion
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BASE_MAIN: 129cc8e6cbef471c56db6c410b2b775967eadc9a
+      DEPLOYED_SOURCE: 8b3d55c616d8820edd523f77021a35fe24167bd0
+      GENERATOR_SOURCE: 907c14b9b61abf8260aa5257e47cbe35dbe39999
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore and patch reviewed generator
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse "$BASE_MAIN")" = "$BASE_MAIN"
+          git show "$GENERATOR_SOURCE:scripts/apply_post_pr99_evidence_promotion.py" \
+            > scripts/apply_post_pr99_evidence_promotion.py
+
+          ahead_count="$(git rev-list --count "${DEPLOYED_SOURCE}..${BASE_MAIN}")"
+          export ahead_count
+
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          path = Path("scripts/apply_post_pr99_evidence_promotion.py")
+          text = path.read_text(encoding="utf-8")
+          text = text.replace(
+              'BASE_MAIN = "719fe25db340fecbcc24599d6cf3c7ac1eee80dd"',
+              'BASE_MAIN = "129cc8e6cbef471c56db6c410b2b775967eadc9a"',
+          )
+
+          needle = '''Usage may lag and is not a final invoice or forecast.
+
+          ## Cleanup and optional capability boundaries
+          '''
+          replacement = '''Usage may lag and is not a final invoice or forecast.
+
+          ## Preserved historical planner evidence
+
+          ```text
+          authorization reconciliation merge: 92b0c3b1064158684a4b280348c77eeedba6dfc3
+          planner run: 30064289707
+          planner artifact: 8585693830
+          planner artifact SHA-256: 7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22
+          candidate restriction: NotAvailableForSubscription
+          VM family: standardBasv2Family
+          typed readiness control: PR #73
+          status: readiness rejected before ARM validation and What-If
+          current deployment view: false
+          ```
+
+          ## Cleanup and optional capability boundaries
+          '''
+          if text.count(needle) != 1:
+              raise SystemExit("expected exactly one historical-handoff insertion point")
+          path.write_text(text.replace(needle, replacement), encoding="utf-8")
+          PY
+          python3 -m py_compile scripts/apply_post_pr99_evidence_promotion.py
+
+      - name: Render canonical files in the runner only
+        run: |
+          set -euo pipefail
+          python3 scripts/apply_post_pr99_evidence_promotion.py
+
+      - name: Reconcile generated files to the post-PR101 baseline
+        run: |
+          set -euo pipefail
+          ahead_count="$(git rev-list --count "${DEPLOYED_SOURCE}..${BASE_MAIN}")"
+          export ahead_count
+
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path.cwd()
+          main = os.environ["BASE_MAIN"]
+          ahead = int(os.environ["ahead_count"])
+
+          def load(path: str):
+              return json.loads((root / path).read_text(encoding="utf-8"))
+
+          def dump(path: str, value):
+              (root / path).write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+
+          current_path = ".project/current-reality.json"
+          current = load(current_path)
+          repo = current["repository_state"]
+          repo["observed_head"] = main
+          repo["latest_merged_pull_request"] = 101
+          repo["also_merged_pull_requests"] = [97, 98, 99, 100]
+          repo["merge_order"] = [98, 97, 99, 100, 101]
+          repo["open_pull_requests_observed"] = []
+          repo["exact_head_ci"].update({
+              "pr100_source_head": "d36a80729a6a6e84632f15ade82490af96d3c6c3",
+              "pr100_ci_run_id": 30175942204,
+              "pr100_ci_conclusion": "success",
+              "pr101_source_head": "409880d83fc5f53b95fe831b2e82d1f43f890dab",
+              "pr101_ci_run_id": 30176315525,
+              "pr101_ci_conclusion": "success",
+          })
+          repo["merge_result_ci"].update({
+              "pr100_merge_commit": "907c14b9b61abf8260aa5257e47cbe35dbe39999",
+              "pr100_merge_commit_run": "not_observed",
+              "pr101_merge_commit": main,
+              "pr101_merge_commit_run": "not_observed",
+          })
+          repo["operator_merge_reconciliation"].update({
+              "pr100_recorded_agent_merge_authority": False,
+              "pr100_human_operator_merge_observed": True,
+              "pr101_recorded_agent_merge_authority": False,
+              "pr101_human_operator_merge_observed": True,
+          })
+          repo["claim_boundary"] = (
+              "GitHub establishes main at PR #101 merge commit 129cc8e. Exact source-head CI passed "
+              "for PRs #99, #100, and #101. Recovered PR #92 protected evidence verifies effective "
+              "extension-write permission without Azure mutation. No merge-result CI was observed on "
+              "the final main composition and no fresh Azure query was performed."
+          )
+
+          anchors = current["evidence_anchors"]
+          anchors.update({
+              "pr100_source_head": "d36a80729a6a6e84632f15ade82490af96d3c6c3",
+              "pr100_merge_commit": "907c14b9b61abf8260aa5257e47cbe35dbe39999",
+              "pr100_ci_run_id": 30175942204,
+              "pr101_source_head": "409880d83fc5f53b95fe831b2e82d1f43f890dab",
+              "pr101_merge_commit": main,
+              "pr101_ci_run_id": 30176315525,
+              "post_pr100_normalization": ".project/reconciliations/post-pr100-normalization-20260725.json",
+          })
+
+          rr = current["independent_demo_api"]["repository_reconciliation"]
+          rr["main_ahead_by_commits"] = ahead
+          rr["main_behind_by_commits"] = 0
+          rr["pr100_evidence_promotion_package_merged_into_main"] = True
+          rr["pr101_temporary_write_machinery_removed"] = True
+          rr["interpretation"] = (
+              "Current main contains the timeout correction, recovered protected evidence package, "
+              "and removal of temporary repository write machinery. Effective extension-write "
+              "permission is verified; the corrected runtime remains undeployed and the Azure "
+              "observation remains time-bounded."
+          )
+          dump(current_path, current)
+
+          recon_path = ".project/reconciliations/post-pr99-protected-verification-evidence.json"
+          recon = load(recon_path)
+          recon["baseline"].update({
+              "main": main,
+              "latest_merged_pull_request": 101,
+              "main_ahead_by_commits": ahead,
+              "main_behind_by_commits": 0,
+          })
+          recon["repository_normalization"] = {
+              "pull_request": 101,
+              "merge_commit": main,
+              "temporary_write_workflow_removed": True,
+              "temporary_promotion_script_removed": True,
+              "exact_head_ci_run": 30176315525,
+              "exact_head_ci_conclusion": "success",
+          }
+          dump(recon_path, recon)
+
+          norm_path = ".project/reconciliations/post-pr100-normalization-20260725.json"
+          norm = load(norm_path)
+          norm["normalization"]["canonical_state_promotion_status"] = "rendered_and_validated_for_followup_review"
+          norm["next_gate"] = {
+              "operation": "review_and_merge_direct_canonical_evidence_promotion",
+              "execution_authorized": False,
+              "claim_boundary": "The rendered repository diff performs no Azure access, workflow rerun, deployment, or infrastructure mutation.",
+          }
+          dump(norm_path, norm)
+
+          handoff_path = root / ".project/handoffs/current-state.md"
+          handoff = handoff_path.read_text(encoding="utf-8")
+          handoff = handoff.replace(
+              "main observed before this reconciliation branch: 719fe25db340fecbcc24599d6cf3c7ac1eee80dd",
+              f"main observed before this reconciliation branch: {main}",
+          )
+          handoff = handoff.replace("latest merged pull request: #99", "latest merged pull request: #101")
+          handoff = handoff.replace("main ahead of deployed source: 191 commits", f"main ahead of deployed source: {ahead} commits")
+          handoff_path.write_text(handoff, encoding="utf-8")
+
+          validator_path = root / "scripts/validate_post_merge_pr86_pr88_current_reality.py"
+          validator = validator_path.read_text(encoding="utf-8")
+          validator = validator.replace(
+              'MAIN = "719fe25db340fecbcc24599d6cf3c7ac1eee80dd"',
+              f'MAIN = "{main}"',
+          )
+          validator = validator.replace(
+              'require(repo["latest_merged_pull_request"] == 99, "latest PR mismatch")',
+              'require(repo["latest_merged_pull_request"] == 101, "latest PR mismatch")',
+          )
+          validator = validator.replace(
+              'require(repo["merge_order"] == [98, 97, 99], "merge order mismatch")',
+              'require(repo["merge_order"] == [98, 97, 99, 100, 101], "merge order mismatch")',
+          )
+          validator = validator.replace(
+              'require(api["repository_reconciliation"]["main_ahead_by_commits"] == 191, "ahead count mismatch")',
+              f'require(api["repository_reconciliation"]["main_ahead_by_commits"] == {ahead}, "ahead count mismatch")',
+          )
+          validator_path.write_text(validator, encoding="utf-8")
+
+          tests_path = root / "tests/test_post_merge_pr86_pr88_current_reality.py"
+          tests = tests_path.read_text(encoding="utf-8")
+          tests = tests.replace(
+              'self.assertEqual(repo["observed_head"], "719fe25db340fecbcc24599d6cf3c7ac1eee80dd")',
+              f'self.assertEqual(repo["observed_head"], "{main}")',
+          )
+          tests = tests.replace('self.assertEqual(repo["latest_merged_pull_request"], 99)', 'self.assertEqual(repo["latest_merged_pull_request"], 101)')
+          tests = tests.replace('self.assertEqual(repo["merge_order"], [98, 97, 99])', 'self.assertEqual(repo["merge_order"], [98, 97, 99, 100, 101])')
+          tests = tests.replace(
+              'self.assertEqual(api["repository_reconciliation"]["main_ahead_by_commits"], 191)',
+              f'self.assertEqual(api["repository_reconciliation"]["main_ahead_by_commits"], {ahead})',
+          )
+          tests_path.write_text(tests, encoding="utf-8")
+          PY
+
+      - name: Validate rendered canonical state
+        id: validate
+        continue-on-error: true
+        run: |
+          set +e
+          mkdir -p /tmp/post-pr101-promotion/validation
+          overall=0
+
+          run_check() {
+            name="$1"
+            shift
+            "$@" >"/tmp/post-pr101-promotion/validation/${name}.log" 2>&1
+            rc=$?
+            printf '%s\n' "$rc" >"/tmp/post-pr101-promotion/validation/${name}.exit-code"
+            if [[ "$rc" -ne 0 ]]; then
+              overall=1
+            fi
+          }
+
+          run_check project-validator python3 .project/validate.py
+          run_check current-reality-validator python3 scripts/validate_post_merge_pr86_pr88_current_reality.py
+          run_check current-reality-tests python3 tests/test_post_merge_pr86_pr88_current_reality.py
+          run_check completion-gate-tests python3 infra/tests/test_lab_v1_completion_gate.py
+          run_check recovery-tests python3 infra/tests/test_pr92_protected_verification_recovery.py
+          run_check normalization-tests python3 infra/tests/test_post_pr100_normalization.py
+
+          printf '%s\n' "$overall" > /tmp/post-pr101-promotion/validation-overall-exit-code.txt
+          cat /tmp/post-pr101-promotion/validation/*.log
+          exit "$overall"
+
+      - name: Build review artifact
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/post-pr101-promotion
+          git diff --binary > /tmp/post-pr101-promotion/post-pr101-canonical-evidence-promotion.patch
+          git status --short > /tmp/post-pr101-promotion/changed-files.txt
+          cp --parents \
+            .project/current-reality.json \
+            .project/lab-v1-completion-gate.json \
+            .project/handoffs/current-state.md \
+            .project/reconciliations/post-pr99-protected-verification-evidence.json \
+            .project/reconciliations/post-pr100-normalization-20260725.json \
+            .github/workflows/recover-pr92-protected-verification-evidence.yml \
+            docs/lab-v1-completion-gate.md \
+            scripts/validate_post_merge_pr86_pr88_current_reality.py \
+            tests/test_post_merge_pr86_pr88_current_reality.py \
+            infra/tests/test_lab_v1_completion_gate.py \
+            infra/tests/test_pr92_protected_verification_recovery.py \
+            /tmp/post-pr101-promotion/
+
+      - name: Upload review artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-pr101-canonical-evidence-promotion-${{ github.run_id }}
+          path: /tmp/post-pr101-promotion
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Fail closed when validation failed
+        if: always()
+        run: |
+          set -euo pipefail
+          test -f /tmp/post-pr101-promotion/validation-overall-exit-code.txt
+          test "$(cat /tmp/post-pr101-promotion/validation-overall-exit-code.txt)" = "0"
