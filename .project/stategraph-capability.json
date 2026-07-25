@@ -1,0 +1,140 @@
+{
+  "schema_version": "project.stategraph-capability.v1",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "recorded_on": "2026-07-25",
+  "decision_status": "accepted_design_for_pending_repository_review_and_merge",
+  "objective": "Make Stategraph available as an optional working capability inside the Azure IaC MSP Lab without making ordinary infrastructure work depend on it.",
+  "governing_question": "Does Stategraph help push the MSP demo lab forward faster and with more confidence?",
+  "current_classification": {
+    "priority": "Design For",
+    "build_now": false,
+    "admission_rule": "Stategraph may move to Build Now only when it directly closes a Lab v1 completion criterion, removes a material security or operational credibility defect, produces required demonstration evidence, or a later explicit human priority decision changes the gate.",
+    "lab_v1_gate": ".project/lab-v1-completion-gate.json"
+  },
+  "current_reality": {
+    "existing_iac_authority": "Bicep",
+    "existing_servicetracer_entrypoint": "infra/main.bicep",
+    "terraform_root_present": false,
+    "stategraph_configuration_present": false,
+    "stategraph_ci_present": false,
+    "stategraph_runtime_available": false,
+    "azure_change_performed_for_this_decision": false,
+    "reconciliation": ".project/reconciliations/pre-stategraph-adoption-20260725.json"
+  },
+  "architecture_boundaries": {
+    "existing_servicetracer_resources": {
+      "owner": "Bicep",
+      "stategraph_participation": "none",
+      "terraform_import_allowed": false
+    },
+    "first_eligible_pilot": {
+      "type": "isolated Terraform root",
+      "resource_overlap_with_existing_bicep": false,
+      "initial_execution_path": "standard Terraform",
+      "initial_stategraph_mode": "advisory shadow",
+      "stategraph_apply_enabled": false
+    },
+    "fallback": {
+      "required": true,
+      "path": "standard Terraform",
+      "stategraph_unavailable_behavior": "Continue ordinary Terraform validation and planning without Stategraph.",
+      "destructive_change_behavior": "Use the standard Terraform path until explicit compatibility and recovery tests pass."
+    }
+  },
+  "planned_phases": [
+    {
+      "phase": 0,
+      "name": "Adoption and bounded reality reconciliation",
+      "status": "implemented_on_branch_pending_review",
+      "azure_action": false
+    },
+    {
+      "phase": 1,
+      "name": "Isolated standard Terraform foundation",
+      "status": "not_started_not_currently_admitted",
+      "requirements": [
+        "fresh repository and Azure reality synchronization",
+        "Lab v1 scope admission",
+        "standard Terraform validation independent of Stategraph",
+        "backend, identity, cost, region, quota, rollback, cleanup, and evidence design"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Stategraph diagnostics and advisory shadow",
+      "status": "not_started",
+      "requirements": [
+        "Phase 1 complete",
+        "read-only or plan-only Stategraph access",
+        "sanitized diagnostics and graph evidence",
+        "nonblocking failure behavior"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Use during real Terraform changes",
+      "status": "not_started",
+      "requirements": [
+        "real lab increments rather than artificial benchmarks",
+        "recorded speed, dependency, confidence, and overhead observations",
+        "standard Terraform remains usable"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Optional Stategraph execution pilot",
+      "status": "not_authorized",
+      "requirements": [
+        "demonstrated advisory value",
+        "plan equivalence review",
+        "tested state export and fallback",
+        "separate exact-scope authorization",
+        "no destructive first apply"
+      ]
+    }
+  ],
+  "evaluation": {
+    "signals_to_continue": [
+      "fewer missed dependencies",
+      "faster impact analysis",
+      "clearer change review",
+      "higher deployment confidence",
+      "less repeated investigation",
+      "acceptable operational overhead"
+    ],
+    "signals_to_restrict_or_remove": [
+      "ambiguous state ownership",
+      "unexplained plan differences",
+      "fallback failure",
+      "greater reconciliation overhead than value",
+      "ordinary Terraform becomes dependent on Stategraph"
+    ],
+    "formal_benchmark_required": false,
+    "real_work_observation_required": true
+  },
+  "security": {
+    "secrets_committed": false,
+    "raw_terraform_state_committed": false,
+    "stategraph_token_committed": false,
+    "azure_client_secret_committed": false,
+    "preferred_azure_authentication_for_future_ci": "GitHub OIDC",
+    "agent_apply_permission_default": "denied"
+  },
+  "authority": {
+    "pull_request_merge": false,
+    "workflow_dispatch_or_rerun": false,
+    "azure_authentication_or_query": false,
+    "azure_mutation_or_deployment": false,
+    "terraform_backend_creation": false,
+    "terraform_plan": false,
+    "terraform_apply": false,
+    "stategraph_account_tenant_or_state_creation": false,
+    "stategraph_token_creation": false,
+    "stategraph_apply": false
+  },
+  "next_gate": {
+    "operation": "review_and_merge_stategraph_adoption_record",
+    "after_merge": "Continue Lab v1 completion. Re-evaluate Stategraph Build Now admission only when the completion gate permits it or an explicit human priority decision changes that ordering.",
+    "claim_boundary": "Repository adoption records strategy only. It does not establish a Terraform root, Stategraph runtime, Stategraph account, CI integration, Azure access, Azure deployment, or operational benefit."
+  }
+}
