@@ -236,16 +236,37 @@ jobs:
           PY
 
       - name: Validate rendered canonical state
+        id: validate
+        continue-on-error: true
         run: |
-          set -euo pipefail
-          python3 .project/validate.py
-          python3 scripts/validate_post_merge_pr86_pr88_current_reality.py
-          python3 tests/test_post_merge_pr86_pr88_current_reality.py
-          python3 infra/tests/test_lab_v1_completion_gate.py
-          python3 infra/tests/test_pr92_protected_verification_recovery.py
-          python3 infra/tests/test_post_pr100_normalization.py
+          set +e
+          mkdir -p /tmp/post-pr101-promotion/validation
+          overall=0
+
+          run_check() {
+            name="$1"
+            shift
+            "$@" >"/tmp/post-pr101-promotion/validation/${name}.log" 2>&1
+            rc=$?
+            printf '%s\n' "$rc" >"/tmp/post-pr101-promotion/validation/${name}.exit-code"
+            if [[ "$rc" -ne 0 ]]; then
+              overall=1
+            fi
+          }
+
+          run_check project-validator python3 .project/validate.py
+          run_check current-reality-validator python3 scripts/validate_post_merge_pr86_pr88_current_reality.py
+          run_check current-reality-tests python3 tests/test_post_merge_pr86_pr88_current_reality.py
+          run_check completion-gate-tests python3 infra/tests/test_lab_v1_completion_gate.py
+          run_check recovery-tests python3 infra/tests/test_pr92_protected_verification_recovery.py
+          run_check normalization-tests python3 infra/tests/test_post_pr100_normalization.py
+
+          printf '%s\n' "$overall" > /tmp/post-pr101-promotion/validation-overall-exit-code.txt
+          cat /tmp/post-pr101-promotion/validation/*.log
+          exit "$overall"
 
       - name: Build review artifact
+        if: always()
         run: |
           set -euo pipefail
           mkdir -p /tmp/post-pr101-promotion
@@ -266,9 +287,17 @@ jobs:
             /tmp/post-pr101-promotion/
 
       - name: Upload review artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: post-pr101-canonical-evidence-promotion-${{ github.run_id }}
           path: /tmp/post-pr101-promotion
           if-no-files-found: error
           retention-days: 14
+
+      - name: Fail closed when validation failed
+        if: always()
+        run: |
+          set -euo pipefail
+          test -f /tmp/post-pr101-promotion/validation-overall-exit-code.txt
+          test "$(cat /tmp/post-pr101-promotion/validation-overall-exit-code.txt)" = "0"
