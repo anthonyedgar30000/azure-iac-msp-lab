@@ -17,6 +17,10 @@ class FrontendStatusChipTests(unittest.TestCase):
         self.assertIn("function setIncidentState(text, stateName = 'neutral')", app)
         self.assertNotIn("function setIncidentState(text, warning = false)", app)
         self.assertIn(
+            "const resolvedState = INCIDENT_STATES.has(stateName) ? stateName : 'neutral';",
+            app,
+        )
+        self.assertIn(
             "elements.incidentChip.classList.remove('status-neutral', 'status-healthy', 'status-warning');",
             app,
         )
