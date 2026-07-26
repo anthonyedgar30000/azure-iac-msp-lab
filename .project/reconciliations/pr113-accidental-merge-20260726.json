@@ -1,0 +1,88 @@
+{
+  "schema_version": "project.repository-governance-incident.v1",
+  "recorded_on": "2026-07-26",
+  "project": "Azure IaC MSP Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "incident": {
+    "id": "pr113-accidental-merge-20260726",
+    "category": "human_error_authorization_boundary_violation",
+    "severity": "repository_governance_reconciliation_required",
+    "acknowledged_by": "Anthony Edgar",
+    "acknowledgement": "The pull-request merge was accidental and caused by human error.",
+    "malicious_activity_observed": false
+  },
+  "observed_repository_state": {
+    "pull_request": 113,
+    "pull_request_intent": "execution_record_not_intended_to_merge",
+    "pull_request_merge_authorized": false,
+    "actual_pull_request_state": "merged",
+    "merge_commit": "4e5cc09a082f44645946cd67da2451fb2ebe76e0",
+    "valid_backend_repair_parent": "5e60a9511dcf9c4917945fbd5b7c2f34fa177016",
+    "valid_backend_repair_pull_request": 114,
+    "files_introduced_or_relaxed_by_pr113": [
+      ".project/authorizations/servicetracer-demo-api-timeout-fix-direct-put-retry-20260725.json",
+      "workloads/servicetracer-demo-api/tests/test_direct_extension_put_retry.py",
+      "workloads/servicetracer-demo-api/tests/test_timeout_direct_put_convergence.py"
+    ],
+    "comparison_result": "PR113 added one consumed authorization marker and relaxed two tests; it did not modify the PR114 collector backend repair files.",
+    "open_pull_requests_observed_before_reconciliation": [],
+    "local_active_branch_and_working_tree": "not_observed_through_GitHub_connector"
+  },
+  "authorization_reality": {
+    "authorization_marker_status_before_reconciliation": "present_on_main_but_consumed_and_nonrenewing",
+    "maximum_attempts": 1,
+    "retry_authorized": false,
+    "merge_after_execution_authorized": false,
+    "repository_marker_present_does_not_renew_authority": true
+  },
+  "azure_reality_boundary": {
+    "merge_commit_caused_new_Azure_mutation": "not_observed",
+    "new_deployment_authorized": false,
+    "workflow_rerun_authorized": false,
+    "Azure_login_or_query_performed_for_this_reconciliation": false,
+    "cost_refreshed": false,
+    "quota_refreshed": false,
+    "current_deployed_runtime_state": "not_refreshed_by_this_repository_only_reconciliation"
+  },
+  "corrective_action": {
+    "history_rewrite": false,
+    "preserve_merge_evidence": true,
+    "remove_consumed_authorization_marker": true,
+    "restore_tests_to_require_marker_absence": true,
+    "preserve_pr114_backend_repair": true,
+    "record_incident_transparently": true,
+    "automatic_retry": false
+  },
+  "reconciliation_authority": {
+    "source": "Anthony Edgar instructed: Proceed, after acknowledging the accidental merge.",
+    "branch_creation": true,
+    "repository_patch": true,
+    "pull_request_creation": true,
+    "ordinary_pull_request_CI": true,
+    "pull_request_merge": false,
+    "Azure_authentication": false,
+    "ARM_validation": false,
+    "ARM_what_if": false,
+    "workflow_dispatch": false,
+    "deployment": false,
+    "rollback": false,
+    "cleanup": false,
+    "manual_portal_or_CLI_drift_fix": false
+  },
+  "validation_required": [
+    "authorization marker is absent from the reconciliation branch",
+    "direct-extension workflow tests require marker absence",
+    "diff preserves all PR114 backend convergence files",
+    "ordinary pull-request CI succeeds at the exact reconciliation head",
+    "merge requires a new explicit authorization"
+  ],
+  "claim_boundaries": [
+    "human_error != malicious_activity",
+    "accidental_merge != renewed_authorization",
+    "authorization_marker_present != authorization_valid",
+    "repository_reconciled != Azure_state_changed",
+    "merge_commit_exists != deployment_rerun_occurred",
+    "PR113_reverted_content != PR114_backend_repair_reverted",
+    "CI_succeeded != reconciliation_merged"
+  ]
+}
