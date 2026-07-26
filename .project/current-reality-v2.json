@@ -1,24 +1,22 @@
 {
   "schema_version": "project.current-reality.v2",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-26T09:24:37-04:00",
+  "recorded_at": "2026-07-26T09:43:47-04:00",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "repository_state": {
     "default_branch": "main",
-    "observed_head": "81df65ca7d4cd77fc89aefb2fac128ead456df7d",
-    "latest_merged_pull_request": 126,
-    "open_pull_requests_observed": [
-      127
-    ],
-    "observation_boundary": "Observed after PR #126 merged the collector golden-path reconciliation and before creating the post-merge truth-lock pull request. PR #127 was open as a draft and was not accepted as current evidence.",
-    "exact_source_head": "1f9a00f572235c74b99520a504d8b057003d411c",
-    "exact_source_ci_run_id": 30203751115,
+    "observed_head": "2f5b60c1d8328d13823e2cc1def09e6be384ecb5",
+    "latest_merged_pull_request": 132,
+    "open_pull_requests_observed": [],
+    "observation_boundary": "Observed after PR #132 merged the exact provenance proof-contract repair. No open pull requests were observed before creating the final post-merge truth-lock pull request.",
+    "exact_source_head": "6b7bd5362b17c9edfc0b41da65d5b798e5d00b45",
+    "exact_source_ci_run_id": 30204497860,
     "exact_source_ci_conclusion": "success",
     "merge_commit_ci": "not_observed",
     "local_working_tree": "not_observed",
     "merge_observation": {
-      "pull_request": 126,
-      "merge_commit": "81df65ca7d4cd77fc89aefb2fac128ead456df7d",
+      "pull_request": 132,
+      "merge_commit": "2f5b60c1d8328d13823e2cc1def09e6be384ecb5",
       "human_or_external_merge_observed": true,
       "assistant_merge_action_performed": false,
       "merge_actor": "not_resolved",
@@ -48,7 +46,29 @@
     "pr126_exact_source_head": "1f9a00f572235c74b99520a504d8b057003d411c",
     "pr126_exact_source_ci_run_id": 30203751115,
     "pr126_exact_source_ci_conclusion": "success",
-    "pr126_merge_commit_ci": "not_observed"
+    "pr126_merge_commit_ci": "not_observed",
+    "pr128_merge_commit": "1c6572c8f06832cb1c755cc0ddf831813bca967b",
+    "pr128_exact_source_head": "ec98b66f802099226b1fc3e6abdeabfc42477fed",
+    "pr128_exact_source_ci_run_id": 30204076349,
+    "pr128_exact_source_ci_conclusion": "success",
+    "pr128_merge_commit_ci": "not_observed",
+    "pr129_merge_commit": "50195397944909918d2b2adcdd58019a425686e8",
+    "pr129_exact_source_head": "d6e50abef33ab15e4a0fda0af12860e0686c3138",
+    "pr129_exact_source_ci_run_id": 30204289333,
+    "pr129_exact_source_ci_conclusion": "success",
+    "pr130_merge_commit": "ede8b7b32fe4dfe0e817d224a3cf9a9c1c6b9489",
+    "pr130_exact_source_head": "07e7056b3d66e88055f93d7f3c27d31f8281c316",
+    "pr130_exact_source_ci_run_id": 30204308669,
+    "pr130_exact_source_ci_conclusion": "failure",
+    "pr131_merge_commit": "1accc46f2c4b585510f3b0919a15467a4e5d5769",
+    "pr131_exact_source_head": "bec88217096dce5ac205b93bb5f019f0f801fe62",
+    "pr131_exact_source_ci_run_id": 30204440155,
+    "pr131_exact_source_ci_conclusion": "failure",
+    "pr132_merge_commit": "2f5b60c1d8328d13823e2cc1def09e6be384ecb5",
+    "pr132_exact_source_head": "6b7bd5362b17c9edfc0b41da65d5b798e5d00b45",
+    "pr132_exact_source_ci_run_id": 30204497860,
+    "pr132_exact_source_ci_conclusion": "success",
+    "pr132_merge_commit_ci": "not_observed"
   },
   "collector_demo_api": {
     "observation": {
@@ -136,7 +156,7 @@
     "source_binding": {
       "predeployment_plan_source": "8de1f61f8a0ea06dcf94b94c798edde2aace357d",
       "deployed_source": "98b092201053fd3592be157a24de6e623e6b74a6",
-      "current_main": "81df65ca7d4cd77fc89aefb2fac128ead456df7d",
+      "current_main": "2f5b60c1d8328d13823e2cc1def09e6be384ecb5",
       "current_main_deployed": false,
       "frontend_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
       "deployment_source_decision": "resolved_to_run18_exact_source",
@@ -189,6 +209,21 @@
       "browser_execution_performed": false,
       "automatic_retry_performed": false,
       "retry_authorized": false
+    },
+    "provenance_monitor": {
+      "repository_implemented": true,
+      "merged_pull_request": 130,
+      "current_repository_proof_repairs": [
+        131,
+        132
+      ],
+      "expected_azure_host_committed": true,
+      "request_correlation_contract_committed": true,
+      "exact_source_runtime_deployed": false,
+      "azure_host_identity_verified_live": false,
+      "browser_rendering_verified": false,
+      "fresh_azure_query_performed": false,
+      "claim_boundary": "The repository contains the provenance monitor and exact proof wording, but the collector VM still runs deployed source 98b0922. Repository implementation does not establish runtime deployment or browser verification."
     }
   },
   "independent_demo_api": {
@@ -240,14 +275,14 @@
     "browser_verification_authorized": false
   },
   "next_gate": {
-    "operation": "observe the exact published collector binding and obtain a new one-shot browser-verification grant",
-    "deployment_status": "deployed_runtime_partially_validated",
+    "operation": "select and review an exact provenance-monitor deployment source, capture fresh Azure state and cost evidence, then seek one-shot deployment authority",
+    "deployment_status": "collector_api_deployed_provenance_contract_repository_only",
     "required": [
-      "observe GitHub Pages serving the exact collector endpoint configuration from merged main",
-      "obtain new finite browser health, CORS, and one 20-attempt transaction authority",
-      "capture bounded browser evidence with no automatic retry",
-      "capture current Azure for Students credit or actual billing evidence in CAD",
-      "do not perform another Azure deployment unless new evidence establishes a deployment defect"
+      "select one exact current source containing the provenance monitor and repaired proof contract",
+      "capture fresh Azure collector state, quota, locks, dependencies, cost or remaining student credit",
+      "capture a fresh FullResourcePayloads What-If for the existing collector API update",
+      "obtain one-shot non-renewing deployment, rollback, and post-deployment verification authority",
+      "after deployment, verify Azure host identity, source ref, CORS, GitHub Pages rendering, and one request-ID-correlated 20-attempt transaction with no automatic retry"
     ]
   }
 }
