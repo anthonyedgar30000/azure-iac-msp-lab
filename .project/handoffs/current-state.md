@@ -2,7 +2,7 @@
 
 ## Interpretation boundary
 
-This handoff reflects GitHub state observed after PR #125 and durable Azure evidence from collector deployment run `30196388398`. It is not a continuously refreshed Azure dashboard.
+This handoff reflects GitHub state observed after PR #126 and durable Azure evidence from collector deployment run `30196388398`. It is not a continuously refreshed Azure dashboard.
 
 ```text
 declared_in_code != deployed_in_azure
@@ -11,6 +11,7 @@ workflow_failed != deployment_failed
 API_health_verified != downstream_transaction_success_verified
 independent_API_ready != collector_golden_path_verified
 frontend_bound != browser_verified
+human_or_external_merge_observed != assistant_merge_action
 RBAC_assignment != effective_least_privilege
 monitoring_enabled != alerts_verified
 estimated_cost != actual_cost
@@ -33,15 +34,18 @@ legacy completion gate: .project/lab-v1-completion-gate.json
 
 ```text
 repository: anthonyedgar30000/azure-iac-msp-lab
-observed main: 855ef85f898cbf34db2931abc8344d05cb05c6f7
-latest merge: PR #125
-PR #125 exact source: 315a310ae4ff3db7d5d100ea0320911043b77564
-PR #125 exact-head CI: 30203314001 / success
+observed main: 81df65ca7d4cd77fc89aefb2fac128ead456df7d
+latest merge: PR #126
+PR #126 merge commit: 81df65ca7d4cd77fc89aefb2fac128ead456df7d
+PR #126 exact source: 1f9a00f572235c74b99520a504d8b057003d411c
+PR #126 exact-head CI: 30203751115 / success
+PR #126 merge-commit CI: not observed
 PR #123: closed without merge after consumed failed one-shot verification
-open pull requests observed before this remediation PR: none
+PR #127: open draft provenance-monitor increment; not accepted as current deployed evidence
 local working tree: not observed
-merge-commit CI: not observed
 ```
+
+The PR #126 merge was observed after exact-head checks passed. This assistant did not invoke the merge action; the merge actor and prior merge authority were not resolved from the observed evidence.
 
 ## Collector golden path — deployed reality
 
@@ -73,9 +77,13 @@ The run concluded red because a shell verifier mishandled normal CRLF headers af
 
 ## Frontend binding
 
-The committed frontend is now bound to the collector-hosted endpoint above. The previous `st-demo-api-vm-aeg30000...` hostname belongs to the independent demo API lineage and is not the Lab v1 golden path.
+Merged `main` now binds the normal frontend to the collector-hosted endpoint above. The previous `st-demo-api-vm-aeg30000...` hostname belongs to the independent demo API lineage and is not the Lab v1 golden path.
+
+Repository binding is complete. GitHub Pages publication of that exact merge and an actual browser transaction remain unverified.
 
 PR #123 failed while waiting for its expected published configuration. Browser setup and the 20-attempt browser action never executed. The PR was closed without merge, and a future browser run requires new explicit one-shot authority.
+
+PR #127 proposes a separate live provenance feature. Its repository implementation, if later corrected and accepted, would still require a separately authorized exact-source deployment before its new runtime fields could be treated as live evidence.
 
 ## Lab v1 gate
 
@@ -83,10 +91,11 @@ PR #123 failed while waiting for its expected published configuration. Browser s
 exact What-If evidence: complete
 collector deployment: complete
 deployed source decision: complete
+collector frontend binding merged: complete
+GitHub Pages publication of exact collector binding: not verified
 API health, HTTPS request, CORS and one 20-attempt API request: observed
 downstream successful transaction evidence: not established
 supported stable localization: not established
-GitHub Pages collector binding publication: pending
 browser live-path verification: pending new authority
 monitoring and alert delivery: not verified
 actual cost in CAD and remaining student credit: not observed
@@ -105,7 +114,7 @@ current billing cost: not observed
 remaining Azure for Students credit: not observed
 ```
 
-No fresh Azure authentication or query was performed during this repository reconciliation.
+No fresh Azure authentication or query was performed during this post-merge repository reconciliation.
 
 ## Historical compatibility anchors
 
@@ -158,8 +167,8 @@ cleanup authorized: false
 
 ## Next gate
 
-1. Merge and publish the corrected collector endpoint only after exact-head CI and human review.
-2. Observe the exact GitHub Pages configuration.
-3. Obtain a new finite browser-verification grant.
-4. Perform one browser health/CORS/20-attempt verification with no automatic retry.
-5. Capture actual Azure cost or remaining student credit in CAD.
+1. Observe GitHub Pages serving the exact collector endpoint configuration from merged `main`.
+2. Obtain a new finite browser-verification grant.
+3. Perform one browser health/CORS/20-attempt verification with no automatic retry.
+4. Preserve a supported localization result or explicitly retain the inconclusive downstream sample.
+5. Capture actual Azure cost or remaining student credit in CAD and verify monitoring delivery.
