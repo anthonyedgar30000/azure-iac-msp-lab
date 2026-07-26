@@ -122,5 +122,6 @@ jobs:
         with:
           name: validated-collector-golden-path-${{ github.run_id }}-${{ github.run_attempt }}
           path: reconciled-output/
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 30
