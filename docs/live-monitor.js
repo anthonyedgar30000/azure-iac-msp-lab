@@ -8,6 +8,7 @@
   const monitor = {
     runUrl: '',
     healthUrl: '',
+    expectedHost: null,
     timer: null,
     polling: false,
   };
@@ -97,15 +98,33 @@
     return url.toString();
   }
 
+  function expectedHostFromConfig(config) {
+    const expected = config?.expected_azure_host;
+    const fields = ['resource_group', 'vm_name', 'location', 'hosting_model'];
+    if (
+      !expected
+      || fields.some((field) => typeof expected[field] !== 'string' || !expected[field].trim())
+    ) {
+      return null;
+    }
+    return Object.fromEntries(fields.map((field) => [field, expected[field].trim()]));
+  }
+
   function identityFromHealth(payload) {
     const identity = payload?.azure_host;
+    const expected = monitor.expectedHost;
     if (
-      !identity
+      !expected
+      || !identity
       || identity.verified !== true
       || !identity.resource_group
       || !identity.vm_name
       || !identity.location
       || !SOURCE_REF_PATTERN.test(identity.source_ref || '')
+      || payload.hosting_model !== expected.hosting_model
+      || identity.resource_group !== expected.resource_group
+      || identity.vm_name !== expected.vm_name
+      || identity.location !== expected.location
     ) {
       return null;
     }
@@ -134,11 +153,11 @@
     }
 
     if (!identity) {
-      setMonitorState('API healthy · Azure host identity unverified', 'warning');
-      setText(elements.scope, '', 'Identity not returned');
-      setText(elements.vm, '', 'Identity not returned');
-      setText(elements.location, '', 'Identity not returned');
-      setText(elements.sourceRef, '', 'Identity not returned');
+      setMonitorState('API healthy · governed collector identity rejected', 'warning');
+      setText(elements.scope, '', 'Expected scope not verified');
+      setText(elements.vm, '', 'Expected VM not verified');
+      setText(elements.location, '', 'Expected region not verified');
+      setText(elements.sourceRef, '', 'Source identity not verified');
       return;
     }
 
@@ -192,8 +211,9 @@
 
   function renderTransactionResponse(payload, requestId, responseStatus) {
     const responseRequestId = payload?.request_id;
-    if (responseRequestId !== requestId) {
-      setText(elements.transaction, 'Request ID mismatch · evidence rejected');
+    const identity = identityFromHealth(payload);
+    if (responseRequestId !== requestId || !identity) {
+      setText(elements.transaction, 'Request or collector identity mismatch · evidence rejected');
       setMonitorState('Correlation proof rejected', 'warning');
       return;
     }
@@ -201,7 +221,7 @@
       ? payload.transactions.length
       : 0;
     setText(elements.transaction, `HTTP ${responseStatus} · ${transactionCount} transactions correlated`);
-    setMonitorState('Frontend request correlated to collector response', 'healthy');
+    setMonitorState('Frontend request correlated to governed collector', 'healthy');
   }
 
   function renderTransactionFailure(error) {
@@ -247,8 +267,12 @@
       }
       const config = await response.json();
       monitor.runUrl = config.live_demo_api_url || '';
+      monitor.expectedHost = expectedHostFromConfig(config);
       if (!monitor.runUrl) {
         throw new Error('No live demo API is configured');
+      }
+      if (!monitor.expectedHost) {
+        throw new Error('No exact governed Azure host identity is configured');
       }
       monitor.healthUrl = deriveHealthUrl(monitor.runUrl);
       setText(elements.endpoint, new URL(monitor.runUrl).host);
@@ -256,7 +280,7 @@
       monitor.timer = window.setInterval(pollHealth, HEALTH_INTERVAL_MS);
     } catch (error) {
       renderHealthFailure(error);
-      setText(elements.endpoint, '', 'No endpoint configured');
+      setText(elements.endpoint, '', 'No governed endpoint configured');
     }
   }
 
