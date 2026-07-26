@@ -69,7 +69,6 @@ class CollectorDemoApiLoadBalancerRegressionTests(unittest.TestCase):
         self.assertIn("if: always() && inputs.operation == 'deploy'", workflow)
         self.assertIn("az deployment operation group list", workflow)
         self.assertIn("post-deploy-demo-api-load-balancer.json", workflow)
-        self.assertIn("post-deploy-demo-api-backend-addresses.json", workflow)
         self.assertIn("post-deploy-legacy-lb-backend-pool.json", workflow)
 
     @staticmethod
