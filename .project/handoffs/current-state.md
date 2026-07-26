@@ -88,7 +88,6 @@ load balancer: lb-st-demo-api-mst-dev / Succeeded
 backend pool: be-st-demo-api / collector / 10.20.40.10
 VM extension: servicetracer-demo-api / Succeeded
 collector API: https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run
-.cloudapp.azure.com/api/demo/run
 health: healthy
 CORS preflight: 204 / GitHub Pages origin allowed / POST allowed
 transaction request: HTTP 200 / 20 attempts
