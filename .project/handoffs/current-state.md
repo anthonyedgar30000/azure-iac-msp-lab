@@ -2,7 +2,7 @@
 
 ## Interpretation boundary
 
-This handoff reflects GitHub state observed after PR #126 and durable Azure evidence from collector deployment run `30196388398`. It is not a continuously refreshed Azure dashboard.
+This handoff reflects GitHub state observed after PR #128 and durable Azure evidence from collector deployment run `30196388398`. It is not a continuously refreshed Azure dashboard.
 
 ```text
 declared_in_code != deployed_in_azure
@@ -34,18 +34,23 @@ legacy completion gate: .project/lab-v1-completion-gate.json
 
 ```text
 repository: anthonyedgar30000/azure-iac-msp-lab
-observed main: 81df65ca7d4cd77fc89aefb2fac128ead456df7d
-latest merge: PR #126
-PR #126 merge commit: 81df65ca7d4cd77fc89aefb2fac128ead456df7d
-PR #126 exact source: 1f9a00f572235c74b99520a504d8b057003d411c
-PR #126 exact-head CI: 30203751115 / success
-PR #126 merge-commit CI: not observed
+observed main: 1c6572c8f06832cb1c755cc0ddf831813bca967b
+latest merge: PR #128
+PR #128 merge commit: 1c6572c8f06832cb1c755cc0ddf831813bca967b
+PR #128 exact source: ec98b66f802099226b1fc3e6abdeabfc42477fed
+PR #128 exact-head CI: 30204076349 / success
+PR #128 merge-commit CI: not observed
+PR #126 collector reconciliation merge: 81df65ca7d4cd77fc89aefb2fac128ead456df7d
+PR #126 exact source / CI: 1f9a00f572235c74b99520a504d8b057003d411c / 30203751115 success
 PR #123: closed without merge after consumed failed one-shot verification
 PR #127: open draft provenance-monitor increment; not accepted as current deployed evidence
+PR #129: open draft post-merge truth lock; not current main authority
 local working tree: not observed
 ```
 
-The PR #126 merge was observed after exact-head checks passed. This assistant did not invoke the merge action; the merge actor and prior merge authority were not resolved from the observed evidence.
+The PR #128 merge was observed after exact-head checks passed. This assistant did not invoke the merge action; the merge actor and prior merge authority were not resolved from the observed evidence.
+
+PR #128 changes only the structured PR #84 validator and its tests. It does not alter the collector deployment, frontend binding, Azure state, cost, quota, monitoring, or authority boundaries established through PR #126.
 
 ## Collector golden path — deployed reality
 
