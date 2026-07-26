@@ -6,6 +6,7 @@
   <meta name="description" content="ServiceTracer visual demo for an intermittent remote-access incident.">
   <title>ServiceTracer — Remote Access Incident</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="live-monitor.css">
 </head>
 <body>
   <main class="shell">
@@ -31,6 +32,77 @@
       <div class="button-row">
         <button id="run-analysis" class="button button-primary" type="button">Run incident analysis</button>
         <button id="reset-demo" class="button button-secondary" type="button">Reset</button>
+      </div>
+    </section>
+
+    <section id="live-path-monitor" class="panel live-monitor-panel" aria-labelledby="live-monitor-title">
+      <div class="live-monitor-heading">
+        <div>
+          <p class="eyebrow">Live deployment provenance</p>
+          <h2 id="live-monitor-title">Frontend-to-collector path</h2>
+          <p class="quiet">The resource group is shown as the governed Azure scope. Traffic terminates at the API process on the collector VM.</p>
+        </div>
+        <div id="monitor-state" class="monitor-state monitor-state-neutral" aria-live="polite">Resolving live path</div>
+      </div>
+
+      <div class="monitor-path" aria-label="Browser frontend connected to the collector API hosted on a VM inside the governed Azure resource group">
+        <article class="monitor-node">
+          <span class="monitor-kicker">Browser</span>
+          <strong>GitHub Pages frontend</strong>
+          <span id="monitor-browser" class="monitor-detail">Resolving browser host…</span>
+        </article>
+
+        <div class="monitor-link" aria-hidden="true"><span>HTTPS</span></div>
+
+        <article class="monitor-node">
+          <span class="monitor-kicker">Public endpoint</span>
+          <strong id="monitor-endpoint">Resolving API endpoint…</strong>
+          <span id="monitor-api" class="monitor-detail">Waiting for health contract</span>
+        </article>
+
+        <div class="monitor-link" aria-hidden="true"><span>LB → VM</span></div>
+
+        <article class="monitor-scope">
+          <div class="monitor-scope-title">
+            <span class="monitor-kicker">Governed Azure scope</span>
+            <strong id="monitor-scope">Identity not yet verified</strong>
+          </div>
+          <div class="monitor-field">
+            <span>Collector VM</span>
+            <strong id="monitor-vm">Not observed</strong>
+          </div>
+          <div class="monitor-field">
+            <span>Region</span>
+            <strong id="monitor-location">Not observed</strong>
+          </div>
+          <div class="monitor-field">
+            <span>Deployed source</span>
+            <strong id="monitor-source-ref">Not observed</strong>
+          </div>
+          <div class="monitor-field">
+            <span>Hosting model</span>
+            <strong>collector_vm_systemd</strong>
+          </div>
+        </article>
+      </div>
+
+      <div class="monitor-evidence" aria-live="polite">
+        <div>
+          <span>Health latency</span>
+          <strong id="monitor-latency">—</strong>
+        </div>
+        <div>
+          <span>Last health check</span>
+          <strong id="monitor-checked-at">Not checked</strong>
+        </div>
+        <div>
+          <span>Frontend request ID</span>
+          <strong id="monitor-request-id">Awaiting transaction</strong>
+        </div>
+        <div>
+          <span>Correlation result</span>
+          <strong id="monitor-transaction">No transaction run yet</strong>
+        </div>
       </div>
     </section>
 
@@ -144,6 +216,7 @@
     </footer>
   </main>
 
+  <script src="live-monitor.js" defer></script>
   <script src="app.js" defer></script>
 </body>
 </html>
