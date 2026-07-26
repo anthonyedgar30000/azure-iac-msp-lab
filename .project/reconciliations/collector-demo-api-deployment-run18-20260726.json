@@ -1,0 +1,96 @@
+{
+  "schema_version": "project.collector-demo-api-deployment-evidence.v1",
+  "recorded_at": "2026-07-26T05:55:00-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "source": {
+    "reviewed_commit": "98b092201053fd3592be157a24de6e623e6b74a6",
+    "workflow": ".github/workflows/collector-demo-api.yml",
+    "workflow_run_id": 30196388398,
+    "workflow_run_number": 18,
+    "workflow_job_id": 89778570106,
+    "operation": "deploy"
+  },
+  "artifact": {
+    "artifact_id": 8630260279,
+    "name": "collector-demo-api-30196388398-1",
+    "sha256": "1f97be3c519d547871cc990e010013259dfd3c2e263f263653c2c4035340eb9e",
+    "manifest_payloads_verified": 48,
+    "manifest_payload_failures": 0,
+    "created_at": "2026-07-26T09:26:57Z"
+  },
+  "azure_context": {
+    "subscription_name": "Azure for Students",
+    "subscription_sha256": "65b6a7824bd5b8037892d9668d83fc08739c0aac13fbc7ae189c205e47d43b0c",
+    "tenant_sha256": "77ebff4ce2f49015b0bcc0c28414d1341bc7c7ed993b7242b8f34d19ad2a443e",
+    "service_principal_sha256": "11e44afe11f8a4acace2b680e7a58f7b5d84fb4c9e53d6d1f08ec6b893538e40",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2"
+  },
+  "deployment": {
+    "azure_login_succeeded": true,
+    "repository_tests_succeeded": true,
+    "readiness_succeeded": true,
+    "arm_validation_succeeded": true,
+    "what_if_classifier_accepted": true,
+    "deployment_step_succeeded": true,
+    "post_deploy_capture_succeeded": true,
+    "parent_deployment": "Succeeded",
+    "nested_deployment": "Succeeded",
+    "collector_vm_extension": {
+      "name": "servicetracer-demo-api",
+      "provisioning_state": "Succeeded",
+      "force_update_tag": "98b092201053fd3592be157a24de6e623e6b74a6"
+    },
+    "backend_pool": {
+      "name": "be-st-demo-api",
+      "provisioning_state": "Succeeded",
+      "address_count": 1,
+      "address_name": "collector",
+      "private_ip": "10.20.40.10"
+    }
+  },
+  "runtime_evidence": {
+    "fqdn": "st-demo-api-aeg30000.westus2.cloudapp.azure.com",
+    "health_status": "healthy",
+    "health_schema": "servicetracer.demo-api-health.v1",
+    "backend_target_configured": true,
+    "hosting_model": "collector_vm_systemd",
+    "backend_timeout_seconds": 10,
+    "max_parallel_transactions": 10,
+    "max_attempts": 50,
+    "estimated_max_execution_seconds": 50,
+    "transaction_request_http_status": 200,
+    "transaction_schema": "servicetracer.demo-api-response.v1",
+    "transaction_count": 20,
+    "successful_transactions": 0,
+    "failed_transactions": 20,
+    "stable_backend_localization": false,
+    "exact_root_cause_claimed": false,
+    "cors_preflight_status": 204,
+    "cors_allow_origin": "https://anthonyedgar30000.github.io",
+    "cors_allows_post": true
+  },
+  "workflow_conclusion": {
+    "overall": "failure",
+    "failed_step": "Verify public TLS, API, and frontend contract",
+    "classification": "verifier_false_negative_after_successful_deployment_and_runtime_requests",
+    "cause": "The grep expression treated the two-character sequence backslash-r as a carriage-return matcher. The captured HTTP header used normal CRLF line endings and contained the exact allowed origin.",
+    "deployment_failed": false,
+    "service_failed": false
+  },
+  "authority": {
+    "one_shot_deployment_authority_consumed": true,
+    "retry_authorized": false,
+    "additional_azure_mutation_authorized": false,
+    "frontend_repository_activation_authorized": true,
+    "one_browser_live_transaction_verification_authorized": true,
+    "pull_request_merge_authorized_by_current_instruction": true
+  },
+  "claim_boundaries": [
+    "workflow_failed != deployment_failed",
+    "verifier_false_negative != service_failure",
+    "API_health_verified != backend_transaction_success_verified",
+    "twenty_attempt_sample != permanent_backend_truth",
+    "frontend_configured != GitHub_Pages_browser_verified"
+  ]
+}
