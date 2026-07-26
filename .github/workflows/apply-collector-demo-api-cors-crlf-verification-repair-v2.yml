@@ -1,0 +1,65 @@
+name: Finalize collector demo API CORS CRLF verification repair
+
+on:
+  push:
+    branches:
+      - fix/collector-demo-api-cors-crlf-verification
+    paths:
+      - .github/workflows/apply-collector-demo-api-cors-crlf-verification-repair-v2.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finalize-collector-demo-api-cors-crlf-verification-repair
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    name: Patch verifier and remove one-shot helpers
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Apply CRLF-safe CORS assertion
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/collector-demo-api.yml')
+          source = path.read_text(encoding='utf-8')
+          old = '          grep -Eiq "^access-control-allow-origin: ${ALLOWED_ORIGIN}\\r?$" "$ARTIFACT_DIR/cors-headers.txt"\n'
+          new = (
+              '          tr -d \'\\r\' < "$ARTIFACT_DIR/cors-headers.txt" > "$ARTIFACT_DIR/cors-headers-normalized.txt"\n'
+              '          grep -Fxi "Access-Control-Allow-Origin: ${ALLOWED_ORIGIN}" "$ARTIFACT_DIR/cors-headers-normalized.txt"\n'
+          )
+          if source.count(old) != 1:
+              raise SystemExit('expected exactly one legacy CRLF grep expression')
+          path.write_text(source.replace(old, new), encoding='utf-8')
+          PY
+
+      - name: Run focused regression tests
+        run: |
+          set -euo pipefail
+          python -m unittest \
+            infra.tests.test_collector_demo_api \
+            infra.tests.test_collector_demo_api_cors_crlf_verification \
+            -v
+
+      - name: Remove helpers and commit final repair
+        run: |
+          set -euo pipefail
+          rm -f \
+            .github/workflows/apply-collector-demo-api-cors-crlf-verification-repair.yml \
+            .github/workflows/apply-collector-demo-api-cors-crlf-verification-repair-v2.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Fix CRLF-safe collector API verification and record deployment"
+          git push origin HEAD:fix/collector-demo-api-cors-crlf-verification
