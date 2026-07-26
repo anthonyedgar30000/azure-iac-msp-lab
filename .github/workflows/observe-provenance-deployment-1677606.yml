@@ -1,0 +1,121 @@
+name: Observe provenance deployment 1677606
+
+on:
+  push:
+    branches:
+      - observe/provenance-deployment-1677606
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  observe:
+    if: ${{ !contains(github.event.head_commit.message, '[skip observer]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve dispatcher and child deployment runs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const dispatcherWorkflow = 'Execute provenance deployment 1677606 once';
+            const dispatcherBranch = 'deploy/execute-provenance-1677606-once';
+            const notBefore = Date.parse('2026-07-26T23:11:00Z');
+
+            async function findDispatcher() {
+              for (let attempt = 0; attempt < 60; attempt += 1) {
+                const response = await github.rest.actions.listWorkflowRunsForRepo({owner, repo, event: 'push', per_page: 50});
+                const run = response.data.workflow_runs.find(item =>
+                  item.name === dispatcherWorkflow &&
+                  item.head_branch === dispatcherBranch &&
+                  Date.parse(item.created_at) >= notBefore
+                );
+                if (run) return run;
+                await new Promise(resolve => setTimeout(resolve, 10000));
+              }
+              return null;
+            }
+
+            async function waitForRun(run) {
+              let current = run;
+              for (let attempt = 0; attempt < 180; attempt += 1) {
+                const response = await github.rest.actions.getWorkflowRun({owner, repo, run_id: run.id});
+                current = response.data;
+                if (current.status === 'completed') return current;
+                await new Promise(resolve => setTimeout(resolve, 30000));
+              }
+              return current;
+            }
+
+            const dispatcherInitial = await findDispatcher();
+            const dispatcher = dispatcherInitial ? await waitForRun(dispatcherInitial) : null;
+
+            let child = null;
+            if (dispatcher) {
+              const childRuns = await github.rest.actions.listWorkflowRuns({
+                owner,
+                repo,
+                workflow_id: 'collector-demo-api.yml',
+                event: 'workflow_dispatch',
+                branch: 'main',
+                per_page: 30
+              });
+              const dispatcherCreated = Date.parse(dispatcher.created_at);
+              const candidates = childRuns.data.workflow_runs
+                .filter(item => Date.parse(item.created_at) >= dispatcherCreated - 5000)
+                .sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+              if (candidates.length > 0) child = await waitForRun(candidates[0]);
+            }
+
+            const result = {
+              schema_version: 'project.collector-provenance-deployment-observation.v1',
+              observed_at: new Date().toISOString(),
+              grant_id: 'collector-provenance-deploy-1677606-20260726',
+              dispatcher: dispatcher ? {
+                run_id: dispatcher.id,
+                status: dispatcher.status,
+                conclusion: dispatcher.conclusion,
+                head_sha: dispatcher.head_sha,
+                head_branch: dispatcher.head_branch,
+                created_at: dispatcher.created_at,
+                updated_at: dispatcher.updated_at
+              } : {
+                run_id: 'not_resolved',
+                status: 'not_observed',
+                conclusion: 'not_observed'
+              },
+              child_deployment: child ? {
+                run_id: child.id,
+                run_number: child.run_number,
+                run_attempt: child.run_attempt,
+                status: child.status,
+                conclusion: child.conclusion,
+                head_sha: child.head_sha,
+                head_branch: child.head_branch,
+                created_at: child.created_at,
+                updated_at: child.updated_at
+              } : {
+                run_id: 'not_resolved',
+                status: 'not_observed',
+                conclusion: 'not_observed'
+              },
+              grant_consumed: true,
+              automatic_retry_authorized: false,
+              rollback_authorized: false
+            };
+            fs.writeFileSync('provenance-deployment-observation.json', JSON.stringify(result, null, 2) + '\n');
+
+      - name: Commit sanitized observation
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add provenance-deployment-observation.json
+          git commit -m 'Record provenance deployment observation [skip observer]'
+          git push
