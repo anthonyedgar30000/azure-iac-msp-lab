@@ -1,0 +1,69 @@
+{
+  "schema_version": "project.repository-change-boundary.v1",
+  "recorded_on": "2026-07-26",
+  "project": "Azure IaC MSP Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "source_instruction": "Anthony Edgar instructed: Lets proceed where we left off.",
+  "observed_repository_state": {
+    "main_commit": "af9a5e4a956a17e5824a4620659c59c832ac021f",
+    "open_pull_requests": [],
+    "local_active_branch_and_working_tree": "not_observed_through_GitHub_connector"
+  },
+  "observed_azure_boundary": {
+    "subscription": "Azure for Students",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "last_observed_backend_pool_addresses": [],
+    "last_observed_vm_extension_state": "Failed",
+    "current_state_refreshed_by_this_repository_change": false,
+    "cost_refreshed": false,
+    "quota_refreshed": false
+  },
+  "reason_for_patch": {
+    "finding": "The existing failed servicetracer-demo-api VM extension requires a Modify operation, while the current What-If classifier permits only Create or NoChange for that target.",
+    "risk_without_patch": "A fresh bounded What-If would likely fail closed before evaluating the valid backend convergence repair.",
+    "intended_repair": [
+      "bind extension reruns to the exact reviewed source commit with forceUpdateTag",
+      "permit only the exact bounded CustomScript extension Modify contract",
+      "add deterministic regression tests"
+    ]
+  },
+  "authority": {
+    "branch_creation": true,
+    "repository_patch": true,
+    "pull_request_creation": true,
+    "ordinary_pull_request_CI": true,
+    "merge": false,
+    "Azure_login": false,
+    "Azure_query": false,
+    "ARM_validation": false,
+    "ARM_what_if": false,
+    "workflow_dispatch": false,
+    "deployment": false,
+    "manual_drift_fix": false,
+    "rollback": false,
+    "cleanup": false
+  },
+  "cost_implication": {
+    "repository_change": "none",
+    "Azure_resource_change": "not authorized and not performed"
+  },
+  "validation_required": [
+    "Python tests pass at the exact branch head",
+    "Bicep lint and build pass at the exact branch head",
+    "What-If classifier accepts only a commit-bound extension Modify",
+    "What-If classifier rejects an invalid forceUpdateTag or publisher",
+    "merge requires new explicit authorization"
+  ],
+  "failure_and_rollback": {
+    "on_test_failure": "leave the pull request unmerged and patch the branch",
+    "repository_rollback": "close the pull request and delete the branch",
+    "Azure_rollback": "not applicable because no Azure action is authorized"
+  },
+  "claim_boundaries": [
+    "repository_patch != Azure_preflight",
+    "What-If_gate_repaired != What-If_executed",
+    "failed_extension_exists != retry_authorized",
+    "CI_succeeded != merge_authorized"
+  ]
+}

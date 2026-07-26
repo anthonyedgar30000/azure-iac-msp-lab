@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,7 @@ PUBLIC_IP_RECONCILIATION = {
     "before": "load-balanced-public-https",
     "after": "dedicated-load-balanced-public-https",
 }
+COMMIT_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
 def _load_json(path: Path) -> Any:
@@ -183,6 +185,27 @@ def _validate_dedicated_load_balancer(
                 raise SystemExit(f"{name} {field} reference leaves the dedicated load balancer")
 
 
+def _validate_extension_reconciliation(item: dict[str, Any]) -> None:
+    properties = _properties(item)
+    expected = {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.1",
+        "autoUpgradeMinorVersion": True,
+    }
+    observed = {key: properties.get(key) for key in expected}
+    if observed != expected:
+        raise SystemExit("Collector API extension Modify leaves the bounded CustomScript contract")
+
+    force_update_tag = properties.get("forceUpdateTag")
+    if not isinstance(force_update_tag, str) or not COMMIT_SHA_RE.fullmatch(force_update_tag):
+        raise SystemExit("Collector API extension rerun must be bound to one exact reviewed commit")
+
+    settings = properties.get("settings")
+    if settings not in (None, {}):
+        raise SystemExit("Collector API extension must not expose mutable public settings")
+
+
 def _validate_expected_payload(
     item: dict[str, Any],
     *,
@@ -213,6 +236,10 @@ def _validate_expected_payload(
     elif lowered.endswith("/securityrules/allow-demo-api-https-from-internet"):
         if properties.get("destinationAddressPrefix") != private_ip or properties.get("destinationPortRange") != "443":
             raise SystemExit("Collector API HTTPS NSG rule does not match the bounded collector endpoint")
+    elif lowered.endswith(
+        f"/virtualmachines/vm-stcollector-{suffix}/extensions/servicetracer-demo-api".lower()
+    ) and item.get("changeType") == "Modify":
+        _validate_extension_reconciliation(item)
 
 
 def classify(
@@ -251,13 +278,16 @@ def classify(
     backend_pool_suffix = (
         f"/loadBalancers/lb-st-demo-api-{suffix}/backendAddressPools/be-st-demo-api"
     )
+    extension_suffix = (
+        f"/virtualMachines/vm-stcollector-{suffix}/extensions/servicetracer-demo-api"
+    )
     target_suffixes = {
         public_ip_suffix: "Microsoft.Network/publicIPAddresses",
         f"/loadBalancers/lb-st-demo-api-{suffix}": "Microsoft.Network/loadBalancers",
         backend_pool_suffix: "Microsoft.Network/loadBalancers/backendAddressPools",
         "/securityRules/Allow-Demo-API-HTTP-From-Internet": "Microsoft.Network/networkSecurityGroups/securityRules",
         "/securityRules/Allow-Demo-API-HTTPS-From-Internet": "Microsoft.Network/networkSecurityGroups/securityRules",
-        f"/virtualMachines/vm-stcollector-{suffix}/extensions/servicetracer-demo-api": "Microsoft.Compute/virtualMachines/extensions",
+        extension_suffix: "Microsoft.Compute/virtualMachines/extensions",
     }
     matched_targets: dict[str, str] = {}
     approved_reconciliations: list[str] = []
@@ -278,7 +308,7 @@ def classify(
         )
         if matched_suffix is not None:
             allowed_change_types = set(DEFAULT_TARGET_CHANGE_TYPES)
-            if matched_suffix in {public_ip_suffix, backend_pool_suffix}:
+            if matched_suffix in {public_ip_suffix, backend_pool_suffix, extension_suffix}:
                 allowed_change_types.add("Modify")
             if change_type not in allowed_change_types:
                 raise SystemExit(f"Target resource has an unapproved change type {change_type}: {resource_id}")
@@ -299,10 +329,7 @@ def classify(
             matched_targets[matched_suffix] = change_type
         elif change_type == "Create":
             resource_type = _resource_type(item)
-            if resource_type not in ALLOWED_CREATE_TYPES:
-                unexpected_creates.append(resource_id or resource_type)
-            else:
-                unexpected_creates.append(resource_id or resource_type)
+            unexpected_creates.append(resource_id or resource_type)
 
     if unexpected_creates:
         raise SystemExit("Unexpected resources would be created: " + ", ".join(unexpected_creates))
@@ -360,10 +387,7 @@ def main() -> int:
         virtual_network_id=args.virtual_network_id,
         dns_label=args.dns_label,
     )
-    Path(args.output).write_text(
-        json.dumps(summary, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    Path(args.output).write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return 0
 
 

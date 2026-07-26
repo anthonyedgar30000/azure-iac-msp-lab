@@ -57,6 +57,11 @@ class CollectorDemoApiLoadBalancerRegressionTests(unittest.TestCase):
         self.assertIn("allowDemoApiHttp", dependency_block)
         self.assertIn("allowDemoApiHttps", dependency_block)
 
+    def test_extension_rerun_is_bound_to_the_reviewed_source_commit(self):
+        source = MODULE.read_text(encoding="utf-8")
+        self.assertIn("forceUpdateTag: sourceRef", source)
+        self.assertIn("sourceRef", source)
+
     def test_public_ip_preserves_observed_platform_properties(self):
         source = MODULE.read_text(encoding="utf-8")
         self.assertIn("tier: 'Regional'", source)
@@ -101,6 +106,39 @@ class CollectorDemoApiLoadBalancerRegressionTests(unittest.TestCase):
         ]
         return payload
 
+    @staticmethod
+    def _payload_with_exact_extension_reconciliation():
+        payload = CollectorDemoApiTests._valid_payload()
+        extension = next(
+            item
+            for item in payload["changes"]
+            if str(item.get("resourceId", "")).endswith(
+                "/virtualMachines/vm-stcollector-mst-dev/extensions/servicetracer-demo-api"
+            )
+        )
+        extension["changeType"] = "Modify"
+        extension["before"] = {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.1",
+                "autoUpgradeMinorVersion": True,
+                "forceUpdateTag": "0" * 40,
+            },
+        }
+        extension["after"] = {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.1",
+                "autoUpgradeMinorVersion": True,
+                "forceUpdateTag": "a" * 40,
+            },
+        }
+        return payload
+
     def _classify(self, payload):
         return self.classifier.classify(
             payload,
@@ -135,6 +173,32 @@ class CollectorDemoApiLoadBalancerRegressionTests(unittest.TestCase):
                 "propertyChangeType": "Delete",
             }
         )
+        with self.assertRaises(SystemExit):
+            self._classify(payload)
+
+    def test_classifier_accepts_exact_failed_extension_reconciliation(self):
+        payload = self._payload_with_exact_extension_reconciliation()
+        extension = next(item for item in payload["changes"] if item.get("changeType") == "Modify")
+        result = self._classify(payload)
+        self.assertEqual(
+            result["target_resource_states"][
+                "/virtualMachines/vm-stcollector-mst-dev/extensions/servicetracer-demo-api"
+            ],
+            "Modify",
+        )
+        self.assertIn(extension["resourceId"], result["approved_reconciliations"])
+        self.assertEqual(result["creates"], 5)
+
+    def test_classifier_rejects_unbound_or_wrong_extension_reconciliation(self):
+        payload = self._payload_with_exact_extension_reconciliation()
+        extension = next(item for item in payload["changes"] if item.get("changeType") == "Modify")
+        extension["after"]["properties"]["forceUpdateTag"] = "not-a-reviewed-commit"
+        with self.assertRaises(SystemExit):
+            self._classify(payload)
+
+        payload = self._payload_with_exact_extension_reconciliation()
+        extension = next(item for item in payload["changes"] if item.get("changeType") == "Modify")
+        extension["after"]["properties"]["publisher"] = "Unexpected.Publisher"
         with self.assertRaises(SystemExit):
             self._classify(payload)
 

@@ -207,6 +207,9 @@ resource demoApiExtension 'Microsoft.Compute/virtualMachines/extensions@2024-07-
     type: 'CustomScript'
     typeHandlerVersion: '2.1'
     autoUpgradeMinorVersion: true
+    // The extension already exists in a terminal failed state. Bind each retry to the
+    // exact reviewed source commit so a new authorized deployment deterministically reruns it.
+    forceUpdateTag: sourceRef
     protectedSettings: {
       fileUris: [
         installerUri
