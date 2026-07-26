@@ -1,0 +1,131 @@
+{
+  "schema_version": "project.collector-provenance-preflight-artifact-promotion.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-26T19:02:36-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "repository_observation": {
+    "default_branch": "main",
+    "observed_head": "16a589adfce0816c759f6ea0e8d3a2ed9a0781aa",
+    "latest_merged_pull_request": 135,
+    "open_pull_requests_observed_before_increment": [],
+    "local_working_tree": "not_observed"
+  },
+  "preflight_identity": {
+    "workflow_run_id": 30206242759,
+    "run_attempt": 1,
+    "job_id": 89804704663,
+    "evidence_carrier_pull_request": 136,
+    "evidence_carrier_merged": false,
+    "exact_reviewed_source": "1677606ded960c951fa37f0fdbfae50ba4b3cc34",
+    "observed_main_at_preflight": "81156468a36d800595ec763ba54d954925fb3183",
+    "current_main_file_differences_from_exact_source": [
+      ".github/workflows/collector-provenance-preflight.yml",
+      ".project/reconciliations/collector-provenance-preflight-plan-20260726.json",
+      "docs/operations/collector-provenance-preflight.md",
+      "infra/scripts/summarize_cost_management_query.py",
+      "infra/tests/test_collector_provenance_preflight.py"
+    ],
+    "deployment_payload_difference_observed": false
+  },
+  "artifact": {
+    "artifact_id": 8633143093,
+    "name": "collector-provenance-preflight-30206242759",
+    "github_digest": "sha256:2f8a63d18d6c2e07e86cc607c49d111e6b788d40637b2adcd30b1d5ce05de902",
+    "independently_verified_digest": true,
+    "manifest_schema": "servicetracer.provenance-preflight-evidence.v1",
+    "manifest_generated_at": "2026-07-26T14:32:17Z",
+    "manifest_payloads_verified": 26,
+    "manifest_payload_failures": 0,
+    "expired_at_observation": false,
+    "expires_at": "2026-08-25T14:32:17Z",
+    "raw_subscription_or_tenant_identifiers_promoted": false
+  },
+  "azure_observation": {
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "resource_group_provisioning_state": "Succeeded",
+    "collector_vm": "vm-stcollector-mst-dev",
+    "collector_vm_size": "Standard_B2ats_v2",
+    "collector_vm_power_state": "VM running",
+    "collector_private_ip": "10.20.40.10",
+    "load_balancer": "lb-st-demo-api-mst-dev",
+    "load_balancer_provisioning_state": "Succeeded",
+    "backend_pool": "be-st-demo-api",
+    "backend_address_name": "collector",
+    "backend_address_count": 1,
+    "vm_extension": "servicetracer-demo-api",
+    "vm_extension_provisioning_state": "Succeeded",
+    "currently_deployed_source": "98b092201053fd3592be157a24de6e623e6b74a6",
+    "resource_locks": [],
+    "readiness_blockers": []
+  },
+  "quota": {
+    "public_ip_addresses_current": 2,
+    "public_ip_addresses_limit": 3,
+    "network_interfaces_current": 3,
+    "network_interfaces_limit": 65536,
+    "load_balancers_current": 2,
+    "load_balancers_limit": 1000,
+    "additional_public_ip_required": 0,
+    "sufficient_for_plan": true
+  },
+  "cost": {
+    "period": "month_to_date",
+    "metric": "PreTaxCost",
+    "amount": 4.03203831168191,
+    "currency": "CAD",
+    "remaining_azure_for_students_credit": "not_observed",
+    "boundary": "month_to_date_cost != remaining_credit"
+  },
+  "arm_validation": {
+    "provisioning_state": "Succeeded",
+    "error": null,
+    "template_source": "1677606ded960c951fa37f0fdbfae50ba4b3cc34"
+  },
+  "what_if": {
+    "status": "accepted_isolated_collector_api_changes",
+    "total_entries": 30,
+    "change_counts": {
+      "Ignore": 24,
+      "Modify": 3,
+      "NoChange": 3,
+      "Create": 0,
+      "Delete": 0,
+      "Replace": 0
+    },
+    "approved_modifications": [
+      "commit-bound CustomScript extension source update to 1677606ded960c951fa37f0fdbfae50ba4b3cc34",
+      "exact existing Standard Regional load-balancer parent reconciliation",
+      "exact existing backend-pool address reconciliation preserving collector at 10.20.40.10"
+    ],
+    "forbidden_changes": [],
+    "base_infrastructure_modifications": [],
+    "collector_vm_modifications": [],
+    "collector_nic_modifications": [],
+    "managed_web_resources_proposed": false,
+    "deployment_decision_ready": true,
+    "deployment_authorized_by_preflight": false,
+    "azure_mutation_performed": false
+  },
+  "limitations": [
+    "The preflight is a point-in-time Azure observation, not continuous runtime truth.",
+    "Remaining Azure for Students credit was not observed.",
+    "The deployed collector still runs source 98b092201053fd3592be157a24de6e623e6b74a6 until a separate authorized deployment succeeds.",
+    "The merged collector deployment workflow retains a known CRLF CORS-header verifier false-negative; workflow conclusion must be reconciled against deployment and artifact evidence."
+  ],
+  "claim_boundaries": [
+    "preflight_succeeded != deployment_authorized",
+    "WhatIf_accepted != Azure_mutation_performed",
+    "month_to_date_cost != remaining_credit",
+    "repository_source_selected != deployed_source",
+    "workflow_failed != deployment_failed",
+    "deployment_succeeded != provenance_runtime_verified"
+  ],
+  "promotion_decision": {
+    "artifact_identity_verified": true,
+    "artifact_integrity_verified": true,
+    "exact_plan_inspected": true,
+    "accepted_for_deployment_decision": true,
+    "rewrites_historical_records": false
+  }
+}
