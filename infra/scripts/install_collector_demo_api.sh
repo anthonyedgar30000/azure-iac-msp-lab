@@ -65,6 +65,7 @@ cat > "$ENV_FILE" <<EOF
 SERVICETRACER_BACKEND_TRANSACTION_URL=${BACKEND_TRANSACTION_URL}
 SERVICETRACER_ALLOWED_ORIGIN=${ALLOWED_ORIGIN}
 SERVICETRACER_SOURCE_ID=${PUBLIC_FQDN}
+SERVICETRACER_DEPLOYED_SOURCE_REF=${SOURCE_REF}
 SERVICETRACER_DEMO_API_LISTEN=127.0.0.1
 SERVICETRACER_DEMO_API_PORT=${LOCAL_PORT}
 SERVICETRACER_BACKEND_TIMEOUT_SECONDS=${BACKEND_TIMEOUT_SECONDS}
@@ -189,14 +190,24 @@ systemctl reload nginx
 
 for _ in $(seq 1 60); do
   if curl --fail --silent --show-error "https://${PUBLIC_FQDN}/api/health" > /tmp/servicetracer-demo-api-health.json; then
-    python3 - <<'PY'
+    python3 - "$SOURCE_REF" <<'PY'
 import json
+import sys
 from pathlib import Path
+
+expected_source_ref = sys.argv[1]
 payload = json.loads(Path('/tmp/servicetracer-demo-api-health.json').read_text(encoding='utf-8'))
 if payload.get('status') != 'healthy' or payload.get('hosting_model') != 'collector_vm_systemd':
     raise SystemExit(f'Unexpected health response: {payload!r}')
 if payload.get('estimated_max_execution_seconds', 0) >= 75:
     raise SystemExit(f'API execution budget exceeds proxy budget: {payload!r}')
+identity = payload.get('azure_host') or {}
+if identity.get('verified') is not True:
+    raise SystemExit(f'Azure host identity was not verified: {identity!r}')
+if identity.get('source_ref') != expected_source_ref:
+    raise SystemExit(f'Deployed source identity mismatch: {identity!r}')
+if not all(identity.get(field) for field in ('resource_group', 'vm_name', 'location')):
+    raise SystemExit(f'Azure host identity is incomplete: {identity!r}')
 PY
     exit 0
   fi
