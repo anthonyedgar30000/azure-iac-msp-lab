@@ -1,0 +1,78 @@
+name: Run collector reconciliation on draft PR
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/reconcile-collector-golden-path-once.yml
+      - .github/workflows/reconcile-collector-golden-path-pr.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: reconcile-collector-golden-path-pr
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'agent/reconcile-collector-golden-path'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPECTED_MAIN: 50ae9113fafccbe31b3e2d076c021c814e4f446d
+      BRANCH: agent/reconcile-collector-golden-path
+    steps:
+      - name: Check out exact head branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Enforce exact repository boundary
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = "$BRANCH"
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git merge-base HEAD origin/main)" = "$EXPECTED_MAIN"
+
+      - name: Extract and execute bounded reconciliation
+        run: |
+          set -euo pipefail
+          python - <<'EXTRACT'
+          from pathlib import Path
+          from textwrap import dedent
+
+          source = Path('.github/workflows/reconcile-collector-golden-path-once.yml').read_text(encoding='utf-8')
+          marker = "          python - <<'PY'\n"
+          start = source.index(marker) + len(marker)
+          end = source.index("\n          PY\n", start)
+          payload = dedent(source[start:end]) + "\n"
+          Path('/tmp/reconcile_collector_golden_path.py').write_text(payload, encoding='utf-8')
+          EXTRACT
+          python /tmp/reconcile_collector_golden_path.py
+
+      - name: Validate bounded reconciliation
+        run: |
+          set -euo pipefail
+          python .project/validate.py
+          python -m unittest discover -s infra/tests -p 'test_*.py'
+          node --check scripts/verify_frontend_live_default.mjs
+          grep -F "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json
+          ! grep -F "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json
+          git diff --check
+
+      - name: Commit repair and remove helpers
+        run: |
+          set -euo pipefail
+          git rm \
+            .github/workflows/reconcile-collector-golden-path-once.yml \
+            .github/workflows/reconcile-collector-golden-path-pr.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Reconcile collector golden path"
+          git push origin HEAD:"$BRANCH"
