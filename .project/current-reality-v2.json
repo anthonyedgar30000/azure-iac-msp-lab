@@ -1,15 +1,16 @@
 {
   "schema_version": "project.current-reality.v2",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-26T04:43:53-04:00",
+  "recorded_at": "2026-07-26T09:13:14-04:00",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "repository_state": {
     "default_branch": "main",
-    "observed_head": "9bfff60bd2e1e3bbf5610807df7d970c9bd9f229",
-    "latest_merged_pull_request": 120,
+    "observed_head": "855ef85f898cbf34db2931abc8344d05cb05c6f7",
+    "latest_merged_pull_request": 125,
     "open_pull_requests_observed": [],
-    "exact_source_head": "2a2bfa64643e56d304fe075392735ec7155c05ed",
-    "exact_source_ci_run_id": 30194713992,
+    "observation_boundary": "Observed after PR #125 merged repository-only helper workflows and before this remediation PR.",
+    "exact_source_head": "315a310ae4ff3db7d5d100ea0320911043b77564",
+    "exact_source_ci_run_id": 30203314001,
     "exact_source_ci_conclusion": "success",
     "merge_commit_ci": "not_observed",
     "local_working_tree": "not_observed"
@@ -23,26 +24,29 @@
     "run16_initial_record": ".project/reconciliations/collector-demo-api-what-if-run16-accepted-20260726.json",
     "run16_artifact_promotion": ".project/reconciliations/collector-demo-api-what-if-run16-artifact-promotion-20260726.json",
     "run16_review": "docs/reviews/collector-demo-api-what-if-run16-artifact-promotion.md",
-    "workflow_run_id": 30192970923,
-    "workflow_run_number": 16,
-    "workflow_job_id": 89769401839,
-    "artifact_id": 8629191915,
-    "artifact_digest": "sha256:57fe05c113d0fefc86437a4aa247b920dc6a02680a1c2bfe8e67873fe7612e6e",
-    "artifact_manifest_payloads_verified": 29,
-    "artifact_manifest_payload_failures": 0
+    "workflow_run_id": 30196388398,
+    "workflow_run_number": 18,
+    "workflow_job_id": 89778570106,
+    "artifact_id": 8630260279,
+    "artifact_digest": "sha256:1f97be3c519d547871cc990e010013259dfd3c2e263f263653c2c4035340eb9e",
+    "artifact_manifest_payloads_verified": 48,
+    "artifact_manifest_payload_failures": 0,
+    "run18_deployment": ".project/reconciliations/collector-demo-api-deployment-run18-20260726.json",
+    "predeployment_what_if_run_id": 30192970923,
+    "predeployment_what_if_artifact_id": 8629191915
   },
   "collector_demo_api": {
     "observation": {
-      "observed_at": "2026-07-26T07:33:03Z",
+      "observed_at": "2026-07-26T09:26:57Z",
       "source": "verified_workflow_artifact",
       "subscription_name": "Azure for Students",
       "identity_identifiers": "sha256_fingerprints_only",
       "resource_group": "rg-servicetracer-dev-westus2",
       "location": "westus2",
-      "reviewed_commit": "8de1f61f8a0ea06dcf94b94c798edde2aace357d",
-      "operation": "what-if",
+      "reviewed_commit": "98b092201053fd3592be157a24de6e623e6b74a6",
+      "operation": "deploy",
       "azure_login_succeeded": true,
-      "azure_mutation_performed": false
+      "azure_mutation_performed": true
     },
     "predeployment_state": {
       "resource_group_provisioning_state": "Succeeded",
@@ -57,7 +61,8 @@
       "vm_extension_name": "servicetracer-demo-api",
       "vm_extension_provisioning_state": "Failed",
       "resource_locks": [],
-      "readiness_blockers": []
+      "readiness_blockers": [],
+      "observation_boundary": "Historical run-16 state before deployment run 18."
     },
     "accepted_what_if": {
       "classifier_accepted": true,
@@ -84,11 +89,14 @@
     "deployment": {
       "decision_ready": true,
       "authorized": false,
-      "performed": false,
+      "authorized_for_run18": true,
+      "authority_consumed": true,
+      "performed": true,
+      "succeeded": true,
       "rollback_performed": false,
-      "runtime_verification_performed": false,
+      "runtime_verification_performed": true,
       "transaction_replay_performed": false,
-      "service_restored": "not_verified"
+      "service_restored": "api_healthy_downstream_sample_failed_without_stable_localization"
     },
     "quota": {
       "standard_ipv4_public_ips": {
@@ -100,19 +108,72 @@
         "limit": 1000
       },
       "additional_public_ip_required": 0,
-      "sufficient_for_accepted_plan": true
+      "sufficient_for_accepted_plan": true,
+      "observation_boundary": "Time-bounded run-16 evidence; no fresh Azure query performed during repository reconciliation."
     },
     "cost_and_budget": {
-      "resource_creates": 0,
+      "resource_creates_in_run18": 0,
       "current_billing_cost": "not_observed",
       "remaining_Azure_for_Students_credit": "not_observed",
+      "actual_cost_cad": "not_observed",
       "cost_delta": "not_quantified"
     },
     "source_binding": {
-      "accepted_plan_source": "8de1f61f8a0ea06dcf94b94c798edde2aace357d",
-      "current_main": "9bfff60bd2e1e3bbf5610807df7d970c9bd9f229",
-      "intervening_changes": "repository evidence and validation only",
-      "deployment_source_decision": "unresolved"
+      "predeployment_plan_source": "8de1f61f8a0ea06dcf94b94c798edde2aace357d",
+      "deployed_source": "98b092201053fd3592be157a24de6e623e6b74a6",
+      "current_main": "855ef85f898cbf34db2931abc8344d05cb05c6f7",
+      "current_main_deployed": false,
+      "frontend_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+      "deployment_source_decision": "resolved_to_run18_exact_source",
+      "claim_boundary": "current main contains evidence and frontend changes after the deployed source; it is not itself claimed as deployed to Azure."
+    },
+    "postdeployment_state": {
+      "resource_group_provisioning_state": "Succeeded",
+      "collector_vm_name": "vm-stcollector-mst-dev",
+      "collector_vm_size": "Standard_B2ats_v2",
+      "collector_private_ip": "10.20.40.10",
+      "collector_vm_running": true,
+      "load_balancer_name": "lb-st-demo-api-mst-dev",
+      "load_balancer_provisioning_state": "Succeeded",
+      "backend_pool_name": "be-st-demo-api",
+      "backend_pool_address_count": 1,
+      "backend_pool_address_name": "collector",
+      "vm_extension_name": "servicetracer-demo-api",
+      "vm_extension_provisioning_state": "Succeeded",
+      "vm_extension_force_update_tag": "98b092201053fd3592be157a24de6e623e6b74a6"
+    },
+    "runtime_evidence": {
+      "collector_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+      "fqdn": "st-demo-api-aeg30000.westus2.cloudapp.azure.com",
+      "public_https_request_succeeded": true,
+      "health_status": "healthy",
+      "health_schema": "servicetracer.demo-api-health.v1",
+      "backend_target_configured": true,
+      "transaction_request_http_status": 200,
+      "transaction_schema": "servicetracer.demo-api-response.v1",
+      "transaction_count": 20,
+      "successful_transactions": 0,
+      "failed_transactions": 20,
+      "stable_backend_localization": false,
+      "exact_root_cause_claimed": false,
+      "cors_preflight_status": 204,
+      "cors_allow_origin": "https://anthonyedgar30000.github.io",
+      "cors_allows_post": true,
+      "workflow_overall_conclusion": "failure",
+      "workflow_failure_classification": "verifier_false_negative_after_successful_deployment_and_runtime_requests"
+    },
+    "frontend_binding": {
+      "configured_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+      "collector_golden_path_required": true,
+      "repository_binding_corrected": true,
+      "github_pages_publication_verified": false,
+      "browser_transaction_verified": false,
+      "consumed_verification_pull_request": 123,
+      "consumed_verification_run_id": 30198346832,
+      "failure_stage": "wait_for_exact_frontend_configuration",
+      "browser_execution_performed": false,
+      "automatic_retry_performed": false,
+      "retry_authorized": false
     }
   },
   "independent_demo_api": {
@@ -122,7 +183,10 @@
     "public_health": "healthy_pre_timeout_fix_contract",
     "corrected_runtime_deployed": false,
     "full_workload_operationally_verified": false,
-    "current_operational_freshness": "expired"
+    "current_operational_freshness": "expired",
+    "endpoint": "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+    "role": "historical_supporting_evidence_not_lab_v1_golden_path",
+    "collector_golden_path": false
   },
   "canonical_distinctions": [
     "declared_in_code != deployed_in_azure",
@@ -137,7 +201,11 @@
     "source_silence != contradiction",
     "verification_status != truth_value",
     "artifact_verified != deployment_authorized",
-    "WhatIf_accepted != service_restored"
+    "WhatIf_accepted != service_restored",
+    "workflow_failed != deployment_failed",
+    "API_health_verified != downstream_transaction_success_verified",
+    "independent_API_ready != collector_golden_path_verified",
+    "frontend_bound != browser_verified"
   ],
   "authority": {
     "repository_reconciliation_authorized": true,
@@ -153,16 +221,18 @@
     "transaction_replay_authorized": false,
     "rollback_authorized": false,
     "cleanup_authorized": false,
-    "rbac_mutation_authorized": false
+    "rbac_mutation_authorized": false,
+    "browser_verification_authorized": false
   },
   "next_gate": {
-    "operation": "refresh cost or credit evidence and select one exact deployment source",
-    "deployment_status": "blocked",
+    "operation": "publish corrected collector endpoint and obtain a new one-shot browser-verification grant",
+    "deployment_status": "deployed_runtime_partially_validated",
     "required": [
-      "current Azure for Students credit or billing evidence",
-      "exact deployment-source decision",
-      "fresh preflight and FullResourcePayloads What-If for that source",
-      "one-shot non-renewing deployment, rollback, and post-deployment verification authority"
+      "merge and publish the corrected collector endpoint",
+      "observe the exact published report-source configuration",
+      "obtain new finite browser health, CORS, and one-transaction-sample authority",
+      "capture current Azure for Students credit or actual billing evidence in CAD",
+      "do not perform another Azure deployment unless new evidence establishes a deployment defect"
     ]
   }
 }

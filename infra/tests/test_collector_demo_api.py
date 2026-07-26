@@ -121,14 +121,14 @@ class CollectorDemoApiTests(unittest.TestCase):
 
     def test_source_configuration_activates_exact_verified_collector_endpoint(self):
         config = json.loads(SOURCE_CONFIG.read_text(encoding="utf-8"))
-        expected = "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run"
+        expected = "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run"
         self.assertEqual(config["live_report_url"], "")
         self.assertEqual(config["live_demo_api_url"], expected)
         self.assertEqual(config["candidate_demo_api_url"], expected)
         self.assertEqual(config["fallback_report_url"], "technician-handoff-report.json")
         self.assertEqual(
             config["activation_status"],
-            "live_default_pending_github_pages_verification",
+            "collector_live_default_pending_github_pages_verification",
         )
         self.assertEqual(
             config["evidence_anchor"],

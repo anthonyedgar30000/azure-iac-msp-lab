@@ -10,12 +10,13 @@ CURRENT = ROOT / ".project/current-reality-v2.json"
 LEGACY = ROOT / ".project/current-reality.json"
 GATE = ROOT / ".project/lab-v1-completion-gate-v2.json"
 HANDOFF = ROOT / ".project/handoffs/current-state.md"
-PROMOTION = ROOT / ".project/reconciliations/collector-demo-api-what-if-run16-artifact-promotion-20260726.json"
+DEPLOYMENT = ROOT / ".project/reconciliations/collector-demo-api-deployment-run18-20260726.json"
 
-MAIN = "9bfff60bd2e1e3bbf5610807df7d970c9bd9f229"
-RUN_ID = 30192970923
-ARTIFACT_ID = 8629191915
-REVIEWED = "8de1f61f8a0ea06dcf94b94c798edde2aace357d"
+MAIN = "855ef85f898cbf34db2931abc8344d05cb05c6f7"
+DEPLOYED_SOURCE = "98b092201053fd3592be157a24de6e623e6b74a6"
+RUN_ID = 30196388398
+ARTIFACT_ID = 8630260279
+COLLECTOR = "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run"
 
 
 class CanonicalStateIndexV2Tests(unittest.TestCase):
@@ -26,85 +27,55 @@ class CanonicalStateIndexV2Tests(unittest.TestCase):
         cls.legacy = json.loads(LEGACY.read_text(encoding="utf-8"))
         cls.gate = json.loads(GATE.read_text(encoding="utf-8"))
         cls.handoff = HANDOFF.read_text(encoding="utf-8")
-        cls.promotion = json.loads(PROMOTION.read_text(encoding="utf-8"))
+        cls.deployment = json.loads(DEPLOYMENT.read_text(encoding="utf-8"))
 
     def test_index_selects_versioned_canonical_state(self):
-        self.assertEqual(
-            self.index["canonical_current_reality"],
-            ".project/current-reality-v2.json",
-        )
-        self.assertEqual(
-            self.index["canonical_completion_gate"],
-            ".project/lab-v1-completion-gate-v2.json",
-        )
-        legacy = self.index["legacy_compatibility_snapshots"]
-        self.assertEqual(legacy[0]["path"], ".project/current-reality.json")
-        self.assertEqual(legacy[1]["path"], ".project/lab-v1-completion-gate.json")
-        self.assertFalse(legacy[0]["authoritative_for_current_operations"])
-        self.assertFalse(legacy[1]["authoritative_for_current_operations"])
-        self.assertEqual(
-            self.legacy["repository_state"]["observed_head"],
-            "665e051375594d11e58e434231bd06775dbdc560",
-        )
+        self.assertEqual(self.index["canonical_current_reality"], ".project/current-reality-v2.json")
+        self.assertEqual(self.index["canonical_completion_gate"], ".project/lab-v1-completion-gate-v2.json")
+        self.assertFalse(self.index["legacy_compatibility_snapshots"][0]["authoritative_for_current_operations"])
+        self.assertEqual(self.legacy["repository_state"]["observed_head"], "665e051375594d11e58e434231bd06775dbdc560")
 
-    def test_current_repository_watermark_is_pr120(self):
+    def test_current_repository_watermark_is_pr124(self):
         repo = self.current["repository_state"]
         self.assertEqual(repo["observed_head"], MAIN)
-        self.assertEqual(repo["latest_merged_pull_request"], 120)
+        self.assertEqual(repo["latest_merged_pull_request"], 125)
         self.assertEqual(repo["open_pull_requests_observed"], [])
-        self.assertEqual(repo["exact_source_ci_run_id"], 30194713992)
+        self.assertEqual(repo["exact_source_ci_run_id"], 30203314001)
         self.assertEqual(repo["exact_source_ci_conclusion"], "success")
 
-    def test_run16_artifact_and_plan_are_exact(self):
+    def test_run18_deployment_is_current_evidence(self):
         anchors = self.current["evidence_anchors"]
         self.assertEqual(anchors["workflow_run_id"], RUN_ID)
         self.assertEqual(anchors["artifact_id"], ARTIFACT_ID)
-        self.assertEqual(anchors["artifact_manifest_payloads_verified"], 29)
-        self.assertEqual(anchors["artifact_manifest_payload_failures"], 0)
+        self.assertEqual(anchors["artifact_manifest_payloads_verified"], 48)
+        self.assertEqual(self.deployment["source"]["reviewed_commit"], DEPLOYED_SOURCE)
+        self.assertTrue(self.deployment["deployment"]["deployment_step_succeeded"])
+        self.assertEqual(self.deployment["deployment"]["backend_pool"]["address_count"], 1)
+        self.assertEqual(self.deployment["deployment"]["collector_vm_extension"]["provisioning_state"], "Succeeded")
 
+    def test_collector_is_deployed_but_browser_gate_remains_open(self):
         api = self.current["collector_demo_api"]
-        self.assertEqual(api["observation"]["reviewed_commit"], REVIEWED)
-        self.assertFalse(api["observation"]["azure_mutation_performed"])
-        self.assertEqual(
-            api["accepted_what_if"]["change_counts"],
-            {"Ignore": 24, "Modify": 3, "NoChange": 3, "Create": 0, "Delete": 0, "Replace": 0},
-        )
-        self.assertEqual(api["predeployment_state"]["backend_pool_address_count"], 0)
-        self.assertEqual(api["predeployment_state"]["vm_extension_provisioning_state"], "Failed")
+        self.assertTrue(api["deployment"]["performed"])
+        self.assertTrue(api["deployment"]["succeeded"])
+        self.assertTrue(api["deployment"]["authority_consumed"])
+        self.assertEqual(api["runtime_evidence"]["collector_endpoint"], COLLECTOR)
+        self.assertEqual(api["runtime_evidence"]["health_status"], "healthy")
+        self.assertEqual(api["runtime_evidence"]["transaction_count"], 20)
+        self.assertEqual(api["runtime_evidence"]["successful_transactions"], 0)
+        self.assertFalse(api["runtime_evidence"]["stable_backend_localization"])
+        self.assertFalse(api["frontend_binding"]["browser_transaction_verified"])
+        self.assertFalse(api["frontend_binding"]["retry_authorized"])
 
-    def test_deployment_and_cost_remain_blocked(self):
-        api = self.current["collector_demo_api"]
-        self.assertTrue(api["deployment"]["decision_ready"])
-        self.assertFalse(api["deployment"]["authorized"])
-        self.assertFalse(api["deployment"]["performed"])
-        self.assertEqual(api["deployment"]["service_restored"], "not_verified")
-        self.assertEqual(api["cost_and_budget"]["current_billing_cost"], "not_observed")
-        self.assertEqual(
-            api["cost_and_budget"]["remaining_Azure_for_Students_credit"],
-            "not_observed",
-        )
-        self.assertEqual(api["source_binding"]["deployment_source_decision"], "unresolved")
+    def test_gate_tracks_completed_deployment_without_overclaiming(self):
+        criteria = {item["criterion_id"]: item for item in self.gate["p0"]["criteria"]}
+        self.assertTrue(criteria["p0-collector-deployment"]["complete"])
+        self.assertFalse(criteria["p0-runtime-contract"]["complete"])
+        self.assertFalse(criteria["p0-servicetracer-scenario"]["complete"])
+        self.assertFalse(criteria["p0-browser-demonstration"]["complete"])
+        self.assertIn(COLLECTOR, self.handoff)
+        self.assertIn("independent_API_ready != collector_golden_path_verified", self.handoff)
 
-    def test_gate_and_handoff_follow_index(self):
-        self.assertEqual(
-            self.gate["evidence_inputs"]["canonical_state_index"],
-            ".project/state-index.json",
-        )
-        self.assertEqual(
-            self.gate["evidence_inputs"]["canonical_current_view"],
-            ".project/current-reality-v2.json",
-        )
-        for marker in (
-            MAIN,
-            str(RUN_ID),
-            str(ARTIFACT_ID),
-            REVIEWED,
-            "artifact_verified != deployment_authorized",
-            "pull request merge authorized: false",
-        ):
-            self.assertIn(marker, self.handoff)
-
-    def test_no_execution_authority_is_manufactured(self):
+    def test_no_new_execution_authority_is_manufactured(self):
         authority = self.current["authority"]
         for key in (
             "pull_request_merge_authorized",
@@ -113,17 +84,13 @@ class CanonicalStateIndexV2Tests(unittest.TestCase):
             "azure_query_authorized",
             "azure_mutation_authorized",
             "deployment_authorized",
-            "verify_operation_authorized",
+            "browser_verification_authorized",
             "transaction_replay_authorized",
             "rollback_authorized",
             "cleanup_authorized",
             "rbac_mutation_authorized",
         ):
             self.assertFalse(authority[key], key)
-
-        promotion_authority = self.promotion["authority"]
-        self.assertFalse(promotion_authority["deployment_authorized"])
-        self.assertFalse(promotion_authority["workflow_dispatch_authorized"])
 
 
 if __name__ == "__main__":

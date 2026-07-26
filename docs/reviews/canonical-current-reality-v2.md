@@ -1,30 +1,28 @@
 # Canonical current reality v2
 
-This increment introduces an explicit state index so current operational consumers no longer mistake historical filenames for live authority.
+## Current authority
+
+`.project/state-index.json` continues to select the versioned v2 current-reality, completion-gate, and handoff files. Legacy filenames remain historical compatibility snapshots.
+
+## Reconciled facts
+
+- Observed main: `855ef85f898cbf34db2931abc8344d05cb05c6f7` after PR #125.
+- Collector exact deployed source: `98b092201053fd3592be157a24de6e623e6b74a6`.
+- Deployment run: `30196388398`; artifact `8630260279`; 48/48 manifest payloads verified.
+- Collector extension and backend pool converged.
+- Collector API endpoint: `https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run`.
+- Health, HTTPS request, CORS, and one 20-attempt response were observed.
+- All 20 downstream attempts failed; stable localization was not established and no exact root cause was claimed.
+- PR #123 was consumed and closed before browser execution.
+- The independent VM API is not the collector golden path.
 
 ```text
-.project/state-index.json
-├── canonical current reality → .project/current-reality-v2.json
-├── canonical completion gate → .project/lab-v1-completion-gate-v2.json
-└── canonical handoff → .project/handoffs/current-state.md
+workflow_failed != deployment_failed
+API_health_verified != downstream_transaction_success_verified
+independent_API_ready != collector_golden_path_verified
+frontend_bound != browser_verified
 ```
 
-The existing `.project/current-reality.json` and `.project/lab-v1-completion-gate.json` remain unchanged historical compatibility snapshots. Their existing tests continue to validate the decisions and observations they originally represented.
+## Remaining gate
 
-The v2 current view promotes:
-
-- `main@9bfff60bd2e1e3bbf5610807df7d970c9bd9f229` and merged PR #120;
-- exact-source CI run `30194713992`;
-- collector What-If run `30192970923`;
-- artifact `8629191915` and verified `29/29` payload hashes;
-- the exact three-resource accepted plan;
-- the observed empty backend pool and failed extension;
-- unresolved cost, credit, deployment source, deployment outcome, and runtime health.
-
-No execution authority is created.
-
-```text
-canonical_state_advanced != Azure_state_refreshed
-artifact_verified != deployment_authorized
-legacy_snapshot_preserved != legacy_snapshot_current
-```
+Publish the corrected collector binding, obtain a new one-shot browser grant, preserve bounded browser evidence, verify monitoring delivery, and capture actual cost or remaining student credit in CAD.
