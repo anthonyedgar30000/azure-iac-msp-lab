@@ -74,6 +74,22 @@ def _item_properties(item: dict[str, Any], label: str) -> dict[str, Any]:
     return properties
 
 
+def _empty_placeholder_properties(item: dict[str, Any], label: str) -> dict[str, Any]:
+    unexpected_keys = sorted(set(item) - {"name", "properties"})
+    if unexpected_keys:
+        raise SystemExit(f"{label} contains unexpected fields: {', '.join(unexpected_keys)}")
+
+    if "properties" not in item:
+        return {}
+
+    properties = item["properties"]
+    if not isinstance(properties, dict):
+        raise SystemExit(f"{label} properties must be an object when present")
+    if properties:
+        raise SystemExit(f"{label} properties must remain empty")
+    return properties
+
+
 def _validate_public_ip(item: dict[str, Any], *, dns_label: str) -> None:
     properties = _properties(item)
     if properties.get("publicIPAllocationMethod") != "Static":
@@ -153,9 +169,10 @@ def _validate_dedicated_load_balancer(
     ):
         raise SystemExit("Dedicated load balancer frontend does not use the bounded public IP")
 
-    pool = _item_properties(pools["be-st-demo-api"], "collector API backend pool placeholder")
-    if any(key in pool for key in ("virtualNetwork", "subnet", "loadBalancerBackendAddresses")):
-        raise SystemExit("Parent load balancer must leave backend address convergence to the child resource")
+    _empty_placeholder_properties(
+        pools["be-st-demo-api"],
+        "collector API backend pool placeholder",
+    )
 
     probe = _item_properties(probes["probe-tcp-80-st-demo-api"], "collector API probe")
     if probe.get("protocol") != "Tcp" or probe.get("port") != 80:
