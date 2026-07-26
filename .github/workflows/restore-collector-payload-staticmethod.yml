@@ -1,0 +1,52 @@
+name: Restore collector payload staticmethod
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/restore-collector-payload-staticmethod.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'activate/frontend-live-api-default'
+    name: Restore unchanged test fixture decorator
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Restore staticmethod and validate classifier suite
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('infra/tests/test_collector_demo_api.py')
+          source = path.read_text(encoding='utf-8')
+          anchor = '\n    def _valid_payload(\n'
+          replacement = '\n    @staticmethod\n    def _valid_payload(\n'
+          if source.count(anchor) != 1:
+              raise SystemExit(f'expected one _valid_payload anchor, observed {source.count(anchor)}')
+          path.write_text(source.replace(anchor, replacement, 1), encoding='utf-8')
+          PY
+          python3 -m unittest \
+            infra.tests.test_collector_demo_api \
+            infra.tests.test_collector_demo_api_load_balancer \
+            -v
+
+      - name: Remove helper and commit exact correction
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm --ignore-unmatch .github/workflows/restore-collector-payload-staticmethod.yml
+          git add -A
+          git commit -m "Restore collector payload staticmethod after frontend test update"
+          git push origin HEAD:${{ github.head_ref }}
