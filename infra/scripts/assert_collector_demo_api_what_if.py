@@ -9,6 +9,7 @@ from typing import Any
 ALLOWED_CREATE_TYPES = {
     "Microsoft.Compute/virtualMachines/extensions",
     "Microsoft.Network/loadBalancers",
+    "Microsoft.Network/loadBalancers/backendAddressPools",
     "Microsoft.Network/networkSecurityGroups/securityRules",
     "Microsoft.Network/publicIPAddresses",
 }
@@ -94,12 +95,33 @@ def _validate_public_ip_reconciliation(item: dict[str, Any]) -> None:
         raise SystemExit("Collector API public IP reconciliation must not contain nested changes")
 
 
+def _validate_backend_pool(
+    item: dict[str, Any],
+    *,
+    private_ip: str,
+    virtual_network_id: str,
+) -> None:
+    properties = _properties(item)
+    if "virtualNetwork" in properties or "subnet" in properties:
+        raise SystemExit("IP-based backend pool must not set virtual network at pool level")
+    addresses = properties.get("loadBalancerBackendAddresses")
+    if not isinstance(addresses, list) or len(addresses) != 1:
+        raise SystemExit("Collector API backend pool must contain exactly one address")
+    address = addresses[0] if isinstance(addresses[0], dict) else {}
+    if address.get("name") != "collector":
+        raise SystemExit("Collector API backend address must be named collector")
+    address_properties = _item_properties(address, "collector API backend address")
+    if address_properties.get("ipAddress") != private_ip:
+        raise SystemExit("Collector API backend pool does not target the proven collector private IP")
+    virtual_network = address_properties.get("virtualNetwork")
+    if not isinstance(virtual_network, dict) or virtual_network.get("id") != virtual_network_id:
+        raise SystemExit("Collector API backend address does not use the proven virtual network")
+
+
 def _validate_dedicated_load_balancer(
     item: dict[str, Any],
     *,
     suffix: str,
-    private_ip: str,
-    virtual_network_id: str,
 ) -> None:
     after = item.get("after") if isinstance(item.get("after"), dict) else {}
     sku = after.get("sku") if isinstance(after.get("sku"), dict) else {}
@@ -129,21 +151,9 @@ def _validate_dedicated_load_balancer(
     ):
         raise SystemExit("Dedicated load balancer frontend does not use the bounded public IP")
 
-    pool = _item_properties(pools["be-st-demo-api"], "collector API backend pool")
-    if "virtualNetwork" in pool or "subnet" in pool:
-        raise SystemExit("IP-based backend pool must not set virtual network at pool level")
-    addresses = pool.get("loadBalancerBackendAddresses")
-    if not isinstance(addresses, list) or len(addresses) != 1:
-        raise SystemExit("Collector API backend pool must contain exactly one address")
-    address = addresses[0] if isinstance(addresses[0], dict) else {}
-    if address.get("name") != "collector":
-        raise SystemExit("Collector API backend address must be named collector")
-    address_properties = _item_properties(address, "collector API backend address")
-    if address_properties.get("ipAddress") != private_ip:
-        raise SystemExit("Collector API backend pool does not target the proven collector private IP")
-    virtual_network = address_properties.get("virtualNetwork")
-    if not isinstance(virtual_network, dict) or virtual_network.get("id") != virtual_network_id:
-        raise SystemExit("Collector API backend address does not use the proven virtual network")
+    pool = _item_properties(pools["be-st-demo-api"], "collector API backend pool placeholder")
+    if any(key in pool for key in ("virtualNetwork", "subnet", "loadBalancerBackendAddresses")):
+        raise SystemExit("Parent load balancer must leave backend address convergence to the child resource")
 
     probe = _item_properties(probes["probe-tcp-80-st-demo-api"], "collector API probe")
     if probe.get("protocol") != "Tcp" or probe.get("port") != 80:
@@ -187,13 +197,16 @@ def _validate_expected_payload(
 
     if lowered.endswith(f"/publicipaddresses/pip-st-demo-api-{suffix}".lower()):
         _validate_public_ip(item, dns_label=dns_label)
-    elif lowered.endswith(f"/loadbalancers/lb-st-demo-api-{suffix}".lower()):
-        _validate_dedicated_load_balancer(
+    elif lowered.endswith(
+        f"/loadbalancers/lb-st-demo-api-{suffix}/backendaddresspools/be-st-demo-api".lower()
+    ):
+        _validate_backend_pool(
             item,
-            suffix=suffix,
             private_ip=private_ip,
             virtual_network_id=virtual_network_id,
         )
+    elif lowered.endswith(f"/loadbalancers/lb-st-demo-api-{suffix}".lower()):
+        _validate_dedicated_load_balancer(item, suffix=suffix)
     elif lowered.endswith("/securityrules/allow-demo-api-http-from-internet"):
         if properties.get("destinationAddressPrefix") != private_ip or properties.get("destinationPortRange") != "80":
             raise SystemExit("Collector API HTTP NSG rule does not match the bounded collector endpoint")
@@ -235,9 +248,13 @@ def classify(
         )
 
     public_ip_suffix = f"/publicIPAddresses/pip-st-demo-api-{suffix}"
+    backend_pool_suffix = (
+        f"/loadBalancers/lb-st-demo-api-{suffix}/backendAddressPools/be-st-demo-api"
+    )
     target_suffixes = {
         public_ip_suffix: "Microsoft.Network/publicIPAddresses",
         f"/loadBalancers/lb-st-demo-api-{suffix}": "Microsoft.Network/loadBalancers",
+        backend_pool_suffix: "Microsoft.Network/loadBalancers/backendAddressPools",
         "/securityRules/Allow-Demo-API-HTTP-From-Internet": "Microsoft.Network/networkSecurityGroups/securityRules",
         "/securityRules/Allow-Demo-API-HTTPS-From-Internet": "Microsoft.Network/networkSecurityGroups/securityRules",
         f"/virtualMachines/vm-stcollector-{suffix}/extensions/servicetracer-demo-api": "Microsoft.Compute/virtualMachines/extensions",
@@ -261,7 +278,7 @@ def classify(
         )
         if matched_suffix is not None:
             allowed_change_types = set(DEFAULT_TARGET_CHANGE_TYPES)
-            if matched_suffix == public_ip_suffix:
+            if matched_suffix in {public_ip_suffix, backend_pool_suffix}:
                 allowed_change_types.add("Modify")
             if change_type not in allowed_change_types:
                 raise SystemExit(f"Target resource has an unapproved change type {change_type}: {resource_id}")
@@ -276,7 +293,8 @@ def classify(
                 dns_label=dns_label,
             )
             if change_type == "Modify":
-                _validate_public_ip_reconciliation(item)
+                if matched_suffix == public_ip_suffix:
+                    _validate_public_ip_reconciliation(item)
                 approved_reconciliations.append(resource_id)
             matched_targets[matched_suffix] = change_type
         elif change_type == "Create":
@@ -307,7 +325,7 @@ def classify(
 
     creates = [item for item in changes if item.get("changeType") == "Create"]
     return {
-        "schema_version": "servicetracer.collector-demo-api-what-if.v2",
+        "schema_version": "servicetracer.collector-demo-api-what-if.v3",
         "status": "accepted_isolated_collector_api_changes",
         "ingress_strategy": "dedicated_standard_load_balancer",
         "total_changes": len(changes),
