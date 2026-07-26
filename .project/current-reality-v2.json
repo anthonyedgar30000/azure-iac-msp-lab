@@ -1,0 +1,168 @@
+{
+  "schema_version": "project.current-reality.v2",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-26T04:43:53-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "repository_state": {
+    "default_branch": "main",
+    "observed_head": "9bfff60bd2e1e3bbf5610807df7d970c9bd9f229",
+    "latest_merged_pull_request": 120,
+    "open_pull_requests_observed": [],
+    "exact_source_head": "2a2bfa64643e56d304fe075392735ec7155c05ed",
+    "exact_source_ci_run_id": 30194713992,
+    "exact_source_ci_conclusion": "success",
+    "merge_commit_ci": "not_observed",
+    "local_working_tree": "not_observed"
+  },
+  "historical_snapshot": {
+    "path": ".project/current-reality.json",
+    "purpose": "Preserve the PR #92/#93 canonical snapshot for bounded historical validators.",
+    "current_authority": false
+  },
+  "evidence_anchors": {
+    "run16_initial_record": ".project/reconciliations/collector-demo-api-what-if-run16-accepted-20260726.json",
+    "run16_artifact_promotion": ".project/reconciliations/collector-demo-api-what-if-run16-artifact-promotion-20260726.json",
+    "run16_review": "docs/reviews/collector-demo-api-what-if-run16-artifact-promotion.md",
+    "workflow_run_id": 30192970923,
+    "workflow_run_number": 16,
+    "workflow_job_id": 89769401839,
+    "artifact_id": 8629191915,
+    "artifact_digest": "sha256:57fe05c113d0fefc86437a4aa247b920dc6a02680a1c2bfe8e67873fe7612e6e",
+    "artifact_manifest_payloads_verified": 29,
+    "artifact_manifest_payload_failures": 0
+  },
+  "collector_demo_api": {
+    "observation": {
+      "observed_at": "2026-07-26T07:33:03Z",
+      "source": "verified_workflow_artifact",
+      "subscription_name": "Azure for Students",
+      "identity_identifiers": "sha256_fingerprints_only",
+      "resource_group": "rg-servicetracer-dev-westus2",
+      "location": "westus2",
+      "reviewed_commit": "8de1f61f8a0ea06dcf94b94c798edde2aace357d",
+      "operation": "what-if",
+      "azure_login_succeeded": true,
+      "azure_mutation_performed": false
+    },
+    "predeployment_state": {
+      "resource_group_provisioning_state": "Succeeded",
+      "collector_vm_name": "vm-stcollector-mst-dev",
+      "collector_vm_size": "Standard_B2ats_v2",
+      "collector_private_ip": "10.20.40.10",
+      "collector_vm_running": true,
+      "load_balancer_name": "lb-st-demo-api-mst-dev",
+      "load_balancer_provisioning_state": "Succeeded",
+      "backend_pool_name": "be-st-demo-api",
+      "backend_pool_address_count": 0,
+      "vm_extension_name": "servicetracer-demo-api",
+      "vm_extension_provisioning_state": "Failed",
+      "resource_locks": [],
+      "readiness_blockers": []
+    },
+    "accepted_what_if": {
+      "classifier_accepted": true,
+      "total_entries": 30,
+      "change_counts": {
+        "Ignore": 24,
+        "Modify": 3,
+        "NoChange": 3,
+        "Create": 0,
+        "Delete": 0,
+        "Replace": 0
+      },
+      "approved_modifications": [
+        "commit-bound CustomScript extension rerun",
+        "exact Standard/Regional load-balancer parent reconciliation",
+        "one collector backend address at 10.20.40.10"
+      ],
+      "explicit_no_change": [
+        "pip-st-demo-api-mst-dev",
+        "Allow-Demo-API-HTTP-From-Internet",
+        "Allow-Demo-API-HTTPS-From-Internet"
+      ]
+    },
+    "deployment": {
+      "decision_ready": true,
+      "authorized": false,
+      "performed": false,
+      "rollback_performed": false,
+      "runtime_verification_performed": false,
+      "transaction_replay_performed": false,
+      "service_restored": "not_verified"
+    },
+    "quota": {
+      "standard_ipv4_public_ips": {
+        "current": 2,
+        "limit": 3
+      },
+      "load_balancers": {
+        "current": 2,
+        "limit": 1000
+      },
+      "additional_public_ip_required": 0,
+      "sufficient_for_accepted_plan": true
+    },
+    "cost_and_budget": {
+      "resource_creates": 0,
+      "current_billing_cost": "not_observed",
+      "remaining_Azure_for_Students_credit": "not_observed",
+      "cost_delta": "not_quantified"
+    },
+    "source_binding": {
+      "accepted_plan_source": "8de1f61f8a0ea06dcf94b94c798edde2aace357d",
+      "current_main": "9bfff60bd2e1e3bbf5610807df7d970c9bd9f229",
+      "intervening_changes": "repository evidence and validation only",
+      "deployment_source_decision": "unresolved"
+    }
+  },
+  "independent_demo_api": {
+    "historical_snapshot": "time_bounded_2026-07-25T00:47:40Z",
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "deployed_source": "8b3d55c616d8820edd523f77021a35fe24167bd0",
+    "public_health": "healthy_pre_timeout_fix_contract",
+    "corrected_runtime_deployed": false,
+    "full_workload_operationally_verified": false,
+    "current_operational_freshness": "expired"
+  },
+  "canonical_distinctions": [
+    "declared_in_code != deployed_in_azure",
+    "deployment_succeeded != service_validated",
+    "resource_exists != securely_configured",
+    "RBAC_assignment != effective_least_privilege",
+    "monitoring_enabled != alerts_verified",
+    "backup_configured != recovery_tested",
+    "high_availability != disaster_recovery",
+    "estimated_cost != actual_cost",
+    "not_observed != false",
+    "source_silence != contradiction",
+    "verification_status != truth_value",
+    "artifact_verified != deployment_authorized",
+    "WhatIf_accepted != service_restored"
+  ],
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "draft_pull_request_authorized": true,
+    "ordinary_pull_request_ci_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "deployment_authorized": false,
+    "verify_operation_authorized": false,
+    "transaction_replay_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false,
+    "rbac_mutation_authorized": false
+  },
+  "next_gate": {
+    "operation": "refresh cost or credit evidence and select one exact deployment source",
+    "deployment_status": "blocked",
+    "required": [
+      "current Azure for Students credit or billing evidence",
+      "exact deployment-source decision",
+      "fresh preflight and FullResourcePayloads What-If for that source",
+      "one-shot non-renewing deployment, rollback, and post-deployment verification authority"
+    ]
+  }
+}
