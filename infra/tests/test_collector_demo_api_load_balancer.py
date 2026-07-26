@@ -139,6 +139,37 @@ class CollectorDemoApiLoadBalancerRegressionTests(unittest.TestCase):
         }
         return payload
 
+    @staticmethod
+    def _payload_with_exact_load_balancer_reconciliation():
+        payload = CollectorDemoApiTests._valid_payload()
+        load_balancer = next(
+            item
+            for item in payload["changes"]
+            if str(item.get("resourceId", "")).endswith(
+                "/loadBalancers/lb-st-demo-api-mst-dev"
+            )
+        )
+        load_balancer["changeType"] = "Modify"
+        load_balancer["after"]["sku"]["tier"] = "Regional"
+        load_balancer["after"]["tags"] = {
+            "workload": "azure-iac-msp-lab",
+            "environment": "dev",
+            "managedBy": "bicep",
+            "purpose": "servicetracer-demo",
+            "component": "collector-hosted-demo-api-load-balancer",
+            "exposure": "public-https",
+        }
+        load_balancer["before"] = deepcopy(load_balancer["after"])
+        load_balancer["before"]["properties"]["backendAddressPools"][0]["properties"] = {
+            "loadBalancerBackendAddresses": [
+                {
+                    "name": "collector",
+                    "properties": {"ipAddress": "10.20.40.10"},
+                }
+            ]
+        }
+        return payload
+
     def _classify(self, payload):
         return self.classifier.classify(
             payload,
@@ -201,6 +232,47 @@ class CollectorDemoApiLoadBalancerRegressionTests(unittest.TestCase):
         extension["after"]["properties"]["publisher"] = "Unexpected.Publisher"
         with self.assertRaises(SystemExit):
             self._classify(payload)
+
+    def test_classifier_accepts_exact_parent_load_balancer_reconciliation(self):
+        payload = self._payload_with_exact_load_balancer_reconciliation()
+        load_balancer = next(item for item in payload["changes"] if item.get("changeType") == "Modify")
+        result = self._classify(payload)
+        self.assertEqual(
+            result["target_resource_states"]["/loadBalancers/lb-st-demo-api-mst-dev"],
+            "Modify",
+        )
+        self.assertIn(load_balancer["resourceId"], result["approved_reconciliations"])
+        self.assertEqual(result["creates"], 5)
+        self.assertFalse(result["deployment_authorized"])
+
+    def test_classifier_rejects_load_balancer_modify_outside_exact_contract(self):
+        payload = self._payload_with_exact_load_balancer_reconciliation()
+        load_balancer = next(item for item in payload["changes"] if item.get("changeType") == "Modify")
+        load_balancer["after"]["tags"]["exposure"] = "unexpected"
+        with self.assertRaises(SystemExit):
+            self._classify(payload)
+
+        payload = self._payload_with_exact_load_balancer_reconciliation()
+        load_balancer = next(item for item in payload["changes"] if item.get("changeType") == "Modify")
+        load_balancer["after"]["properties"]["backendAddressPools"][0]["properties"] = {
+            "loadBalancerBackendAddresses": []
+        }
+        with self.assertRaises(SystemExit):
+            self._classify(payload)
+
+        payload = self._payload_with_exact_load_balancer_reconciliation()
+        load_balancer = next(item for item in payload["changes"] if item.get("changeType") == "Modify")
+        load_balancer["after"]["sku"]["tier"] = "Global"
+        with self.assertRaises(SystemExit):
+            self._classify(payload)
+
+    def test_classifier_still_rejects_load_balancer_replace_or_delete(self):
+        for change_type in ("Delete", "Replace"):
+            payload = self._payload_with_exact_load_balancer_reconciliation()
+            load_balancer = next(item for item in payload["changes"] if item.get("changeType") == "Modify")
+            load_balancer["changeType"] = change_type
+            with self.assertRaises(SystemExit):
+                self._classify(payload)
 
 
 if __name__ == "__main__":
