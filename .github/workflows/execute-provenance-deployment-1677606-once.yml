@@ -1,0 +1,184 @@
+name: Execute provenance deployment 1677606 once
+
+on:
+  push:
+    branches:
+      - deploy/execute-provenance-1677606-once
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: execute-provenance-deployment-1677606-once
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    name: Consume finite deployment grant
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    outputs:
+      child_run_id: ${{ steps.dispatch.outputs.child_run_id }}
+      child_conclusion: ${{ steps.dispatch.outputs.child_conclusion }}
+    steps:
+      - name: Check out authorization record
+        uses: actions/checkout@v4
+
+      - name: Validate exact unconsumed grant
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import datetime as dt
+          import json
+          from pathlib import Path
+
+          path = Path('.project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json')
+          grant = json.loads(path.read_text(encoding='utf-8'))
+          assert grant['grant_id'] == 'collector-provenance-deploy-1677606-20260726'
+          assert grant['action']['workflow'] == '.github/workflows/collector-demo-api.yml'
+          assert grant['action']['operation'] == 'deploy'
+          assert grant['action']['reviewed_commit'] == '1677606ded960c951fa37f0fdbfae50ba4b3cc34'
+          assert grant['action']['resource_group'] == 'rg-servicetracer-dev-westus2'
+          assert grant['action']['location'] == 'westus2'
+          assert grant['action']['lab_environment'] == 'dev'
+          assert grant['action']['prefix'] == 'mst'
+          assert grant['action']['dns_label'] == 'st-demo-api-aeg30000'
+          assert grant['action']['allowed_origin'] == 'https://anthonyedgar30000.github.io'
+          assert grant['action']['confirmation'] == 'COLLECTOR-DEMO-API:deploy:rg-servicetracer-dev-westus2:st-demo-api-aeg30000'
+          assert grant['consumption']['attempt_limit'] == 1
+          assert grant['consumption']['renewable'] is False
+          assert grant['consumption']['status'] == 'pending_consumption'
+          assert grant['verification_authority']['automatic_retry'] is False
+          assert grant['rollback_authority']['automatic_rollback'] is False
+          assert grant['rollback_authority']['manual_rollback'] is False
+          assert grant['authorized_mutation_scope']['creates'] == 0
+          assert grant['authorized_mutation_scope']['deletes'] == 0
+          assert grant['authorized_mutation_scope']['replaces'] == 0
+          assert len(grant['authorized_mutation_scope']['modifies']) == 3
+
+          now = dt.datetime.now(dt.timezone.utc)
+          expires = dt.datetime.fromisoformat(grant['valid_until'])
+          assert now <= expires.astimezone(dt.timezone.utc), 'Deployment grant has expired'
+          PY
+
+      - name: Dispatch exact deployment and wait for terminal result
+        id: dispatch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const workflow_id = 'collector-demo-api.yml';
+            const before = await github.rest.actions.listWorkflowRuns({
+              owner,
+              repo,
+              workflow_id,
+              event: 'workflow_dispatch',
+              per_page: 20
+            });
+            const priorIds = new Set(before.data.workflow_runs.map(run => run.id));
+            const dispatchedAt = Date.now();
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner,
+              repo,
+              workflow_id,
+              ref: 'main',
+              inputs: {
+                operation: 'deploy',
+                reviewed_commit: '1677606ded960c951fa37f0fdbfae50ba4b3cc34',
+                environment: 'dev',
+                resource_group: 'rg-servicetracer-dev-westus2',
+                location: 'westus2',
+                prefix: 'mst',
+                dns_label: 'st-demo-api-aeg30000',
+                allowed_origin: 'https://anthonyedgar30000.github.io',
+                confirmation: 'COLLECTOR-DEMO-API:deploy:rg-servicetracer-dev-westus2:st-demo-api-aeg30000'
+              }
+            });
+
+            let child = null;
+            for (let attempt = 0; attempt < 60; attempt += 1) {
+              await new Promise(resolve => setTimeout(resolve, 10000));
+              const runs = await github.rest.actions.listWorkflowRuns({
+                owner,
+                repo,
+                workflow_id,
+                event: 'workflow_dispatch',
+                branch: 'main',
+                per_page: 20
+              });
+              child = runs.data.workflow_runs.find(run =>
+                !priorIds.has(run.id) &&
+                Date.parse(run.created_at) >= dispatchedAt - 5000
+              );
+              if (child) break;
+            }
+            if (!child) {
+              core.setFailed('Deployment dispatch was accepted but the child workflow run could not be resolved. The grant is consumed; do not retry automatically.');
+              return;
+            }
+
+            core.setOutput('child_run_id', String(child.id));
+            core.info(`Resolved deployment child run ${child.id}`);
+
+            let terminal = child;
+            for (let attempt = 0; attempt < 180; attempt += 1) {
+              const response = await github.rest.actions.getWorkflowRun({owner, repo, run_id: child.id});
+              terminal = response.data;
+              if (terminal.status === 'completed') break;
+              await new Promise(resolve => setTimeout(resolve, 30000));
+            }
+
+            core.setOutput('child_conclusion', terminal.conclusion || 'not_completed');
+            await core.summary
+              .addHeading('One-shot collector provenance deployment')
+              .addRaw(`Child run: ${terminal.id}\n`)
+              .addRaw(`Status: ${terminal.status}\n`)
+              .addRaw(`Conclusion: ${terminal.conclusion || 'not_completed'}\n`)
+              .addRaw('Grant consumed: true\n')
+              .addRaw('Automatic retry authorized: false\n')
+              .write();
+
+            if (terminal.status !== 'completed') {
+              core.setFailed(`Child run ${terminal.id} did not reach a terminal state. The grant is consumed; do not retry automatically.`);
+            } else if (terminal.conclusion !== 'success') {
+              core.setFailed(`Child run ${terminal.id} concluded ${terminal.conclusion}. Inspect its artifact before any new authority decision.`);
+            }
+
+      - name: Write dispatcher evidence
+        if: always()
+        env:
+          CHILD_RUN_ID: ${{ steps.dispatch.outputs.child_run_id }}
+          CHILD_CONCLUSION: ${{ steps.dispatch.outputs.child_conclusion }}
+        run: |
+          set -euo pipefail
+          jq -n \
+            --arg grant_id 'collector-provenance-deploy-1677606-20260726' \
+            --arg dispatcher_run_id "$GITHUB_RUN_ID" \
+            --arg dispatcher_run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg child_run_id "${CHILD_RUN_ID:-not_resolved}" \
+            --arg child_conclusion "${CHILD_CONCLUSION:-not_observed}" \
+            --arg consumed_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+              schema_version:"project.collector-provenance-deployment-dispatch.v1",
+              grant_id:$grant_id,
+              dispatcher_run_id:$dispatcher_run_id,
+              dispatcher_run_attempt:$dispatcher_run_attempt,
+              child_run_id:$child_run_id,
+              child_conclusion:$child_conclusion,
+              consumed_at:$consumed_at,
+              grant_consumed:true,
+              automatic_retry_authorized:false,
+              rollback_authorized:false
+            }' > dispatcher-evidence.json
+
+      - name: Upload dispatcher evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: provenance-deployment-dispatch-${{ github.run_id }}
+          path: dispatcher-evidence.json
+          if-no-files-found: error
+          retention-days: 30
