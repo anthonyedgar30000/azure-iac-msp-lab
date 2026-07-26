@@ -1,0 +1,131 @@
+{
+  "schema_version": "project.azure-deployment-reconciliation.v1",
+  "recorded_at": "2026-07-26T09:31:07Z",
+  "project": "Azure IaC MSP Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "source_instruction": "I dint need to kmow those things get this deployed already!",
+  "source_binding": {
+    "reviewed_commit": "98b092201053fd3592be157a24de6e623e6b74a6",
+    "workflow": ".github/workflows/collector-demo-api.yml",
+    "workflow_run_id": 30196388398,
+    "workflow_run_number": 18,
+    "workflow_run_attempt": 1,
+    "job_id": 89778570106
+  },
+  "artifact": {
+    "artifact_id": 8630260279,
+    "name": "collector-demo-api-30196388398-1",
+    "github_digest": "sha256:1f97be3c519d547871cc990e010013259dfd3c2e263f263653c2c4035340eb9e",
+    "downloaded_zip_sha256": "1f97be3c519d547871cc990e010013259dfd3c2e263f263653c2c4035340eb9e",
+    "archive_entry_count": 50,
+    "manifest_payload_count": 48,
+    "manifest_payload_hashes_verified": 48,
+    "manifest_payload_hash_failures": 0
+  },
+  "azure_identity_context": {
+    "subscription_name": "Azure for Students",
+    "subscription_id_sha256": "8f27aec6b3012cf0d4a85d3859872f0daf34e014860650c7c2b3446cd3db0b7f",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2"
+  },
+  "workflow_progression": {
+    "repository_tests": "success",
+    "azure_login": "success",
+    "live_state_capture": "success",
+    "readiness": "success",
+    "arm_validation_and_what_if": "success",
+    "deployment": "success",
+    "post_deploy_capture": "success",
+    "workflow_verification_step": "failure",
+    "artifact_upload": "success"
+  },
+  "deployment_result": {
+    "parent_deployment": "Succeeded",
+    "nested_deployment": "Succeeded",
+    "deployment_duration": "PT49.7848636S",
+    "deployment_completed_at": "2026-07-26T09:26:15.123443Z",
+    "collector_vm_remains_private": true,
+    "fqdn": "st-demo-api-aeg30000.westus2.cloudapp.azure.com"
+  },
+  "post_deploy_state": {
+    "load_balancer": {
+      "name": "lb-st-demo-api-mst-dev",
+      "provisioning_state": "Succeeded",
+      "sku": "Standard",
+      "tier": "Regional",
+      "backend_pool": "be-st-demo-api",
+      "backend_address_count": 1,
+      "backend_name": "collector",
+      "backend_private_ip": "10.20.40.10",
+      "probe": "probe-tcp-80-st-demo-api",
+      "rules": [
+        "rule-st-demo-api-http",
+        "rule-st-demo-api-https"
+      ]
+    },
+    "vm_extension": {
+      "name": "servicetracer-demo-api",
+      "provisioning_state": "Succeeded",
+      "publisher": "Microsoft.Azure.Extensions",
+      "handler": "CustomScript",
+      "handler_version": "2.1",
+      "force_update_tag": "98b092201053fd3592be157a24de6e623e6b74a6"
+    },
+    "http_nsg_rule": "Succeeded",
+    "https_nsg_rule": "Succeeded"
+  },
+  "runtime_evidence": {
+    "observed_at": "2026-07-26T09:26:56Z",
+    "public_https_request_succeeded": true,
+    "health_status": "healthy",
+    "backend_target_configured": true,
+    "hosting_model": "collector_vm_systemd",
+    "backend_timeout_seconds": 10.0,
+    "max_parallel_transactions": 10,
+    "max_attempts": 50,
+    "estimated_max_execution_seconds": 50.0,
+    "transaction_count": 20,
+    "successful_transactions": 0,
+    "failed_transactions": 20,
+    "exact_root_cause_claimed": false,
+    "cors_options_http_status": 204,
+    "cors_allowed_origin": "https://anthonyedgar30000.github.io",
+    "cors_allowed_methods": "POST, OPTIONS"
+  },
+  "verification_failure": {
+    "classification": "deterministic_verifier_false_negative",
+    "failed_command": "grep -Eiq with a backslash-r expression against CRLF HTTP headers",
+    "cause": "GNU grep extended regular expressions do not interpret backslash-r as a carriage-return token; the correct Access-Control-Allow-Origin header ended in an actual CR byte.",
+    "deployment_or_runtime_failure": false,
+    "verification_json_written": false,
+    "repair": "Normalize carriage returns with tr -d before an exact fixed-string case-insensitive header match."
+  },
+  "resolved_truth": {
+    "azure_deployment_performed": true,
+    "azure_deployment_succeeded": true,
+    "collector_backend_pool_populated": true,
+    "collector_extension_succeeded": true,
+    "public_health_verified_time_bounded": true,
+    "twenty_transaction_response_verified_time_bounded": true,
+    "cors_verified_time_bounded": true,
+    "workflow_terminal_conclusion": "failure",
+    "workflow_failure_represents_service_failure": false,
+    "service_restored": true,
+    "full_backend_transaction_success_verified": false
+  },
+  "authority": {
+    "deployment_grant_consumed": true,
+    "retry_authorized": false,
+    "verification_rerun_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "repository_verifier_repair_authorized": true
+  },
+  "claim_boundaries": [
+    "deployment_succeeded != all_backend_transactions_succeeded",
+    "workflow_failed != deployment_failed",
+    "verifier_false_negative != service_failure",
+    "service_restored != downstream_VPN_backend_repaired",
+    "transaction_failure_localized != exact_root_cause_proven"
+  ]
+}
