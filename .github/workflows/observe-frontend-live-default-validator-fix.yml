@@ -1,0 +1,67 @@
+name: Observe frontend live-default validator fix
+
+on:
+  push:
+    branches:
+      - observe/frontend-live-default-validator-fix
+    paths:
+      - .github/workflows/observe-frontend-live-default-validator-fix.yml
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  observe:
+    name: Capture exact validator-fix workflow result
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out observer branch
+        uses: actions/checkout@v4
+        with:
+          ref: observe/frontend-live-default-validator-fix
+          fetch-depth: 0
+
+      - name: Query latest helper run, jobs, and failed logs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .project/observations
+          workflow='.github/workflows/apply-frontend-live-default-validator-fix.yml'
+          gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/runs" \
+            -f branch='activate/frontend-live-api-default' \
+            -F per_page=5 > /tmp/runs.json
+          run_id="$(jq -r '.workflow_runs[0].id // empty' /tmp/runs.json)"
+          test -n "$run_id"
+          gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs" -F per_page=100 > /tmp/jobs.json
+          failed_job="$(jq -r '.jobs[] | select(.conclusion=="failure") | .id' /tmp/jobs.json | head -n1)"
+          excerpt=''
+          if [[ -n "$failed_job" ]]; then
+            set +e
+            gh api -H 'Accept: application/vnd.github+json' \
+              "repos/${GITHUB_REPOSITORY}/actions/jobs/${failed_job}/logs" > /tmp/job.log 2>/tmp/log.error
+            log_status=$?
+            set -e
+            if [[ $log_status -eq 0 ]]; then
+              excerpt="$(tail -n 80 /tmp/job.log | sed -E 's/[0-9a-fA-F]{40,}/<redacted-hex>/g' | head -c 12000)"
+            else
+              excerpt="log_unavailable"
+            fi
+          fi
+          jq -n \
+            --argjson run "$(jq '.workflow_runs[0]' /tmp/runs.json)" \
+            --argjson jobs "$(jq '.jobs' /tmp/jobs.json)" \
+            --arg excerpt "$excerpt" \
+            '{schema_version:"project.github-workflow-observation.v1",observed_at:(now|todate),workflow_run:{id:$run.id,run_number:$run.run_number,event:$run.event,status:$run.status,conclusion:$run.conclusion,head_branch:$run.head_branch,head_sha:$run.head_sha,created_at:$run.created_at,updated_at:$run.updated_at,html_url:$run.html_url},jobs:[$jobs[]|{id,name,status,conclusion,steps:[.steps[]|{number,name,status,conclusion}]}],sanitized_failed_log_excerpt:$excerpt,azure_access_performed:false,retry_performed:false}' \
+            > .project/observations/frontend-live-default-validator-fix.json
+
+      - name: Commit observation without retrigger
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .project/observations/frontend-live-default-validator-fix.json
+          git commit -m "Observe frontend live-default validator helper"
+          git push origin HEAD:observe/frontend-live-default-validator-fix
