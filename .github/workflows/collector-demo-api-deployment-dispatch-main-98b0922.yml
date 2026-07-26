@@ -1,0 +1,161 @@
+name: Dispatch authorized collector demo API deployment
+
+on:
+  push:
+    branches:
+      - deploy/collector-demo-api-main-98b0922
+    paths:
+      - .project/authorizations/collector-demo-api-deployment-main-98b0922-20260726.json
+      - .github/workflows/collector-demo-api-deployment-dispatch-main-98b0922.yml
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: collector-demo-api-one-shot-deployment-main-98b0922
+  cancel-in-progress: false
+
+env:
+  SOURCE_COMMIT: 98b092201053fd3592be157a24de6e623e6b74a6
+  AUTHORIZATION_BRANCH: deploy/collector-demo-api-main-98b0922
+  AUTHORIZATION_MARKER: .project/authorizations/collector-demo-api-deployment-main-98b0922-20260726.json
+  TARGET_WORKFLOW: collector-demo-api.yml
+  RESOURCE_GROUP: rg-servicetracer-dev-westus2
+  LOCATION: westus2
+  LAB_ENVIRONMENT: dev
+  PREFIX: mst
+  DNS_LABEL: st-demo-api-aeg30000
+  ALLOWED_ORIGIN: https://anthonyedgar30000.github.io
+
+jobs:
+  dispatch-and-observe:
+    if: ${{ github.run_attempt == 1 }}
+    name: Dispatch exact one-shot deployment and observe terminal result
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - name: Check out exact authorization event
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Validate finite authorization and unchanged source
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/${AUTHORIZATION_BRANCH}"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$SOURCE_COMMIT"
+
+          mapfile -t changed < <(git diff --name-only "${SOURCE_COMMIT}...HEAD" | sort)
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = ".github/workflows/collector-demo-api-deployment-dispatch-main-98b0922.yml"
+          test "${changed[1]}" = "$AUTHORIZATION_MARKER"
+
+          jq -e --arg source "$SOURCE_COMMIT" --arg branch "$AUTHORIZATION_BRANCH" '
+            .schema_version == "project.azure-deployment-authorization.v1" and
+            .authorized == true and
+            .one_shot == true and
+            .non_renewing == true and
+            .source_binding.reviewed_commit == $source and
+            .source_binding.authorization_branch == $branch and
+            .source_binding.workflow == ".github/workflows/collector-demo-api.yml" and
+            .target.subscription_name == "Azure for Students" and
+            .target.resource_group == "rg-servicetracer-dev-westus2" and
+            .target.location == "westus2" and
+            .accepted_plan.fresh_preflight_and_full_resource_payloads_what_if_required_before_mutation == true and
+            .accepted_plan.expected_change_counts.Create == 0 and
+            .accepted_plan.expected_change_counts.Delete == 0 and
+            .accepted_plan.expected_change_counts.Replace == 0 and
+            .cost_and_quota_risk_acceptance.accepted_by_human_operator == true and
+            .authority.workflow_dispatch == true and
+            .authority.azure_authentication == true and
+            .authority.azure_query == true and
+            .authority.deployment == true and
+            .authority.collector_configuration_mutation == true and
+            .authority.post_deployment_verification == true and
+            .authority.transaction_replay_attempts == 20 and
+            .authority.retry == false and
+            .authority.rbac_mutation == false and
+            .authority.base_infrastructure_mutation == false and
+            .authority.microsoft_web_mutation == false and
+            .authority.cleanup == false and
+            .authority.pull_request_merge == false
+          ' "$AUTHORIZATION_MARKER" >/dev/null
+
+      - name: Dispatch exact governed deployment
+        id: dispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          jq -n \
+            --arg ref main \
+            --arg source "$SOURCE_COMMIT" \
+            --arg resource_group "$RESOURCE_GROUP" \
+            --arg location "$LOCATION" \
+            --arg environment "$LAB_ENVIRONMENT" \
+            --arg prefix "$PREFIX" \
+            --arg dns_label "$DNS_LABEL" \
+            --arg allowed_origin "$ALLOWED_ORIGIN" \
+            '{ref:$ref,inputs:{operation:"deploy",reviewed_commit:$source,environment:$environment,resource_group:$resource_group,location:$location,prefix:$prefix,dns_label:$dns_label,allowed_origin:$allowed_origin,confirmation:("COLLECTOR-DEMO-API:deploy:"+$resource_group+":"+$dns_label)}}' \
+            > /tmp/dispatch.json
+
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/${TARGET_WORKFLOW}/dispatches" \
+            --input /tmp/dispatch.json
+
+          child_run_id=''
+          child_run_url=''
+          child_run_number=''
+          for _ in $(seq 1 60); do
+            gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/${TARGET_WORKFLOW}/runs?event=workflow_dispatch&branch=main&per_page=30" \
+              > /tmp/runs.json
+            child_run_id="$(jq -r --arg sha "$SOURCE_COMMIT" '[.workflow_runs[] | select(.head_sha==$sha and .run_number>16)] | sort_by(.run_number) | last | .id // empty' /tmp/runs.json)"
+            if [[ -n "$child_run_id" ]]; then
+              child_run_url="$(jq -r --argjson id "$child_run_id" '.workflow_runs[] | select(.id==$id) | .html_url' /tmp/runs.json)"
+              child_run_number="$(jq -r --argjson id "$child_run_id" '.workflow_runs[] | select(.id==$id) | .run_number' /tmp/runs.json)"
+              break
+            fi
+            sleep 5
+          done
+          test -n "$child_run_id"
+          echo "child_run_id=$child_run_id" >> "$GITHUB_OUTPUT"
+          echo "child_run_url=$child_run_url" >> "$GITHUB_OUTPUT"
+          echo "child_run_number=$child_run_number" >> "$GITHUB_OUTPUT"
+
+      - name: Observe child deployment to terminal state
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHILD_RUN_ID: ${{ steps.dispatch.outputs.child_run_id }}
+          CHILD_RUN_URL: ${{ steps.dispatch.outputs.child_run_url }}
+          CHILD_RUN_NUMBER: ${{ steps.dispatch.outputs.child_run_number }}
+        run: |
+          set -euo pipefail
+          status=''
+          conclusion=''
+          for _ in $(seq 1 540); do
+            gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${CHILD_RUN_ID}" > /tmp/child.json
+            status="$(jq -r '.status' /tmp/child.json)"
+            conclusion="$(jq -r '.conclusion // ""' /tmp/child.json)"
+            [[ "$status" == completed ]] && break
+            sleep 10
+          done
+
+          {
+            echo '## One-shot collector deployment dispatch'
+            echo
+            echo "- Reviewed source: \`$SOURCE_COMMIT\`"
+            echo "- Child workflow run: [#${CHILD_RUN_NUMBER}](${CHILD_RUN_URL})"
+            echo "- Child run ID: \`${CHILD_RUN_ID}\`"
+            echo "- Terminal status: \`${status}\`"
+            echo "- Terminal conclusion: \`${conclusion:-not_observed}\`"
+            echo '- Authorization consumed: `true`'
+            echo '- Retry authority: `false`'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          test "$status" = completed
+          test "$conclusion" = success
