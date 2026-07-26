@@ -1,0 +1,36 @@
+{
+  "schema_version": "project.collector-golden-path-reconciliation.v1",
+  "recorded_at": "2026-07-26T09:13:14-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "observed_main": "855ef85f898cbf34db2931abc8344d05cb05c6f7",
+  "deployed_source": "98b092201053fd3592be157a24de6e623e6b74a6",
+  "deployment_run_id": 30196388398,
+  "deployment_artifact_id": 8630260279,
+  "collector_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+  "independent_endpoint": "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+  "decision": "bind the normal frontend to the collector-hosted endpoint because the collector golden path is mandatory for Lab v1",
+  "consumed_browser_verification": {
+    "pull_request": 123,
+    "workflow_run_id": 30198346832,
+    "browser_execution_performed": false,
+    "retry_authorized": false,
+    "closed_without_merge": true
+  },
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "ordinary_pull_request_ci_authorized": true,
+    "draft_pull_request_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "browser_verification_authorized": false
+  },
+  "claim_boundaries": [
+    "independent_API_ready != collector_golden_path_verified",
+    "frontend_bound != browser_verified",
+    "failed_verification != authorization_to_retry",
+    "workflow_failed != deployment_failed"
+  ]
+}

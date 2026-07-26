@@ -34,7 +34,7 @@ The workflow concluded `failure` only because the shell verifier mishandled norm
 `docs/report-source.json` now selects the live endpoint by default:
 
 ```text
-https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run
+https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run
 ```
 
 The frontend still validates health before enabling the operator action. Failed health, CORS, or transaction requests use the fixture and clearly label the fallback.
@@ -50,4 +50,20 @@ frontend_configured != GitHub_Pages_published
 GitHub_Pages_published != browser_path_verified
 API_connected != downstream_transaction_successful
 inconclusive_sample != backend_failure_absent
+```
+
+
+## Collector binding reconciliation
+
+The first activation revision accidentally used the independent VM API hostname even though its evidence anchor was collector deployment run `30196388398`. The current binding is corrected to the endpoint emitted by that deployment:
+
+```text
+https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run
+```
+
+The independent endpoint remains historical supporting evidence. It is not the Lab v1 golden path and cannot satisfy the collector-hosted browser gate.
+
+```text
+independent_API_ready != collector_golden_path_verified
+deployment_evidence_anchor != arbitrary_compatible_endpoint
 ```

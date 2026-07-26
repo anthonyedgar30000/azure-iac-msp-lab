@@ -12,7 +12,7 @@ REPOSITORY_ROOT = ROOT.parent
 TEST_LOG = Path("/tmp/tests.log")
 SHA = re.compile(r"^[0-9a-f]{40}$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
-LIVE_COLLECTOR_API = "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run"
+LIVE_COLLECTOR_API = "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run"
 COLLECTOR_DEPLOYMENT_EVIDENCE = ROOT / "reconciliations" / "collector-demo-api-deployment-run18-20260726.json"
 FORBIDDEN_LIVE_KEYS = {
     "repository_observation",
@@ -410,7 +410,7 @@ def validate_frontend_configuration() -> None:
     require(source.get("live_demo_api_url") == LIVE_COLLECTOR_API, "live demo API must match the exact deployed collector endpoint")
     require(source.get("candidate_demo_api_url") == LIVE_COLLECTOR_API, "candidate API must remain aligned with the live endpoint")
     require(source.get("fallback_report_url") == "technician-handoff-report.json", "fixture fallback changed unexpectedly")
-    require(source.get("activation_status") == "live_default_pending_github_pages_verification", "frontend activation status is invalid")
+    require(source.get("activation_status") == "collector_live_default_pending_github_pages_verification", "frontend activation status is invalid")
     require(
         source.get("evidence_anchor") == ".project/reconciliations/collector-demo-api-deployment-run18-20260726.json",
         "frontend evidence anchor is invalid",
