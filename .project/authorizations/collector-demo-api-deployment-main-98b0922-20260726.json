@@ -1,0 +1,76 @@
+{
+  "schema_version": "project.azure-deployment-authorization.v1",
+  "recorded_at": "2026-07-26T05:20:24-04:00",
+  "project": "Azure IaC MSP Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "source_instruction": "I dint need to kmow those things get this deployed already!",
+  "authorized": true,
+  "one_shot": true,
+  "non_renewing": true,
+  "source_binding": {
+    "default_branch": "main",
+    "reviewed_commit": "98b092201053fd3592be157a24de6e623e6b74a6",
+    "authorization_branch": "deploy/collector-demo-api-main-98b0922",
+    "workflow": ".github/workflows/collector-demo-api.yml",
+    "workflow_ref": "main"
+  },
+  "target": {
+    "subscription_name": "Azure for Students",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "environment": "dev",
+    "prefix": "mst",
+    "dns_label": "st-demo-api-aeg30000",
+    "allowed_origin": "https://anthonyedgar30000.github.io"
+  },
+  "accepted_plan": {
+    "source_run_id": 30192970923,
+    "source_artifact_id": 8629191915,
+    "fresh_preflight_and_full_resource_payloads_what_if_required_before_mutation": true,
+    "expected_change_counts": {
+      "Ignore": 24,
+      "Modify": 3,
+      "NoChange": 3,
+      "Create": 0,
+      "Delete": 0,
+      "Replace": 0
+    },
+    "allowed_modifications": [
+      "commit-bound CustomScript extension rerun",
+      "exact Standard Regional load-balancer parent reconciliation",
+      "one collector backend address at 10.20.40.10"
+    ],
+    "resource_creation_authorized": false,
+    "resource_deletion_authorized": false,
+    "resource_replacement_authorized": false
+  },
+  "cost_and_quota_risk_acceptance": {
+    "current_billing_cost": "not_observed",
+    "remaining_Azure_for_Students_credit": "not_observed",
+    "accepted_by_human_operator": true,
+    "basis": "The verified plan creates zero resources, requires no additional public IP, and the human operator explicitly directed immediate deployment despite the remaining cost-observation gap."
+  },
+  "authority": {
+    "workflow_dispatch": true,
+    "azure_authentication": true,
+    "azure_query": true,
+    "deployment": true,
+    "collector_configuration_mutation": true,
+    "post_deployment_verification": true,
+    "transaction_replay_attempts": 20,
+    "rollback": false,
+    "retry": false,
+    "rbac_mutation": false,
+    "base_infrastructure_mutation": false,
+    "microsoft_web_mutation": false,
+    "cleanup": false,
+    "pull_request_merge": false
+  },
+  "failure_behavior": {
+    "automatic_retry": false,
+    "automatic_rollback": false,
+    "reason": "The predeployment state is already incomplete: the backend pool is empty and the extension is failed. A failed attempt must terminate, preserve evidence, and require new authority rather than silently restoring the broken state.",
+    "next_action_on_failure": "Inspect the exact child workflow artifact and issue a new bounded repair decision."
+  },
+  "consumption_rule": "The first push-triggered dispatcher attempt consumes this grant whether dispatch, deployment, or verification succeeds or fails. Re-runs and additional pushes are not authorized."
+}
