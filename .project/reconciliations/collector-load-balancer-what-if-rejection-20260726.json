@@ -1,0 +1,92 @@
+{
+  "schema_version": "project.what-if-policy-reconciliation.v1",
+  "recorded_at": "2026-07-26T02:35:34-04:00",
+  "project": "Azure IaC MSP Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "source_instruction": "Anthony Edgar instructed: Fix and restore.",
+  "repository_baseline": {
+    "default_branch": "main",
+    "observed_head": "c08ee8ab248458a7c2b9854e6975a2fcd37f610e",
+    "latest_merged_pull_request": 116,
+    "open_pull_requests_observed": [],
+    "local_active_branch_and_working_tree": "not_observed_through_GitHub_connector"
+  },
+  "observed_workflow_attempt": {
+    "workflow": ".github/workflows/collector-demo-api.yml",
+    "operation": "what-if",
+    "reviewed_commit": "c08ee8ab248458a7c2b9854e6975a2fcd37f610e",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "workflow_run_id": "not_observed_from_available_connector_or_user_screenshot",
+    "evidence_source": "user-provided GitHub Actions screenshots",
+    "scope_validation": "succeeded",
+    "repository_tests": "succeeded",
+    "azure_login": "succeeded",
+    "live_collector_and_dependency_capture": "succeeded",
+    "deployment_readiness": "succeeded",
+    "arm_validation_and_what_if": "completed_before_policy_rejection",
+    "terminal_failure": "Target resource has an unapproved change type Modify for the exact dedicated load balancer lb-st-demo-api-mst-dev",
+    "deployment_step": "skipped_by_what_if_operation_and_prior_failure",
+    "transaction_replay": "not_performed",
+    "azure_mutation_performed": false,
+    "evidence_manifest_written": true,
+    "scoped_evidence_upload": true
+  },
+  "finding": {
+    "classification": "deterministic_policy_false_negative_on_bounded_existing_resource_reconciliation",
+    "resource_type": "Microsoft.Network/loadBalancers",
+    "resource_name": "lb-st-demo-api-mst-dev",
+    "change_type": "Modify",
+    "existing_validator": "The verifier already validates the complete post-change dedicated load-balancer contract but did not permit the exact parent target to reach that validator when Azure reported Modify.",
+    "not_an_azure_deployment_failure": true
+  },
+  "repair": {
+    "allow_general_load_balancer_modify": false,
+    "allow_exact_target_modify": true,
+    "required_target_suffix": "/loadBalancers/lb-st-demo-api-<prefix>-<environment>",
+    "required_resource_type": "Microsoft.Network/loadBalancers",
+    "required_final_contract": [
+      "Standard Regional SKU",
+      "exact common and component tags",
+      "one bounded public frontend",
+      "one empty parent backend-pool placeholder",
+      "one TCP/80 probe",
+      "only the bounded HTTP and HTTPS rules",
+      "all rule references remain inside the exact dedicated load balancer"
+    ],
+    "still_rejected": [
+      "Delete",
+      "Replace",
+      "wrong tags",
+      "wrong SKU tier",
+      "embedded backend addresses on the parent resource",
+      "extra or renamed frontends, pools, probes, or rules",
+      "references leaving the dedicated load balancer"
+    ]
+  },
+  "authority": {
+    "branch_creation": true,
+    "repository_patch": true,
+    "regression_tests": true,
+    "draft_pull_request_creation": true,
+    "ordinary_pull_request_ci": true,
+    "pull_request_merge": false,
+    "workflow_dispatch_or_rerun": false,
+    "azure_login_or_query": false,
+    "arm_validation_or_what_if": false,
+    "deployment": false,
+    "transaction_replay": false,
+    "rollback": false,
+    "cleanup": false
+  },
+  "next_gate": {
+    "operation": "review exact diff and exact-head CI",
+    "after_merge": "a new explicit authorization is required before any new Azure what-if attempt",
+    "claim_boundaries": [
+      "policy_repaired != what_if_accepted",
+      "what_if_accepted != deployment_authorized",
+      "repository_restored != Azure_state_changed",
+      "prior_what_if_attempt != reusable_authorization"
+    ]
+  }
+}
