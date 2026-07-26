@@ -1,0 +1,23 @@
+{
+  "schema_version": "project.repository-change-boundary.v1",
+  "recorded_on": "2026-07-26",
+  "branch": "reconcile/pr113-accidental-merge",
+  "base": "4e5cc09a082f44645946cd67da2451fb2ebe76e0",
+  "authority": {
+    "repository_patch": true,
+    "branch_creation": true,
+    "pull_request": true,
+    "ordinary_CI": true,
+    "merge": false,
+    "Azure_login": false,
+    "Azure_query": false,
+    "ARM_validation": false,
+    "ARM_what_if": false,
+    "workflow_dispatch": false,
+    "deployment": false,
+    "manual_drift_fix": false,
+    "rollback": false,
+    "cleanup": false
+  },
+  "statement": "Anthony Edgar acknowledged that PR #113 was merged accidentally and instructed: Proceed. This authorizes repository reconciliation and a reviewable pull request only. It does not authorize another merge or any Azure action."
+}
