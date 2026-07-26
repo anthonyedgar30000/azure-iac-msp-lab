@@ -2,251 +2,201 @@
 
 ## Interpretation boundary
 
-This handoff records repository lifecycle state checked after PR #93 and then PR #92 merged. It preserves the latest durable Azure evidence reviewed on `2026-07-25`; it is not a continuously refreshed GitHub or Azure dashboard.
+This handoff reflects repository state observed on `2026-07-26T04:43:53-04:00` and the newest durable Azure evidence from collector-hosted demo API What-If run `30192970923`.
 
 ```text
-merged_into_main != deployed_to_VM
-checks_green != protected_Azure_artifact_inspected
-verification_package_merged != effective_permission_verified
-human_operator_merge != prior_agent_merge_authority
-repository_RBAC_package != Azure_RBAC_observed
-RBAC_apply_asserted != RBAC_apply_succeeded
-role_assignment_observed != effective_permission_verified
-cleanup_plan_merged != cleanup_query_executed
-cleanup_candidate != orphaned_resource
-historical_planner_evidence != current_deployment_state
+declared_in_code != deployed_in_azure
+deployment_succeeded != service_validated
+resource_exists != securely_configured
+RBAC_assignment != effective_least_privilege
+monitoring_enabled != alerts_verified
+estimated_cost != actual_cost
+artifact_verified != deployment_authorized
+WhatIf_accepted != service_restored
 not_observed != false
-not_observed != absent
-conflicting != false
+source_silence != contradiction
+verification_status != truth_value
 ```
 
-Resolve live GitHub, exact-head CI, authority, Azure state, cost, quota, RBAC, and dependency health before every consequential operation.
+Resolve live GitHub, Azure identity, subscription, cost, quota, locks, dependencies, and authority before every consequential operation.
 
 ## Repository watermark
 
 ```text
 repository: anthonyedgar30000/azure-iac-msp-lab
-main: 665e051375594d11e58e434231bd06775dbdc560
-latest merge by time: PR #92
-also merged in final main: PR #93
-merge order: PR #93, then PR #92
+main: 9bfff60bd2e1e3bbf5610807df7d970c9bd9f229
+latest merge: PR #120
+PR #120 source head: 2a2bfa64643e56d304fe075392735ec7155c05ed
+PR #120 exact-head CI: 30194713992 / success
 open pull requests observed: none
 local working tree: not observed
+merge-commit CI: not observed
 ```
 
-PR #92:
+PR #120 promotes the exact run-16 workflow and artifact evidence. It does not authorize deployment.
+
+## Exact collector What-If evidence
 
 ```text
-title: Verify effective extension write permission without mutation
-reviewed package head: c53093ec5a9c84dbe1abb450a0079e01b2865bda
-reviewed package CI: 30160596671 / success
-execution source head: 5b5af74d57fb5fd87ece2a34239cc6f29d04b12b
-execution-head CI: 30160681565 / success
-merge commit: 665e051375594d11e58e434231bd06775dbdc560
-operator UI check rollup: all checks passed
-named protected verifier run ID: not observed
-protected verifier artifact: not observed
-effective extension-write permission: unverified
-Azure mutation claimed: false
+workflow: Collector-hosted demo API
+run number: 16
+run ID: 30192970923
+run attempt: 1
+job ID: 89769401839
+operation: what-if
+reviewed source: 8de1f61f8a0ea06dcf94b94c798edde2aace357d
+artifact ID: 8629191915
+artifact digest: sha256:57fe05c113d0fefc86437a4aa247b920dc6a02680a1c2bfe8e67873fe7612e6e
+manifest payloads verified: 29 / 29
+Azure mutation: false
+deployment step: skipped
+runtime verification: skipped
+transaction replay: not performed
 ```
 
-PR #93:
+## Captured collector Azure state
 
 ```text
-title: Decouple PR82 historical validation from handoff prose
-source head: eecb5c872f76cb5e51df6f5451d5a61b79d87bba
-merge commit: 99dc79c7093fa4cd5655c2d5a65095dd796f9f75
-PR 82 historical workflow: 30160683469 / success
-CI: 30160683486 / success
-Azure action performed: false
+subscription: Azure for Students
+subscription, tenant, and principal IDs: SHA-256 fingerprints only
+resource group: rg-servicetracer-dev-westus2
+location: westus2
+collector VM: vm-stcollector-mst-dev
+collector VM size: Standard_B2ats_v2
+collector VM state: running
+collector private IP: 10.20.40.10
+load balancer: lb-st-demo-api-mst-dev / Succeeded
+backend pool: be-st-demo-api / zero addresses
+VM extension: servicetracer-demo-api / Failed
+resource locks: none
+readiness blockers: none
 ```
 
-The PR descriptions recorded `pull_request_merge_authorized: false`. The repository owner subsequently merged both PRs through GitHub. Those merges are accepted as live repository reality and recorded as human operator actions; the earlier agent grants are not retroactively broadened.
+The evidence was captured at `2026-07-26T07:33:03Z`. It is time-bounded and not a continuously refreshed Azure dashboard.
 
-No workflow result was observed directly on the final combined main merge composition.
-
-## Preserved repository anchors
+## Accepted Azure plan
 
 ```text
-PR #90 merge: 8b25ecf1f00a59033955ef67bb3f9b511126f08a
-PR #90 source: 0e5ae4c68801695241eebef4f05967ec38a894ff
-PR #90 CI: 30146139826, 30146139825, 30146139830, 30146139832 / success
+24 Ignore
+3 Modify
+3 NoChange
+0 Create
+0 Delete
+0 Replace
+```
 
-PR #89 merge: 39e214a32ebdac61d22d7b130d4c2f1e5d6f4f53
-PR #89 source: 3727b67533eb8043a22895a833223fa00fb70d10
-PR #89 full CI: 30145973950 / failure
-PR #89 dedicated checks: 30145973957, 30145973961, 30145973948 / success
+Approved modifications are limited to:
 
-PR #88 merge: 726c42ea1dddf402a42d8d0c591c660ebc50733f
-PR #88 source: 5e05d050cace2210c9b47103fe100eceb759cd0e
-PR #88 exact-head CI: 30142555135, 30142555107, 30142555131 / success
+1. Rerun the exact `Microsoft.Azure.Extensions / CustomScript` extension with `forceUpdateTag` bound to `8de1f61f...`.
+2. Reconcile the exact existing Standard/Regional load-balancer parent contract.
+3. Populate `be-st-demo-api` with one backend named `collector` at `10.20.40.10`.
 
-PR #86 merge: 67d1aa9c784825e835097f684ddf629727ca5e22
-PR #86 source: 8df0a5af4b522ceeff16c0d9d1adfc978e66d559
-PR #86 exact-head CI: 30141965628 / success
+Explicit `NoChange` targets:
 
+```text
+pip-st-demo-api-mst-dev
+Allow-Demo-API-HTTP-From-Internet
+Allow-Demo-API-HTTPS-From-Internet
+```
+
+No collector VM, NIC, base infrastructure, Microsoft.Web resource, create, delete, or replace is proposed.
+
+## Quota, cost, and source boundary
+
+```text
+Standard IPv4 public IPs: 2 / 3
+load balancers: 2 / 1000
+additional public IP required: 0
+quota sufficient for accepted no-create plan: true
+
+current billing cost: not observed
+remaining Azure for Students credit: not observed
+cost delta: not quantified
+```
+
+The accepted plan is bound to `8de1f61f8a0ea06dcf94b94c798edde2aace357d`.
+
+Current `main` is `9bfff60bd2e1e3bbf5610807df7d970c9bd9f229`. The intervening changes are repository evidence and validation only, but:
+
+```text
+deploying accepted source != deploying current main
+```
+
+An exact deployment source decision remains unresolved.
+
+## Lab v1 status
+
+```text
+exact What-If and artifact evidence: complete
+cost or credit refresh: pending
+exact deployment source decision: pending
+collector deployment: not performed
+post-deployment runtime validation: not performed
+20-transaction ServiceTracer scenario: not performed
+live browser demonstration: not verified
+monitoring and alert delivery: not verified
+full evidence lock: incomplete
+```
+
+## Historical compatibility anchors
+
+The former PR #92/#93 canonical snapshot remains preserved at:
+
+```text
+.project/current-reality.json
+```
+
+It is retained for historical validators and is not authoritative for current operations. Current operational consumers must resolve `.project/state-index.json`.
+
+The following historical evidence remains valid only within its original observation boundary:
+
+```text
 PR #84 merge: c96d9cbb765a023921fa819cf7d99c957e8ad608
 PR #84 source: 5c938a7e07da3a22b27bb5ac5aa52b7ccf22ba37
-PR #84 exact-head CI: 30137351716 / success
-
-PR #82 merge: 5dfa3b76a9fb975002d9cd702a892a0f678c88c5
-PR #82 source: a85970061879ef4a900564d18e9631630e95b11e
-PR #82 CI: 30112308916
-```
-
-## Repository-to-runtime boundary
-
-Current `main` is 158 commits ahead of deployed source `8b3d55c616d8820edd523f77021a35fe24167bd0` and zero behind.
-
-```text
-deployed_source_ref != current_main
-workload_source_or_IaC_drift = observed
-repository_timeout_fix_merged = true
-deployed_timeout_fix_verified = false
-repository_RBAC_package_merged = true
-repository_verify_only_attempt_2_merged = true
-Azure_RBAC_effectiveness_verified = false
-repository_cleanup_plan_merged = true
-cleanup_dependency_collection_executed = false
-repository_structured_PR82_validator_fix_merged = true
-```
-
-## Latest durable Azure evidence
-
-The newest durable protected observation remains time-bounded through `2026-07-25T00:47:40Z`:
-
-```text
-subscription: Azure subscription 1
-resource group: rg-st-demo-api-dev-westus2
-location: westus2
-resources observed: 7
-deployment: servicetracer-demo-api-dev / Succeeded
-deployed source: 8b3d55c616d8820edd523f77021a35fe24167bd0
-VM: vm-st-demo-api-mst-dev
-VM size: Standard_F1als_v7
-VM state: VM running
-VM provisioning: Succeeded
-Custom Script extension provisioning: Succeeded
-FQDN: st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com
-public GET /api/health: HTTP 200 / healthy
-health contract: pre-timeout-fix contract
-corrected timeout fields observed: false
-```
-
-No fresh Azure inventory, Resource Graph query, RBAC query, runtime test, deployment, or mutation was performed by this repository reconciliation.
-
-## Historical timeout-fix deployment outcome
-
-```text
+historical main: 665e051375594d11e58e434231bd06775dbdc560
+PR #92 source: 5b5af74d57fb5fd87ece2a34239cc6f29d04b12b
+PR #93 source: eecb5c872f76cb5e51df6f5451d5a61b79d87bba
+PR #93 merge: 99dc79c7093fa4cd5655c2d5a65095dd796f9f75
+independent demo API deployed source: 8b3d55c616d8820edd523f77021a35fe24167bd0
+merged_into_main != deployed_to_VM
+checks_green != protected_Azure_artifact_inspected
+human_operator_merge != prior_agent_merge_authority
+missing action: Microsoft.Compute/virtualMachines/extensions/write
 deployment grant status: consumed_blocked
-attempts: 2
-missing action at attempt time: Microsoft.Compute/virtualMachines/extensions/write
-What-If result observed: false
-deployment step executed: false
-Azure resource mutation performed: false
-rollback performed: false
-```
-
-Green checks on PR #92 do not retroactively deploy the fix or renew deployment authorization.
-
-## RBAC reconciliation
-
-```text
-role: ServiceTracer Demo API Extension Updater v1
-action: Microsoft.Compute/virtualMachines/extensions/write
-assignable scope: rg-st-demo-api-dev-westus2
-assignment scope: vm-st-demo-api-mst-dev/extensions/servicetracer-demo-api
-PR #86 operator --apply attempt asserted: true
-apply success: assumed_not_evidenced
-role definition observed: false
-role assignment observed: false
-PR #92 check rollup: passed
-exact protected run and artifact: not observed
 effective extension write: unverified
-deployment authorized: false
-```
-
-The check rollup is retained as evidence without being promoted into the missing protected What-If assessment.
-
-## Runtime and operations boundaries
-
-```text
-backend transaction success verified: false
-live 20-attempt replay performed: false
-full workload operationally verified: false
-metric alerts observed: 0
-action groups observed: 0
-alert delivery verified: false
-effective least privilege verified: false
-Azure Backup / Recovery Services: intentionally out of scope for Lab v1
-Recovery Services vaults observed: 0
-other backup methods: not observed
-recovery tested: false
-```
-
-Month-to-date ActualCost at the latest protected preflight:
-
-```text
-total: CAD 0.734335248846279
-VM: CAD 0.648600227898012
-public IP: CAD 0.0606791966666666
-disk: CAD 0.0250558242816
-```
-
-Usage may lag and is not a final invoice or forecast.
-
-```text
-Total regional vCPUs: 1 / 10
-Standard IPv4 public IPs: 1 / 20
-Falsv7 family quota: not returned by the latest filtered query
-```
-
-## Resource-group cleanup boundary
-
-```text
-rg-servicetracer-dev-westus2 = core ServiceTracer platform
-rg-st-demo-api-dev-westus2 = independent public demo API
-relationship = peer operational boundaries, not nested layers
-independent demo API protected from cleanup = true
-dependency collection executed: false
-candidate current presence: not freshly observed
-candidate orphan status: not established
-cleanup authorized: false
-cleanup performed: false
-```
-
-## Preserved planner evidence
-
-```text
 authorization reconciliation merge: 92b0c3b1064158684a4b280348c77eeedba6dfc3
 planner run: 30064289707
 planner artifact: 8585693830
 planner artifact SHA-256: 7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22
-candidate: Standard_B2ats_v2 / eastus
 restriction: NotAvailableForSubscription
 VM family: standardBasv2Family
 typed readiness control: PR #73
-status: readiness rejected before ARM validation and What-If
-current deployment view: false
+GitHub Pages publication authorized: false
 ```
+
+Historical evidence is preserved; it is not allowed to overwrite newer collector evidence.
 
 ## Current authority
 
 ```text
 repository reconciliation authorized: true
-pull request creation authorized: true
+draft pull request creation authorized: true
+ordinary pull request CI authorized: true
 pull request merge authorized: false
 workflow dispatch authorized: false
 Azure authentication authorized: false
+Azure query authorized: false
 Azure mutation authorized: false
-Azure RBAC mutation authorized: false
-Resource Graph query authorized: false
-guest commands authorized: false
+deployment authorized: false
+rollback authorized: false
 transaction replay authorized: false
-GitHub Pages publication authorized: false
+RBAC mutation authorized: false
 cleanup authorized: false
 ```
 
 ## Next gate
 
-Recover and inspect the exact existing PR #92 protected verifier run and artifact if possible. A new Azure verification attempt, deployment, RBAC change, replay, cleanup, publication, workflow rerun, or PR merge requires separate explicit authorization.
+1. Refresh current Azure for Students credit or billing evidence.
+2. Select one exact deployment source.
+3. Repeat live preflight and FullResourcePayloads What-If for that exact source.
+4. Seek a one-shot, non-renewing deployment grant with rollback and post-deployment verification boundaries.
