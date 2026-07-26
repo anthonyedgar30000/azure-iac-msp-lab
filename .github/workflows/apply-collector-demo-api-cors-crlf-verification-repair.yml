@@ -1,0 +1,302 @@
+name: Apply collector demo API CORS CRLF verification repair
+
+on:
+  push:
+    branches:
+      - fix/collector-demo-api-cors-crlf-verification
+    paths:
+      - .github/workflows/apply-collector-demo-api-cors-crlf-verification-repair.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-collector-demo-api-cors-crlf-verification-repair
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    name: Patch verifier, tests, and deployment evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Apply exact CRLF-safe verifier repair
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          workflow = Path(".github/workflows/collector-demo-api.yml")
+          source = workflow.read_text(encoding="utf-8")
+          old = '          grep -Eiq "^access-control-allow-origin: ${ALLOWED_ORIGIN}\\r?$" "$ARTIFACT_DIR/cors-headers.txt"\n'
+          new = (
+              '          tr -d \'\\r\' < "$ARTIFACT_DIR/cors-headers.txt" > "$ARTIFACT_DIR/cors-headers-normalized.txt"\n'
+              '          grep -Fxi "Access-Control-Allow-Origin: ${ALLOWED_ORIGIN}" "$ARTIFACT_DIR/cors-headers-normalized.txt"\n'
+          )
+          if source.count(old) != 1:
+              raise SystemExit("expected exactly one legacy CRLF grep expression")
+          workflow.write_text(source.replace(old, new), encoding="utf-8")
+          PY
+
+      - name: Add deterministic regression test
+        run: |
+          set -euo pipefail
+          cat > infra/tests/test_collector_demo_api_cors_crlf_verification.py <<'PY'
+          from __future__ import annotations
+
+          import subprocess
+          import unittest
+          from pathlib import Path
+
+
+          ROOT = Path(__file__).resolve().parents[2]
+          WORKFLOW = ROOT / ".github" / "workflows" / "collector-demo-api.yml"
+
+
+          class CollectorDemoApiCorsCrlfVerificationTests(unittest.TestCase):
+              def test_workflow_normalizes_crlf_before_exact_origin_match(self) -> None:
+                  source = WORKFLOW.read_text(encoding="utf-8")
+                  self.assertIn(
+                      "tr -d '\\r' < \"$ARTIFACT_DIR/cors-headers.txt\" > \"$ARTIFACT_DIR/cors-headers-normalized.txt\"",
+                      source,
+                  )
+                  self.assertIn(
+                      "grep -Fxi \"Access-Control-Allow-Origin: ${ALLOWED_ORIGIN}\" \"$ARTIFACT_DIR/cors-headers-normalized.txt\"",
+                      source,
+                  )
+                  self.assertNotIn(
+                      "grep -Eiq \"^access-control-allow-origin: ${ALLOWED_ORIGIN}\\r?$\"",
+                      source,
+                  )
+
+              def test_real_http_crlf_header_survives_normalization_and_exact_match(self) -> None:
+                  origin = "https://anthonyedgar30000.github.io"
+                  raw = (
+                      "HTTP/1.1 204 No Content\r\n"
+                      f"Access-Control-Allow-Origin: {origin}\r\n"
+                      "Access-Control-Allow-Methods: POST, OPTIONS\r\n"
+                  ).encode()
+
+                  normalized = subprocess.run(
+                      ["tr", "-d", "\r"],
+                      input=raw,
+                      capture_output=True,
+                      check=True,
+                  ).stdout
+                  self.assertNotIn(b"\r", normalized)
+
+                  matched = subprocess.run(
+                      ["grep", "-Fxi", f"Access-Control-Allow-Origin: {origin}"],
+                      input=normalized,
+                      capture_output=True,
+                      check=False,
+                  )
+                  self.assertEqual(matched.returncode, 0, matched.stderr.decode())
+
+
+          if __name__ == "__main__":
+              unittest.main()
+          PY
+
+      - name: Record exact deployment and verification evidence
+        run: |
+          set -euo pipefail
+          mkdir -p .project/reconciliations docs/reviews
+          cat > .project/reconciliations/collector-demo-api-deployment-run18-20260726.json <<'JSON'
+          {
+            "schema_version": "project.azure-deployment-reconciliation.v1",
+            "recorded_at": "2026-07-26T09:31:07Z",
+            "project": "Azure IaC MSP Lab",
+            "repository": "anthonyedgar30000/azure-iac-msp-lab",
+            "source_instruction": "I dint need to kmow those things get this deployed already!",
+            "source_binding": {
+              "reviewed_commit": "98b092201053fd3592be157a24de6e623e6b74a6",
+              "workflow": ".github/workflows/collector-demo-api.yml",
+              "workflow_run_id": 30196388398,
+              "workflow_run_number": 18,
+              "workflow_run_attempt": 1,
+              "job_id": 89778570106
+            },
+            "artifact": {
+              "artifact_id": 8630260279,
+              "name": "collector-demo-api-30196388398-1",
+              "github_digest": "sha256:1f97be3c519d547871cc990e010013259dfd3c2e263f263653c2c4035340eb9e",
+              "downloaded_zip_sha256": "1f97be3c519d547871cc990e010013259dfd3c2e263f263653c2c4035340eb9e",
+              "archive_entry_count": 50,
+              "manifest_payload_count": 48,
+              "manifest_payload_hashes_verified": 48,
+              "manifest_payload_hash_failures": 0
+            },
+            "azure_identity_context": {
+              "subscription_name": "Azure for Students",
+              "subscription_id_sha256": "8f27aec6b3012cf0d4a85d3859872f0daf34e014860650c7c2b3446cd3db0b7f",
+              "resource_group": "rg-servicetracer-dev-westus2",
+              "location": "westus2"
+            },
+            "workflow_progression": {
+              "repository_tests": "success",
+              "azure_login": "success",
+              "live_state_capture": "success",
+              "readiness": "success",
+              "arm_validation_and_what_if": "success",
+              "deployment": "success",
+              "post_deploy_capture": "success",
+              "workflow_verification_step": "failure",
+              "artifact_upload": "success"
+            },
+            "deployment_result": {
+              "parent_deployment": "Succeeded",
+              "nested_deployment": "Succeeded",
+              "deployment_duration": "PT49.7848636S",
+              "deployment_completed_at": "2026-07-26T09:26:15.123443Z",
+              "collector_vm_remains_private": true,
+              "fqdn": "st-demo-api-aeg30000.westus2.cloudapp.azure.com"
+            },
+            "post_deploy_state": {
+              "load_balancer": {
+                "name": "lb-st-demo-api-mst-dev",
+                "provisioning_state": "Succeeded",
+                "sku": "Standard",
+                "tier": "Regional",
+                "backend_pool": "be-st-demo-api",
+                "backend_address_count": 1,
+                "backend_name": "collector",
+                "backend_private_ip": "10.20.40.10",
+                "probe": "probe-tcp-80-st-demo-api",
+                "rules": [
+                  "rule-st-demo-api-http",
+                  "rule-st-demo-api-https"
+                ]
+              },
+              "vm_extension": {
+                "name": "servicetracer-demo-api",
+                "provisioning_state": "Succeeded",
+                "publisher": "Microsoft.Azure.Extensions",
+                "handler": "CustomScript",
+                "handler_version": "2.1",
+                "force_update_tag": "98b092201053fd3592be157a24de6e623e6b74a6"
+              },
+              "http_nsg_rule": "Succeeded",
+              "https_nsg_rule": "Succeeded"
+            },
+            "runtime_evidence": {
+              "observed_at": "2026-07-26T09:26:56Z",
+              "public_https_request_succeeded": true,
+              "health_status": "healthy",
+              "backend_target_configured": true,
+              "hosting_model": "collector_vm_systemd",
+              "backend_timeout_seconds": 10.0,
+              "max_parallel_transactions": 10,
+              "max_attempts": 50,
+              "estimated_max_execution_seconds": 50.0,
+              "transaction_count": 20,
+              "successful_transactions": 0,
+              "failed_transactions": 20,
+              "exact_root_cause_claimed": false,
+              "cors_options_http_status": 204,
+              "cors_allowed_origin": "https://anthonyedgar30000.github.io",
+              "cors_allowed_methods": "POST, OPTIONS"
+            },
+            "verification_failure": {
+              "classification": "deterministic_verifier_false_negative",
+              "failed_command": "grep -Eiq with a backslash-r expression against CRLF HTTP headers",
+              "cause": "GNU grep extended regular expressions do not interpret backslash-r as a carriage-return token; the correct Access-Control-Allow-Origin header ended in an actual CR byte.",
+              "deployment_or_runtime_failure": false,
+              "verification_json_written": false,
+              "repair": "Normalize carriage returns with tr -d before an exact fixed-string case-insensitive header match."
+            },
+            "resolved_truth": {
+              "azure_deployment_performed": true,
+              "azure_deployment_succeeded": true,
+              "collector_backend_pool_populated": true,
+              "collector_extension_succeeded": true,
+              "public_health_verified_time_bounded": true,
+              "twenty_transaction_response_verified_time_bounded": true,
+              "cors_verified_time_bounded": true,
+              "workflow_terminal_conclusion": "failure",
+              "workflow_failure_represents_service_failure": false,
+              "service_restored": true,
+              "full_backend_transaction_success_verified": false
+            },
+            "authority": {
+              "deployment_grant_consumed": true,
+              "retry_authorized": false,
+              "verification_rerun_authorized": false,
+              "azure_query_authorized": false,
+              "azure_mutation_authorized": false,
+              "repository_verifier_repair_authorized": true
+            },
+            "claim_boundaries": [
+              "deployment_succeeded != all_backend_transactions_succeeded",
+              "workflow_failed != deployment_failed",
+              "verifier_false_negative != service_failure",
+              "service_restored != downstream_VPN_backend_repaired",
+              "transaction_failure_localized != exact_root_cause_proven"
+            ]
+          }
+          JSON
+
+          cat > docs/reviews/collector-demo-api-deployment-run18.md <<'MD'
+          # Collector-hosted demo API deployment run 18
+
+          Exact source `98b092201053fd3592be157a24de6e623e6b74a6` was deployed by workflow run `30196388398`.
+
+          ## Deployment result
+
+          - ARM validation and bounded FullResourcePayloads What-If passed.
+          - Parent and nested deployments reached `Succeeded`.
+          - `lb-st-demo-api-mst-dev` is Standard/Regional and contains backend `collector / 10.20.40.10`.
+          - VM extension `servicetracer-demo-api` reached `Succeeded` with `forceUpdateTag` bound to the exact source commit.
+          - Public HTTPS health returned `healthy`, `backend_target_configured=true`, and `hosting_model=collector_vm_systemd`.
+          - The bounded API request returned exactly 20 transactions without claiming an exact root cause.
+          - CORS OPTIONS returned HTTP 204 with the exact allowed origin and `POST, OPTIONS`.
+
+          ## Why the workflow was red
+
+          The final CORS assertion used:
+
+          ```text
+          grep -Eiq "...\r?$"
+          ```
+
+          against a real HTTP header file ending in CRLF. GNU grep ERE does not treat `\r` as a carriage-return token, so the correct header was rejected. The workflow never wrote `verification.json`, even though the raw artifact proves the required health, API, and CORS evidence.
+
+          The repair normalizes CR bytes before an exact fixed-string match. No Azure retry or mutation is part of this repository increment.
+
+          ## Boundaries
+
+          ```text
+          workflow_failed != deployment_failed
+          verifier_false_negative != service_failure
+          service_restored != downstream_VPN_backend_repaired
+          ```
+          MD
+
+      - name: Run focused tests
+        run: |
+          set -euo pipefail
+          python -m unittest \
+            infra.tests.test_collector_demo_api \
+            infra.tests.test_collector_demo_api_cors_crlf_verification \
+            -v
+
+      - name: Remove one-shot helper and commit repair
+        run: |
+          set -euo pipefail
+          rm .github/workflows/apply-collector-demo-api-cors-crlf-verification-repair.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            .github/workflows/collector-demo-api.yml \
+            infra/tests/test_collector_demo_api_cors_crlf_verification.py \
+            .project/reconciliations/collector-demo-api-deployment-run18-20260726.json \
+            docs/reviews/collector-demo-api-deployment-run18.md \
+            .github/workflows/apply-collector-demo-api-cors-crlf-verification-repair.yml
+          git commit -m "Fix CRLF-safe collector API verification and record deployment"
+          git push origin HEAD:fix/collector-demo-api-cors-crlf-verification
