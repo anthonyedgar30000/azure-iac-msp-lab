@@ -112,6 +112,9 @@ No fresh Azure authentication or query was performed during this repository reco
 Historical evidence remains bounded to its original context and must not overwrite collector run-18 reality:
 
 ```text
+PR #84 merge: c96d9cbb765a023921fa819cf7d99c957e8ad608
+PR #84 source: 5c938a7e07da3a22b27bb5ac5aa52b7ccf22ba37
+merged_into_main != deployed_to_VM
 legacy canonical main: 665e051375594d11e58e434231bd06775dbdc560
 PR #92 source: 5b5af74d57fb5fd87ece2a34239cc6f29d04b12b
 PR #93 source: eecb5c872f76cb5e51df6f5451d5a61b79d87bba
