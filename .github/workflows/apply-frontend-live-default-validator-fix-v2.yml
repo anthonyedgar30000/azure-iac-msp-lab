@@ -1,0 +1,52 @@
+name: Apply frontend live-default validator fix v2
+
+on:
+  push:
+    branches:
+      - activate/frontend-live-api-default
+    paths:
+      - .github/workflows/apply-frontend-live-default-validator-fix-v2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    name: Apply exact validation patch and self-remove
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out activation branch
+        uses: actions/checkout@v4
+        with:
+          ref: activate/frontend-live-api-default
+          fetch-depth: 0
+
+      - name: Apply deterministic patch
+        run: |
+          set -euo pipefail
+          python3 .project/tmp/apply_frontend_live_default_validation_fix.py
+
+      - name: Validate exact activation contract
+        run: |
+          set -euo pipefail
+          python3 .project/validate.py
+          python3 -m unittest \
+            infra.tests.test_collector_demo_api \
+            infra.tests.test_frontend_api_demo_lab_integration \
+            infra.tests.test_frontend_live_default_activation \
+            -v
+          node --check scripts/verify_frontend_live_default.mjs
+
+      - name: Remove transient helpers and commit clean repair
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm --ignore-unmatch \
+            .github/workflows/apply-frontend-live-default-validator-fix.yml \
+            .github/workflows/apply-frontend-live-default-validator-fix-v2.yml \
+            .project/tmp/apply_frontend_live_default_validation_fix.py
+          git add -A
+          git commit -m "Bind frontend live default to exact deployment evidence"
+          git push origin HEAD:activate/frontend-live-api-default
