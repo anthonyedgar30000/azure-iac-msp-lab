@@ -1,10 +1,12 @@
 {
   "schema_version": "project.state-index.v1",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-26T09:43:47-04:00",
+  "recorded_at": "2026-07-26T19:02:36-04:00",
   "canonical_current_reality": ".project/current-reality-v2.json",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
   "canonical_handoff": ".project/handoffs/current-state.md",
+  "latest_verified_reconciliation": ".project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json",
+  "active_deployment_authorization": ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json",
   "legacy_compatibility_snapshots": [
     {
       "path": ".project/current-reality.json",
@@ -25,10 +27,12 @@
       ]
     }
   ],
-  "selection_rule": "Operational consumers must resolve canonical paths through this index rather than assuming a legacy filename is current.",
+  "selection_rule": "Operational consumers must resolve canonical paths and the latest verified reconciliation through this index rather than assuming a legacy filename is current.",
   "claim_boundaries": [
     "legacy_filename != current_authority",
     "historical_snapshot != live_state",
+    "verified_preflight != deployment_completed",
+    "active_authorization != consumed_authorization",
     "not_observed != false"
   ]
 }
