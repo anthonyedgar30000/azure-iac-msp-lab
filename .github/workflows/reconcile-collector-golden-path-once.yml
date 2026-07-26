@@ -1,0 +1,733 @@
+name: Reconcile collector golden path once
+
+on:
+  push:
+    branches:
+      - agent/reconcile-collector-golden-path
+    paths:
+      - .github/workflows/reconcile-collector-golden-path-once.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: reconcile-collector-golden-path-once
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    if: github.ref_name == 'agent/reconcile-collector-golden-path'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPECTED_MAIN: 50ae9113fafccbe31b3e2d076c021c814e4f446d
+      BRANCH: agent/reconcile-collector-golden-path
+    steps:
+      - name: Check out exact reconciliation branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH }}
+          fetch-depth: 0
+
+      - name: Enforce repository-only scope and exact base
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = "$BRANCH"
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git merge-base HEAD origin/main)" = "$EXPECTED_MAIN"
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_MAIN"
+
+      - name: Reconcile collector endpoint and canonical state
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          from datetime import datetime
+          from pathlib import Path
+          from textwrap import dedent
+          from zoneinfo import ZoneInfo
+
+          OLD = "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run"
+          COLLECTOR = "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run"
+          MAIN = "50ae9113fafccbe31b3e2d076c021c814e4f446d"
+          SOURCE_HEAD = "dcfcc66f1ce9b2c49ffa5cbdca94c33d80716609"
+          SOURCE_CI = 30201933461
+          DEPLOYED_SOURCE = "98b092201053fd3592be157a24de6e623e6b74a6"
+          RUN_ID = 30196388398
+          RUN_NUMBER = 18
+          JOB_ID = 89778570106
+          ARTIFACT_ID = 8630260279
+          ARTIFACT_DIGEST = "sha256:1f97be3c519d547871cc990e010013259dfd3c2e263f263653c2c4035340eb9e"
+          FAILED_BROWSER_RUN = 30198346832
+          now = datetime.now(ZoneInfo("America/Toronto")).replace(microsecond=0).isoformat()
+
+          def load(path: str) -> dict:
+              return json.loads(Path(path).read_text(encoding="utf-8"))
+
+          def write_json(path: str, value: dict) -> None:
+              Path(path).write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+
+          def replace_exact(path: str) -> None:
+              target = Path(path)
+              text = target.read_text(encoding="utf-8")
+              if OLD not in text:
+                  raise SystemExit(f"expected independent endpoint missing from {path}")
+              target.write_text(text.replace(OLD, COLLECTOR), encoding="utf-8")
+
+          for path in (
+              ".project/validate.py",
+              "infra/tests/test_frontend_api_demo_lab_integration.py",
+              "infra/tests/test_frontend_live_default_activation.py",
+              "scripts/verify_frontend_live_default.mjs",
+              "docs/reviews/frontend-live-default-activation-20260726.md",
+          ):
+              replace_exact(path)
+
+          activation_review = Path("docs/reviews/frontend-live-default-activation-20260726.md")
+          review_text = activation_review.read_text(encoding="utf-8")
+          if "## Collector binding reconciliation" not in review_text:
+              review_text += dedent(
+                  f"""
+
+                  ## Collector binding reconciliation
+
+                  The first activation revision accidentally used the independent VM API hostname even though its evidence anchor was collector deployment run `{RUN_ID}`. The current binding is corrected to the endpoint emitted by that deployment:
+
+                  ```text
+                  {COLLECTOR}
+                  ```
+
+                  The independent endpoint remains historical supporting evidence. It is not the Lab v1 golden path and cannot satisfy the collector-hosted browser gate.
+
+                  ```text
+                  independent_API_ready != collector_golden_path_verified
+                  deployment_evidence_anchor != arbitrary_compatible_endpoint
+                  ```
+                  """
+              )
+          activation_review.write_text(review_text, encoding="utf-8")
+
+          source = load("docs/report-source.json")
+          source["live_demo_api_url"] = COLLECTOR
+          source["candidate_demo_api_url"] = COLLECTOR
+          source["activation_status"] = "collector_live_default_pending_github_pages_verification"
+          source["evidence_anchor"] = ".project/reconciliations/collector-demo-api-deployment-run18-20260726.json"
+          source["claim_boundary"] = (
+              "The normal frontend is bound to the collector-hosted API deployed by run 30196388398. "
+              "The controlled fixture remains the fail-closed fallback when health, CORS, or the live transaction request fails. "
+              "Repository binding does not prove GitHub Pages publication or browser-path completion, and the independent VM API is not the collector golden path."
+          )
+          write_json("docs/report-source.json", source)
+
+          # Update validator and tests for the more explicit activation state.
+          for path in (
+              ".project/validate.py",
+              "infra/tests/test_frontend_api_demo_lab_integration.py",
+              "infra/tests/test_frontend_live_default_activation.py",
+              "scripts/verify_frontend_live_default.mjs",
+          ):
+              target = Path(path)
+              text = target.read_text(encoding="utf-8")
+              text = text.replace(
+                  "live_default_pending_github_pages_verification",
+                  "collector_live_default_pending_github_pages_verification",
+              )
+              target.write_text(text, encoding="utf-8")
+
+          index = load(".project/state-index.json")
+          index["recorded_at"] = now
+          write_json(".project/state-index.json", index)
+
+          current = load(".project/current-reality-v2.json")
+          current["recorded_at"] = now
+          current["repository_state"] = {
+              "default_branch": "main",
+              "observed_head": MAIN,
+              "latest_merged_pull_request": 124,
+              "open_pull_requests_observed": [],
+              "observation_boundary": "Observed after closing consumed PR #123 and before creating the reconciliation PR.",
+              "exact_source_head": SOURCE_HEAD,
+              "exact_source_ci_run_id": SOURCE_CI,
+              "exact_source_ci_conclusion": "success",
+              "merge_commit_ci": "not_observed",
+              "local_working_tree": "not_observed",
+          }
+          current["evidence_anchors"].update({
+              "run18_deployment": ".project/reconciliations/collector-demo-api-deployment-run18-20260726.json",
+              "workflow_run_id": RUN_ID,
+              "workflow_run_number": RUN_NUMBER,
+              "workflow_job_id": JOB_ID,
+              "artifact_id": ARTIFACT_ID,
+              "artifact_digest": ARTIFACT_DIGEST,
+              "artifact_manifest_payloads_verified": 48,
+              "artifact_manifest_payload_failures": 0,
+              "predeployment_what_if_run_id": 30192970923,
+              "predeployment_what_if_artifact_id": 8629191915,
+          })
+
+          api = current["collector_demo_api"]
+          api["observation"] = {
+              "observed_at": "2026-07-26T09:26:57Z",
+              "source": "verified_workflow_artifact",
+              "subscription_name": "Azure for Students",
+              "identity_identifiers": "sha256_fingerprints_only",
+              "resource_group": "rg-servicetracer-dev-westus2",
+              "location": "westus2",
+              "reviewed_commit": DEPLOYED_SOURCE,
+              "operation": "deploy",
+              "azure_login_succeeded": True,
+              "azure_mutation_performed": True,
+          }
+          api["predeployment_state"]["observation_boundary"] = "Historical run-16 state before deployment run 18."
+          api["postdeployment_state"] = {
+              "resource_group_provisioning_state": "Succeeded",
+              "collector_vm_name": "vm-stcollector-mst-dev",
+              "collector_vm_size": "Standard_B2ats_v2",
+              "collector_private_ip": "10.20.40.10",
+              "collector_vm_running": True,
+              "load_balancer_name": "lb-st-demo-api-mst-dev",
+              "load_balancer_provisioning_state": "Succeeded",
+              "backend_pool_name": "be-st-demo-api",
+              "backend_pool_address_count": 1,
+              "backend_pool_address_name": "collector",
+              "vm_extension_name": "servicetracer-demo-api",
+              "vm_extension_provisioning_state": "Succeeded",
+              "vm_extension_force_update_tag": DEPLOYED_SOURCE,
+          }
+          api["deployment"] = {
+              "decision_ready": True,
+              "authorized": False,
+              "authorized_for_run18": True,
+              "authority_consumed": True,
+              "performed": True,
+              "succeeded": True,
+              "rollback_performed": False,
+              "runtime_verification_performed": True,
+              "transaction_replay_performed": False,
+              "service_restored": "api_healthy_downstream_sample_failed_without_stable_localization",
+          }
+          api["runtime_evidence"] = {
+              "collector_endpoint": COLLECTOR,
+              "fqdn": "st-demo-api-aeg30000.westus2.cloudapp.azure.com",
+              "public_https_request_succeeded": True,
+              "health_status": "healthy",
+              "health_schema": "servicetracer.demo-api-health.v1",
+              "backend_target_configured": True,
+              "transaction_request_http_status": 200,
+              "transaction_schema": "servicetracer.demo-api-response.v1",
+              "transaction_count": 20,
+              "successful_transactions": 0,
+              "failed_transactions": 20,
+              "stable_backend_localization": False,
+              "exact_root_cause_claimed": False,
+              "cors_preflight_status": 204,
+              "cors_allow_origin": "https://anthonyedgar30000.github.io",
+              "cors_allows_post": True,
+              "workflow_overall_conclusion": "failure",
+              "workflow_failure_classification": "verifier_false_negative_after_successful_deployment_and_runtime_requests",
+          }
+          api["frontend_binding"] = {
+              "configured_endpoint": COLLECTOR,
+              "collector_golden_path_required": True,
+              "repository_binding_corrected": True,
+              "github_pages_publication_verified": False,
+              "browser_transaction_verified": False,
+              "consumed_verification_pull_request": 123,
+              "consumed_verification_run_id": FAILED_BROWSER_RUN,
+              "failure_stage": "wait_for_exact_frontend_configuration",
+              "browser_execution_performed": False,
+              "automatic_retry_performed": False,
+              "retry_authorized": False,
+          }
+          api["quota"]["observation_boundary"] = "Time-bounded run-16 evidence; no fresh Azure query performed during repository reconciliation."
+          api["cost_and_budget"] = {
+              "resource_creates_in_run18": 0,
+              "current_billing_cost": "not_observed",
+              "remaining_Azure_for_Students_credit": "not_observed",
+              "actual_cost_cad": "not_observed",
+              "cost_delta": "not_quantified",
+          }
+          api["source_binding"] = {
+              "predeployment_plan_source": "8de1f61f8a0ea06dcf94b94c798edde2aace357d",
+              "deployed_source": DEPLOYED_SOURCE,
+              "current_main": MAIN,
+              "current_main_deployed": False,
+              "frontend_endpoint": COLLECTOR,
+              "deployment_source_decision": "resolved_to_run18_exact_source",
+              "claim_boundary": "current main contains evidence and frontend changes after the deployed source; it is not itself claimed as deployed to Azure.",
+          }
+          current["independent_demo_api"].update({
+              "endpoint": OLD,
+              "role": "historical_supporting_evidence_not_lab_v1_golden_path",
+              "collector_golden_path": False,
+          })
+          for marker in (
+              "workflow_failed != deployment_failed",
+              "API_health_verified != downstream_transaction_success_verified",
+              "independent_API_ready != collector_golden_path_verified",
+              "frontend_bound != browser_verified",
+          ):
+              if marker not in current["canonical_distinctions"]:
+                  current["canonical_distinctions"].append(marker)
+          current["authority"].update({
+              "pull_request_merge_authorized": False,
+              "workflow_dispatch_authorized": False,
+              "azure_authentication_authorized": False,
+              "azure_query_authorized": False,
+              "azure_mutation_authorized": False,
+              "deployment_authorized": False,
+              "verify_operation_authorized": False,
+              "transaction_replay_authorized": False,
+              "rollback_authorized": False,
+              "cleanup_authorized": False,
+              "rbac_mutation_authorized": False,
+              "browser_verification_authorized": False,
+          })
+          current["next_gate"] = {
+              "operation": "publish corrected collector endpoint and obtain a new one-shot browser-verification grant",
+              "deployment_status": "deployed_runtime_partially_validated",
+              "required": [
+                  "merge and publish the corrected collector endpoint",
+                  "observe the exact published report-source configuration",
+                  "obtain new finite browser health, CORS, and one-transaction-sample authority",
+                  "capture current Azure for Students credit or actual billing evidence in CAD",
+                  "do not perform another Azure deployment unless new evidence establishes a deployment defect",
+              ],
+          }
+          write_json(".project/current-reality-v2.json", current)
+
+          gate = load(".project/lab-v1-completion-gate-v2.json")
+          gate["recorded_at"] = now
+          gate["decision_status"] = "collector_deployed_frontend_binding_reconciliation_pending"
+          statuses = {
+              "p0-exact-what-if-evidence": ("verified_run_30192970923_artifact_8629191915", True),
+              "p0-source-and-cost-decision": ("deployment_source_resolved_to_98b0922_cost_not_observed", False),
+              "p0-collector-deployment": ("deployed_run_30196388398_artifact_8630260279", True),
+              "p0-runtime-contract": ("api_health_https_cors_and_20_request_verified_downstream_success_not_established", False),
+              "p0-servicetracer-scenario": ("20_attempt_sample_preserved_no_stable_localization_no_unsupported_root_cause", False),
+              "p0-browser-demonstration": ("previous_one_shot_consumed_before_browser_execution_new_grant_required", False),
+              "p0-evidence-lock": ("deployment_and_api_evidence_locked_browser_cost_monitoring_pending", False),
+          }
+          for criterion in gate["p0"]["criteria"]:
+              status, complete = statuses[criterion["criterion_id"]]
+              criterion["current_status"] = status
+              criterion["complete"] = complete
+          gate["evidence_inputs"].update({
+              "collector_deployment_record": ".project/reconciliations/collector-demo-api-deployment-run18-20260726.json",
+              "workflow_run_id": RUN_ID,
+              "artifact_id": ARTIFACT_ID,
+              "deployed_source": DEPLOYED_SOURCE,
+              "current_main": MAIN,
+              "frontend_endpoint": COLLECTOR,
+              "consumed_browser_pr": 123,
+              "consumed_browser_run_id": FAILED_BROWSER_RUN,
+          })
+          gate["next_gate"] = {
+              "operation": "publish_corrected_collector_binding_then_request_new_one_shot_browser_verification",
+              "after_that": "complete browser evidence, establish a supported localization sample or preserve inconclusive evidence, then verify monitoring and actual cost",
+              "claim_boundary": "This repository reconciliation authorizes no Azure access, deployment, workflow dispatch, browser transaction, rollback, cleanup, or merge.",
+          }
+          write_json(".project/lab-v1-completion-gate-v2.json", gate)
+
+          handoff = dedent(f"""
+          # Current project handoff
+
+          ## Interpretation boundary
+
+          This handoff reflects GitHub state observed after PR #124 and durable Azure evidence from collector deployment run `{RUN_ID}`. It is not a continuously refreshed Azure dashboard.
+
+          ```text
+          declared_in_code != deployed_in_azure
+          deployment_succeeded != service_validated
+          workflow_failed != deployment_failed
+          API_health_verified != downstream_transaction_success_verified
+          independent_API_ready != collector_golden_path_verified
+          frontend_bound != browser_verified
+          RBAC_assignment != effective_least_privilege
+          monitoring_enabled != alerts_verified
+          estimated_cost != actual_cost
+          not_observed != false
+          source_silence != contradiction
+          verification_status != truth_value
+          ```
+
+          ## Canonical state selection
+
+          ```text
+          state index: .project/state-index.json
+          current reality: .project/current-reality-v2.json
+          current completion gate: .project/lab-v1-completion-gate-v2.json
+          legacy reality snapshot: .project/current-reality.json
+          legacy completion gate: .project/lab-v1-completion-gate.json
+          ```
+
+          ## Repository watermark
+
+          ```text
+          repository: anthonyedgar30000/azure-iac-msp-lab
+          observed main: {MAIN}
+          latest merge: PR #124
+          PR #124 exact source: {SOURCE_HEAD}
+          PR #124 exact-head CI: {SOURCE_CI} / success
+          PR #123: closed without merge after consumed failed one-shot verification
+          open pull requests observed before this reconciliation PR: none
+          local working tree: not observed
+          merge-commit CI: not observed
+          ```
+
+          ## Collector golden path — deployed reality
+
+          ```text
+          subscription: Azure for Students
+          resource group: rg-servicetracer-dev-westus2
+          region: westus2
+          deployed source: {DEPLOYED_SOURCE}
+          deployment workflow run: {RUN_ID} / run {RUN_NUMBER}
+          workflow job: {JOB_ID}
+          artifact: {ARTIFACT_ID}
+          artifact digest: {ARTIFACT_DIGEST}
+          manifest: 48 / 48 verified
+          collector VM: vm-stcollector-mst-dev / running
+          collector private IP: 10.20.40.10
+          load balancer: lb-st-demo-api-mst-dev / Succeeded
+          backend pool: be-st-demo-api / collector / 10.20.40.10
+          VM extension: servicetracer-demo-api / Succeeded
+          collector API: {COLLECTOR}
+          health: healthy
+          CORS preflight: 204 / GitHub Pages origin allowed / POST allowed
+          transaction request: HTTP 200 / 20 attempts
+          downstream results: 0 successful / 20 failed
+          stable backend localization: false
+          exact root cause claimed: false
+          ```
+
+          The run concluded red because a shell verifier mishandled normal CRLF headers after deployment and runtime requests succeeded. The grant was consumed; no deployment retry is authorized.
+
+          ## Frontend binding
+
+          The committed frontend is now bound to the collector-hosted endpoint above. The previous `st-demo-api-vm-aeg30000...` hostname belongs to the independent demo API lineage and is not the Lab v1 golden path.
+
+          PR #123 failed while waiting for its expected published configuration. Browser setup and the 20-attempt browser action never executed. The PR was closed without merge, and a future browser run requires new explicit one-shot authority.
+
+          ## Lab v1 gate
+
+          ```text
+          exact What-If evidence: complete
+          collector deployment: complete
+          deployed source decision: complete
+          API health, HTTPS request, CORS and one 20-attempt API request: observed
+          downstream successful transaction evidence: not established
+          supported stable localization: not established
+          GitHub Pages collector binding publication: pending
+          browser live-path verification: pending new authority
+          monitoring and alert delivery: not verified
+          actual cost in CAD and remaining student credit: not observed
+          full evidence lock: incomplete
+          ```
+
+          ## Quota and cost boundary
+
+          Last time-bounded quota evidence remains:
+
+          ```text
+          Standard IPv4 public IPs: 2 / 3
+          load balancers: 2 / 1000
+          additional public IP required by run 18: 0
+          current billing cost: not observed
+          remaining Azure for Students credit: not observed
+          ```
+
+          No fresh Azure authentication or query was performed during this repository reconciliation.
+
+          ## Historical compatibility anchors
+
+          Historical evidence remains bounded to its original context and must not overwrite collector run-18 reality:
+
+          ```text
+          authorization reconciliation merge: 92b0c3b1064158684a4b280348c77eeedba6dfc3
+          independent planner run: 30064289707
+          independent planner artifact: 8585693830
+          independent planner digest: 7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22
+          independent SKU restriction: NotAvailableForSubscription
+          independent VM family: standardBasv2Family
+          typed readiness control: PR #73
+          ```
+
+          ## Current authority
+
+          ```text
+          repository reconciliation authorized: true
+          draft pull request creation authorized: true
+          ordinary pull request CI authorized: true
+          pull request merge authorized: false
+          workflow dispatch authorized: false
+          Azure authentication authorized: false
+          Azure query authorized: false
+          Azure mutation authorized: false
+          deployment authorized: false
+          browser verification authorized: false
+          transaction replay authorized: false
+          rollback authorized: false
+          RBAC mutation authorized: false
+          cleanup authorized: false
+          ```
+
+          ## Next gate
+
+          1. Merge and publish the corrected collector endpoint only after exact-head CI and human review.
+          2. Observe the exact GitHub Pages configuration.
+          3. Obtain a new finite browser-verification grant.
+          4. Perform one browser health/CORS/20-attempt verification with no automatic retry.
+          5. Capture actual Azure cost or remaining student credit in CAD.
+          """).lstrip()
+          Path(".project/handoffs/current-state.md").write_text(handoff, encoding="utf-8")
+
+          canonical_review = dedent(f"""
+          # Canonical current reality v2
+
+          ## Current authority
+
+          `.project/state-index.json` continues to select the versioned v2 current-reality, completion-gate, and handoff files. Legacy filenames remain historical compatibility snapshots.
+
+          ## Reconciled facts
+
+          - Observed main: `{MAIN}` after PR #124.
+          - Collector exact deployed source: `{DEPLOYED_SOURCE}`.
+          - Deployment run: `{RUN_ID}`; artifact `{ARTIFACT_ID}`; 48/48 manifest payloads verified.
+          - Collector extension and backend pool converged.
+          - Collector API endpoint: `{COLLECTOR}`.
+          - Health, HTTPS request, CORS, and one 20-attempt response were observed.
+          - All 20 downstream attempts failed; stable localization was not established and no exact root cause was claimed.
+          - PR #123 was consumed and closed before browser execution.
+          - The independent VM API is not the collector golden path.
+
+          ```text
+          workflow_failed != deployment_failed
+          API_health_verified != downstream_transaction_success_verified
+          independent_API_ready != collector_golden_path_verified
+          frontend_bound != browser_verified
+          ```
+
+          ## Remaining gate
+
+          Publish the corrected collector binding, obtain a new one-shot browser grant, preserve bounded browser evidence, verify monitoring delivery, and capture actual cost or remaining student credit in CAD.
+          """).lstrip()
+          Path("docs/reviews/canonical-current-reality-v2.md").write_text(canonical_review, encoding="utf-8")
+
+          reconciliation = {
+              "schema_version": "project.collector-golden-path-reconciliation.v1",
+              "recorded_at": now,
+              "repository": "anthonyedgar30000/azure-iac-msp-lab",
+              "observed_main": MAIN,
+              "deployed_source": DEPLOYED_SOURCE,
+              "deployment_run_id": RUN_ID,
+              "deployment_artifact_id": ARTIFACT_ID,
+              "collector_endpoint": COLLECTOR,
+              "independent_endpoint": OLD,
+              "decision": "bind the normal frontend to the collector-hosted endpoint because the collector golden path is mandatory for Lab v1",
+              "consumed_browser_verification": {
+                  "pull_request": 123,
+                  "workflow_run_id": FAILED_BROWSER_RUN,
+                  "browser_execution_performed": False,
+                  "retry_authorized": False,
+                  "closed_without_merge": True,
+              },
+              "authority": {
+                  "repository_reconciliation_authorized": True,
+                  "ordinary_pull_request_ci_authorized": True,
+                  "draft_pull_request_authorized": True,
+                  "pull_request_merge_authorized": False,
+                  "workflow_dispatch_authorized": False,
+                  "azure_authentication_authorized": False,
+                  "azure_query_authorized": False,
+                  "azure_mutation_authorized": False,
+                  "browser_verification_authorized": False,
+              },
+              "claim_boundaries": [
+                  "independent_API_ready != collector_golden_path_verified",
+                  "frontend_bound != browser_verified",
+                  "failed_verification != authorization_to_retry",
+                  "workflow_failed != deployment_failed",
+              ],
+          }
+          write_json(".project/reconciliations/collector-golden-path-reconciliation-20260726.json", reconciliation)
+
+          canonical_test = dedent(f"""
+          from __future__ import annotations
+
+          import json
+          from pathlib import Path
+          import unittest
+
+          ROOT = Path(__file__).resolve().parents[2]
+          INDEX = ROOT / ".project/state-index.json"
+          CURRENT = ROOT / ".project/current-reality-v2.json"
+          LEGACY = ROOT / ".project/current-reality.json"
+          GATE = ROOT / ".project/lab-v1-completion-gate-v2.json"
+          HANDOFF = ROOT / ".project/handoffs/current-state.md"
+          DEPLOYMENT = ROOT / ".project/reconciliations/collector-demo-api-deployment-run18-20260726.json"
+
+          MAIN = "{MAIN}"
+          DEPLOYED_SOURCE = "{DEPLOYED_SOURCE}"
+          RUN_ID = {RUN_ID}
+          ARTIFACT_ID = {ARTIFACT_ID}
+          COLLECTOR = "{COLLECTOR}"
+
+
+          class CanonicalStateIndexV2Tests(unittest.TestCase):
+              @classmethod
+              def setUpClass(cls):
+                  cls.index = json.loads(INDEX.read_text(encoding="utf-8"))
+                  cls.current = json.loads(CURRENT.read_text(encoding="utf-8"))
+                  cls.legacy = json.loads(LEGACY.read_text(encoding="utf-8"))
+                  cls.gate = json.loads(GATE.read_text(encoding="utf-8"))
+                  cls.handoff = HANDOFF.read_text(encoding="utf-8")
+                  cls.deployment = json.loads(DEPLOYMENT.read_text(encoding="utf-8"))
+
+              def test_index_selects_versioned_canonical_state(self):
+                  self.assertEqual(self.index["canonical_current_reality"], ".project/current-reality-v2.json")
+                  self.assertEqual(self.index["canonical_completion_gate"], ".project/lab-v1-completion-gate-v2.json")
+                  self.assertFalse(self.index["legacy_compatibility_snapshots"][0]["authoritative_for_current_operations"])
+                  self.assertEqual(self.legacy["repository_state"]["observed_head"], "665e051375594d11e58e434231bd06775dbdc560")
+
+              def test_current_repository_watermark_is_pr124(self):
+                  repo = self.current["repository_state"]
+                  self.assertEqual(repo["observed_head"], MAIN)
+                  self.assertEqual(repo["latest_merged_pull_request"], 124)
+                  self.assertEqual(repo["open_pull_requests_observed"], [])
+                  self.assertEqual(repo["exact_source_ci_run_id"], {SOURCE_CI})
+                  self.assertEqual(repo["exact_source_ci_conclusion"], "success")
+
+              def test_run18_deployment_is_current_evidence(self):
+                  anchors = self.current["evidence_anchors"]
+                  self.assertEqual(anchors["workflow_run_id"], RUN_ID)
+                  self.assertEqual(anchors["artifact_id"], ARTIFACT_ID)
+                  self.assertEqual(anchors["artifact_manifest_payloads_verified"], 48)
+                  self.assertEqual(self.deployment["source"]["reviewed_commit"], DEPLOYED_SOURCE)
+                  self.assertTrue(self.deployment["deployment"]["deployment_step_succeeded"])
+                  self.assertEqual(self.deployment["deployment"]["backend_pool"]["address_count"], 1)
+                  self.assertEqual(self.deployment["deployment"]["collector_vm_extension"]["provisioning_state"], "Succeeded")
+
+              def test_collector_is_deployed_but_browser_gate_remains_open(self):
+                  api = self.current["collector_demo_api"]
+                  self.assertTrue(api["deployment"]["performed"])
+                  self.assertTrue(api["deployment"]["succeeded"])
+                  self.assertTrue(api["deployment"]["authority_consumed"])
+                  self.assertEqual(api["runtime_evidence"]["collector_endpoint"], COLLECTOR)
+                  self.assertEqual(api["runtime_evidence"]["health_status"], "healthy")
+                  self.assertEqual(api["runtime_evidence"]["transaction_count"], 20)
+                  self.assertEqual(api["runtime_evidence"]["successful_transactions"], 0)
+                  self.assertFalse(api["runtime_evidence"]["stable_backend_localization"])
+                  self.assertFalse(api["frontend_binding"]["browser_transaction_verified"])
+                  self.assertFalse(api["frontend_binding"]["retry_authorized"])
+
+              def test_gate_tracks_completed_deployment_without_overclaiming(self):
+                  criteria = {{item["criterion_id"]: item for item in self.gate["p0"]["criteria"]}}
+                  self.assertTrue(criteria["p0-collector-deployment"]["complete"])
+                  self.assertFalse(criteria["p0-runtime-contract"]["complete"])
+                  self.assertFalse(criteria["p0-servicetracer-scenario"]["complete"])
+                  self.assertFalse(criteria["p0-browser-demonstration"]["complete"])
+                  self.assertIn(COLLECTOR, self.handoff)
+                  self.assertIn("independent_API_ready != collector_golden_path_verified", self.handoff)
+
+              def test_no_new_execution_authority_is_manufactured(self):
+                  authority = self.current["authority"]
+                  for key in (
+                      "pull_request_merge_authorized",
+                      "workflow_dispatch_authorized",
+                      "azure_authentication_authorized",
+                      "azure_query_authorized",
+                      "azure_mutation_authorized",
+                      "deployment_authorized",
+                      "browser_verification_authorized",
+                      "transaction_replay_authorized",
+                      "rollback_authorized",
+                      "cleanup_authorized",
+                      "rbac_mutation_authorized",
+                  ):
+                      self.assertFalse(authority[key], key)
+
+
+          if __name__ == "__main__":
+              unittest.main()
+          """).lstrip()
+          Path("infra/tests/test_canonical_state_index_v2.py").write_text(canonical_test, encoding="utf-8")
+
+          binding_test = dedent(f"""
+          import json
+          from pathlib import Path
+          import unittest
+
+          ROOT = Path(__file__).resolve().parents[2]
+          COLLECTOR = "{COLLECTOR}"
+          INDEPENDENT = "{OLD}"
+
+
+          class CollectorGoldenPathBindingTests(unittest.TestCase):
+              def test_current_frontend_is_bound_to_collector_endpoint(self):
+                  config = json.loads((ROOT / "docs/report-source.json").read_text(encoding="utf-8"))
+                  self.assertEqual(config["live_demo_api_url"], COLLECTOR)
+                  self.assertEqual(config["candidate_demo_api_url"], COLLECTOR)
+                  self.assertEqual(config["activation_status"], "collector_live_default_pending_github_pages_verification")
+                  self.assertNotEqual(config["live_demo_api_url"], INDEPENDENT)
+
+              def test_active_validators_cannot_accept_independent_endpoint(self):
+                  for relative in (
+                      ".project/validate.py",
+                      "scripts/verify_frontend_live_default.mjs",
+                      "infra/tests/test_frontend_live_default_activation.py",
+                      "infra/tests/test_frontend_api_demo_lab_integration.py",
+                  ):
+                      text = (ROOT / relative).read_text(encoding="utf-8")
+                      self.assertIn(COLLECTOR, text, relative)
+                      self.assertNotIn(INDEPENDENT, text, relative)
+
+              def test_canonical_state_keeps_independent_api_outside_golden_path(self):
+                  state = json.loads((ROOT / ".project/current-reality-v2.json").read_text(encoding="utf-8"))
+                  self.assertEqual(state["collector_demo_api"]["frontend_binding"]["configured_endpoint"], COLLECTOR)
+                  self.assertTrue(state["collector_demo_api"]["frontend_binding"]["collector_golden_path_required"])
+                  self.assertFalse(state["independent_demo_api"]["collector_golden_path"])
+
+
+          if __name__ == "__main__":
+              unittest.main()
+          """).lstrip()
+          Path("infra/tests/test_collector_golden_path_binding.py").write_text(binding_test, encoding="utf-8")
+          PY
+
+      - name: Validate bounded reconciliation
+        run: |
+          set -euo pipefail
+          python .project/validate.py
+          python -m unittest discover -s infra/tests -p 'test_*.py'
+          node --check scripts/verify_frontend_live_default.mjs
+          grep -F "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json
+          ! grep -F "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json
+          git diff --check
+
+      - name: Commit reconciliation and remove helper
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/reconcile-collector-golden-path-once.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            .project/current-reality-v2.json \
+            .project/handoffs/current-state.md \
+            .project/lab-v1-completion-gate-v2.json \
+            .project/reconciliations/collector-golden-path-reconciliation-20260726.json \
+            .project/state-index.json \
+            .project/validate.py \
+            docs/report-source.json \
+            docs/reviews/canonical-current-reality-v2.md \
+            docs/reviews/frontend-live-default-activation-20260726.md \
+            infra/tests/test_canonical_state_index_v2.py \
+            infra/tests/test_collector_golden_path_binding.py \
+            infra/tests/test_frontend_api_demo_lab_integration.py \
+            infra/tests/test_frontend_live_default_activation.py \
+            scripts/verify_frontend_live_default.mjs
+          git diff --cached --check
+          git commit -m "Reconcile collector golden path"
+          git push origin HEAD:"$BRANCH"
