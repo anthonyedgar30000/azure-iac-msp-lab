@@ -1,0 +1,178 @@
+name: Verify published frontend live default once
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/verify-frontend-live-default-once-20260726.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frontend-live-default-browser-verification-20260726
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'verify/frontend-live-default-f089e6f8'
+    name: Verify actual GitHub Pages to live API path once
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      VERIFIED_MAIN_COMMIT: f089e6f8f075043cb9b17ebdb9c64239aba4e706
+      FRONTEND_ORIGIN: https://anthonyedgar30000.github.io
+      LIVE_API_URL: https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run
+      EVIDENCE_DIR: browser-evidence
+    steps:
+      - name: Check out exact verification branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Bind branch to exact merged source
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD origin/main)" = "$VERIFIED_MAIN_COMMIT"
+          test "$(git rev-parse HEAD^ 2>/dev/null || true)" = "$VERIFIED_MAIN_COMMIT" || true
+          test "$(git show "$VERIFIED_MAIN_COMMIT:docs/report-source.json" | jq -r '.live_demo_api_url')" = "$LIVE_API_URL"
+          mkdir -p "$EVIDENCE_DIR" .project/evidence .project/reconciliations
+
+      - name: Wait for exact frontend configuration to publish
+        run: |
+          set -euo pipefail
+          published=false
+          for attempt in $(seq 1 90); do
+            url="${FRONTEND_ORIGIN}/report-source.json?verified_main=${VERIFIED_MAIN_COMMIT}&poll=${attempt}"
+            if curl --fail --silent --show-error \
+              --header 'Cache-Control: no-cache' \
+              --header 'Pragma: no-cache' \
+              "$url" > "$EVIDENCE_DIR/published-report-source.json"; then
+              if jq -e \
+                --arg api "$LIVE_API_URL" \
+                '.schema_version=="servicetracer.report-source.v1" and .live_demo_api_url==$api and .candidate_demo_api_url==$api and .fallback_report_url=="technician-handoff-report.json" and .activation_status=="live_default_pending_github_pages_verification"' \
+                "$EVIDENCE_DIR/published-report-source.json" >/dev/null; then
+                published=true
+                break
+              fi
+            fi
+            sleep 10
+          done
+          test "$published" = true
+          jq -n \
+            --arg observed_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg frontend_origin "$FRONTEND_ORIGIN" \
+            --arg verified_main_commit "$VERIFIED_MAIN_COMMIT" \
+            --arg live_api_url "$LIVE_API_URL" \
+            '{schema_version:"project.github-pages-publication-observation.v1",observed_at:$observed_at,frontend_origin:$frontend_origin,verified_main_commit:$verified_main_commit,live_api_url:$live_api_url,exact_configuration_published:true,transaction_request_performed:false}' \
+            > "$EVIDENCE_DIR/publication-observation.json"
+
+      - name: Set up bounded browser client
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --ignore-scripts puppeteer-core@24.16.0
+          CHROME_PATH="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || true)"
+          test -n "$CHROME_PATH"
+          echo "CHROME_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+          node --check scripts/verify_frontend_live_default.mjs
+
+      - name: Perform the single authorized browser transaction verification
+        id: browser
+        continue-on-error: true
+        env:
+          VERIFICATION_OUTPUT_DIR: browser-evidence
+        run: |
+          set +e
+          node scripts/verify_frontend_live_default.mjs \
+            > "$EVIDENCE_DIR/frontend-live-default-verification.stdout.json" \
+            2> "$EVIDENCE_DIR/frontend-live-default-verification.stderr.txt"
+          status=$?
+          set -e
+          echo "exit_status=$status" >> "$GITHUB_OUTPUT"
+          exit "$status"
+
+      - name: Normalize and preserve exact browser evidence
+        if: always()
+        env:
+          BROWSER_OUTCOME: ${{ steps.browser.outcome }}
+          BROWSER_EXIT_STATUS: ${{ steps.browser.outputs.exit_status }}
+        run: |
+          set -euo pipefail
+          evidence_path="$EVIDENCE_DIR/frontend-live-default-verification.json"
+          durable_evidence='.project/evidence/frontend-live-default-browser-verification-20260726.json'
+          if [[ -s "$evidence_path" ]]; then
+            jq \
+              --arg verified_main_commit "$VERIFIED_MAIN_COMMIT" \
+              --arg workflow_run_id "$GITHUB_RUN_ID" \
+              --arg workflow_run_attempt "$GITHUB_RUN_ATTEMPT" \
+              '.repository_sha=$verified_main_commit | .workflow_run_id=($workflow_run_id|tonumber) | .workflow_run_attempt=($workflow_run_attempt|tonumber)' \
+              "$evidence_path" > "$durable_evidence"
+          else
+            jq -n \
+              --arg observed_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              --arg verified_main_commit "$VERIFIED_MAIN_COMMIT" \
+              --arg frontend_origin "$FRONTEND_ORIGIN" \
+              --arg live_api_url "$LIVE_API_URL" \
+              --arg workflow_run_id "$GITHUB_RUN_ID" \
+              --arg workflow_run_attempt "$GITHUB_RUN_ATTEMPT" \
+              --arg browser_outcome "$BROWSER_OUTCOME" \
+              --arg browser_exit_status "${BROWSER_EXIT_STATUS:-not_observed}" \
+              '{schema_version:"project.frontend-live-default-browser-verification.v1",observed_at:$observed_at,repository_sha:$verified_main_commit,frontend_url:$frontend_origin,live_api_url:$live_api_url,workflow_run_id:($workflow_run_id|tonumber),workflow_run_attempt:($workflow_run_attempt|tonumber),browser_outcome:$browser_outcome,browser_exit_status:$browser_exit_status,actual_github_pages_deployment_verified:false,fixture_fallback_used:"not_observed",transaction_run:"not_observed",claim_boundary:"Browser verification did not produce a complete evidence document. No retry was performed."}' \
+              > "$durable_evidence"
+          fi
+
+          browser_success=false
+          if [[ "$BROWSER_OUTCOME" == success ]]; then
+            browser_success=true
+          fi
+          transaction_attempts="$(jq -r '.transaction_run.attempts // "not_observed"' "$durable_evidence")"
+          fixture_fallback="$(jq -r '.fixture_fallback_used // "not_observed"' "$durable_evidence")"
+          exact_root_cause_claimed="$(jq -r '.transaction_run.exact_root_cause_claimed // "not_observed"' "$durable_evidence")"
+          jq -n \
+            --arg recorded_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg verified_main_commit "$VERIFIED_MAIN_COMMIT" \
+            --arg workflow_run_id "$GITHUB_RUN_ID" \
+            --arg workflow_run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg browser_outcome "$BROWSER_OUTCOME" \
+            --arg browser_exit_status "${BROWSER_EXIT_STATUS:-not_observed}" \
+            --arg transaction_attempts "$transaction_attempts" \
+            --arg fixture_fallback "$fixture_fallback" \
+            --arg exact_root_cause_claimed "$exact_root_cause_claimed" \
+            --argjson browser_success "$browser_success" \
+            '{schema_version:"project.frontend-live-default-browser-reconciliation.v1",recorded_at:$recorded_at,verified_main_commit:$verified_main_commit,workflow_run_id:($workflow_run_id|tonumber),workflow_run_attempt:($workflow_run_attempt|tonumber),exact_configuration_published:true,browser_outcome:$browser_outcome,browser_exit_status:$browser_exit_status,browser_success:$browser_success,transaction_attempts:$transaction_attempts,fixture_fallback_used:$fixture_fallback,exact_root_cause_claimed:$exact_root_cause_claimed,automatic_retry_performed:false,azure_authentication_performed:false,azure_mutation_performed:false,claim_boundaries:["GitHub_Pages_published != browser_path_verified","API_connected != downstream_transaction_successful","twenty_attempt_sample != permanent_backend_truth","failed_browser_verification != authorization_to_retry"]}' \
+            > .project/reconciliations/frontend-live-default-browser-verification-20260726.json
+
+          find "$EVIDENCE_DIR" -maxdepth 1 -type f -print0 \
+            | sort -z \
+            | xargs -0 -r sha256sum \
+            > "$EVIDENCE_DIR/sha256sums.txt"
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-live-default-browser-verification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: browser-evidence/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Commit durable verification result without retriggering
+        if: always()
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            .project/evidence/frontend-live-default-browser-verification-20260726.json \
+            .project/reconciliations/frontend-live-default-browser-verification-20260726.json
+          git commit -m "Record one-shot public frontend browser verification"
+          git push origin HEAD:${{ github.head_ref }}
+
+      - name: Fail closed when the single browser gate did not pass
+        if: steps.browser.outcome != 'success'
+        run: |
+          echo 'The one authorized browser transaction verification did not pass. No retry was performed or authorized.' >&2
+          exit 1
