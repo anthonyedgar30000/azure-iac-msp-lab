@@ -1,4 +1,4 @@
-name: Complete collector golden path reconciliation
+name: Diagnose collector golden path remediation
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
       - .github/workflows/reconcile-collector-golden-path-pr.yml
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: complete-collector-golden-path-reconciliation
@@ -95,55 +95,47 @@ jobs:
           if old not in text:
               raise SystemExit('stale activation assertion not found')
           path.write_text(text.replace(old, new), encoding='utf-8')
-
-          for path_name in (
-              '.project/current-reality-v2.json',
-              '.project/handoffs/current-state.md',
-              'docs/reviews/canonical-current-reality-v2.md',
-          ):
-              target = Path(path_name)
-              value = target.read_text(encoding='utf-8')
-              value = value.replace(
-                  'open pull requests observed before this reconciliation PR: none',
-                  'open pull requests observed before this remediation PR: none',
-              )
-              target.write_text(value, encoding='utf-8')
           PATCH
 
-      - name: Validate complete reconciliation
+      - name: Run all validation and preserve output
+        id: validate
         run: |
-          set -euo pipefail
-          python .project/validate.py
-          python -m unittest discover -s infra/tests -p 'test_*.py'
-          node --check scripts/verify_frontend_live_default.mjs
-          grep -F "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json
-          ! grep -F "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json
-          git diff --check
+          set +e
+          status=0
+          {
+            echo '=== workflow observability validator ==='
+            python .project/validate.py || status=$?
+            echo '=== complete unit-test suite ==='
+            python -m unittest discover -s infra/tests -p 'test_*.py' || status=$?
+            echo '=== browser verifier syntax ==='
+            node --check scripts/verify_frontend_live_default.mjs || status=$?
+            echo '=== collector endpoint present ==='
+            grep -F "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json || status=$?
+            echo '=== independent endpoint absent from active config ==='
+            if grep -F "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json; then status=1; fi
+            echo '=== diff check ==='
+            git diff --check || status=$?
+          } > remediation-validation.log 2>&1
+          git status --short > remediation-status.txt
+          git diff > remediation.patch
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          cat remediation-validation.log
+          exit 0
 
-      - name: Commit intended files and remove temporary helpers
+      - name: Upload remediation diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: collector-golden-path-remediation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            remediation-validation.log
+            remediation-status.txt
+            remediation.patch
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Fail closed when any validation failed
+        if: steps.validate.outputs.status != '0'
         run: |
-          set -euo pipefail
-          git rm \
-            .github/workflows/reconcile-collector-golden-path-once.yml \
-            .github/workflows/reconcile-collector-golden-path-pr.yml
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add \
-            .project/current-reality-v2.json \
-            .project/handoffs/current-state.md \
-            .project/lab-v1-completion-gate-v2.json \
-            .project/reconciliations/collector-golden-path-reconciliation-20260726.json \
-            .project/state-index.json \
-            .project/validate.py \
-            docs/report-source.json \
-            docs/reviews/canonical-current-reality-v2.md \
-            docs/reviews/frontend-live-default-activation-20260726.md \
-            infra/tests/test_canonical_state_index_v2.py \
-            infra/tests/test_collector_demo_api.py \
-            infra/tests/test_collector_golden_path_binding.py \
-            infra/tests/test_frontend_api_demo_lab_integration.py \
-            infra/tests/test_frontend_live_default_activation.py \
-            scripts/verify_frontend_live_default.mjs
-          git diff --cached --check
-          git commit -m "Complete collector golden path reconciliation"
-          git push origin HEAD:"$BRANCH"
+          cat remediation-validation.log >&2
+          exit 1
