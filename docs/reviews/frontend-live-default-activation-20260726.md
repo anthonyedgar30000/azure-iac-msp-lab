@@ -39,7 +39,7 @@ https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run
 
 The frontend still validates health before enabling the operator action. Failed health, CORS, or transaction requests use the fixture and clearly label the fallback.
 
-The repository validator does not permit an arbitrary live URL. It binds activation to the exact deployment source, workflow run, artifact digest, converged extension and backend pool, healthy API contract, exact CORS origin, consumed deployment authority, and absence of retry authority.
+The repository validator does not permit an arbitrary live URL. It binds activation to the exact deployment source, workflow run, artifact digest, converged extension and backend pool, healthy API contract, exact CORS origin, consumed deployment authority, and absence of retry authority. Existing load-balancer classifier fixtures and their fail-closed tests remain unchanged.
 
 ## Remaining verification
 
