@@ -1,0 +1,135 @@
+{
+  "schema_version": "project.lab-v1-completion-gate.v2",
+  "project": "ServiceTracer — Governed Azure Operations Lab",
+  "recorded_at": "2026-07-26T04:43:53-04:00",
+  "governing_objective": "Complete and evidence-lock one production-shaped ServiceTracer workload from infrastructure-as-code declaration through deployment, security, runtime validation, monitoring, cost observation, and portfolio demonstration.",
+  "decision_status": "repository_evidence_current_deployment_pending",
+  "active_golden_path": "collector-hosted demo API in rg-servicetracer-dev-westus2",
+  "scope_control": {
+    "parallel_feature_expansion_allowed": false,
+    "new_workload_allowed": false,
+    "new_governance_abstraction_allowed": false,
+    "rule": "Admit only work that closes a Lab v1 criterion, removes a material security or operational defect, or captures required evidence."
+  },
+  "p0": {
+    "name": "Complete the golden path",
+    "criteria": [
+      {
+        "criterion_id": "p0-exact-what-if-evidence",
+        "requirement": "Verify exact-source CI, live preflight, ARM validation, bounded FullResourcePayloads What-If, and artifact integrity.",
+        "current_status": "verified_run_30192970923_artifact_8629191915",
+        "complete": true
+      },
+      {
+        "criterion_id": "p0-source-and-cost-decision",
+        "requirement": "Choose one exact deployment source and refresh current Azure for Students credit or billing evidence.",
+        "current_status": "blocked_source_unresolved_cost_not_observed",
+        "complete": false
+      },
+      {
+        "criterion_id": "p0-collector-deployment",
+        "requirement": "Populate the collector backend pool and rerun the failed commit-bound CustomScript extension through a one-shot governed deployment.",
+        "current_status": "accepted_plan_not_deployed",
+        "complete": false
+      },
+      {
+        "criterion_id": "p0-runtime-contract",
+        "requirement": "Verify TLS, public health, API contract, CORS, backend connectivity, and stable endpoint behaviour after deployment.",
+        "current_status": "not_verified_after_collector_deployment",
+        "complete": false
+      },
+      {
+        "criterion_id": "p0-servicetracer-scenario",
+        "requirement": "Execute and preserve the bounded 20-transaction demonstration with supported fault localization and no unsupported root-cause claim.",
+        "current_status": "not_performed",
+        "complete": false
+      },
+      {
+        "criterion_id": "p0-browser-demonstration",
+        "requirement": "Verify the public operator console renders the live API result while preserving the safe fixture default.",
+        "current_status": "not_verified",
+        "complete": false
+      },
+      {
+        "criterion_id": "p0-evidence-lock",
+        "requirement": "Capture source, CI, authorization, deployment, control-plane, endpoint, transaction, browser, and sanitized portfolio evidence.",
+        "current_status": "predeployment_evidence_locked_postdeployment_evidence_pending",
+        "complete": false
+      }
+    ]
+  },
+  "p1": {
+    "name": "Make the workload credibly operable",
+    "entry_condition": "All P0 criteria are complete or explicitly blocked by a human decision.",
+    "criteria": [
+      "Enable the minimum useful supported diagnostic path.",
+      "Create one meaningful alert and independently verify delivery through an action group.",
+      "Verify effective least privilege for deployment and verification identities.",
+      "Capture a time-bounded actual-cost observation in CAD.",
+      "Document restart, redeployment, rollback, failure classification, and decommissioning."
+    ],
+    "backup_and_recovery": "intentionally_out_of_scope_for_lab_v1"
+  },
+  "p2": {
+    "name": "Package portfolio proof",
+    "entry_condition": "P0 and P1 evidence is available.",
+    "required_story": [
+      "exact GitHub commit",
+      "exact-head CI",
+      "reviewed ARM What-If",
+      "explicit human deployment authority",
+      "Azure deployment",
+      "healthy corrected API",
+      "bounded synthetic service failure",
+      "deterministic ServiceTracer localization",
+      "verified alert or operational evidence",
+      "bounded technician handoff",
+      "cost observation",
+      "cleanup or decommissioning procedure"
+    ]
+  },
+  "evidence_inputs": {
+    "canonical_current_view": ".project/current-reality-v2.json",
+    "current_handoff": ".project/handoffs/current-state.md",
+    "run16_artifact_promotion": ".project/reconciliations/collector-demo-api-what-if-run16-artifact-promotion-20260726.json",
+    "workflow_run_id": 30192970923,
+    "artifact_id": 8629191915,
+    "accepted_plan_source": "8de1f61f8a0ea06dcf94b94c798edde2aace357d",
+    "current_main": "9bfff60bd2e1e3bbf5610807df7d970c9bd9f229",
+    "canonical_state_index": ".project/state-index.json",
+    "legacy_pr92_pr93_snapshot": ".project/current-reality.json",
+    "legacy_completion_gate": ".project/lab-v1-completion-gate.json"
+  },
+  "completion_definition": {
+    "rule": "Lab v1 is complete only when one exact source lineage connects reviewed IaC, authorized deployment, deployed Azure resources, validated runtime, bounded ServiceTracer evidence, effective security, verified monitoring delivery, current cost evidence, and a reproducible demonstration.",
+    "boundaries": [
+      "merged_into_main != deployed_to_Azure",
+      "deployment_succeeded != service_validated",
+      "resource_exists != securely_configured",
+      "RBAC_assignment != effective_least_privilege",
+      "monitoring_enabled != alerts_verified",
+      "estimated_cost != actual_cost",
+      "fixture_demo != live_demo",
+      "WhatIf_accepted != deployment_authorized"
+    ]
+  },
+  "authority": {
+    "repository_gate_reconciliation": true,
+    "draft_pull_request_creation": true,
+    "ordinary_pull_request_ci": true,
+    "pull_request_merge": false,
+    "workflow_dispatch_or_rerun": false,
+    "azure_authentication": false,
+    "azure_query": false,
+    "azure_mutation": false,
+    "deployment": false,
+    "rbac_mutation": false,
+    "transaction_replay": false,
+    "cleanup": false
+  },
+  "next_gate": {
+    "operation": "refresh_cost_or_credit_and_choose_exact_deployment_source",
+    "after_that": "repeat live preflight and FullResourcePayloads What-If, then seek one-shot deployment authority",
+    "claim_boundary": "This repository reconciliation does not authorize Azure access, workflow dispatch, deployment, verification replay, rollback, cleanup, or merge."
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": "project.state-index.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-26T04:43:53-04:00",
+  "canonical_current_reality": ".project/current-reality-v2.json",
+  "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
+  "canonical_handoff": ".project/handoffs/current-state.md",
+  "legacy_compatibility_snapshots": [
+    {
+      "path": ".project/current-reality.json",
+      "observation_boundary": "PR #92/#93 repository state and 2026-07-25 independent-demo-API evidence",
+      "authoritative_for_current_operations": false,
+      "preserved_for": [
+        "historical validators",
+        "historical evidence lineage"
+      ]
+    },
+    {
+      "path": ".project/lab-v1-completion-gate.json",
+      "observation_boundary": "Original Lab v1 prioritization decision before collector run 16 evidence",
+      "authoritative_for_current_operations": false,
+      "preserved_for": [
+        "historical gate tests",
+        "decision lineage"
+      ]
+    }
+  ],
+  "selection_rule": "Operational consumers must resolve canonical paths through this index rather than assuming a legacy filename is current.",
+  "claim_boundaries": [
+    "legacy_filename != current_authority",
+    "historical_snapshot != live_state",
+    "not_observed != false"
+  ]
+}
