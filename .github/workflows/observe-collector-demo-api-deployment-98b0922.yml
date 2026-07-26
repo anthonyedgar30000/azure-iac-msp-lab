@@ -1,0 +1,121 @@
+name: Observe collector demo API deployment attempt
+
+on:
+  push:
+    branches:
+      - observe/collector-demo-api-deployment-98b0922
+    paths:
+      - .github/workflows/observe-collector-demo-api-deployment-98b0922.yml
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: observe-collector-demo-api-deployment-98b0922
+  cancel-in-progress: false
+
+env:
+  SOURCE_COMMIT: 98b092201053fd3592be157a24de6e623e6b74a6
+  TARGET_WORKFLOW: collector-demo-api.yml
+  OUTPUT_PATH: .project/observations/collector-demo-api-deployment-main-98b0922-20260726.json
+
+jobs:
+  observe:
+    name: Capture exact child deployment outcome
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out observer branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Query child workflow and capture bounded evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$OUTPUT_PATH")"
+
+          gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/${TARGET_WORKFLOW}/runs?event=workflow_dispatch&branch=main&per_page=50" \
+            > /tmp/runs.json
+
+          run_id="$(jq -r --arg sha "$SOURCE_COMMIT" '[.workflow_runs[] | select(.head_sha==$sha and .run_number>16)] | sort_by(.run_number) | last | .id // empty' /tmp/runs.json)"
+          test -n "$run_id"
+
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}" > /tmp/run.json
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?per_page=100" > /tmp/jobs.json
+
+          job_id="$(jq -r '.jobs[0].id // empty' /tmp/jobs.json)"
+          test -n "$job_id"
+
+          error_excerpt='not_observed'
+          if gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${job_id}/logs" > /tmp/job.log 2>/tmp/log-fetch.err; then
+            python3 - <<'PY'
+          import re
+          from pathlib import Path
+          source = Path('/tmp/job.log').read_text(encoding='utf-8', errors='replace')
+          lines = []
+          for line in source.splitlines():
+              lowered = line.lower()
+              if '##[error]' in lowered or 'error:' in lowered or 'failed' in lowered or 'exit code' in lowered:
+                  lines.append(line)
+          text = '\n'.join(lines[-40:])
+          text = re.sub(r'/subscriptions/[0-9a-f-]+', '/subscriptions/<redacted>', text, flags=re.I)
+          text = re.sub(r'\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b', '<redacted-guid>', text, flags=re.I)
+          Path('/tmp/error-excerpt.txt').write_text(text or 'no explicit error line observed', encoding='utf-8')
+          PY
+            error_excerpt="$(cat /tmp/error-excerpt.txt)"
+          fi
+
+          jq -n \
+            --arg recorded_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg source_commit "$SOURCE_COMMIT" \
+            --argjson run "$(cat /tmp/run.json)" \
+            --argjson jobs "$(cat /tmp/jobs.json)" \
+            --arg error_excerpt "$error_excerpt" \
+            '{
+              schema_version:"project.github-workflow-observation.v1",
+              recorded_at:$recorded_at,
+              repository:"anthonyedgar30000/azure-iac-msp-lab",
+              source_commit:$source_commit,
+              workflow:{
+                run_id:$run.id,
+                run_number:$run.run_number,
+                run_attempt:$run.run_attempt,
+                event:$run.event,
+                status:$run.status,
+                conclusion:$run.conclusion,
+                created_at:$run.created_at,
+                updated_at:$run.updated_at,
+                html_url:$run.html_url
+              },
+              jobs:[$jobs.jobs[] | {
+                id:.id,
+                name:.name,
+                status:.status,
+                conclusion:.conclusion,
+                started_at:.started_at,
+                completed_at:.completed_at,
+                steps:[.steps[]? | {number:.number,name:.name,status:.status,conclusion:.conclusion}]
+              }],
+              failed_steps:[$jobs.jobs[] | .steps[]? | select(.conclusion=="failure") | .name],
+              deploy_step_conclusions:[$jobs.jobs[] | .steps[]? | select(.name=="Deploy collector-hosted demo API" or .name=="Capture post-deploy target state and ARM operations" or .name=="Verify public TLS, API, and frontend contract") | {name:.name,conclusion:.conclusion}],
+              sanitized_error_excerpt:$error_excerpt,
+              azure_query_performed_by_observer:false,
+              azure_mutation_performed_by_observer:false,
+              retry_performed:false,
+              claim_boundary:"This is a GitHub-only observation of the consumed child run. Step conclusions establish workflow progression; Azure mutation truth must follow deployment and artifact evidence rather than assumption."
+            }' > "$OUTPUT_PATH"
+
+      - name: Commit observation to observer branch
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add "$OUTPUT_PATH"
+          git commit -m 'Record collector demo API deployment attempt outcome'
+          git push origin HEAD:observe/collector-demo-api-deployment-98b0922
