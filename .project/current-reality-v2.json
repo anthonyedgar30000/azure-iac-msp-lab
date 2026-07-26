@@ -1,19 +1,29 @@
 {
   "schema_version": "project.current-reality.v2",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-26T09:13:14-04:00",
+  "recorded_at": "2026-07-26T09:24:37-04:00",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "repository_state": {
     "default_branch": "main",
-    "observed_head": "855ef85f898cbf34db2931abc8344d05cb05c6f7",
-    "latest_merged_pull_request": 125,
-    "open_pull_requests_observed": [],
-    "observation_boundary": "Observed after PR #125 merged repository-only helper workflows and before this remediation PR.",
-    "exact_source_head": "315a310ae4ff3db7d5d100ea0320911043b77564",
-    "exact_source_ci_run_id": 30203314001,
+    "observed_head": "81df65ca7d4cd77fc89aefb2fac128ead456df7d",
+    "latest_merged_pull_request": 126,
+    "open_pull_requests_observed": [
+      127
+    ],
+    "observation_boundary": "Observed after PR #126 merged the collector golden-path reconciliation and before creating the post-merge truth-lock pull request. PR #127 was open as a draft and was not accepted as current evidence.",
+    "exact_source_head": "1f9a00f572235c74b99520a504d8b057003d411c",
+    "exact_source_ci_run_id": 30203751115,
     "exact_source_ci_conclusion": "success",
     "merge_commit_ci": "not_observed",
-    "local_working_tree": "not_observed"
+    "local_working_tree": "not_observed",
+    "merge_observation": {
+      "pull_request": 126,
+      "merge_commit": "81df65ca7d4cd77fc89aefb2fac128ead456df7d",
+      "human_or_external_merge_observed": true,
+      "assistant_merge_action_performed": false,
+      "merge_actor": "not_resolved",
+      "prior_merge_authority": "not_observed"
+    }
   },
   "historical_snapshot": {
     "path": ".project/current-reality.json",
@@ -33,7 +43,12 @@
     "artifact_manifest_payload_failures": 0,
     "run18_deployment": ".project/reconciliations/collector-demo-api-deployment-run18-20260726.json",
     "predeployment_what_if_run_id": 30192970923,
-    "predeployment_what_if_artifact_id": 8629191915
+    "predeployment_what_if_artifact_id": 8629191915,
+    "pr126_merge_commit": "81df65ca7d4cd77fc89aefb2fac128ead456df7d",
+    "pr126_exact_source_head": "1f9a00f572235c74b99520a504d8b057003d411c",
+    "pr126_exact_source_ci_run_id": 30203751115,
+    "pr126_exact_source_ci_conclusion": "success",
+    "pr126_merge_commit_ci": "not_observed"
   },
   "collector_demo_api": {
     "observation": {
@@ -121,7 +136,7 @@
     "source_binding": {
       "predeployment_plan_source": "8de1f61f8a0ea06dcf94b94c798edde2aace357d",
       "deployed_source": "98b092201053fd3592be157a24de6e623e6b74a6",
-      "current_main": "855ef85f898cbf34db2931abc8344d05cb05c6f7",
+      "current_main": "81df65ca7d4cd77fc89aefb2fac128ead456df7d",
       "current_main_deployed": false,
       "frontend_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
       "deployment_source_decision": "resolved_to_run18_exact_source",
@@ -225,12 +240,12 @@
     "browser_verification_authorized": false
   },
   "next_gate": {
-    "operation": "publish corrected collector endpoint and obtain a new one-shot browser-verification grant",
+    "operation": "observe the exact published collector binding and obtain a new one-shot browser-verification grant",
     "deployment_status": "deployed_runtime_partially_validated",
     "required": [
-      "merge and publish the corrected collector endpoint",
-      "observe the exact published report-source configuration",
-      "obtain new finite browser health, CORS, and one-transaction-sample authority",
+      "observe GitHub Pages serving the exact collector endpoint configuration from merged main",
+      "obtain new finite browser health, CORS, and one 20-attempt transaction authority",
+      "capture bounded browser evidence with no automatic retry",
       "capture current Azure for Students credit or actual billing evidence in CAD",
       "do not perform another Azure deployment unless new evidence establishes a deployment defect"
     ]
