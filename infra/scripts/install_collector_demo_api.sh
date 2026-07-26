@@ -150,6 +150,32 @@ for _ in $(seq 1 60); do
 done
 getent ahostsv4 "$PUBLIC_FQDN" >/dev/null
 
+# DNS resolution is not proof that the load balancer has retained and activated its
+# backend address. Require the public TCP/80 path to reach this exact nginx config
+# before asking the ACME service to validate the same route.
+public_http_ready=false
+for _ in $(seq 1 120); do
+  http_code="$(
+    curl \
+      --silent \
+      --output /dev/null \
+      --connect-timeout 5 \
+      --max-time 10 \
+      --write-out '%{http_code}' \
+      "http://${PUBLIC_FQDN}/" || true
+  )"
+  if [[ "$http_code" == '404' ]]; then
+    public_http_ready=true
+    break
+  fi
+  sleep 5
+done
+
+if [[ "$public_http_ready" != true ]]; then
+  echo "Public HTTP path did not converge to the collector nginx backend before TLS enrollment." >&2
+  exit 1
+fi
+
 certbot --nginx \
   --non-interactive \
   --agree-tos \

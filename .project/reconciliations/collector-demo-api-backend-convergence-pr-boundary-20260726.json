@@ -1,0 +1,22 @@
+{
+  "schema_version": "project.repository-change-boundary.v1",
+  "recorded_on": "2026-07-26",
+  "branch": "fix/collector-demo-api-backend-convergence",
+  "base": "e5fabb271d05bbb1644515467c9b2c9beb106031",
+  "authority": {
+    "repository_patch": true,
+    "pull_request": true,
+    "ordinary_CI": true,
+    "Azure_login": false,
+    "Azure_query": false,
+    "ARM_validation": false,
+    "ARM_what_if": false,
+    "deployment": false,
+    "workflow_dispatch": false,
+    "merge": false,
+    "manual_drift_fix": false,
+    "rollback": false,
+    "cleanup": false
+  },
+  "statement": "Anthony Edgar authorized patch preparation with the instruction: Patch it. This authorization does not extend to Azure execution or pull-request merge."
+}

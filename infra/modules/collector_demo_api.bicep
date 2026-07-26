@@ -48,8 +48,8 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
 }
 
 // Keep the demo API ingress isolated from the existing remote-access load balancer.
-// The complete load-balancer resource is deployed atomically so Azure does not receive
-// unsupported standalone PUT requests for frontend, pool, probe, or rule child resources.
+// Frontend, probe, and rules remain on the atomic parent PUT. The IP backend pool is
+// created as an empty placeholder here, then converged through its supported child API.
 resource demoApiLoadBalancer 'Microsoft.Network/loadBalancers@2024-05-01' = {
   name: loadBalancerName
   location: location
@@ -75,21 +75,7 @@ resource demoApiLoadBalancer 'Microsoft.Network/loadBalancers@2024-05-01' = {
     backendAddressPools: [
       {
         name: backendPoolName
-        properties: {
-          loadBalancerBackendAddresses: [
-            {
-              name: 'collector'
-              properties: {
-                ipAddress: collectorPrivateIpAddress
-                // IP-based pools must set the virtual network at either pool or address
-                // level, never both. Use the address level for this single proven target.
-                virtualNetwork: {
-                  id: virtualNetworkId
-                }
-              }
-            }
-          ]
-        }
+        properties: {}
       }
     ]
     probes: [
@@ -152,6 +138,28 @@ resource demoApiLoadBalancer 'Microsoft.Network/loadBalancers@2024-05-01' = {
   }
 }
 
+// Azure retained the dedicated pool but dropped the inline IP address during the observed
+// deployment. Converge the address explicitly through the backend-pool child resource.
+resource demoApiBackendPool 'Microsoft.Network/loadBalancers/backendAddressPools@2024-05-01' = {
+  parent: demoApiLoadBalancer
+  name: backendPoolName
+  properties: {
+    loadBalancerBackendAddresses: [
+      {
+        name: 'collector'
+        properties: {
+          ipAddress: collectorPrivateIpAddress
+          // IP-based pools must set the virtual network at either pool or address level,
+          // never both. Use the address level for this single proven target.
+          virtualNetwork: {
+            id: virtualNetworkId
+          }
+        }
+      }
+    ]
+  }
+}
+
 resource operationsNsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' existing = {
   name: operationsNsgName
 }
@@ -207,7 +215,7 @@ resource demoApiExtension 'Microsoft.Compute/virtualMachines/extensions@2024-07-
     }
   }
   dependsOn: [
-    demoApiLoadBalancer
+    demoApiBackendPool
     allowDemoApiHttp
     allowDemoApiHttps
   ]
