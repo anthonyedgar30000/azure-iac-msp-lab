@@ -131,6 +131,13 @@ dt {
   color: var(--muted);
 }
 
+.status-healthy {
+  border-color: rgba(63, 211, 155, 0.42);
+  background: var(--healthy-soft);
+  color: var(--healthy);
+  box-shadow: 0 0 0 4px rgba(63, 211, 155, 0.07);
+}
+
 .status-warning {
   border-color: rgba(247, 199, 107, 0.35);
   background: var(--warning-soft);
