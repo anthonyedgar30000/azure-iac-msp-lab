@@ -1,0 +1,98 @@
+{
+  "schema_version": "project.collector-provenance-preflight-plan.v1",
+  "recorded_at": "2026-07-26T10:15:00-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "base": {
+    "branch": "main",
+    "commit": "81156468a36d800595ec763ba54d954925fb3183",
+    "latest_merged_pull_request": 133,
+    "open_pull_requests_observed": [],
+    "local_working_tree": "not_observed"
+  },
+  "intent": "Create an exact-source, read-only Azure state, quota, cost, lock, readiness, ARM validation, and FullResourcePayloads What-If evidence path before deployment authority is considered.",
+  "scope": {
+    "subscription_name": "Azure for Students",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "environment": "dev",
+    "collector_vm": "vm-stcollector-mst-dev",
+    "collector_private_ip": "10.20.40.10",
+    "dns_label": "st-demo-api-aeg30000",
+    "new_azure_resources_declared": false,
+    "azure_mutation_performed": false
+  },
+  "implementation": {
+    "workflow": ".github/workflows/collector-provenance-preflight.yml",
+    "cost_normalizer": "infra/scripts/summarize_cost_management_query.py",
+    "regression_tests": "infra/tests/test_collector_provenance_preflight.py",
+    "runbook": "docs/operations/collector-provenance-preflight.md",
+    "workflow_trigger": "workflow_dispatch_after_merge",
+    "reviewed_commit_selection": "exact_green_pull_request_source_head",
+    "deployment_code_path_present": false
+  },
+  "evidence": {
+    "azure_context": true,
+    "subscription_and_tenant_raw_identifiers_persisted": false,
+    "resource_inventory": true,
+    "network_quota": true,
+    "compute_quota": true,
+    "resource_locks": true,
+    "budgets_when_observable": true,
+    "subscription_month_to_date_cost": true,
+    "resource_group_month_to_date_cost": true,
+    "remaining_azure_for_students_credit": "not_observed_without_separate_supported_scope",
+    "arm_validation": true,
+    "full_resource_payloads_what_if": true,
+    "deterministic_what_if_assessment": true,
+    "sha256_manifest": true
+  },
+  "identity_and_permissions": {
+    "github_contents_read": true,
+    "github_id_token_write": true,
+    "azure_authentication_authorized_for_future_preflight_run": true,
+    "azure_queries_authorized_for_future_preflight_run": true,
+    "arm_validation_authorized_for_future_preflight_run": true,
+    "arm_what_if_authorized_for_future_preflight_run": true,
+    "azure_mutations_authorized": false,
+    "deployment_authorized": false,
+    "browser_transactions_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "failure_and_rollback": {
+    "scope_or_confirmation_failure": "fail_before_azure_login",
+    "readiness_or_what_if_failure": "fail_closed_without_mutation",
+    "cost_or_budget_query_failure": "record_not_observed_without_zero_or_absence_claim",
+    "automatic_retry": false,
+    "azure_rollback_required": false,
+    "repository_rollback": "close_or_revert_pull_request"
+  },
+  "authority": {
+    "instruction": "Proceed",
+    "repository_inspection_authorized": true,
+    "bounded_repository_implementation_authorized": true,
+    "draft_pull_request_authorized": true,
+    "ordinary_pull_request_ci_authorized": true,
+    "future_single_preflight_workflow_dispatch_authorized": true,
+    "future_azure_authentication_and_read_only_queries_authorized": true,
+    "future_arm_validation_and_what_if_authorized": true,
+    "pull_request_merge_authorized": false,
+    "azure_mutation_authorized": false,
+    "deployment_authorized": false,
+    "transaction_replay_authorized": false,
+    "rollback_execution_authorized": false,
+    "cleanup_authorized": false
+  },
+  "next_gate": {
+    "operation": "merge_green_preflight_increment_then_dispatch_once_against_exact_green_source",
+    "after_preflight": "independent artifact review and separate one-shot deployment and rollback authority",
+    "claim_boundary": "preflight_authority does not authorize deployment or browser verification"
+  },
+  "canonical_distinctions": [
+    "preflight_succeeded != deployment_authorized",
+    "WhatIf_accepted != Azure_mutation_performed",
+    "month_to_date_cost != remaining_credit",
+    "not_observed != zero_cost",
+    "repository_workflow_merged != preflight_executed"
+  ]
+}
