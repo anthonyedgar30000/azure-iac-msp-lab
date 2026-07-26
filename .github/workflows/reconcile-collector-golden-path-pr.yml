@@ -1,4 +1,4 @@
-name: Package validated collector reconciliation
+name: Commit validated collector reconciliation
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ on:
       - .github/workflows/reconcile-collector-golden-path-pr.yml
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: reconcile-collector-golden-path-pr
@@ -38,7 +38,7 @@ jobs:
           test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
           test "$(git merge-base HEAD origin/main)" = "$EXPECTED_MAIN"
 
-      - name: Extract and execute bounded reconciliation
+      - name: Generate bounded reconciliation
         run: |
           set -euo pipefail
           python - <<'EXTRACT'
@@ -84,44 +84,30 @@ jobs:
           ! grep -F "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json
           git diff --check
 
-      - name: Package only intended repository files
+      - name: Commit intended files and remove helpers
         run: |
           set -euo pipefail
-          mkdir -p reconciled-output
-          while IFS= read -r path; do
-            mkdir -p "reconciled-output/$(dirname "$path")"
-            cp "$path" "reconciled-output/$path"
-          done <<'FILES'
-          .project/current-reality-v2.json
-          .project/handoffs/current-state.md
-          .project/lab-v1-completion-gate-v2.json
-          .project/reconciliations/collector-golden-path-reconciliation-20260726.json
-          .project/state-index.json
-          .project/validate.py
-          docs/report-source.json
-          docs/reviews/canonical-current-reality-v2.md
-          docs/reviews/frontend-live-default-activation-20260726.md
-          infra/tests/test_canonical_state_index_v2.py
-          infra/tests/test_collector_demo_api.py
-          infra/tests/test_collector_golden_path_binding.py
-          infra/tests/test_frontend_api_demo_lab_integration.py
-          infra/tests/test_frontend_live_default_activation.py
-          scripts/verify_frontend_live_default.mjs
-          FILES
-          git diff --stat > reconciled-output/VALIDATION-SUMMARY.txt
-          printf '%s\n' \
-            'workflow-observability validator: passed' \
-            'unit tests: passed' \
-            'browser verifier syntax: passed' \
-            'collector endpoint binding: passed' \
-            'diff check: passed' \
-            >> reconciled-output/VALIDATION-SUMMARY.txt
-
-      - name: Upload validated reconciliation bundle
-        uses: actions/upload-artifact@v4
-        with:
-          name: validated-collector-golden-path-${{ github.run_id }}-${{ github.run_attempt }}
-          path: reconciled-output/
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 30
+          git rm \
+            .github/workflows/reconcile-collector-golden-path-once.yml \
+            .github/workflows/reconcile-collector-golden-path-pr.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            .project/current-reality-v2.json \
+            .project/handoffs/current-state.md \
+            .project/lab-v1-completion-gate-v2.json \
+            .project/reconciliations/collector-golden-path-reconciliation-20260726.json \
+            .project/state-index.json \
+            .project/validate.py \
+            docs/report-source.json \
+            docs/reviews/canonical-current-reality-v2.md \
+            docs/reviews/frontend-live-default-activation-20260726.md \
+            infra/tests/test_canonical_state_index_v2.py \
+            infra/tests/test_collector_demo_api.py \
+            infra/tests/test_collector_golden_path_binding.py \
+            infra/tests/test_frontend_api_demo_lab_integration.py \
+            infra/tests/test_frontend_live_default_activation.py \
+            scripts/verify_frontend_live_default.mjs
+          git diff --cached --check
+          git commit -m "Reconcile collector golden path"
+          git push origin HEAD:"$BRANCH"
