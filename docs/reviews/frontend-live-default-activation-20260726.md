@@ -39,6 +39,8 @@ https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run
 
 The frontend still validates health before enabling the operator action. Failed health, CORS, or transaction requests use the fixture and clearly label the fallback.
 
+The repository validator does not permit an arbitrary live URL. It binds activation to the exact deployment source, workflow run, artifact digest, converged extension and backend pool, healthy API contract, exact CORS origin, consumed deployment authority, and absence of retry authority.
+
 ## Remaining verification
 
 The repository change must be merged and published by GitHub Pages. One bounded browser run will then verify the actual public site, its CORS preflight, one 20-attempt live request, and the rendered fail-closed localization.
