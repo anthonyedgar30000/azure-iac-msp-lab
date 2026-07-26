@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Validate that the bounded PR #84 reconciliation remains preserved historically."""
+"""Validate that the bounded PR #84 reconciliation remains preserved historically.
+
+Machine verification terminates in structured JSON evidence. Human-facing Markdown
+may change wording or omit historical markers without changing governed facts.
+"""
 
 from __future__ import annotations
 
@@ -8,7 +12,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CURRENT = ROOT / ".project/current-reality.json"
-HANDOFF = ROOT / ".project/handoffs/current-state.md"
 RECONCILIATION = ROOT / ".project/reconciliations/post-merge-pr84-current-reality.json"
 BLOCKED = ROOT / ".project/evidence/servicetracer-demo-api-timeout-fix-deployment-blocked-20260724.json"
 
@@ -26,12 +29,11 @@ def require(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
-def main() -> None:
-    current = load(CURRENT)
-    reconciliation = load(RECONCILIATION)
-    blocked = load(BLOCKED)
-    handoff = HANDOFF.read_text(encoding="utf-8")
-
+def validate_structured_state(
+    current: dict,
+    reconciliation: dict,
+    blocked: dict,
+) -> None:
     repo = current["repository_state"]
     require(len(repo["observed_head"]) == 40, "current main watermark missing")
     require(repo["latest_merged_pull_request"] >= 84, "PR #84 disappeared from repository history")
@@ -117,6 +119,12 @@ def main() -> None:
         "blocked evidence mutation boundary regressed",
     )
 
+    distinctions = current["shared_state_resolution"]["canonical_distinctions"]
+    require(
+        "merged_into_main != deployed_to_VM" in distinctions,
+        "repository-to-runtime distinction missing",
+    )
+
     authority = current["authority"]
     for key in (
         "pull_request_merge_authorized",
@@ -131,17 +139,13 @@ def main() -> None:
     ):
         require(authority[key] is False, f"{key} must remain false")
 
-    for marker in (
-        PR84_MERGE,
-        SOURCE,
-        DEPLOYED,
-        "merged_into_main != deployed_to_VM",
-        "Microsoft.Compute/virtualMachines/extensions/write",
-        "deployment grant status: consumed_blocked",
-        "GitHub Pages publication authorized: false",
-    ):
-        require(marker in handoff, f"handoff missing {marker!r}")
 
+def main() -> None:
+    validate_structured_state(
+        current=load(CURRENT),
+        reconciliation=load(RECONCILIATION),
+        blocked=load(BLOCKED),
+    )
     print("post-merge PR #84 historical current-reality validation passed")
 
 
