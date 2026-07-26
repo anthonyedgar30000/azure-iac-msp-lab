@@ -1,0 +1,109 @@
+{
+  "schema_version": "project.what-if-policy-reconciliation.v1",
+  "recorded_at": "2026-07-26T03:16:11-04:00",
+  "project": "Azure IaC MSP Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "source_instruction": "Anthony Edgar instructed: Proceed.",
+  "repository_baseline": {
+    "default_branch": "main",
+    "observed_head": "bc8a6adff4e26017530d6056445be3f1ae5ed164",
+    "latest_merged_pull_request": 117,
+    "open_pull_requests_observed": [],
+    "local_active_branch_and_working_tree": "not_observed_through_GitHub_connector"
+  },
+  "observed_workflow_attempt": {
+    "workflow": ".github/workflows/collector-demo-api.yml",
+    "operation": "what-if",
+    "reviewed_commit": "bc8a6adff4e26017530d6056445be3f1ae5ed164",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "workflow_run_id": "not_observed_from_available_connector_or_user_screenshot",
+    "evidence_source": "user-provided GitHub Actions screenshot",
+    "scope_validation": "succeeded",
+    "repository_tests": "succeeded",
+    "azure_login": "succeeded",
+    "live_collector_and_dependency_capture": "succeeded",
+    "deployment_readiness": "succeeded",
+    "arm_validation_and_what_if": "completed_before_policy_rejection",
+    "terminal_failure": "Collector API backend pool placeholder must contain properties",
+    "deployment_step": "skipped_by_what_if_operation_and_prior_failure",
+    "transaction_replay": "not_performed",
+    "azure_mutation_performed": false,
+    "evidence_manifest_written": "observed_as_succeeded_in_workflow_ui",
+    "scoped_evidence_upload": "observed_as_succeeded_in_workflow_ui"
+  },
+  "finding": {
+    "classification": "deterministic_policy_false_negative_on_semantically_empty_ARM_serialization",
+    "resource_type": "Microsoft.Network/loadBalancers",
+    "resource_name": "lb-st-demo-api-mst-dev",
+    "nested_contract": "backendAddressPools/be-st-demo-api parent placeholder",
+    "declared_form": {
+      "name": "be-st-demo-api",
+      "properties": {}
+    },
+    "observed_ARM_form": {
+      "name": "be-st-demo-api"
+    },
+    "semantic_interpretation": "ARM omitted an empty properties object; omission does not establish configured backend addresses or any other parent-pool setting.",
+    "not_an_azure_deployment_failure": true
+  },
+  "repair": {
+    "global_item_properties_relaxation": false,
+    "exact_placeholder_normalization": true,
+    "accepted_forms": [
+      {
+        "name": "be-st-demo-api"
+      },
+      {
+        "name": "be-st-demo-api",
+        "properties": {}
+      }
+    ],
+    "still_rejected": [
+      "non-object properties",
+      "any non-empty properties",
+      "virtualNetwork at parent-pool level",
+      "subnet at parent-pool level",
+      "loadBalancerBackendAddresses embedded in the parent load balancer",
+      "unexpected sibling fields on the placeholder",
+      "wrong or additional backend-pool names",
+      "Delete",
+      "Replace"
+    ],
+    "child_resource_authority": "The dedicated backend-pool child resource remains the only bounded location for collector address convergence."
+  },
+  "validation": {
+    "python_compile": "passed",
+    "targeted_exact_empty_object_case": "passed",
+    "targeted_omitted_properties_case": "passed",
+    "targeted_non_object_properties_cases": "rejected",
+    "targeted_non_empty_properties_case": "rejected",
+    "targeted_unexpected_sibling_field_case": "rejected",
+    "full_repository_CI": "pending_pull_request"
+  },
+  "authority": {
+    "branch_creation": true,
+    "repository_patch": true,
+    "regression_tests": true,
+    "draft_pull_request_creation": true,
+    "ordinary_pull_request_ci": true,
+    "pull_request_merge": false,
+    "workflow_dispatch_or_rerun": false,
+    "azure_login_or_query": false,
+    "arm_validation_or_what_if": false,
+    "deployment": false,
+    "transaction_replay": false,
+    "rollback": false,
+    "cleanup": false
+  },
+  "next_gate": {
+    "operation": "review exact diff and exact-head CI",
+    "after_merge": "A fresh explicit authorization is required before another Azure what-if attempt using the new merge commit.",
+    "claim_boundaries": [
+      "serializer_policy_repaired != what_if_accepted",
+      "what_if_accepted != deployment_authorized",
+      "repository_restored != Azure_state_changed",
+      "prior_what_if_attempt != reusable_authorization"
+    ]
+  }
+}
