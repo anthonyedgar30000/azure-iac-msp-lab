@@ -1,0 +1,117 @@
+{
+  "schema_version": "project.provenance-monitor-post-merge-reconciliation.v1",
+  "recorded_at": "2026-07-26T09:45:50-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "repository_observation": {
+    "main": "2f5b60c1d8328d13823e2cc1def09e6be384ecb5",
+    "latest_merged_pull_request": 132,
+    "open_pull_requests_observed": [],
+    "local_working_tree": "not_observed",
+    "exact_source_head": "6b7bd5362b17c9edfc0b41da65d5b798e5d00b45",
+    "exact_source_ci_run_id": 30204497860,
+    "exact_source_ci_conclusion": "success",
+    "source_vs_merge_file_content_difference_observed": false,
+    "merge_commit_ci": "not_observed"
+  },
+  "merge_chain": [
+    {
+      "pull_request": 130,
+      "title": "Add live governed collector provenance monitor",
+      "merge_commit": "ede8b7b32fe4dfe0e817d224a3cf9a9c1c6b9489",
+      "exact_source_head": "07e7056b3d66e88055f93d7f3c27d31f8281c316",
+      "exact_source_ci_run_id": 30204308669,
+      "exact_source_ci_conclusion": "failure",
+      "failure_boundary": "deterministic frontend proof wording contract",
+      "merged_despite_failed_exact_head_ci": true
+    },
+    {
+      "pull_request": 131,
+      "title": "Restore provenance monitor proof boundary",
+      "merge_commit": "1accc46f2c4b585510f3b0919a15467a4e5d5769",
+      "exact_source_head": "bec88217096dce5ac205b93bb5f019f0f801fe62",
+      "exact_source_ci_run_id": 30204440155,
+      "exact_source_ci_conclusion": "failure",
+      "failure_boundary": "grammatical variant did not match the exact deterministic phrase",
+      "merged_despite_failed_exact_head_ci": true
+    },
+    {
+      "pull_request": 132,
+      "title": "Match exact provenance proof contract",
+      "merge_commit": "2f5b60c1d8328d13823e2cc1def09e6be384ecb5",
+      "exact_source_head": "6b7bd5362b17c9edfc0b41da65d5b798e5d00b45",
+      "exact_source_ci_run_id": 30204497860,
+      "exact_source_ci_conclusion": "success",
+      "source_vs_merge_file_content_difference_observed": false,
+      "repair_status": "deterministic_contract_repaired"
+    }
+  ],
+  "provenance_monitor_repository_state": {
+    "implementation_merged": true,
+    "expected_collector_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+    "expected_resource_group": "rg-servicetracer-dev-westus2",
+    "expected_vm_name": "vm-stcollector-mst-dev",
+    "expected_location": "westus2",
+    "expected_hosting_model": "collector_vm_systemd",
+    "identity_source": "azure_instance_metadata_service",
+    "request_id_contract": "canonical_UUID_echoed_in_header_and_payload",
+    "exact_proof_boundary_present": true
+  },
+  "azure_evidence_boundary": {
+    "fresh_azure_authentication_performed": false,
+    "fresh_azure_query_performed": false,
+    "azure_mutation_performed": false,
+    "deployment_performed": false,
+    "latest_durable_deployment_source": "98b092201053fd3592be157a24de6e623e6b74a6",
+    "latest_durable_deployment_run_id": 30196388398,
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "collector_vm": "vm-stcollector-mst-dev",
+    "provenance_runtime_contract_deployed": false,
+    "github_pages_publication_verified": false,
+    "browser_health_identity_verified": false,
+    "browser_request_correlation_verified": false,
+    "downstream_service_success_verified": false,
+    "current_billing_cost_cad": "not_observed",
+    "remaining_azure_for_students_credit": "not_observed"
+  },
+  "merge_observation": {
+    "human_or_external_merge_observed": true,
+    "assistant_merge_action_performed": false,
+    "merge_actor": "anthonyedgar30000",
+    "prior_merge_authority": "not_observed"
+  },
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "draft_pull_request_authorized": true,
+    "ordinary_pull_request_ci_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "deployment_authorized": false,
+    "browser_verification_authorized": false,
+    "transaction_replay_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "next_gate": {
+    "operation": "select_exact_provenance_deployment_source_and_capture_fresh_azure_preflight",
+    "required": [
+      "capture fresh subscription, tenant, resource-group, region, quota, and cost or credit evidence",
+      "capture a fresh FullResourcePayloads What-If for the exact reviewed source",
+      "obtain one-shot non-renewing deployment and rollback authority",
+      "after deployment, verify health identity, CORS, GitHub Pages rendering, and one request-ID correlation path",
+      "do not automatically retry a failed deployment or browser verification"
+    ]
+  },
+  "claim_boundaries": [
+    "PR_merged != exact_head_CI_passed",
+    "repository_implemented != deployed_to_collector_VM",
+    "monitor_rendered != provenance_contract_deployed",
+    "expected_resource_group != observed_resource_group",
+    "request_sent != response_correlation_verified",
+    "deployment_succeeded != service_validated",
+    "not_observed != false"
+  ]
+}
