@@ -1,0 +1,153 @@
+{
+  "schema_version": "project.github-workflow-observation.v1",
+  "recorded_at": "2026-07-26T09:31:07Z",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "source_commit": "98b092201053fd3592be157a24de6e623e6b74a6",
+  "workflow": {
+    "run_id": 30196388398,
+    "run_number": 18,
+    "run_attempt": 1,
+    "event": "workflow_dispatch",
+    "status": "completed",
+    "conclusion": "failure",
+    "created_at": "2026-07-26T09:24:05Z",
+    "updated_at": "2026-07-26T09:27:01Z",
+    "html_url": "https://github.com/anthonyedgar30000/azure-iac-msp-lab/actions/runs/30196388398"
+  },
+  "jobs": [
+    {
+      "id": 89778570106,
+      "name": "deploy collector-hosted demo API",
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2026-07-26T09:24:08Z",
+      "completed_at": "2026-07-26T09:27:00Z",
+      "steps": [
+        {
+          "number": 1,
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 2,
+          "name": "Check out exact reviewed repository state",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 3,
+          "name": "Validate bounded scope and authority",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 4,
+          "name": "Run repository tests before Azure login",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 5,
+          "name": "Log in to Azure with workload identity federation",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 6,
+          "name": "Capture current collector and dependency state",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 7,
+          "name": "Enforce collector-hosted deployment readiness",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 8,
+          "name": "Validate and capture exact ARM What-If",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 9,
+          "name": "Deploy collector-hosted demo API",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 10,
+          "name": "Capture post-deploy target state and ARM operations",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 11,
+          "name": "Verify public TLS, API, and frontend contract",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "number": 12,
+          "name": "Write evidence manifest",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 13,
+          "name": "Write scoped workflow summary",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 14,
+          "name": "Upload scoped evidence",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 27,
+          "name": "Post Log in to Azure with workload identity federation",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 28,
+          "name": "Post Check out exact reviewed repository state",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 29,
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "failed_steps": [
+    "Verify public TLS, API, and frontend contract"
+  ],
+  "deploy_step_conclusions": [
+    {
+      "name": "Deploy collector-hosted demo API",
+      "conclusion": "success"
+    },
+    {
+      "name": "Capture post-deploy target state and ARM operations",
+      "conclusion": "success"
+    },
+    {
+      "name": "Verify public TLS, API, and frontend contract",
+      "conclusion": "failure"
+    }
+  ],
+  "sanitized_error_excerpt": "2026-07-26T09:24:11.7920013Z test_core_localizes_failed_backend_without_claiming_root_cause (infra.tests.test_demo_backend_api.DemoBackendApiTests.test_core_localizes_failed_backend_without_claiming_root_cause) ... ok\n2026-07-26T09:24:11.8116280Z test_workflow_is_exact_commit_bound_and_captures_failed_deploy_state (infra.tests.test_collector_demo_api.CollectorDemoApiTests.test_workflow_is_exact_commit_bound_and_captures_failed_deploy_state) ... ok\n2026-07-26T09:24:11.8126903Z test_classifier_accepts_exact_failed_extension_reconciliation (infra.tests.test_collector_demo_api_load_balancer.CollectorDemoApiLoadBalancerRegressionTests.test_classifier_accepts_exact_failed_extension_reconciliation) ... ok\n2026-07-26T09:24:11.8212702Z test_failed_deploy_always_captures_operations_and_target_inventory (infra.tests.test_collector_demo_api_load_balancer.CollectorDemoApiLoadBalancerRegressionTests.test_failed_deploy_always_captures_operations_and_target_inventory) ... ok\n2026-07-26T09:24:11.8281004Z test_workflow_is_exact_commit_bound_and_captures_failed_deploy_state (infra.tests.test_collector_demo_api.CollectorDemoApiTests.test_workflow_is_exact_commit_bound_and_captures_failed_deploy_state) ... ok\n2026-07-26T09:26:56.3913189Z ##[error]Process completed with exit code 1.",
+  "azure_query_performed_by_observer": false,
+  "azure_mutation_performed_by_observer": false,
+  "retry_performed": false,
+  "claim_boundary": "This is a GitHub-only observation of the consumed child run. Step conclusions establish workflow progression; Azure mutation truth must follow deployment and artifact evidence rather than assumption."
+}
