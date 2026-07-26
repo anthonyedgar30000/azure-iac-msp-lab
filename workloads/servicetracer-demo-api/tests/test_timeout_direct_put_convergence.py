@@ -38,7 +38,7 @@ REMOVED_PATHS = [
 
 
 class TimeoutDirectPutConvergenceTests(unittest.TestCase):
-    def test_direct_workflow_remains_bounded_and_inert_or_explicitly_authorized(self):
+    def test_direct_workflow_remains_bounded_and_inert(self):
         source = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("az deployment group validate", source)
         self.assertIn("az deployment group what-if", source)
@@ -47,27 +47,7 @@ class TimeoutDirectPutConvergenceTests(unittest.TestCase):
         self.assertNotIn("Microsoft.Resources/deployments/write", source)
         self.assertNotIn("az role assignment create", source)
         self.assertNotIn("/api/demo/run", source)
-
-        if not FUTURE_MARKER.exists():
-            self.assertFalse(FUTURE_MARKER.exists())
-            return
-
-        marker = json.loads(FUTURE_MARKER.read_text(encoding="utf-8"))
-        self.assertEqual(
-            marker["schema_version"],
-            "project.azure-deployment-authorization-direct-extension-put.v1",
-        )
-        self.assertTrue(marker["authorized"])
-        self.assertEqual(
-            marker["source_binding"]["branch"],
-            "fix/pr104-direct-extension-put-remediation",
-        )
-        self.assertTrue(marker["scope"]["only_existing_extension_update"])
-        self.assertEqual(marker["method"]["forward"], "direct_extension_resource_put")
-        self.assertEqual(marker["method"]["rollback"], "direct_extension_resource_put")
-        self.assertFalse(marker["authority"]["rbac_mutation"])
-        self.assertFalse(marker["authority"]["transaction_replay"])
-        self.assertFalse(marker["authority"]["cleanup"])
+        self.assertFalse(FUTURE_MARKER.exists())
 
     def test_wrapper_rbac_package_is_absent(self):
         for relative_path in REMOVED_PATHS:
