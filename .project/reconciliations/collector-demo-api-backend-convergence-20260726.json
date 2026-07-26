@@ -1,0 +1,99 @@
+{
+  "schema_version": "project.azure-reconciliation.collector-demo-api-backend-convergence.v1",
+  "recorded_on": "2026-07-26",
+  "project": "Azure IaC MSP Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "repository_baseline": {
+    "base_branch": "main",
+    "base_commit": "e5fabb271d05bbb1644515467c9b2c9beb106031",
+    "repair_branch": "fix/collector-demo-api-backend-convergence",
+    "local_working_tree": "not_observed_connector_backed_repository_changes",
+    "open_pull_requests_observed_before_repair": [113]
+  },
+  "observed_azure_state": {
+    "observation_method": "interactive_Azure_Cloud_Shell_read_only_commands",
+    "subscription_name": "Azure for Students",
+    "tenant_and_subscription_identifiers": "withheld_from_repository_record",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "resource_group_provisioning_state": "Succeeded",
+    "load_balancer": "lb-st-demo-api-mst-dev",
+    "backend_pool": "be-st-demo-api",
+    "backend_address_list_result": [],
+    "backend_address_observation": "pool_exists_but_no_backend_addresses_were_returned",
+    "expected_backend": {
+      "name": "collector",
+      "private_ip": "10.20.40.10"
+    },
+    "cost": "not_refreshed_for_this_repository_only_repair",
+    "quota": "not_refreshed_for_this_repository_only_repair"
+  },
+  "prior_deployment_evidence": {
+    "latest_failed_workflow_source_commit": "e5fabb271d05bbb1644515467c9b2c9beb106031",
+    "arm_failure_boundary": "collector_demo_api_VM_extension_installer",
+    "installer_failure": "certbot_public_HTTP_challenge_timeout",
+    "earlier_nested_deployment_errors": [
+      "OperationNotSupported_for_child_PUTs_on_the_existing_remote_access_load_balancer",
+      "IpBasedLbShouldHaveVnetPropertyEitherOnPoolOrBackendAddressLevel"
+    ],
+    "current_material_finding": "the_dedicated_load_balancer_and_pool_exist_but_the_declared_inline_backend_address_was_not_retained"
+  },
+  "declared_state_before_repair": {
+    "backend_address_location": "inline_in_parent_load_balancer_backendAddressPools",
+    "extension_dependency": "parent_load_balancer_and_NSG_rules",
+    "TLS_readiness_check": "DNS_resolution_only_before_certbot"
+  },
+  "repair_design": {
+    "parent_load_balancer": "retain_frontend_probe_rules_and_empty_backend_pool_placeholder_on_atomic_parent_PUT",
+    "backend_convergence": "declare_exact_dedicated_backend_pool_child_resource_with_one_collector_IP_address",
+    "virtual_network_binding": "address_level_only",
+    "dependency_order": "VM_extension_waits_for_backend_pool_child_and_NSG_rules",
+    "installer_readiness": "require_public_HTTP_404_from_the_exact_nginx_configuration_before_certbot",
+    "what_if_policy": "accept_only_the_exact_dedicated_backend_pool_Create_NoChange_or_bounded_Modify_target"
+  },
+  "scope_and_permissions": {
+    "repository_changes_authorized": true,
+    "branch_creation_authorized": true,
+    "pull_request_creation_authorized": true,
+    "ordinary_pull_request_CI_authorized": true,
+    "Azure_authentication_authorized": false,
+    "ARM_validation_or_what_if_authorized": false,
+    "Azure_network_mutation_authorized": false,
+    "deployment_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "pull_request_merge_authorized": false,
+    "manual_portal_or_CLI_drift_fix_authorized": false
+  },
+  "cost_and_cleanup": {
+    "expected_recurring_cost_change": "none_the_repair_converges_an_existing_load_balancer_backend_address",
+    "cleanup": "no_cleanup_or_decommissioning_authorized",
+    "rollback_design_for_future_authorized_deployment": "stop_on_failed_What_If_or_backend_convergence_and_preserve_ARM_and_load_balancer_evidence"
+  },
+  "validation_contract": {
+    "repository_tests": [
+      "Bicep_uses_only_the_dedicated_backend_pool_child_resource",
+      "virtual_network_is_set_only_at_backend_address_level",
+      "extension_depends_on_backend_pool_convergence",
+      "What_If_classifier_accepts_exact_backend_pool_reconciliation_and_rejects_scope_escape",
+      "installer_checks_public_HTTP_before_certbot"
+    ],
+    "future_Azure_evidence_required": [
+      "ARM_validation_result",
+      "full_resource_payload_What_If",
+      "backend_address_list_showing_exactly_collector_at_10.20.40.10",
+      "public_HTTP_path_reaches_nginx_before_TLS_enrollment",
+      "extension_provisioning_state",
+      "public_HTTPS_health_contract",
+      "post_deploy_ARM_operations_and_resource_inventory"
+    ]
+  },
+  "claim_boundaries": [
+    "repository_patch_created != pull_request_CI_passed",
+    "pull_request_CI_passed != ARM_What_If_accepted",
+    "Bicep_declares_backend != Azure_retained_backend",
+    "backend_address_present != load_balancer_probe_healthy",
+    "public_HTTP_reachable != TLS_certificate_issued",
+    "deployment_succeeded != service_validated",
+    "this_reconciliation != deployment_authorization"
+  ]
+}
