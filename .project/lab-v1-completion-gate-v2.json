@@ -1,9 +1,9 @@
 {
   "schema_version": "project.lab-v1-completion-gate.v2",
   "project": "ServiceTracer \u2014 Governed Azure Operations Lab",
-  "recorded_at": "2026-07-26T09:13:14-04:00",
+  "recorded_at": "2026-07-26T09:24:37-04:00",
   "governing_objective": "Complete and evidence-lock one production-shaped ServiceTracer workload from infrastructure-as-code declaration through deployment, security, runtime validation, monitoring, cost observation, and portfolio demonstration.",
-  "decision_status": "collector_deployed_frontend_binding_reconciliation_pending",
+  "decision_status": "collector_binding_merged_browser_publication_pending",
   "active_golden_path": "collector-hosted demo API in rg-servicetracer-dev-westus2",
   "scope_control": {
     "parallel_feature_expansion_allowed": false,
@@ -95,7 +95,7 @@
     "workflow_run_id": 30196388398,
     "artifact_id": 8630260279,
     "accepted_plan_source": "8de1f61f8a0ea06dcf94b94c798edde2aace357d",
-    "current_main": "855ef85f898cbf34db2931abc8344d05cb05c6f7",
+    "current_main": "81df65ca7d4cd77fc89aefb2fac128ead456df7d",
     "canonical_state_index": ".project/state-index.json",
     "legacy_pr92_pr93_snapshot": ".project/current-reality.json",
     "legacy_completion_gate": ".project/lab-v1-completion-gate.json",
@@ -103,7 +103,15 @@
     "deployed_source": "98b092201053fd3592be157a24de6e623e6b74a6",
     "frontend_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
     "consumed_browser_pr": 123,
-    "consumed_browser_run_id": 30198346832
+    "consumed_browser_run_id": 30198346832,
+    "latest_merged_pull_request": 126,
+    "latest_exact_source_head": "1f9a00f572235c74b99520a504d8b057003d411c",
+    "latest_exact_source_ci_run_id": 30203751115,
+    "latest_exact_source_ci_conclusion": "success",
+    "open_draft_pull_requests_observed": [
+      127
+    ],
+    "pr126_merge_commit_ci": "not_observed"
   },
   "completion_definition": {
     "rule": "Lab v1 is complete only when one exact source lineage connects reviewed IaC, authorized deployment, deployed Azure resources, validated runtime, bounded ServiceTracer evidence, effective security, verified monitoring delivery, current cost evidence, and a reproducible demonstration.",
@@ -133,8 +141,8 @@
     "cleanup": false
   },
   "next_gate": {
-    "operation": "publish_corrected_collector_binding_then_request_new_one_shot_browser_verification",
+    "operation": "observe_published_collector_binding_then_request_new_one_shot_browser_verification",
     "after_that": "complete browser evidence, establish a supported localization sample or preserve inconclusive evidence, then verify monitoring and actual cost",
-    "claim_boundary": "This repository reconciliation authorizes no Azure access, deployment, workflow dispatch, browser transaction, rollback, cleanup, or merge."
+    "claim_boundary": "This post-merge repository truth lock authorizes no Azure access, deployment, workflow dispatch, browser transaction, rollback, cleanup, or merge."
   }
 }
