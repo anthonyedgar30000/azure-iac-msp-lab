@@ -2,7 +2,7 @@
 
 ## Interpretation boundary
 
-This handoff reflects GitHub state observed after PR #124 and durable Azure evidence from collector deployment run `30196388398`. It is not a continuously refreshed Azure dashboard.
+This handoff reflects GitHub state observed after PR #125 and durable Azure evidence from collector deployment run `30196388398`. It is not a continuously refreshed Azure dashboard.
 
 ```text
 declared_in_code != deployed_in_azure
@@ -38,7 +38,7 @@ latest merge: PR #125
 PR #125 exact source: 315a310ae4ff3db7d5d100ea0320911043b77564
 PR #125 exact-head CI: 30203314001 / success
 PR #123: closed without merge after consumed failed one-shot verification
-open pull requests observed before this reconciliation PR: none
+open pull requests observed before this remediation PR: none
 local working tree: not observed
 merge-commit CI: not observed
 ```
@@ -112,6 +112,16 @@ No fresh Azure authentication or query was performed during this repository reco
 Historical evidence remains bounded to its original context and must not overwrite collector run-18 reality:
 
 ```text
+legacy canonical main: 665e051375594d11e58e434231bd06775dbdc560
+PR #92 source: 5b5af74d57fb5fd87ece2a34239cc6f29d04b12b
+PR #93 source: eecb5c872f76cb5e51df6f5451d5a61b79d87bba
+PR #93 merge: 99dc79c7093fa4cd5655c2d5a65095dd796f9f75
+independent demo deployed source: 8b3d55c616d8820edd523f77021a35fe24167bd0
+checks_green != protected_Azure_artifact_inspected
+human_operator_merge != prior_agent_merge_authority
+deployment grant status: consumed_blocked
+missing action: Microsoft.Compute/virtualMachines/extensions/write
+effective extension write: unverified
 authorization reconciliation merge: 92b0c3b1064158684a4b280348c77eeedba6dfc3
 independent planner run: 30064289707
 independent planner artifact: 8585693830
@@ -119,7 +129,10 @@ independent planner digest: 7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8
 independent SKU restriction: NotAvailableForSubscription
 independent VM family: standardBasv2Family
 typed readiness control: PR #73
+GitHub Pages publication authorized: false
 ```
+
+These strings remain only because historical validators require their original evidence anchors. They do not supersede the versioned canonical v2 state selected by `.project/state-index.json`.
 
 ## Current authority
 
