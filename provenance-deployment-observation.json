@@ -1,0 +1,28 @@
+{
+  "schema_version": "project.collector-provenance-deployment-observation.v1",
+  "observed_at": "2026-07-26T23:16:45.074Z",
+  "grant_id": "collector-provenance-deploy-1677606-20260726",
+  "dispatcher": {
+    "run_id": 30224765833,
+    "status": "completed",
+    "conclusion": "failure",
+    "head_sha": "c15ccfc824677297da9c904df67f5fcac6f236c4",
+    "head_branch": "deploy/execute-provenance-1677606-once",
+    "created_at": "2026-07-26T23:12:53Z",
+    "updated_at": "2026-07-26T23:16:16Z"
+  },
+  "child_deployment": {
+    "run_id": 30224770178,
+    "run_number": 19,
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "failure",
+    "head_sha": "f6e79818150d72b75d1e4f25be172e6dc577114d",
+    "head_branch": "main",
+    "created_at": "2026-07-26T23:13:00Z",
+    "updated_at": "2026-07-26T23:15:46Z"
+  },
+  "grant_consumed": true,
+  "automatic_retry_authorized": false,
+  "rollback_authorized": false
+}
