@@ -1,0 +1,127 @@
+{
+  "schema_version": "project.reconciliation.v1",
+  "reconciliation": "frontend-azure-provenance-monitor",
+  "recorded_at": "2026-07-26T13:40:00Z",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "default_branch": "main",
+    "observed_head": "81df65ca7d4cd77fc89aefb2fac128ead456df7d",
+    "latest_merged_pull_request": 126,
+    "exact_source_head": "1f9a00f572235c74b99520a504d8b057003d411c",
+    "exact_source_ci_run_id": 30203751115,
+    "exact_source_ci_conclusion": "success",
+    "open_pull_requests_observed": [127],
+    "local_working_tree": "not_observed",
+    "branch": "feature/frontend-azure-provenance-monitor-v3",
+    "branch_base": "81df65ca7d4cd77fc89aefb2fac128ead456df7d",
+    "branch_relation_to_main": "clean_exact_base",
+    "superseded_pull_request": 127,
+    "superseded_reason": "The first implementation branch predated PR #126 and diverged across the collector endpoint configuration. The clean branch reapplies only the provenance-monitor increment on canonical post-PR126 main."
+  },
+  "canonical_collector_boundary": {
+    "source": ".project/reconciliations/collector-demo-api-deployment-run18-20260726.json",
+    "workflow_run_id": 30196388398,
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "collector_vm": "vm-stcollector-mst-dev",
+    "location": "westus2",
+    "public_endpoint": "st-demo-api-aeg30000.westus2.cloudapp.azure.com",
+    "run_url": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+    "deployment_source": "98b092201053fd3592be157a24de6e623e6b74a6",
+    "expected_azure_host": {
+      "resource_group": "rg-servicetracer-dev-westus2",
+      "vm_name": "vm-stcollector-mst-dev",
+      "location": "westus2",
+      "hosting_model": "collector_vm_systemd"
+    },
+    "independent_endpoint_role": "historical_supporting_evidence_not_collector_golden_path",
+    "fresh_azure_query_performed_for_this_increment": false,
+    "claim_boundary": "The endpoint and resource identity are promoted run-18 evidence and canonical PR-126 state. The new runtime provenance contract has not yet been deployed."
+  },
+  "increment": {
+    "intent": "Render a live frontend-to-collector path and bind it to exact Azure host identity plus one frontend request correlation UUID.",
+    "resource_group_semantics": "governance_and_lifecycle_scope_not_network_endpoint",
+    "repository_changes": [
+      "Add a responsive GitHub Pages live provenance monitor.",
+      "Poll the existing collector health endpoint every 15 seconds without cache.",
+      "Read resource group, VM name, and region from Azure Instance Metadata Service.",
+      "Bind runtime identity to the exact deployment source ref written by the installer.",
+      "Require the observed host identity to equal the configured collector resource group, VM, region, and hosting model.",
+      "Attach a canonical UUID request ID to the existing incident-analysis POST and require an exact response echo from the same governed collector identity.",
+      "Preserve existing application response consumption through Response.clone().",
+      "Add fail-closed regression tests and an operational design record."
+    ],
+    "frontend_bound_to_collector_endpoint": true,
+    "expected_host_identity_committed": true,
+    "new_azure_resources_declared": false,
+    "azure_network_rules_changed": false,
+    "azure_query_performed": false,
+    "azure_mutation_performed": false,
+    "deployment_performed": false,
+    "api_provenance_contract_deployed": false,
+    "browser_verification_performed": false
+  },
+  "security_boundary": {
+    "azure_credentials_required_by_runtime": false,
+    "managed_identity_token_requested": false,
+    "subscription_id_exposed": false,
+    "tenant_id_exposed": false,
+    "public_identity_fields": [
+      "resource_group",
+      "vm_name",
+      "location",
+      "source_ref",
+      "verification_source"
+    ],
+    "identity_source": "azure_instance_metadata_service",
+    "identity_failure_semantics": "unverified_or_mismatch_not_guessed",
+    "request_id_contract": "canonical_UUID_echoed_in_header_and_payload",
+    "correlation_failure_semantics": "proof_rejected_without_blocking_existing_application_response"
+  },
+  "authority": {
+    "instruction": "Proceed",
+    "authorized_actions": [
+      "inspect live GitHub repository state",
+      "create and update a repository branch",
+      "implement the bounded repository increment",
+      "create a pull request",
+      "run ordinary pull-request CI"
+    ],
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "deployment_authorized": false,
+    "transaction_replay_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false,
+    "claim_boundary": "Repository implementation authority does not manufacture exact-source Azure deployment, retry, rollback, browser transaction, or cleanup authority."
+  },
+  "next_gate": {
+    "operation": "review_exact_pr_head_and_ci",
+    "required_before_merge": [
+      "exact changed-file review",
+      "exact-head CI success",
+      "separate merge authority"
+    ],
+    "required_before_live_activation": [
+      "select the exact reviewed merge commit as deployment source",
+      "capture fresh Azure state, quota, and cost or credit evidence",
+      "capture a fresh FullResourcePayloads What-If for the existing collector API deployment",
+      "obtain one-shot deployment and rollback authority",
+      "verify health identity, CORS, GitHub Pages rendering, and one request-ID correlation path"
+    ]
+  },
+  "canonical_distinctions": [
+    "resource_group_scope != traffic_endpoint",
+    "API_compatible != collector_golden_path",
+    "API_healthy != Azure_host_identity_verified",
+    "expected_resource_group != observed_resource_group",
+    "request_sent != response_correlation_verified",
+    "frontend_configured != browser_path_verified",
+    "monitor_rendered != provenance_contract_deployed",
+    "repository_implemented != deployed_to_collector_VM",
+    "deployment_succeeded != service_validated",
+    "not_observed != false"
+  ]
+}
