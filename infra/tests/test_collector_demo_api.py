@@ -54,7 +54,10 @@ class CollectorDemoApiTests(unittest.TestCase):
         self.assertIn("ProtectSystem=strict", source)
         self.assertIn("NoNewPrivileges=true", source)
         self.assertIn("limit_req_zone", source)
-        self.assertIn("certbot --nginx", source)
+        self.assertIn("public_http_ready=false", source)
+        self.assertIn("http_code", source)
+        self.assertIn("Public HTTP path did not converge", source)
+        self.assertLess(source.index("public_http_ready=false"), source.index("certbot --nginx"))
         self.assertIn("https://${PUBLIC_FQDN}/api/health", source)
         self.assertNotIn("Microsoft.Web", source)
 
@@ -76,14 +79,19 @@ class CollectorDemoApiTests(unittest.TestCase):
         self.assertIn("pip-st-demo-api-", ingress)
         self.assertIn("lb-st-demo-api-", ingress)
         self.assertIn("Microsoft.Network/loadBalancers@2024-05-01", ingress)
+        self.assertIn(
+            "Microsoft.Network/loadBalancers/backendAddressPools@2024-05-01",
+            ingress,
+        )
         for unsupported_child in (
             "Microsoft.Network/loadBalancers/frontendIPConfigurations@",
-            "Microsoft.Network/loadBalancers/backendAddressPools@",
             "Microsoft.Network/loadBalancers/probes@",
             "Microsoft.Network/loadBalancers/loadBalancingRules@",
         ):
             self.assertNotIn(unsupported_child, ingress)
         self.assertEqual(ingress.count("virtualNetwork:"), 1)
+        self.assertIn("resource demoApiBackendPool", ingress)
+        self.assertIn("demoApiBackendPool", ingress)
         self.assertIn("servicetracer-demo-api", ingress)
         self.assertIn("Allow-Demo-API-HTTP-From-Internet", ingress)
         self.assertIn("Allow-Demo-API-HTTPS-From-Internet", ingress)
@@ -118,7 +126,11 @@ class CollectorDemoApiTests(unittest.TestCase):
         self.assertEqual(config["fallback_report_url"], "technician-handoff-report.json")
 
     @staticmethod
-    def _valid_payload(*, private_ip="10.20.40.10", vnet_id="/subscriptions/x/resourceGroups/y/providers/Microsoft.Network/virtualNetworks/vnet-onprem-sim-mst-dev"):
+    def _valid_payload(
+        *,
+        private_ip="10.20.40.10",
+        vnet_id="/subscriptions/x/resourceGroups/y/providers/Microsoft.Network/virtualNetworks/vnet-onprem-sim-mst-dev",
+    ):
         suffix = "mst-dev"
         lb_name = f"lb-st-demo-api-{suffix}"
         lb_id = f"/subscriptions/x/resourceGroups/y/providers/Microsoft.Network/loadBalancers/{lb_name}"
@@ -161,17 +173,7 @@ class CollectorDemoApiTests(unittest.TestCase):
                             "backendAddressPools": [
                                 {
                                     "name": "be-st-demo-api",
-                                    "properties": {
-                                        "loadBalancerBackendAddresses": [
-                                            {
-                                                "name": "collector",
-                                                "properties": {
-                                                    "ipAddress": private_ip,
-                                                    "virtualNetwork": {"id": vnet_id},
-                                                },
-                                            }
-                                        ]
-                                    },
+                                    "properties": {},
                                 }
                             ],
                             "probes": [
@@ -184,8 +186,12 @@ class CollectorDemoApiTests(unittest.TestCase):
                                 {
                                     "name": "rule-st-demo-api-http",
                                     "properties": {
-                                        "frontendIPConfiguration": {"id": f"{lb_id}/frontendIPConfigurations/fe-public-st-demo-api"},
-                                        "backendAddressPool": {"id": f"{lb_id}/backendAddressPools/be-st-demo-api"},
+                                        "frontendIPConfiguration": {
+                                            "id": f"{lb_id}/frontendIPConfigurations/fe-public-st-demo-api"
+                                        },
+                                        "backendAddressPool": {
+                                            "id": f"{lb_id}/backendAddressPools/be-st-demo-api"
+                                        },
                                         "probe": {"id": f"{lb_id}/probes/probe-tcp-80-st-demo-api"},
                                         "protocol": "Tcp",
                                         "frontendPort": 80,
@@ -196,8 +202,12 @@ class CollectorDemoApiTests(unittest.TestCase):
                                 {
                                     "name": "rule-st-demo-api-https",
                                     "properties": {
-                                        "frontendIPConfiguration": {"id": f"{lb_id}/frontendIPConfigurations/fe-public-st-demo-api"},
-                                        "backendAddressPool": {"id": f"{lb_id}/backendAddressPools/be-st-demo-api"},
+                                        "frontendIPConfiguration": {
+                                            "id": f"{lb_id}/frontendIPConfigurations/fe-public-st-demo-api"
+                                        },
+                                        "backendAddressPool": {
+                                            "id": f"{lb_id}/backendAddressPools/be-st-demo-api"
+                                        },
                                         "probe": {"id": f"{lb_id}/probes/probe-tcp-80-st-demo-api"},
                                         "protocol": "Tcp",
                                         "frontendPort": 443,
@@ -211,10 +221,31 @@ class CollectorDemoApiTests(unittest.TestCase):
                 },
                 {
                     "changeType": "Create",
+                    "resourceId": f"{lb_id}/backendAddressPools/be-st-demo-api",
+                    "after": {
+                        "type": "Microsoft.Network/loadBalancers/backendAddressPools",
+                        "properties": {
+                            "loadBalancerBackendAddresses": [
+                                {
+                                    "name": "collector",
+                                    "properties": {
+                                        "ipAddress": private_ip,
+                                        "virtualNetwork": {"id": vnet_id},
+                                    },
+                                }
+                            ]
+                        },
+                    },
+                },
+                {
+                    "changeType": "Create",
                     "resourceId": "/subscriptions/x/resourceGroups/y/providers/Microsoft.Network/networkSecurityGroups/nsg-operations-mst-dev/securityRules/Allow-Demo-API-HTTP-From-Internet",
                     "after": {
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
-                        "properties": {"destinationAddressPrefix": private_ip, "destinationPortRange": "80"},
+                        "properties": {
+                            "destinationAddressPrefix": private_ip,
+                            "destinationPortRange": "80",
+                        },
                     },
                 },
                 {
@@ -222,7 +253,10 @@ class CollectorDemoApiTests(unittest.TestCase):
                     "resourceId": "/subscriptions/x/resourceGroups/y/providers/Microsoft.Network/networkSecurityGroups/nsg-operations-mst-dev/securityRules/Allow-Demo-API-HTTPS-From-Internet",
                     "after": {
                         "type": "Microsoft.Network/networkSecurityGroups/securityRules",
-                        "properties": {"destinationAddressPrefix": private_ip, "destinationPortRange": "443"},
+                        "properties": {
+                            "destinationAddressPrefix": private_ip,
+                            "destinationPortRange": "443",
+                        },
                     },
                 },
                 {
@@ -244,11 +278,34 @@ class CollectorDemoApiTests(unittest.TestCase):
 
     def test_classifier_accepts_dedicated_load_balancer_and_passive_leftovers(self):
         result = self._classify(self._valid_payload())
-        self.assertEqual(result["creates"], 5)
+        self.assertEqual(result["creates"], 6)
+        self.assertEqual(result["schema_version"], "servicetracer.collector-demo-api-what-if.v3")
         self.assertEqual(result["ingress_strategy"], "dedicated_standard_load_balancer")
         self.assertEqual(len(result["ignored_managed_leftovers"]), 1)
         self.assertEqual(result["base_infrastructure_modifications"], [])
         self.assertFalse(result["deployment_authorized"])
+
+    def test_classifier_accepts_exact_backend_pool_reconciliation(self):
+        payload = self._valid_payload()
+        pool = next(
+            item
+            for item in payload["changes"]
+            if item.get("after", {}).get("type")
+            == "Microsoft.Network/loadBalancers/backendAddressPools"
+        )
+        pool["changeType"] = "Modify"
+        pool["before"] = {
+            "type": "Microsoft.Network/loadBalancers/backendAddressPools",
+            "properties": {"loadBalancerBackendAddresses": []},
+        }
+        result = self._classify(payload)
+        self.assertEqual(
+            result["target_resource_states"][
+                "/loadBalancers/lb-st-demo-api-mst-dev/backendAddressPools/be-st-demo-api"
+            ],
+            "Modify",
+        )
+        self.assertIn(pool["resourceId"], result["approved_reconciliations"])
 
     def test_classifier_rejects_legacy_load_balancer_child_create(self):
         payload = self._valid_payload()
@@ -267,9 +324,15 @@ class CollectorDemoApiTests(unittest.TestCase):
             self._classify(self._valid_payload(private_ip="10.20.40.99"))
 
         payload = self._valid_payload()
-        lb = next(item for item in payload["changes"] if item.get("after", {}).get("type") == "Microsoft.Network/loadBalancers")
-        pool = lb["after"]["properties"]["backendAddressPools"][0]["properties"]
-        pool["virtualNetwork"] = {"id": "/subscriptions/x/resourceGroups/y/providers/Microsoft.Network/virtualNetworks/vnet-onprem-sim-mst-dev"}
+        pool = next(
+            item
+            for item in payload["changes"]
+            if item.get("after", {}).get("type")
+            == "Microsoft.Network/loadBalancers/backendAddressPools"
+        )["after"]["properties"]
+        pool["virtualNetwork"] = {
+            "id": "/subscriptions/x/resourceGroups/y/providers/Microsoft.Network/virtualNetworks/vnet-onprem-sim-mst-dev"
+        }
         with self.assertRaises(SystemExit):
             self._classify(payload)
 
