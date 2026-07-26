@@ -136,6 +136,7 @@ class CollectorDemoApiTests(unittest.TestCase):
         )
         self.assertIn("does not by itself prove", config["claim_boundary"])
 
+    @staticmethod
     def _valid_payload(
         *,
         private_ip="10.20.40.10",
