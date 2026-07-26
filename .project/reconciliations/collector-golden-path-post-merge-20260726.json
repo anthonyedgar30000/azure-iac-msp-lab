@@ -1,16 +1,17 @@
 {
   "schema_version": "project.collector-golden-path-post-merge-reconciliation.v1",
-  "recorded_at": "2026-07-26T09:24:37-04:00",
+  "recorded_at": "2026-07-26T09:34:40-04:00",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "repository_observation": {
-    "main": "81df65ca7d4cd77fc89aefb2fac128ead456df7d",
-    "latest_merged_pull_request": 126,
-    "exact_source_head": "1f9a00f572235c74b99520a504d8b057003d411c",
-    "exact_source_ci_run_id": 30203751115,
+    "main": "1c6572c8f06832cb1c755cc0ddf831813bca967b",
+    "latest_merged_pull_request": 128,
+    "exact_source_head": "ec98b66f802099226b1fc3e6abdeabfc42477fed",
+    "exact_source_ci_run_id": 30204076349,
     "exact_source_ci_conclusion": "success",
     "merge_commit_ci": "not_observed",
     "open_pull_requests_observed": [
-      127
+      127,
+      129
     ],
     "local_working_tree": "not_observed"
   },
@@ -18,7 +19,9 @@
     "human_or_external_merge_observed": true,
     "assistant_merge_action_performed": false,
     "merge_actor": "not_resolved",
-    "prior_merge_authority": "not_observed"
+    "prior_merge_authority": "not_observed",
+    "pull_request": 128,
+    "merge_commit": "1c6572c8f06832cb1c755cc0ddf831813bca967b"
   },
   "collector_binding": {
     "endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
@@ -26,13 +29,8 @@
     "github_pages_publication_verified": false,
     "browser_transaction_verified": false,
     "deployed_source": "98b092201053fd3592be157a24de6e623e6b74a6",
-    "deployed_main": false
-  },
-  "open_pr127_boundary": {
-    "state": "open_draft",
-    "accepted_as_current_evidence": false,
-    "repository_implementation_deployed": false,
-    "review_note_recorded": true
+    "deployed_main": false,
+    "merged_through_pull_request": 126
   },
   "authority": {
     "repository_reconciliation_authorized": true,
@@ -50,6 +48,20 @@
     "frontend_bound != browser_verified",
     "open_draft_PR != accepted_evidence",
     "human_or_external_merge_observed != assistant_merge_action",
-    "current_main != deployed_source"
-  ]
+    "current_main != deployed_source",
+    "historical_validator_repair != Azure_state_change"
+  ],
+  "open_pr_boundaries": {
+    "127": {
+      "state": "open_draft",
+      "accepted_as_current_evidence": false,
+      "repository_implementation_deployed": false,
+      "review_note_recorded": true
+    },
+    "129": {
+      "state": "open_draft",
+      "accepted_as_current_main": false,
+      "purpose": "post_merge_truth_lock"
+    }
+  }
 }
