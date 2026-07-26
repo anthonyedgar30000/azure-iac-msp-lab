@@ -50,6 +50,16 @@ jobs:
           start = source.index(marker) + len(marker)
           end = source.index("\n          PY\n", start)
           payload = dedent(source[start:end]) + "\n"
+          payload = payload.replace(
+              '    "infra/tests/test_frontend_api_demo_lab_integration.py",',
+              '    "infra/tests/test_collector_demo_api.py",\n    "infra/tests/test_frontend_api_demo_lab_integration.py",',
+              1,
+          )
+          payload = payload.replace(
+              'Repository binding does not prove GitHub Pages publication or browser-path completion, and the independent VM API is not the collector golden path.',
+              'Repository binding does not by itself prove GitHub Pages publication or browser-path completion, and the independent VM API is not the collector golden path.',
+              1,
+          )
           Path('/tmp/reconcile_collector_golden_path.py').write_text(payload, encoding='utf-8')
           EXTRACT
           python /tmp/reconcile_collector_golden_path.py
