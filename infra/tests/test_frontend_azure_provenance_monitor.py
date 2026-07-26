@@ -1,3 +1,4 @@
+import json
 import unittest
 from pathlib import Path
 
@@ -6,8 +7,10 @@ ROOT = Path(__file__).resolve().parents[2]
 INDEX = ROOT / "docs" / "index.html"
 MONITOR = ROOT / "docs" / "live-monitor.js"
 MONITOR_STYLES = ROOT / "docs" / "live-monitor.css"
+SOURCE_CONFIG = ROOT / "docs" / "report-source.json"
 SERVER = ROOT / "demo_api" / "standalone_server.py"
 INSTALLER = ROOT / "infra" / "scripts" / "install_collector_demo_api.sh"
+COLLECTOR_API = "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run"
 
 
 class FrontendAzureProvenanceMonitorTests(unittest.TestCase):
@@ -27,6 +30,26 @@ class FrontendAzureProvenanceMonitorTests(unittest.TestCase):
             index,
         )
 
+    def test_source_configuration_binds_exact_collector_golden_path(self) -> None:
+        config = json.loads(SOURCE_CONFIG.read_text(encoding="utf-8"))
+
+        self.assertEqual(config["live_demo_api_url"], COLLECTOR_API)
+        self.assertEqual(config["candidate_demo_api_url"], COLLECTOR_API)
+        self.assertEqual(
+            config["activation_status"],
+            "collector_live_default_pending_github_pages_verification",
+        )
+        self.assertEqual(
+            config["expected_azure_host"],
+            {
+                "resource_group": "rg-servicetracer-dev-westus2",
+                "vm_name": "vm-stcollector-mst-dev",
+                "location": "westus2",
+                "hosting_model": "collector_vm_systemd",
+            },
+        )
+        self.assertNotIn("st-demo-api-vm-aeg30000", config["live_demo_api_url"])
+
     def test_frontend_correlates_one_request_without_consuming_the_response(self) -> None:
         source = MONITOR.read_text(encoding="utf-8")
 
@@ -34,9 +57,13 @@ class FrontendAzureProvenanceMonitorTests(unittest.TestCase):
         self.assertIn("window.fetch = async", source)
         self.assertIn("headers.set(REQUEST_HEADER, requestId);", source)
         self.assertIn("response.clone().json()", source)
-        self.assertIn("responseRequestId !== requestId", source)
+        self.assertIn("responseRequestId !== requestId || !identity", source)
         self.assertIn("setInterval(pollHealth, HEALTH_INTERVAL_MS)", source)
         self.assertIn("identity.verified !== true", source)
+        self.assertIn("identity.resource_group !== expected.resource_group", source)
+        self.assertIn("identity.vm_name !== expected.vm_name", source)
+        self.assertIn("identity.location !== expected.location", source)
+        self.assertIn("payload.hosting_model !== expected.hosting_model", source)
         self.assertIn("Frontend ↔ governed collector API live", source)
 
     def test_api_uses_azure_instance_metadata_without_exposing_subscription_identity(self) -> None:
