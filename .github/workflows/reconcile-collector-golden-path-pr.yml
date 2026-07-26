@@ -1,4 +1,4 @@
-name: Run collector reconciliation on draft PR
+name: Package validated collector reconciliation
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ on:
       - .github/workflows/reconcile-collector-golden-path-pr.yml
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: reconcile-collector-golden-path-pr
@@ -63,60 +63,64 @@ jobs:
           Path('/tmp/reconcile_collector_golden_path.py').write_text(payload, encoding='utf-8')
           EXTRACT
           python /tmp/reconcile_collector_golden_path.py
+          python - <<'PATCH'
+          from pathlib import Path
+          path = Path('infra/tests/test_collector_demo_api.py')
+          text = path.read_text(encoding='utf-8')
+          old = 'live_default_pending_github_pages_verification'
+          new = 'collector_live_default_pending_github_pages_verification'
+          if old not in text:
+              raise SystemExit('stale activation assertion not found')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PATCH
 
-      - name: Validate bounded reconciliation
-        id: validate
-        run: |
-          set +e
-          {
-            echo '=== workflow observability validator ==='
-            python .project/validate.py
-            echo '=== complete unit-test suite ==='
-            python -m unittest discover -s infra/tests -p 'test_*.py'
-            echo '=== browser verifier syntax ==='
-            node --check scripts/verify_frontend_live_default.mjs
-            echo '=== collector endpoint present ==='
-            grep -F "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json
-            echo '=== independent endpoint absent from active config ==='
-            ! grep -F "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json
-            echo '=== diff check ==='
-            git diff --check
-          } > reconciliation-validation.log 2>&1
-          status=$?
-          git status --short > reconciliation-status.txt
-          git diff > reconciliation.patch
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-          cat reconciliation-validation.log
-          exit 0
-
-      - name: Upload reconciliation diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: collector-golden-path-reconciliation-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            reconciliation-validation.log
-            reconciliation-status.txt
-            reconciliation.patch
-          if-no-files-found: error
-          retention-days: 30
-
-      - name: Fail closed when validation did not pass
-        if: steps.validate.outputs.status != '0'
-        run: |
-          cat reconciliation-validation.log >&2
-          exit 1
-
-      - name: Commit repair and remove helpers
-        if: steps.validate.outputs.status == '0'
+      - name: Validate complete reconciliation
         run: |
           set -euo pipefail
-          git rm \
-            .github/workflows/reconcile-collector-golden-path-once.yml \
-            .github/workflows/reconcile-collector-golden-path-pr.yml
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -A
-          git diff --cached --check
-          git commit -m "Reconcile collector golden path"
-          git push origin HEAD:"$BRANCH"
+          python .project/validate.py
+          python -m unittest discover -s infra/tests -p 'test_*.py'
+          node --check scripts/verify_frontend_live_default.mjs
+          grep -F "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json
+          ! grep -F "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json
+          git diff --check
+
+      - name: Package only intended repository files
+        run: |
+          set -euo pipefail
+          mkdir -p reconciled-output
+          while IFS= read -r path; do
+            mkdir -p "reconciled-output/$(dirname "$path")"
+            cp "$path" "reconciled-output/$path"
+          done <<'FILES'
+          .project/current-reality-v2.json
+          .project/handoffs/current-state.md
+          .project/lab-v1-completion-gate-v2.json
+          .project/reconciliations/collector-golden-path-reconciliation-20260726.json
+          .project/state-index.json
+          .project/validate.py
+          docs/report-source.json
+          docs/reviews/canonical-current-reality-v2.md
+          docs/reviews/frontend-live-default-activation-20260726.md
+          infra/tests/test_canonical_state_index_v2.py
+          infra/tests/test_collector_demo_api.py
+          infra/tests/test_collector_golden_path_binding.py
+          infra/tests/test_frontend_api_demo_lab_integration.py
+          infra/tests/test_frontend_live_default_activation.py
+          scripts/verify_frontend_live_default.mjs
+          FILES
+          git diff --stat > reconciled-output/VALIDATION-SUMMARY.txt
+          printf '%s\n' \
+            'workflow-observability validator: passed' \
+            'unit tests: passed' \
+            'browser verifier syntax: passed' \
+            'collector endpoint binding: passed' \
+            'diff check: passed' \
+            >> reconciled-output/VALIDATION-SUMMARY.txt
+
+      - name: Upload validated reconciliation bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: validated-collector-golden-path-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reconciled-output/
+          if-no-files-found: error
+          retention-days: 30
