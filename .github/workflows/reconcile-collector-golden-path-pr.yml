@@ -55,16 +55,50 @@ jobs:
           python /tmp/reconcile_collector_golden_path.py
 
       - name: Validate bounded reconciliation
+        id: validate
         run: |
-          set -euo pipefail
-          python .project/validate.py
-          python -m unittest discover -s infra/tests -p 'test_*.py'
-          node --check scripts/verify_frontend_live_default.mjs
-          grep -F "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json
-          ! grep -F "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json
-          git diff --check
+          set +e
+          {
+            echo '=== workflow observability validator ==='
+            python .project/validate.py
+            echo '=== complete unit-test suite ==='
+            python -m unittest discover -s infra/tests -p 'test_*.py'
+            echo '=== browser verifier syntax ==='
+            node --check scripts/verify_frontend_live_default.mjs
+            echo '=== collector endpoint present ==='
+            grep -F "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json
+            echo '=== independent endpoint absent from active config ==='
+            ! grep -F "https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com/api/demo/run" docs/report-source.json
+            echo '=== diff check ==='
+            git diff --check
+          } > reconciliation-validation.log 2>&1
+          status=$?
+          git status --short > reconciliation-status.txt
+          git diff > reconciliation.patch
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          cat reconciliation-validation.log
+          exit 0
+
+      - name: Upload reconciliation diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: collector-golden-path-reconciliation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            reconciliation-validation.log
+            reconciliation-status.txt
+            reconciliation.patch
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Fail closed when validation did not pass
+        if: steps.validate.outputs.status != '0'
+        run: |
+          cat reconciliation-validation.log >&2
+          exit 1
 
       - name: Commit repair and remove helpers
+        if: steps.validate.outputs.status == '0'
         run: |
           set -euo pipefail
           git rm \
