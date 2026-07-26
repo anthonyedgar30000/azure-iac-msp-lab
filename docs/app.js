@@ -61,10 +61,13 @@ function setBadgeState(badge, text, stateName = 'neutral') {
   badge.classList.add(`badge-${stateName}`);
 }
 
-function setIncidentState(text, warning = false) {
+const INCIDENT_STATES = new Set(['neutral', 'healthy', 'warning']);
+
+function setIncidentState(text, stateName = 'neutral') {
+  const resolvedState = INCIDENT_STATES.has(stateName) ? stateName : 'neutral';
   elements.incidentChip.textContent = text;
-  elements.incidentChip.classList.toggle('status-warning', warning);
-  elements.incidentChip.classList.toggle('status-neutral', !warning);
+  elements.incidentChip.classList.remove('status-neutral', 'status-healthy', 'status-warning');
+  elements.incidentChip.classList.add(`status-${resolvedState}`);
 }
 
 function formatTimestamp(value) {
@@ -187,7 +190,7 @@ function setLiveReport(envelope, sourceUrl) {
   elements.reportSourceDetail.textContent = (
     `${sourceId} · ServiceTracer ${version} · generated ${formatTimestamp(envelope.generated_at)}`
   );
-  setIncidentState(stale ? 'Live report is stale' : 'Awaiting analysis', stale);
+  setIncidentState(stale ? 'Live report is stale' : 'Awaiting analysis', stale ? 'warning' : 'neutral');
 }
 
 function setApiReport(payload, sourceUrl) {
@@ -204,7 +207,7 @@ function setApiReport(payload, sourceUrl) {
   elements.reportSourceDetail.textContent = (
     `${sourceId} · generated ${formatTimestamp(payload.generated_at)} · ${payload.transactions.length} correlated transactions`
   );
-  setIncidentState('Live Azure evidence captured');
+  setIncidentState('Live Azure evidence captured', 'healthy');
 }
 
 function setFallbackReport(report, fallbackUrl, liveError = null) {
@@ -309,7 +312,7 @@ function completeWorkflowStep(item, button, stepId) {
 
   if (state.completedSteps.size === state.report.technician_workflow.length) {
     elements.completionMessage.classList.remove('is-hidden');
-    setIncidentState('Service verified');
+    setIncidentState('Service verified', 'healthy');
   }
 }
 
@@ -320,7 +323,7 @@ function populateReport() {
 
   setIncidentState(
     stable ? 'Technician investigation required' : 'More evidence required',
-    true,
+    'warning',
   );
 
   elements.evidenceSummary.textContent = `${incident.attempts} correlated transactions: ${incident.successful_attempts} successful, ${incident.failed_attempts} failed.`;
@@ -422,9 +425,9 @@ function resetDemo() {
   elements.runButton.disabled = state.report === null;
   elements.runButton.textContent = state.report ? 'Run incident analysis' : 'Loading report…';
   if (state.reportMetadata?.stale) {
-    setIncidentState('Live report is stale', true);
+    setIncidentState('Live report is stale', 'warning');
   } else if (state.demoApiReady) {
-    setIncidentState('Live lab API ready');
+    setIncidentState('Live lab API ready', 'healthy');
   } else {
     setIncidentState('Awaiting analysis');
   }
@@ -495,7 +498,7 @@ async function loadReport() {
     elements.runButton.textContent = 'Report unavailable';
     elements.reportSourceName.textContent = 'Report unavailable';
     elements.reportSourceDetail.textContent = 'Neither the live source nor the committed fallback could be loaded.';
-    setIncidentState('Report unavailable', true);
+    setIncidentState('Report unavailable', 'warning');
     elements.evidenceSummary.textContent = 'Serve this folder over HTTP, such as through GitHub Pages.';
   }
 }
