@@ -1,24 +1,25 @@
 {
   "schema_version": "project.current-reality.v2",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-26T09:24:37-04:00",
+  "recorded_at": "2026-07-26T09:34:40-04:00",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "repository_state": {
     "default_branch": "main",
-    "observed_head": "81df65ca7d4cd77fc89aefb2fac128ead456df7d",
-    "latest_merged_pull_request": 126,
+    "observed_head": "1c6572c8f06832cb1c755cc0ddf831813bca967b",
+    "latest_merged_pull_request": 128,
     "open_pull_requests_observed": [
-      127
+      127,
+      129
     ],
-    "observation_boundary": "Observed after PR #126 merged the collector golden-path reconciliation and before creating the post-merge truth-lock pull request. PR #127 was open as a draft and was not accepted as current evidence.",
-    "exact_source_head": "1f9a00f572235c74b99520a504d8b057003d411c",
-    "exact_source_ci_run_id": 30203751115,
+    "observation_boundary": "Observed after PR #128 merged the structured PR #84 validator repair. PR #127 and this post-merge truth-lock PR #129 were open as drafts and were not accepted as current deployed evidence.",
+    "exact_source_head": "ec98b66f802099226b1fc3e6abdeabfc42477fed",
+    "exact_source_ci_run_id": 30204076349,
     "exact_source_ci_conclusion": "success",
     "merge_commit_ci": "not_observed",
     "local_working_tree": "not_observed",
     "merge_observation": {
-      "pull_request": 126,
-      "merge_commit": "81df65ca7d4cd77fc89aefb2fac128ead456df7d",
+      "pull_request": 128,
+      "merge_commit": "1c6572c8f06832cb1c755cc0ddf831813bca967b",
       "human_or_external_merge_observed": true,
       "assistant_merge_action_performed": false,
       "merge_actor": "not_resolved",
@@ -48,7 +49,12 @@
     "pr126_exact_source_head": "1f9a00f572235c74b99520a504d8b057003d411c",
     "pr126_exact_source_ci_run_id": 30203751115,
     "pr126_exact_source_ci_conclusion": "success",
-    "pr126_merge_commit_ci": "not_observed"
+    "pr126_merge_commit_ci": "not_observed",
+    "pr128_merge_commit": "1c6572c8f06832cb1c755cc0ddf831813bca967b",
+    "pr128_exact_source_head": "ec98b66f802099226b1fc3e6abdeabfc42477fed",
+    "pr128_exact_source_ci_run_id": 30204076349,
+    "pr128_exact_source_ci_conclusion": "success",
+    "pr128_merge_commit_ci": "not_observed"
   },
   "collector_demo_api": {
     "observation": {
@@ -136,7 +142,7 @@
     "source_binding": {
       "predeployment_plan_source": "8de1f61f8a0ea06dcf94b94c798edde2aace357d",
       "deployed_source": "98b092201053fd3592be157a24de6e623e6b74a6",
-      "current_main": "81df65ca7d4cd77fc89aefb2fac128ead456df7d",
+      "current_main": "1c6572c8f06832cb1c755cc0ddf831813bca967b",
       "current_main_deployed": false,
       "frontend_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
       "deployment_source_decision": "resolved_to_run18_exact_source",
