@@ -1,0 +1,246 @@
+{
+  "schema_version": "project.what-if-artifact-promotion.v1",
+  "recorded_at": "2026-07-26T04:15:25-04:00",
+  "project": "Azure IaC MSP Lab",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "source_instruction": "Anthony Edgar instructed: Proceed.",
+  "repository_baseline": {
+    "default_branch": "main",
+    "observed_head": "2251f9721d582e6f79f22cf8977e1dea55a5b786",
+    "latest_merged_pull_request": 119,
+    "open_pull_requests_observed": [],
+    "exact_source_ci_run_id": 30193294874,
+    "exact_source_ci_conclusion": "success",
+    "local_active_branch_and_working_tree": "not_observed_through_GitHub_connector"
+  },
+  "supersedes_observation_boundary": {
+    "record": ".project/reconciliations/collector-demo-api-what-if-run16-accepted-20260726.json",
+    "historical_record_remains_immutable": true,
+    "fields_now_observed": [
+      "workflow_run_id",
+      "workflow_run_attempt",
+      "job_id_and_step_conclusions",
+      "artifact_id_name_size_retention_and_digest",
+      "artifact_manifest_integrity",
+      "exact_resource_change_set",
+      "quota_snapshot"
+    ],
+    "still_not_observed": [
+      "current_Azure_for_Students_credit_balance",
+      "current_billing_cost_snapshot",
+      "post_deployment_runtime_health",
+      "deployment_outcome"
+    ]
+  },
+  "workflow_run": {
+    "workflow": ".github/workflows/collector-demo-api.yml",
+    "workflow_display_name": "Collector-hosted demo API",
+    "run_number": 16,
+    "run_id": 30192970923,
+    "run_attempt": 1,
+    "event": "workflow_dispatch",
+    "operation": "what-if",
+    "reviewed_commit": "8de1f61f8a0ea06dcf94b94c798edde2aace357d",
+    "head_branch": "main",
+    "job": {
+      "job_id": 89769401839,
+      "name": "what-if collector-hosted demo API",
+      "conclusion": "success",
+      "successful_steps": [
+        "Check out exact reviewed repository state",
+        "Validate bounded scope and authority",
+        "Run repository tests before Azure login",
+        "Log in to Azure with workload identity federation",
+        "Capture current collector and dependency state",
+        "Enforce collector-hosted deployment readiness",
+        "Validate and capture exact ARM What-If",
+        "Write evidence manifest",
+        "Write scoped workflow summary",
+        "Upload scoped evidence"
+      ],
+      "skipped_steps": [
+        "Deploy collector-hosted demo API",
+        "Capture post-deploy target state and ARM operations",
+        "Verify public TLS, API, and frontend contract"
+      ]
+    },
+    "azure_mutations_performed": false,
+    "transaction_replay_performed": false,
+    "what_if_authority_consumed": true
+  },
+  "artifact": {
+    "artifact_id": 8629191915,
+    "name": "collector-demo-api-30192970923-1",
+    "size_in_bytes": 25867,
+    "created_at": "2026-07-26T07:33:03Z",
+    "expires_at": "2026-08-25T07:33:02Z",
+    "expired": false,
+    "github_digest": "sha256:57fe05c113d0fefc86437a4aa247b920dc6a02680a1c2bfe8e67873fe7612e6e",
+    "downloaded_zip_sha256": "57fe05c113d0fefc86437a4aa247b920dc6a02680a1c2bfe8e67873fe7612e6e",
+    "zip_digest_matches_github": true,
+    "archive_entry_count": 31,
+    "manifest_payload_count": 29,
+    "manifest_payload_hashes_verified": 29,
+    "manifest_payload_hash_failures": 0,
+    "manifest_generated_at": "2026-07-26T07:33:02Z",
+    "manifest_sha256": "4ab6696d1d855f9a6a53a6af9755ee7085605024d2501e235e9bbc8bea66316a",
+    "checksum_list_sha256": "7c82e5abe68564a00851f08cb1eed22c631488baf86dd608605de53ed7810bb8",
+    "evidence_control": "Artifact contains Azure identifiers and must not be published as public portfolio evidence without redaction."
+  },
+  "azure_identity_context": {
+    "subscription_name": "Azure for Students",
+    "subscription_id_sha256": "8f27aec6b3012cf0d4a85d3859872f0daf34e014860650c7c2b3446cd3db0b7f",
+    "tenant_id_sha256": "26ba6e04f1a9cde8b97b64734498f4cbe81d5dcbf7b0f451d81570817c2967bc",
+    "service_principal_object_id_sha256": "f4c14387ae3302e224bd7e53300425069bd392c269b84e2678820e7a61e8d3f2",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2"
+  },
+  "captured_predeployment_state": {
+    "resource_group_provisioning_state": "Succeeded",
+    "collector_vm_name": "vm-stcollector-mst-dev",
+    "collector_vm_size": "Standard_B2ats_v2",
+    "collector_private_ip": "10.20.40.10",
+    "collector_vm_running": true,
+    "load_balancer_name": "lb-st-demo-api-mst-dev",
+    "load_balancer_provisioning_state": "Succeeded",
+    "backend_pool_name": "be-st-demo-api",
+    "backend_pool_address_count": 0,
+    "vm_extension_name": "servicetracer-demo-api",
+    "vm_extension_provisioning_state": "Failed",
+    "resource_locks": [],
+    "readiness_blockers": [],
+    "deployment_decision_ready": true,
+    "deployment_authorized": false
+  },
+  "accepted_what_if_plan": {
+    "status": "accepted_isolated_collector_api_changes",
+    "total_entries": 30,
+    "change_counts": {
+      "Ignore": 24,
+      "Modify": 3,
+      "NoChange": 3,
+      "Create": 0,
+      "Delete": 0,
+      "Replace": 0
+    },
+    "approved_modifications": [
+      {
+        "resource_type": "Microsoft.Compute/virtualMachines/extensions",
+        "resource_name": "vm-stcollector-mst-dev/servicetracer-demo-api",
+        "existing_state": "Failed",
+        "bounded_change": "Create properties.forceUpdateTag with exact reviewed commit.",
+        "force_update_tag": "8de1f61f8a0ea06dcf94b94c798edde2aace357d",
+        "publisher": "Microsoft.Azure.Extensions",
+        "handler_type": "CustomScript",
+        "handler_version": "2.1"
+      },
+      {
+        "resource_type": "Microsoft.Network/loadBalancers",
+        "resource_name": "lb-st-demo-api-mst-dev",
+        "bounded_change": "Reconcile exact Standard Regional parent contract while removing ARM-default fields omitted from the declaration.",
+        "sku_name": "Standard",
+        "sku_tier": "Regional",
+        "frontends": [
+          "fe-public-st-demo-api"
+        ],
+        "probes": [
+          "probe-tcp-80-st-demo-api"
+        ],
+        "rules": [
+          "rule-st-demo-api-http",
+          "rule-st-demo-api-https"
+        ],
+        "broader_network_redesign": false
+      },
+      {
+        "resource_type": "Microsoft.Network/loadBalancers/backendAddressPools",
+        "resource_name": "lb-st-demo-api-mst-dev/be-st-demo-api",
+        "bounded_change": "Populate exactly one backend address.",
+        "backend_name": "collector",
+        "backend_ip": "10.20.40.10",
+        "virtual_network_name": "vnet-onprem-sim-mst-dev"
+      }
+    ],
+    "explicit_no_change": [
+      "pip-st-demo-api-mst-dev",
+      "Allow-Demo-API-HTTP-From-Internet",
+      "Allow-Demo-API-HTTPS-From-Internet"
+    ],
+    "forbidden_changes": [],
+    "base_infrastructure_modifications": [],
+    "collector_vm_modifications": [],
+    "collector_nic_modifications": [],
+    "managed_web_resources_proposed": false,
+    "ignored_managed_leftovers": [
+      "appi-demo-api-mst-dev"
+    ]
+  },
+  "quota_snapshot": {
+    "captured_region": "westus2",
+    "public_ip_addresses": {
+      "current": 2,
+      "limit": 3
+    },
+    "standard_ipv4_public_ip_addresses": {
+      "current": 2,
+      "limit": 3
+    },
+    "load_balancers": {
+      "current": 2,
+      "limit": 1000
+    },
+    "additional_public_ip_required": 0,
+    "quota_sufficient_for_plan": true
+  },
+  "cost_and_budget": {
+    "resource_creates": 0,
+    "current_billing_cost": "not_observed",
+    "remaining_Azure_for_Students_credit": "not_observed",
+    "cost_delta": "not_quantified",
+    "decision_boundary": "No resource creation is proposed, but billing and credit evidence must be refreshed before deployment authorization."
+  },
+  "source_binding": {
+    "accepted_plan_source": "8de1f61f8a0ea06dcf94b94c798edde2aace357d",
+    "current_main_at_promotion": "2251f9721d582e6f79f22cf8977e1dea55a5b786",
+    "main_ahead_by_commits": 4,
+    "net_changes_after_accepted_source": [
+      ".project/reconciliations/collector-demo-api-what-if-run16-accepted-20260726.json",
+      "docs/reviews/collector-demo-api-what-if-run16.md",
+      "infra/tests/test_collector_demo_api_what_if_run16_review.py"
+    ],
+    "deployment_source_decision": "unresolved",
+    "boundary": "Deploying the exact accepted source differs from deploying current main even when intervening changes are evidence-only."
+  },
+  "authority": {
+    "artifact_inspection_authorized": true,
+    "repository_promotion_authorized": true,
+    "draft_pull_request_authorized": true,
+    "ordinary_pull_request_ci_authorized": true,
+    "pull_request_merge_authorized": false,
+    "azure_query_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "deployment_authorized": false,
+    "verify_operation_authorized": false,
+    "transaction_replay_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false,
+    "rbac_mutation_authorized": false
+  },
+  "next_gate": {
+    "required_before_deployment": [
+      "review and merge this artifact-promotion increment under separate authority",
+      "refresh Azure for Students credit or billing evidence",
+      "choose and bind an exact deployment source",
+      "repeat live preflight and FullResourcePayloads What-If for that exact deployment source",
+      "define one-shot deployment, rollback, and post-deployment verification authority"
+    ],
+    "deployment_status": "blocked_pending_separate_exact_source_authorization",
+    "claim_boundaries": [
+      "artifact_verified != deployment_authorized",
+      "deployment_decision_ready != deployment_authorized",
+      "WhatIf_accepted != service_restored",
+      "resource_exists != securely_configured",
+      "not_observed != false"
+    ]
+  }
+}
