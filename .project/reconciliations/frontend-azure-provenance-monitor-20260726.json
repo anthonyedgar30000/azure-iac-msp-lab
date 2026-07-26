@@ -1,0 +1,106 @@
+{
+  "schema_version": "project.reconciliation.v1",
+  "reconciliation": "frontend-azure-provenance-monitor",
+  "recorded_at": "2026-07-26T13:15:00Z",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "default_branch": "main",
+    "observed_base_head": "50ae9113fafccbe31b3e2d076c021c814e4f446d",
+    "observed_latest_merged_pull_request": 124,
+    "open_pull_requests_observed_before_branch": [],
+    "base_merge_commit_ci": "not_observed",
+    "latest_exact_source_head": "dcfcc66f1ce9b2c49ffa5cbdca94c33d80716609",
+    "latest_exact_source_ci_run_id": 30201933461,
+    "latest_exact_source_ci_conclusion": "success",
+    "local_working_tree": "not_observed",
+    "branch": "feature/frontend-azure-provenance-monitor"
+  },
+  "promoted_azure_evidence_boundary": {
+    "source": ".project/reconciliations/collector-demo-api-deployment-run18-20260726.json",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "collector_vm": "vm-stcollector-mst-dev",
+    "location": "westus2",
+    "public_endpoint": "st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com",
+    "deployment_source": "98b092201053fd3592be157a24de6e623e6b74a6",
+    "fresh_azure_query_performed": false,
+    "claim_boundary": "These values are promoted deployment evidence, not a fresh Azure observation for this repository increment."
+  },
+  "increment": {
+    "intent": "Render a live frontend-to-collector path and bind it to Azure host identity and one frontend request correlation ID.",
+    "resource_group_semantics": "governance_and_lifecycle_scope_not_network_endpoint",
+    "repository_changes": [
+      "Add a responsive GitHub Pages live provenance monitor.",
+      "Poll the existing collector health endpoint without cache.",
+      "Read resource group, VM name, and region from Azure Instance Metadata Service.",
+      "Bind runtime identity to the exact deployment source ref written by the installer.",
+      "Attach a canonical UUID request ID to the existing incident-analysis POST and require an exact response echo.",
+      "Preserve existing application response consumption through Response.clone().",
+      "Add fail-closed static regression tests and a deployment design record."
+    ],
+    "new_azure_resources_declared": false,
+    "azure_network_rules_changed": false,
+    "azure_query_performed": false,
+    "azure_mutation_performed": false,
+    "deployment_performed": false,
+    "browser_verification_performed": false
+  },
+  "security_boundary": {
+    "azure_credentials_required_by_runtime": false,
+    "managed_identity_token_requested": false,
+    "subscription_id_exposed": false,
+    "tenant_id_exposed": false,
+    "public_identity_fields": [
+      "resource_group",
+      "vm_name",
+      "location",
+      "source_ref",
+      "verification_source"
+    ],
+    "identity_failure_semantics": "unverified_not_guessed",
+    "correlation_failure_semantics": "request_proof_rejected_without_blocking_existing_app_response"
+  },
+  "authority": {
+    "instruction": "Proceed",
+    "authorized_actions": [
+      "inspect live GitHub repository state",
+      "create one repository branch",
+      "implement the bounded repository increment",
+      "create a draft pull request",
+      "run ordinary pull-request CI"
+    ],
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "deployment_authorized": false,
+    "transaction_replay_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false,
+    "claim_boundary": "Repository implementation authority does not manufacture exact-source Azure deployment, rollback, retry, or browser transaction authority."
+  },
+  "next_gate": {
+    "operation": "review_exact_pr_head_and_ci",
+    "required_before_merge": [
+      "exact changed-file review",
+      "exact-head CI success",
+      "separate merge authority"
+    ],
+    "required_before_live_activation": [
+      "fresh Azure state and cost or credit observation",
+      "exact deployment source selection",
+      "fresh FullResourcePayloads What-If",
+      "one-shot deployment and rollback authority",
+      "post-deployment health, identity, CORS, browser, and request-correlation validation"
+    ]
+  },
+  "canonical_distinctions": [
+    "resource_group_scope != traffic_endpoint",
+    "API_healthy != Azure_host_identity_verified",
+    "frontend_configured != browser_path_verified",
+    "request_sent != response_correlation_verified",
+    "repository_implemented != deployed_to_collector_VM",
+    "deployment_succeeded != service_validated",
+    "not_observed != false"
+  ]
+}
