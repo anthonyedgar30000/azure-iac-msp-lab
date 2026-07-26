@@ -185,6 +185,31 @@ def _validate_dedicated_load_balancer(
                 raise SystemExit(f"{name} {field} reference leaves the dedicated load balancer")
 
 
+def _validate_load_balancer_reconciliation(item: dict[str, Any], *, suffix: str) -> None:
+    before = item.get("before")
+    after = item.get("after")
+    if not isinstance(before, dict) or not isinstance(after, dict):
+        raise SystemExit("Collector API load balancer Modify requires before and after payloads")
+    if before.get("type") != "Microsoft.Network/loadBalancers":
+        raise SystemExit("Collector API load balancer Modify has an unexpected prior resource type")
+
+    sku = after.get("sku") if isinstance(after.get("sku"), dict) else {}
+    if sku.get("tier") != "Regional":
+        raise SystemExit("Collector API load balancer Modify must remain Regional tier")
+
+    environment = suffix.rsplit("-", 1)[-1]
+    expected_tags = {
+        "workload": "azure-iac-msp-lab",
+        "environment": environment,
+        "managedBy": "bicep",
+        "purpose": "servicetracer-demo",
+        "component": "collector-hosted-demo-api-load-balancer",
+        "exposure": "public-https",
+    }
+    if after.get("tags") != expected_tags:
+        raise SystemExit("Collector API load balancer Modify leaves the exact bounded tag contract")
+
+
 def _validate_extension_reconciliation(item: dict[str, Any]) -> None:
     properties = _properties(item)
     expected = {
@@ -275,15 +300,14 @@ def classify(
         )
 
     public_ip_suffix = f"/publicIPAddresses/pip-st-demo-api-{suffix}"
-    backend_pool_suffix = (
-        f"/loadBalancers/lb-st-demo-api-{suffix}/backendAddressPools/be-st-demo-api"
-    )
+    load_balancer_suffix = f"/loadBalancers/lb-st-demo-api-{suffix}"
+    backend_pool_suffix = f"{load_balancer_suffix}/backendAddressPools/be-st-demo-api"
     extension_suffix = (
         f"/virtualMachines/vm-stcollector-{suffix}/extensions/servicetracer-demo-api"
     )
     target_suffixes = {
         public_ip_suffix: "Microsoft.Network/publicIPAddresses",
-        f"/loadBalancers/lb-st-demo-api-{suffix}": "Microsoft.Network/loadBalancers",
+        load_balancer_suffix: "Microsoft.Network/loadBalancers",
         backend_pool_suffix: "Microsoft.Network/loadBalancers/backendAddressPools",
         "/securityRules/Allow-Demo-API-HTTP-From-Internet": "Microsoft.Network/networkSecurityGroups/securityRules",
         "/securityRules/Allow-Demo-API-HTTPS-From-Internet": "Microsoft.Network/networkSecurityGroups/securityRules",
@@ -308,7 +332,12 @@ def classify(
         )
         if matched_suffix is not None:
             allowed_change_types = set(DEFAULT_TARGET_CHANGE_TYPES)
-            if matched_suffix in {public_ip_suffix, backend_pool_suffix, extension_suffix}:
+            if matched_suffix in {
+                public_ip_suffix,
+                load_balancer_suffix,
+                backend_pool_suffix,
+                extension_suffix,
+            }:
                 allowed_change_types.add("Modify")
             if change_type not in allowed_change_types:
                 raise SystemExit(f"Target resource has an unapproved change type {change_type}: {resource_id}")
@@ -325,6 +354,8 @@ def classify(
             if change_type == "Modify":
                 if matched_suffix == public_ip_suffix:
                     _validate_public_ip_reconciliation(item)
+                elif matched_suffix == load_balancer_suffix:
+                    _validate_load_balancer_reconciliation(item, suffix=suffix)
                 approved_reconciliations.append(resource_id)
             matched_targets[matched_suffix] = change_type
         elif change_type == "Create":
