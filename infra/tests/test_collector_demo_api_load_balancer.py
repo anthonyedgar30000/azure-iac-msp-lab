@@ -27,23 +27,35 @@ class CollectorDemoApiLoadBalancerRegressionTests(unittest.TestCase):
     def setUpClass(cls):
         cls.classifier = load_module(CLASSIFIER, "collector_demo_api_public_ip_classifier")
 
-    def test_template_never_declares_existing_load_balancer_children(self):
+    def test_template_uses_only_the_supported_backend_pool_child(self):
         source = MODULE.read_text(encoding="utf-8")
         self.assertIn("resource demoApiLoadBalancer 'Microsoft.Network/loadBalancers@2024-05-01'", source)
         self.assertIn("name: loadBalancerName", source)
-        for child_type in (
+        self.assertIn(
+            "resource demoApiBackendPool 'Microsoft.Network/loadBalancers/backendAddressPools@2024-05-01'",
+            source,
+        )
+        for unsupported_child in (
             "loadBalancers/frontendIPConfigurations@",
-            "loadBalancers/backendAddressPools@",
             "loadBalancers/probes@",
             "loadBalancers/loadBalancingRules@",
         ):
-            self.assertNotIn(child_type, source)
+            self.assertNotIn(unsupported_child, source)
 
     def test_ip_backend_pool_sets_virtual_network_only_on_address(self):
         source = MODULE.read_text(encoding="utf-8")
         self.assertEqual(source.count("virtualNetwork:"), 1)
         self.assertIn("loadBalancerBackendAddresses", source)
         self.assertIn("ipAddress: collectorPrivateIpAddress", source)
+        self.assertIn("parent: demoApiLoadBalancer", source)
+        self.assertIn("demoApiBackendPool", source)
+
+    def test_extension_waits_for_backend_pool_convergence(self):
+        source = MODULE.read_text(encoding="utf-8")
+        dependency_block = source.split("dependsOn: [", 1)[1].split("]", 1)[0]
+        self.assertIn("demoApiBackendPool", dependency_block)
+        self.assertIn("allowDemoApiHttp", dependency_block)
+        self.assertIn("allowDemoApiHttps", dependency_block)
 
     def test_public_ip_preserves_observed_platform_properties(self):
         source = MODULE.read_text(encoding="utf-8")
@@ -57,6 +69,7 @@ class CollectorDemoApiLoadBalancerRegressionTests(unittest.TestCase):
         self.assertIn("if: always() && inputs.operation == 'deploy'", workflow)
         self.assertIn("az deployment operation group list", workflow)
         self.assertIn("post-deploy-demo-api-load-balancer.json", workflow)
+        self.assertIn("post-deploy-demo-api-backend-addresses.json", workflow)
         self.assertIn("post-deploy-legacy-lb-backend-pool.json", workflow)
 
     @staticmethod
@@ -108,7 +121,7 @@ class CollectorDemoApiLoadBalancerRegressionTests(unittest.TestCase):
             "Modify",
         )
         self.assertEqual(len(result["approved_reconciliations"]), 1)
-        self.assertEqual(result["creates"], 4)
+        self.assertEqual(result["creates"], 5)
         self.assertFalse(result["deployment_authorized"])
 
     def test_classifier_rejects_public_ip_property_deletion_or_extra_delta(self):
