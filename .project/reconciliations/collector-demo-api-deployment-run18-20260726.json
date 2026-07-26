@@ -20,9 +20,9 @@
   },
   "azure_context": {
     "subscription_name": "Azure for Students",
-    "subscription_sha256": "65b6a7824bd5b8037892d9668d83fc08739c0aac13fbc7ae189c205e47d43b0c",
-    "tenant_sha256": "77ebff4ce2f49015b0bcc0c28414d1341bc7c7ed993b7242b8f34d19ad2a443e",
-    "service_principal_sha256": "11e44afe11f8a4acace2b680e7a58f7b5d84fb4c9e53d6d1f08ec6b893538e40",
+    "subscription_sha256": "8f27aec6b3012cf0d4a85d3859872f0daf34e014860650c7c2b3446cd3db0b7f",
+    "tenant_sha256": "26ba6e04f1a9cde8b97b64734498f4cbe81d5dcbf7b0f451d81570817c2967bc",
+    "service_principal_sha256": "f4c14387ae3302e224bd7e53300425069bd392c269b84e2678820e7a61e8d3f2",
     "resource_group": "rg-servicetracer-dev-westus2",
     "location": "westus2"
   },
