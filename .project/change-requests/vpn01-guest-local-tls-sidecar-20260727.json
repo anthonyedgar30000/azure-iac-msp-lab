@@ -1,0 +1,92 @@
+{
+  "schema_version": "project.guest-local-validation-request.v1",
+  "request_id": "vpn01-guest-local-tls-sidecar-20260727",
+  "status": "authorized_repository_only",
+  "authorized_by": "user confirmation: Yes",
+  "tracking_issue": 167,
+  "recorded_on": "2026-07-27",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "15346792d5905b3d00db8bc6a7a48a879f359ae6",
+    "working_branch": "test/vpn01-guest-local-tls-sidecar",
+    "superseded_pull_request": 166,
+    "local_working_tree": "not_observed_connector_backed_repository_changes"
+  },
+  "intended_architecture": {
+    "azure_vm": "vm-vpn01-mst-dev",
+    "guest_os": "Ubuntu 24.04 LTS",
+    "production_service": "servicetracer-demo-backend.service",
+    "production_listener": "TCP/443",
+    "temporary_service": "servicetracer-demo-backend-canary.service",
+    "temporary_listener": "TCP/8443",
+    "temporary_root": "/opt/servicetracer-demo-canary",
+    "test_transport": "loopback only",
+    "cleanup": "mandatory before terminal success"
+  },
+  "authorized_repository_changes": {
+    "branch": true,
+    "workflow_dispatch_definition": true,
+    "workflow_contract_tests": true,
+    "project_evidence": true,
+    "draft_pull_request": true,
+    "close_superseded_pull_request": true
+  },
+  "explicit_exclusions": {
+    "workflow_dispatch": false,
+    "merge_to_main": false,
+    "azure_authentication": false,
+    "azure_query": false,
+    "azure_guest_mutation": false,
+    "production_service_file_change": false,
+    "production_service_restart": false,
+    "production_listener_change": false,
+    "ufw_change": false,
+    "azure_network_change": false,
+    "load_balancer_probe_change": false,
+    "vpn02_access": false,
+    "frontend_transaction": false,
+    "azure_resource_creation": false
+  },
+  "future_dispatch_contract": {
+    "requires_new_explicit_authorization": true,
+    "target_vm": "vm-vpn01-mst-dev",
+    "allowed_guest_mutations": [
+      "create temporary canary directory",
+      "create temporary canary systemd unit",
+      "start temporary canary service on TCP/8443",
+      "run loopback HTTPS and raw TCP tests",
+      "stop and remove temporary canary service and files",
+      "systemctl daemon-reload only to register and retire the temporary unit"
+    ],
+    "required_integrity_checks": [
+      "production service active before test",
+      "production backend and unit hashes captured before test",
+      "production service active after cleanup",
+      "production backend and unit hashes unchanged after cleanup",
+      "TCP/8443 closed after cleanup"
+    ]
+  },
+  "validation_contract": [
+    "exact repaired backend source renders and compiles",
+    "temporary canary service becomes active",
+    "loopback HTTPS health returns the expected canary payload",
+    "twelve raw TCP connections without TLS data do not starve valid HTTPS",
+    "listener queue remains below backlog",
+    "named checkpoint evidence is preserved",
+    "temporary unit and files are removed",
+    "production service and hashes remain unchanged"
+  ],
+  "cost_and_quota": {
+    "new_resources": "none",
+    "recurring_cost_delta_CAD": 0,
+    "quota_delta": "none"
+  },
+  "failure_behavior": "Stop, run mandatory canary cleanup, verify production integrity, preserve guest output, and do not retry or touch VPN-02.",
+  "claim_boundaries": [
+    "workflow_created != workflow_dispatched",
+    "guest_local_sidecar_passed != production_service_updated",
+    "production_integrity_preserved != Azure_probe_recovered",
+    "temporary_listener_healthy != load_balancer_path_validated"
+  ]
+}
