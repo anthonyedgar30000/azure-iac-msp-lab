@@ -1,0 +1,93 @@
+{
+  "schema_version": "project.correlation-identity-deployment-request.v1",
+  "request_id": "correlation-identity-run1",
+  "issued_at": "2026-07-27T18:15:00-04:00",
+  "valid_until": "2026-07-28T18:15:00-04:00",
+  "status": "authorized_unconsumed",
+  "authorized_by": {
+    "authority": "user",
+    "instruction": "Stop being so perfect just fix the remaining issue",
+    "interpretation": "Execute one governed deployment of the exact CI-tested correlation identity fix and one independent live verification without retry or automatic rollback."
+  },
+  "tracking_issue": 179,
+  "source": {
+    "repair_pull_request": 178,
+    "exact_head": "0b6b5322f25b3d0289f6c0febdcfd800ea4b909a",
+    "merge_commit": "e2b0aee4c4f9e0042036042d7892b7d51ec17e2e",
+    "ci_run_id": 30309238071,
+    "ci_conclusion": "success"
+  },
+  "execution": {
+    "workflow": ".github/workflows/collector-demo-api.yml",
+    "dispatch_ref": "main",
+    "operation": "deploy",
+    "reviewed_commit": "0b6b5322f25b3d0289f6c0febdcfd800ea4b909a",
+    "environment": "dev",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "prefix": "mst",
+    "dns_label": "st-demo-api-aeg30000",
+    "allowed_origin": "https://anthonyedgar30000.github.io",
+    "confirmation": "COLLECTOR-DEMO-API:deploy:rg-servicetracer-dev-westus2:st-demo-api-aeg30000"
+  },
+  "preconditions": {
+    "fresh_subscription_and_tenant_observation_required": true,
+    "fresh_resource_group_region_vm_lb_extension_lock_quota_observation_required": true,
+    "fresh_arm_validation_required": true,
+    "fresh_full_resource_payloads_what_if_required": true,
+    "what_if_must_remain_within_existing_collector_scope": true,
+    "current_live_source_expected": "ea34e8cb98ce703552cbccedb4c44d41d6185e86",
+    "target_live_source": "0b6b5322f25b3d0289f6c0febdcfd800ea4b909a"
+  },
+  "authority": {
+    "attempt_limit": 1,
+    "consumed_when": "The governed deployment workflow dispatch is accepted, regardless of terminal outcome.",
+    "renewable": false,
+    "transferable": false,
+    "automatic_retry_authorized": false,
+    "rollback_authorized": false,
+    "rbac_mutation_authorized": false,
+    "cleanup_authorized": false,
+    "base_infrastructure_mutation_authorized": false,
+    "collector_vm_resource_mutation_authorized": false,
+    "microsoft_web_mutation_authorized": false
+  },
+  "authorized_mutation_scope": {
+    "creates": 0,
+    "deletes": 0,
+    "replaces": 0,
+    "modifies": [
+      "/Microsoft.Compute/virtualMachines/vm-stcollector-mst-dev/extensions/servicetracer-demo-api",
+      "/Microsoft.Network/loadBalancers/lb-st-demo-api-mst-dev",
+      "/Microsoft.Network/loadBalancers/lb-st-demo-api-mst-dev/backendAddressPools/be-st-demo-api"
+    ]
+  },
+  "post_deployment_verification": {
+    "health_requests": 12,
+    "cors_preflight_required": true,
+    "correlated_post_required": true,
+    "transaction_attempts": 20,
+    "request_header_identity_required": true,
+    "request_body_identity_required": true,
+    "hosting_model_required": "collector_vm_systemd",
+    "verified_collector_identity_required": true,
+    "reviewed_source_identity_required": true,
+    "separate_frontend_diagnostics_required": true,
+    "browser_render_execution_claimed": false
+  },
+  "cost_and_quota": {
+    "new_resources_expected": 0,
+    "quota_delta_expected": 0,
+    "recurring_cost_delta_CAD_expected": 0,
+    "actual_cost_observation": "not_available_through_current_github_connector",
+    "workflow_quota_evidence_required": true
+  },
+  "claim_boundaries": [
+    "authorization != deployment_success",
+    "dispatch_accepted == grant_consumed",
+    "workflow_conclusion != live_service_truth",
+    "deployment_succeeded != transaction_correlation_verified",
+    "API_and_asset_verification != browser_DOM_render_verified",
+    "failed_attempt != renewed_authority"
+  ]
+}
