@@ -1,0 +1,70 @@
+{
+  "schema_version": "project.vpn-backend-guest-compact-plan.v1",
+  "plan_id": "vpn-backend-guest-compact-run2-plan-20260727",
+  "tracking_issue": 148,
+  "base_main": "b0083a763ab6d210145174de1b0802309bacf8c2",
+  "objective": "Observe compact, non-truncated guest evidence for cloud-init, systemd, TCP 443 listener state, recent service journal, and UFW on both VPN backend VMs.",
+  "scope": {
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "region": "westus2",
+    "virtual_machines": [
+      "vm-vpn01-mst-dev",
+      "vm-vpn02-mst-dev"
+    ]
+  },
+  "dependencies": [
+    "azure-lab GitHub environment",
+    "OIDC federation",
+    "Azure VM agent on both VMs",
+    "existing read-only guest evidence analyzer"
+  ],
+  "identity_and_permissions": {
+    "azure_authentication": true,
+    "vm_run_command": true,
+    "azure_mutation": false,
+    "guest_mutation": false
+  },
+  "network_paths": [
+    "GitHub Actions to Azure control plane",
+    "Azure VM agent to each guest"
+  ],
+  "security_controls": [
+    "one attempt",
+    "exact target VMs",
+    "read-only commands",
+    "no SSH",
+    "no restart",
+    "no firewall changes",
+    "no automatic retry",
+    "artifact checksums"
+  ],
+  "cost_implications": "Negligible GitHub Actions and Azure control-plane/VM-agent diagnostic usage; no new Azure resources.",
+  "deployment_method": "Merge a one-shot path-triggered GitHub Actions workflow after exact-head CI passes.",
+  "validation": [
+    "ordinary CI passes at exact PR head",
+    "workflow records grant consumption",
+    "one compact RunShellScript invocation succeeds per VM",
+    "artifact contains both raw Run Command envelopes and deterministic diagnosis",
+    "terminal result is posted to issue 148"
+  ],
+  "expected_outputs": [
+    "cloud-init state",
+    "systemd active/enabled/result state",
+    "current TCP 443 listener observation",
+    "bounded journal tail",
+    "UFW state",
+    "evidence manifest and SHA-256 sums"
+  ],
+  "failure_and_rollback": {
+    "failure": "Stop after the single attempt and upload partial evidence.",
+    "rollback": "Not applicable because the operation is read-only."
+  },
+  "cleanup": "No Azure cleanup required. The one-shot workflow remains as historical evidence and cannot retrigger without the unique request path changing again.",
+  "evidence_to_capture": [
+    "exact main and PR head SHAs",
+    "CI run",
+    "guest-inspection workflow run",
+    "artifact ID and digest",
+    "issue start and terminal comments"
+  ]
+}
