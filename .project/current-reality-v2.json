@@ -1,1 +1,216 @@
-{"schema_version":"project.current-reality.v2","project":"Azure IaC MSP Lab","recorded_at":"2026-07-27T08:37:39-04:00","repository":"anthonyedgar30000/azure-iac-msp-lab","repository_state":{"default_branch":"main","observed_head":"f6e79818150d72b75d1e4f25be172e6dc577114d","latest_merged_pull_request":137,"open_pull_requests_observed":[],"observation_boundary":"Observed after PR #137 fast-forwarded the verified preflight promotion and finite deployment grant. Deployment run 19 then consumed that grant and failed closed.","exact_source_head":"f6e79818150d72b75d1e4f25be172e6dc577114d","exact_source_ci_run_id":30224641320,"exact_source_ci_conclusion":"success","merge_commit_ci":"same_exact_head_ci","local_working_tree":"not_observed","merge_observation":{"pull_request":137,"merge_commit":"f6e79818150d72b75d1e4f25be172e6dc577114d","human_or_external_merge_observed":false,"assistant_merge_action_performed":true,"merge_method":"fast_forward"}},"historical_snapshot":{"path":".project/current-reality.json","purpose":"Preserve the PR #92/#93 historical snapshot.","current_authority":false},"evidence_anchors":{"run18_deployment":".project/reconciliations/collector-demo-api-deployment-run18-20260726.json","run18_workflow_run_id":30196388398,"run18_artifact_id":8630260279,"run18_artifact_digest":"sha256:1f97be3c519d547871cc990e010013259dfd3c2e263f263653c2c4035340eb9e","provenance_preflight":".project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json","provenance_preflight_run_id":30206242759,"provenance_preflight_artifact_id":8633143093,"run19_deployment":".project/reconciliations/collector-provenance-deployment-run19-20260726.json","run19_workflow_run_id":30224770178,"run19_workflow_job_id":89853061733,"run19_artifact_id":8638260753,"run19_artifact_digest":"sha256:3cd4993461de1545bc52885bbf8118d74f861d651f5aac692e4e06e4b3f16fab","run19_manifest_payloads_verified":44,"run19_manifest_payload_failures":0},"collector_demo_api":{"observation":{"source":"verified_workflow_artifact","subscription_name":"Azure for Students","identity_identifiers":"raw_ids_not_promoted","resource_group":"rg-servicetracer-dev-westus2","location":"westus2","latest_operation":"deploy","latest_run_id":30224770178,"azure_login_succeeded":true,"azure_mutation_performed":true},"preflight":{"run_id":30206242759,"decision_ready":true,"classifier_accepted":true,"what_if_counts":{"Ignore":24,"Modify":3,"NoChange":3,"Create":0,"Delete":0,"Replace":0},"month_to_date_cost_amount":4.03203831168191,"month_to_date_cost_currency":"CAD","remaining_Azure_for_Students_credit":"not_observed"},"deployment":{"latest_run_number":19,"attempted_source":"1677606ded960c951fa37f0fdbfae50ba4b3cc34","authorized":true,"authority_consumed":true,"performed":true,"succeeded":false,"network_reconciliation_succeeded":true,"extension_provisioning_succeeded":false,"rollback_performed":false,"runtime_verification_performed":false,"transaction_replay_performed":false,"automatic_retry_performed":false},"source_binding":{"last_verified_runtime_source":"98b092201053fd3592be157a24de6e623e6b74a6","attempted_source":"1677606ded960c951fa37f0fdbfae50ba4b3cc34","files_and_environment_replaced_with_attempted_source":true,"extension_force_update_tag":"1677606ded960c951fa37f0fdbfae50ba4b3cc34","running_process_source_after_run19":"not_observed","attempted_source_runtime_verified":false,"current_main":"f6e79818150d72b75d1e4f25be172e6dc577114d","current_main_deployed":false,"frontend_endpoint":"https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run"},"postdeployment_state":{"load_balancer_name":"lb-st-demo-api-mst-dev","load_balancer_provisioning_state":"Succeeded","backend_pool_name":"be-st-demo-api","backend_pool_provisioning_state":"Succeeded","backend_pool_address_count":1,"backend_pool_address_name":"collector","collector_private_ip":"10.20.40.10","vm_extension_name":"servicetracer-demo-api","vm_extension_provisioning_state":"Failed","parent_deployment_provisioning_state":"Failed","nested_deployment_provisioning_state":"Failed"},"runtime_evidence":{"last_verified_runtime_run_id":30196388398,"public_runtime_after_run19":"not_observed","health_after_run19":"not_observed","azure_host_identity_verified_live":false,"request_correlation_verified":false,"browser_transaction_verified":false,"claim_boundary":"The failed extension attempt changed source files and configuration but did not establish which process is currently serving the public endpoint."},"failure_classification":{"status":"deterministic_repository_lifecycle_defect","observed_error":"Azure host identity was not verified: {}","root_cause":"Missing explicit systemd service restart after replacing code, environment, and unit files.","repair_repository_implemented":true,"repair_deployed":false},"frontend_binding":{"configured_endpoint":"https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run","collector_golden_path_required":true,"github_pages_publication_verified":true,"base_api_health_seen_in_browser":true,"browser_transaction_verified":false},"provenance_monitor":{"repository_implemented":true,"expected_azure_host_committed":true,"request_correlation_contract_committed":true,"exact_source_runtime_deployed":false,"azure_host_identity_verified_live":false,"browser_rendering_verified":false}},"independent_demo_api":{"historical_snapshot":"time_bounded_2026-07-25","collector_golden_path":false},"canonical_distinctions":["declared_in_code != deployed_in_azure","deployment_succeeded != service_validated","resource_exists != securely_configured","RBAC_assignment != effective_least_privilege","monitoring_enabled != alerts_verified","backup_configured != recovery_tested","high_availability != disaster_recovery","estimated_cost != actual_cost","not_observed != false","source_silence != contradiction","verification_status != truth_value","files_replaced != running_process_restarted","failed_attempt != authorization_to_retry"],"authority":{"repository_reconciliation_authorized":true,"restart_repair_repository_change_authorized":true,"draft_pull_request_authorized":true,"ordinary_pull_request_ci_authorized":true,"pull_request_merge_authorized":true,"workflow_dispatch_authorized":false,"azure_authentication_authorized":false,"azure_query_authorized":false,"azure_mutation_authorized":false,"deployment_authorized":false,"verify_operation_authorized":false,"transaction_replay_authorized":false,"rollback_authorized":false,"cleanup_authorized":false,"rbac_mutation_authorized":false,"browser_verification_authorized":false},"next_gate":{"operation":"review the restart repair at an exact source, capture fresh Azure state and FullResourcePayloads What-If, then obtain a new one-shot non-renewing deployment grant","deployment_status":"run19_failed_closed_restart_repair_repository_only","required":["merge exact-head green restart repair","capture fresh Azure state, cost, quota, locks, and extension state","capture fresh What-If for the repaired exact source","obtain a new explicit one-shot deployment and rollback decision","verify live Azure host identity, exact source, CORS, request correlation, and browser rendering after deployment"]}}
+{
+  "schema_version": "project.current-reality.v2",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-27T09:22:25-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "repository_state": {
+    "default_branch": "main",
+    "observed_head": "bd1ef50451c85d9f0e9e77c9ac54882d44940933",
+    "latest_merged_pull_request": 138,
+    "open_pull_requests_observed": [
+      139
+    ],
+    "observation_boundary": "Observed after PR #138 merged the repository-only authority-expiry reconciliation. PR #139 is the active reconciliation for verified run-19 deployment evidence and the repository service-restart repair.",
+    "exact_source_head": "db2c95d279f06f379c13b4cd8664518eda417843",
+    "exact_source_ci_run_id": 30267618707,
+    "exact_source_ci_conclusion": "success",
+    "merge_commit_ci": "not_observed",
+    "local_working_tree": "not_observed",
+    "merge_observation": {
+      "pull_request": 138,
+      "merge_commit": "bd1ef50451c85d9f0e9e77c9ac54882d44940933",
+      "source_head": "db2c95d279f06f379c13b4cd8664518eda417843",
+      "human_or_external_merge_observed": true,
+      "assistant_merge_action_performed": false,
+      "merge_actor": "anthonyedgar30000",
+      "prior_merge_authority": "not_resolved"
+    }
+  },
+  "historical_snapshot": {
+    "path": ".project/current-reality.json",
+    "purpose": "Preserve the PR #92/#93 historical snapshot.",
+    "current_authority": false
+  },
+  "evidence_anchors": {
+    "run18_deployment": ".project/reconciliations/collector-demo-api-deployment-run18-20260726.json",
+    "run18_workflow_run_id": 30196388398,
+    "run18_artifact_id": 8630260279,
+    "run18_artifact_digest": "sha256:1f97be3c519d547871cc990e010013259dfd3c2e263f263653c2c4035340eb9e",
+    "provenance_preflight": ".project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json",
+    "provenance_preflight_run_id": 30206242759,
+    "provenance_preflight_artifact_id": 8633143093,
+    "pr137_merge_commit": "f6e79818150d72b75d1e4f25be172e6dc577114d",
+    "pr137_exact_source_ci_run_id": 30224641320,
+    "pr137_exact_source_ci_conclusion": "success",
+    "pr138_merge_commit": "bd1ef50451c85d9f0e9e77c9ac54882d44940933",
+    "pr138_exact_source_head": "db2c95d279f06f379c13b4cd8664518eda417843",
+    "pr138_exact_source_ci_run_id": 30267618707,
+    "pr138_exact_source_ci_conclusion": "success",
+    "pr138_merge_commit_ci": "not_observed",
+    "prior_authorization_resolution": ".project/reconciliations/post-pr137-provenance-authority-expiry-20260727.json",
+    "run19_deployment": ".project/reconciliations/collector-provenance-deployment-run19-20260726.json",
+    "run19_workflow_run_id": 30224770178,
+    "run19_workflow_job_id": 89853061733,
+    "run19_artifact_id": 8638260753,
+    "run19_artifact_digest": "sha256:3cd4993461de1545bc52885bbf8118d74f861d651f5aac692e4e06e4b3f16fab",
+    "run19_manifest_payloads_verified": 44,
+    "run19_manifest_payload_failures": 0
+  },
+  "collector_demo_api": {
+    "observation": {
+      "source": "verified_workflow_artifact",
+      "subscription_name": "Azure for Students",
+      "identity_identifiers": "raw_ids_not_promoted",
+      "resource_group": "rg-servicetracer-dev-westus2",
+      "location": "westus2",
+      "latest_operation": "deploy",
+      "latest_run_id": 30224770178,
+      "azure_login_succeeded": true,
+      "azure_mutation_performed": true
+    },
+    "preflight": {
+      "run_id": 30206242759,
+      "decision_ready": true,
+      "classifier_accepted": true,
+      "what_if_counts": {
+        "Ignore": 24,
+        "Modify": 3,
+        "NoChange": 3,
+        "Create": 0,
+        "Delete": 0,
+        "Replace": 0
+      },
+      "month_to_date_cost_amount": 4.03203831168191,
+      "month_to_date_cost_currency": "CAD",
+      "remaining_Azure_for_Students_credit": "not_observed"
+    },
+    "deployment": {
+      "latest_run_number": 19,
+      "attempted_source": "1677606ded960c951fa37f0fdbfae50ba4b3cc34",
+      "authorized": true,
+      "authority_consumed": true,
+      "performed": true,
+      "succeeded": false,
+      "network_reconciliation_succeeded": true,
+      "extension_provisioning_succeeded": false,
+      "rollback_performed": false,
+      "runtime_verification_performed": false,
+      "transaction_replay_performed": false,
+      "automatic_retry_performed": false
+    },
+    "provenance_deployment_authorization": {
+      "grant_id": "collector-provenance-deploy-1677606-20260726",
+      "status": "consumed",
+      "renewable": false,
+      "transferable": false,
+      "deployment_run_id": 30224770178,
+      "new_authority_required": true,
+      "retry_authorized": false,
+      "rollback_authorized": false
+    },
+    "source_binding": {
+      "last_verified_runtime_source": "98b092201053fd3592be157a24de6e623e6b74a6",
+      "attempted_source": "1677606ded960c951fa37f0fdbfae50ba4b3cc34",
+      "files_and_environment_replaced_with_attempted_source": true,
+      "extension_force_update_tag": "1677606ded960c951fa37f0fdbfae50ba4b3cc34",
+      "running_process_source_after_run19": "not_observed",
+      "attempted_source_runtime_verified": false,
+      "current_main": "bd1ef50451c85d9f0e9e77c9ac54882d44940933",
+      "current_main_deployed": false,
+      "frontend_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run"
+    },
+    "postdeployment_state": {
+      "load_balancer_name": "lb-st-demo-api-mst-dev",
+      "load_balancer_provisioning_state": "Succeeded",
+      "backend_pool_name": "be-st-demo-api",
+      "backend_pool_provisioning_state": "Succeeded",
+      "backend_pool_address_count": 1,
+      "backend_pool_address_name": "collector",
+      "collector_private_ip": "10.20.40.10",
+      "vm_extension_name": "servicetracer-demo-api",
+      "vm_extension_provisioning_state": "Failed",
+      "parent_deployment_provisioning_state": "Failed",
+      "nested_deployment_provisioning_state": "Failed"
+    },
+    "runtime_evidence": {
+      "last_verified_runtime_run_id": 30196388398,
+      "public_runtime_after_run19": "not_observed",
+      "health_after_run19": "not_observed",
+      "azure_host_identity_verified_live": false,
+      "request_correlation_verified": false,
+      "browser_transaction_verified": false,
+      "claim_boundary": "The failed extension attempt changed source files and configuration but did not establish which process is currently serving the public endpoint."
+    },
+    "failure_classification": {
+      "status": "deterministic_repository_lifecycle_defect",
+      "observed_error": "Azure host identity was not verified: {}",
+      "root_cause": "Missing explicit systemd service restart after replacing code, environment, and unit files.",
+      "repair_repository_implemented": true,
+      "repair_deployed": false
+    },
+    "frontend_binding": {
+      "configured_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+      "collector_golden_path_required": true,
+      "github_pages_publication_verified": true,
+      "base_api_health_seen_in_browser": true,
+      "browser_transaction_verified": false
+    },
+    "provenance_monitor": {
+      "repository_implemented": true,
+      "expected_azure_host_committed": true,
+      "request_correlation_contract_committed": true,
+      "exact_source_runtime_deployed": false,
+      "azure_host_identity_verified_live": false,
+      "browser_rendering_verified": false
+    }
+  },
+  "independent_demo_api": {
+    "historical_snapshot": "time_bounded_2026-07-25",
+    "collector_golden_path": false
+  },
+  "canonical_distinctions": [
+    "declared_in_code != deployed_in_azure",
+    "deployment_succeeded != service_validated",
+    "resource_exists != securely_configured",
+    "RBAC_assignment != effective_least_privilege",
+    "monitoring_enabled != alerts_verified",
+    "backup_configured != recovery_tested",
+    "high_availability != disaster_recovery",
+    "estimated_cost != actual_cost",
+    "not_observed != false",
+    "source_silence != contradiction",
+    "verification_status != truth_value",
+    "files_replaced != running_process_restarted",
+    "network_reconciliation_succeeded != deployment_succeeded",
+    "failed_attempt != authorization_to_retry",
+    "PR_head_CI != merge_commit_CI"
+  ],
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "restart_repair_repository_change_authorized": true,
+    "draft_pull_request_authorized": true,
+    "ordinary_pull_request_ci_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "deployment_authorized": false,
+    "verify_operation_authorized": false,
+    "transaction_replay_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false,
+    "rbac_mutation_authorized": false,
+    "browser_verification_authorized": false
+  },
+  "next_gate": {
+    "operation": "review exact-head CI for PR #139 and obtain a separate merge decision",
+    "deployment_status": "run19_failed_closed_restart_repair_repository_only",
+    "after_merge": [
+      "capture fresh Azure state, cost, quota, locks, and extension state",
+      "capture a fresh FullResourcePayloads What-If for the repaired exact source",
+      "obtain a new explicit one-shot, non-renewing deployment and rollback decision",
+      "verify live Azure host identity, exact source, CORS, request correlation, and browser rendering after deployment"
+    ]
+  }
+}
