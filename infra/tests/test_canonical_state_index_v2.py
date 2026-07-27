@@ -105,7 +105,7 @@ class CanonicalStateIndexV2Tests(unittest.TestCase):
     def test_historical_post_merge_record_remains_fail_closed(self):
         self.assertEqual(
             self.post_merge["repository_observation"]["main"],
-            "81df65ca7d4cd77fc89aefb2fac128ead456df7d",
+            "2f5b60c1d8328d13823e2cc1def09e6be384ecb5",
         )
         self.assertTrue(self.post_merge["provenance_monitor"]["repository_merged"])
         self.assertFalse(self.post_merge["provenance_monitor"]["exact_source_runtime_deployed"])
