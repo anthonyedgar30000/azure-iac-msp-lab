@@ -1,6 +1,7 @@
 {
   "schema_version": "project.repository-generator-trigger.v1",
   "generator": ".github/workflows/generate-collector-analysis-rate-limit-fix.yml",
+  "generator_revision": "133ef6ef96b9bd370fbfdaeb4cc1c06b661e5ce7",
   "tracking_issue": 171,
   "authorized_by": "user instruction: Proceed",
   "purpose": "Generate the exact repository implementation PR without Azure access or mutation.",
