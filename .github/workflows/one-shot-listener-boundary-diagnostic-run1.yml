@@ -1,0 +1,287 @@
+name: One-shot listener-boundary diagnostic run 1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.project/diagnostic-requests/listener-boundary-run1-20260727.json'
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+
+concurrency:
+  group: one-shot-listener-boundary-diagnostic-run1
+  cancel-in-progress: false
+
+env:
+  REQUEST_FILE: .project/diagnostic-requests/listener-boundary-run1-20260727.json
+  ARTIFACT_DIR: listener-boundary-diagnostic-run1-evidence
+  GH_TOKEN: ${{ github.token }}
+  AZURE_CORE_ONLY_SHOW_ERRORS: true
+
+jobs:
+  diagnose:
+    name: Inspect Azure listener boundary without guest access or mutation
+    if: github.repository == 'anthonyedgar30000/azure-iac-msp-lab'
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact diagnostic request
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate finite read-only authority
+        id: request
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$REQUEST_FILE"
+          jq -e '
+            .schema_version == "project.listener-boundary-diagnostic-request.v1" and
+            .request_id == "listener-boundary-run1-20260727" and
+            .status == "authorized_unconsumed" and
+            .tracking_issue == 144 and
+            .execution.operation == "read_only_diagnostic" and
+            .execution.resource_group == "rg-servicetracer-dev-westus2" and
+            .execution.location == "westus2" and
+            .execution.load_balancer == "lb-remote-access-mst-dev" and
+            .execution.expected_backend_ips == ["10.20.10.11", "10.20.10.12"] and
+            .execution.expected_probe_protocol == "Tcp" and
+            .execution.expected_probe_port == 443 and
+            .authority.attempt_limit == 1 and
+            .authority.renewable == false and
+            .authority.transferable == false and
+            .authority.azure_authentication_authorized == true and
+            .authority.azure_read_only_queries_authorized == true and
+            .authority.effective_nsg_query_authorized == true and
+            .authority.cost_quota_lock_observation_authorized == true and
+            .authority.artifact_publication_authorized == true and
+            .authority.azure_mutation_authorized == false and
+            .authority.guest_command_authorized == false and
+            .authority.ssh_authorized == false and
+            .authority.service_restart_authorized == false and
+            .authority.deployment_authorized == false and
+            .authority.automatic_retry_authorized == false and
+            .authority.rollback_authorized == false and
+            .authority.rbac_mutation_authorized == false and
+            .authority.cleanup_authorized == false
+          ' "$REQUEST_FILE" > /dev/null
+
+          valid_until="$(jq -r '.valid_until' "$REQUEST_FILE")"
+          (( $(date -u +%s) <= $(date -u -d "$valid_until" +%s) ))
+          base_main="$(jq -r '.repository.base_main' "$REQUEST_FILE")"
+          git cat-file -e "${base_main}^{commit}"
+          git merge-base --is-ancestor "$base_main" "$GITHUB_SHA"
+
+          mkdir -p "$ARTIFACT_DIR"
+          cp "$REQUEST_FILE" "$ARTIFACT_DIR/request.json"
+          echo "tracking_issue=$(jq -r '.tracking_issue' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "resource_group=$(jq -r '.execution.resource_group' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "location=$(jq -r '.execution.location' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "load_balancer=$(jq -r '.execution.load_balancer' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+
+      - name: Validate deterministic analyzer before Azure login
+        run: |
+          set -euo pipefail
+          python -m unittest infra.tests.test_analyze_listener_boundary_evidence -v
+
+      - name: Record grant consumption
+        env:
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracking_issue }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          body=$(cat <<EOF
+          ## Listener diagnostic run started
+
+          The finite read-only diagnostic grant is now **consumed**.
+
+          - diagnostic commit: \`$GITHUB_SHA\`
+          - Azure mutation authorized: **false**
+          - guest command authorized: **false**
+          - automatic retry authorized: **false**
+          EOF
+          )
+          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" -f body="$body" > /dev/null
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Collect read-only Azure configuration and operational evidence
+        env:
+          RESOURCE_GROUP: ${{ steps.request.outputs.resource_group }}
+          LOCATION: ${{ steps.request.outputs.location }}
+          LOAD_BALANCER: ${{ steps.request.outputs.load_balancer }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          az account show --output json > "$ARTIFACT_DIR/account-raw.json"
+          subscription_id="$(jq -r '.id' "$ARTIFACT_DIR/account-raw.json")"
+          tenant_id="$(jq -r '.tenantId' "$ARTIFACT_DIR/account-raw.json")"
+          jq -n \
+            --arg name "$(jq -r '.name' "$ARTIFACT_DIR/account-raw.json")" \
+            --arg state "$(jq -r '.state' "$ARTIFACT_DIR/account-raw.json")" \
+            --arg subscriptionHash "$(printf '%s' "$subscription_id" | sha256sum | cut -d' ' -f1)" \
+            --arg tenantHash "$(printf '%s' "$tenant_id" | sha256sum | cut -d' ' -f1)" \
+            '{name:$name,state:$state,subscription_id_sha256:$subscriptionHash,tenant_id_sha256:$tenantHash}' \
+            > "$ARTIFACT_DIR/account.json"
+          rm -f "$ARTIFACT_DIR/account-raw.json"
+
+          az group show --name "$RESOURCE_GROUP" --query '{name:name,location:location,provisioningState:properties.provisioningState,tags:tags}' --output json > "$ARTIFACT_DIR/resource-group.json"
+          az resource list --resource-group "$RESOURCE_GROUP" --query '[].{name:name,type:type,location:location,kind:kind}' --output json > "$ARTIFACT_DIR/resource-inventory.json"
+          az lock list --resource-group "$RESOURCE_GROUP" --query '[].{name:name,level:level,notes:notes,scope:id}' --output json > "$ARTIFACT_DIR/resource-locks.json"
+
+          az network lb show --resource-group "$RESOURCE_GROUP" --name "$LOAD_BALANCER" --output json > "$ARTIFACT_DIR/load-balancer.json"
+          az network lb probe list --resource-group "$RESOURCE_GROUP" --lb-name "$LOAD_BALANCER" --output json > "$ARTIFACT_DIR/load-balancer-probes.json"
+          az network lb rule list --resource-group "$RESOURCE_GROUP" --lb-name "$LOAD_BALANCER" --output json > "$ARTIFACT_DIR/load-balancer-rules.json"
+          az network lb address-pool list --resource-group "$RESOURCE_GROUP" --lb-name "$LOAD_BALANCER" --output json > "$ARTIFACT_DIR/load-balancer-pools.json"
+
+          az network nic list --resource-group "$RESOURCE_GROUP" --output json > "$ARTIFACT_DIR/network-interfaces.json"
+          az network nsg list --resource-group "$RESOURCE_GROUP" --output json > "$ARTIFACT_DIR/network-security-groups.json"
+          az network vnet list --resource-group "$RESOURCE_GROUP" --output json > "$ARTIFACT_DIR/virtual-networks.json"
+          az vm list --resource-group "$RESOURCE_GROUP" --show-details --output json > "$ARTIFACT_DIR/virtual-machines.json"
+
+          az monitor metrics list \
+            --resource "$(jq -r '.id' "$ARTIFACT_DIR/load-balancer.json")" \
+            --metric DipAvailability \
+            --aggregation Average \
+            --interval PT1M \
+            --filter "BackendIPAddress eq '*' and BackendPort eq '*'" \
+            --output json > "$ARTIFACT_DIR/probe-metrics.json"
+
+          printf '{}\n' > "$ARTIFACT_DIR/effective-nsg.json"
+          for ip in 10.20.10.11 10.20.10.12; do
+            nic_name="$(jq -r --arg ip "$ip" '[.[] | select(any(.ipConfigurations[]?; .privateIPAddress == $ip)) | .name][0] // empty' "$ARTIFACT_DIR/network-interfaces.json")"
+            [[ -n "$nic_name" ]] || continue
+            if az network nic list-effective-nsg --resource-group "$RESOURCE_GROUP" --name "$nic_name" --output json > "$ARTIFACT_DIR/effective-${nic_name}.json" 2> "$ARTIFACT_DIR/effective-${nic_name}.error.txt"; then
+              jq --arg name "$nic_name" --slurpfile payload "$ARTIFACT_DIR/effective-${nic_name}.json" '. + {($name): $payload[0]}' "$ARTIFACT_DIR/effective-nsg.json" > "$ARTIFACT_DIR/effective-nsg.next.json"
+            else
+              jq --arg name "$nic_name" --rawfile error "$ARTIFACT_DIR/effective-${nic_name}.error.txt" '. + {($name): {status:"not_observed",error:$error}}' "$ARTIFACT_DIR/effective-nsg.json" > "$ARTIFACT_DIR/effective-nsg.next.json"
+            fi
+            mv "$ARTIFACT_DIR/effective-nsg.next.json" "$ARTIFACT_DIR/effective-nsg.json"
+            rm -f "$ARTIFACT_DIR/effective-${nic_name}.json" "$ARTIFACT_DIR/effective-${nic_name}.error.txt"
+          done
+
+          printf '{}\n' > "$ARTIFACT_DIR/vm-instance-views.json"
+          for vm_name in $(jq -r '[.[] | select((.privateIps // "") | test("(^|,)10\\.20\\.10\\.(11|12)(,|$)")) | .name] | .[]' "$ARTIFACT_DIR/virtual-machines.json"); do
+            if az vm get-instance-view --resource-group "$RESOURCE_GROUP" --name "$vm_name" --output json > "$ARTIFACT_DIR/instance-${vm_name}.json" 2> "$ARTIFACT_DIR/instance-${vm_name}.error.txt"; then
+              jq --arg name "$vm_name" --slurpfile payload "$ARTIFACT_DIR/instance-${vm_name}.json" '. + {($name): $payload[0]}' "$ARTIFACT_DIR/vm-instance-views.json" > "$ARTIFACT_DIR/vm-instance-views.next.json"
+            else
+              jq --arg name "$vm_name" --rawfile error "$ARTIFACT_DIR/instance-${vm_name}.error.txt" '. + {($name): {status:"not_observed",error:$error}}' "$ARTIFACT_DIR/vm-instance-views.json" > "$ARTIFACT_DIR/vm-instance-views.next.json"
+            fi
+            mv "$ARTIFACT_DIR/vm-instance-views.next.json" "$ARTIFACT_DIR/vm-instance-views.json"
+            rm -f "$ARTIFACT_DIR/instance-${vm_name}.json" "$ARTIFACT_DIR/instance-${vm_name}.error.txt"
+          done
+
+          month_start="$(date -u +%Y-%m-01)"
+          tomorrow="$(date -u -d tomorrow +%Y-%m-%d)"
+          if ! az consumption usage list --start-date "$month_start" --end-date "$tomorrow" --query '[?resourceGroup==`rg-servicetracer-dev-westus2`].{pretaxCost:pretaxCost,currency:currency,instanceName:instanceName,meterCategory:meterDetails.meterCategory}' --output json > "$ARTIFACT_DIR/month-to-date-usage.json" 2> "$ARTIFACT_DIR/month-to-date-usage.error.txt"; then
+            jq -n --rawfile error "$ARTIFACT_DIR/month-to-date-usage.error.txt" '{status:"not_observed",error:$error}' > "$ARTIFACT_DIR/month-to-date-usage.json"
+          fi
+          if ! az vm list-usage --location "$LOCATION" --output json > "$ARTIFACT_DIR/compute-usage.json" 2> "$ARTIFACT_DIR/compute-usage.error.txt"; then
+            jq -n --rawfile error "$ARTIFACT_DIR/compute-usage.error.txt" '{status:"not_observed",error:$error}' > "$ARTIFACT_DIR/compute-usage.json"
+          fi
+          if ! az network list-usages --location "$LOCATION" --output json > "$ARTIFACT_DIR/network-usage.json" 2> "$ARTIFACT_DIR/network-usage.error.txt"; then
+            jq -n --rawfile error "$ARTIFACT_DIR/network-usage.error.txt" '{status:"not_observed",error:$error}' > "$ARTIFACT_DIR/network-usage.json"
+          fi
+          rm -f "$ARTIFACT_DIR"/*.error.txt
+
+          python - "$ARTIFACT_DIR" "$subscription_id" "$tenant_id" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          root = Path(sys.argv[1])
+          replacements = {sys.argv[2]: "<subscription-redacted>", sys.argv[3]: "<tenant-redacted>"}
+
+          def sanitize(value):
+              if isinstance(value, dict):
+                  return {key: sanitize(item) for key, item in value.items()}
+              if isinstance(value, list):
+                  return [sanitize(item) for item in value]
+              if isinstance(value, str):
+                  for old, new in replacements.items():
+                      value = value.replace(old, new)
+                  return value
+              return value
+
+          for path in root.glob("*.json"):
+              try:
+                  payload = json.loads(path.read_text(encoding="utf-8"))
+              except json.JSONDecodeError:
+                  continue
+              path.write_text(json.dumps(sanitize(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          PY
+
+      - name: Analyze the observed boundary deterministically
+        run: |
+          set -euo pipefail
+          python infra/scripts/analyze_listener_boundary_evidence.py \
+            --evidence-dir "$ARTIFACT_DIR" \
+            --output-json "$ARTIFACT_DIR/diagnosis.json" \
+            --output-md "$ARTIFACT_DIR/diagnosis.md"
+
+      - name: Write evidence manifest
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          find "$ARTIFACT_DIR" -maxdepth 1 -type f ! -name evidence-manifest.json ! -name sha256sums.txt -print0 \
+            | sort -z | xargs -0 -r sha256sum > "$ARTIFACT_DIR/sha256sums.txt"
+          jq -n \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg head_sha "$GITHUB_SHA" \
+            --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --rawfile sums "$ARTIFACT_DIR/sha256sums.txt" \
+            '{schema_version:"servicetracer.listener-boundary-diagnostic-evidence.v1",operation:"read_only_diagnostic",azure_mutation_performed:false,guest_command_performed:false,run_id:$run_id,run_attempt:$run_attempt,head_sha:$head_sha,generated_at:$generated_at,sha256sums:$sums}' \
+            > "$ARTIFACT_DIR/evidence-manifest.json"
+
+      - name: Upload read-only diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: listener-boundary-diagnostic-run1-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish terminal diagnostic result
+        if: always()
+        env:
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracking_issue }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          diagnosis="not_produced"
+          if [[ -f "$ARTIFACT_DIR/diagnosis.json" ]]; then
+            diagnosis="$(jq -c '{conclusion:.diagnosis.conclusion,candidate_boundaries:.diagnosis.candidate_boundaries,tcp_443_probe_observed:.diagnosis.tcp_443_probe_observed,both_backend_memberships_observed:.diagnosis.both_backend_memberships_observed,both_vms_observed_running:.diagnosis.both_vms_observed_running,both_effective_nsgs_allow_azure_load_balancer_tcp_443:.diagnosis.both_effective_nsgs_allow_azure_load_balancer_tcp_443,both_probe_metrics_unhealthy:.diagnosis.both_probe_metrics_unhealthy,exact_root_cause_claimed,azure_mutation_performed,guest_command_performed}' "$ARTIFACT_DIR/diagnosis.json")"
+          fi
+          body=$(cat <<EOF
+          ## Listener diagnostic terminal result
+
+          - workflow run: [$GITHUB_RUN_ID](https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)
+          - diagnostic commit: \`$GITHUB_SHA\`
+          - job status: **$JOB_STATUS**
+          - diagnosis: \`$diagnosis\`
+          - Azure mutation performed: **false**
+          - guest command performed: **false**
+          - automatic retry performed: **false**
+          EOF
+          )
+          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" -f body="$body" > /dev/null
