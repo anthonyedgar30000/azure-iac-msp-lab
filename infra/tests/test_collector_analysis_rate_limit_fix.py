@@ -27,8 +27,7 @@ class CollectorAnalysisRateLimitFixTests(unittest.TestCase):
         )
         self.assertIn("limit_req_status 429", analysis)
         self.assertIn("client_max_body_size 4k", analysis)
-        self.assertNotIn("location /api/ {
-        limit_req", source)
+        self.assertNotIn("location /api/ {\n        limit_req", source)
 
     def test_unknown_api_paths_fail_closed(self) -> None:
         source = INSTALLER.read_text(encoding="utf-8")
