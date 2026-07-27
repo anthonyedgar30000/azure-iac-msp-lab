@@ -2,16 +2,24 @@
   "schema_version": "project.collector-analysis-rate-limit-fix.v1",
   "request_id": "collector-analysis-rate-limit-fix-20260727",
   "tracking_issue": 171,
-  "status": "authorized_repository_repair",
+  "status": "authorized_repository_repair_and_single_deployment_pending",
   "authorized_by": "user instruction: Proceed",
   "recorded_on": "2026-07-27",
   "repository": {
     "name": "anthonyedgar30000/azure-iac-msp-lab",
     "base_branch": "main",
-    "base_commit": "9e87a930f262a5af2ee16a05a4fa5ef4bf7f3d25",
-    "working_branch": "fix/collector-analysis-rate-limit",
+    "base_commit": "16b73675415e74ad8593e04fa49958790f8bc36b",
+    "working_branch": "fix/collector-analysis-rate-limit-implementation",
+    "pull_request": 174,
     "open_pull_requests_observed_before_change": 0,
     "local_working_tree": "not_observed_connector_backed_repository_changes"
+  },
+  "generation_history": {
+    "reviewed_generator_pr": 172,
+    "trigger_pr": 173,
+    "trigger_pr_merged": false,
+    "generator_validation_claim_accepted": false,
+    "reason": "A shell-status defect allowed a malformed generated test to pass the generator wrapper; exact-head pull-request CI is the authoritative acceptance gate."
   },
   "observed_browser_boundary": {
     "collector_health_and_identity_verified": true,
