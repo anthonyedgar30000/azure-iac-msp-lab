@@ -1,0 +1,43 @@
+{
+  "schema_version": "project.vpn-backend-guest-inspection-plan.v1",
+  "recorded_at": "2026-07-27T11:44:27-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "base_main": "014f16cc974a5e248d00899334e3be93cfb60340",
+  "prior_evidence": {
+    "probe_run_id": 30278408467,
+    "listener_diagnostic_run_id": 30280839461,
+    "listener_diagnostic_artifact_id": 8658759627,
+    "listener_diagnostic_artifact_digest": "sha256:1eab8aa37307f8bc98640a1be8326c246a756ca006ffcfb471f3ef609e0514c6",
+    "observed_boundary": "guest_listener_or_guest_firewall_boundary_not_yet_observed"
+  },
+  "intended_operation": {
+    "type": "one_shot_read_only_guest_inspection",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "virtual_machines": [
+      "vm-vpn01-mst-dev",
+      "vm-vpn02-mst-dev"
+    ],
+    "service": "servicetracer-demo-backend.service",
+    "listener_port": 443
+  },
+  "security_and_authority": {
+    "azure_oidc": true,
+    "vm_agent_guest_command": true,
+    "ssh": false,
+    "file_write": false,
+    "service_restart": false,
+    "service_enable_disable": false,
+    "guest_firewall_change": false,
+    "deployment": false,
+    "rollback": false,
+    "automatic_retry": false
+  },
+  "validation": {
+    "commands_are_read_only": true,
+    "deterministic_analyzer_tested_before_azure_login": true,
+    "artifact_manifest_and_sha256sums_required": true,
+    "terminal_issue_comment_required": true
+  },
+  "failure_behavior": "Stop after the single attempt, preserve partial evidence, publish the terminal result, and require new authority for any retry or repair.",
+  "cleanup": "The diagnostic creates no Azure resources. The workflow and request remain as evidence-bearing repository history."
+}

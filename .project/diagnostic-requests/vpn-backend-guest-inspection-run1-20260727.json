@@ -1,0 +1,62 @@
+{
+  "schema_version": "project.vpn-backend-guest-inspection-request.v1",
+  "request_id": "vpn-backend-guest-inspection-run1-20260727",
+  "issued_at": "2026-07-27T11:44:27-04:00",
+  "valid_until": "2026-07-27T16:00:00-04:00",
+  "status": "authorized_unconsumed",
+  "authorized_by": {
+    "authority": "user",
+    "instruction": "Proceed",
+    "interpretation": "Execute one bounded read-only guest inspection on VPN-01 and VPN-02 after Azure control-plane diagnostics localized the remaining boundary to guest listener, service, cloud-init, or guest firewall state."
+  },
+  "tracking_issue": 146,
+  "repository": {
+    "base_main": "014f16cc974a5e248d00899334e3be93cfb60340",
+    "prior_probe_run_id": 30278408467,
+    "prior_listener_diagnostic_run_id": 30280839461,
+    "prior_listener_diagnostic_artifact_id": 8658759627,
+    "prior_listener_diagnostic_artifact_digest": "sha256:1eab8aa37307f8bc98640a1be8326c246a756ca006ffcfb471f3ef609e0514c6"
+  },
+  "execution": {
+    "operation": "read_only_guest_inspection",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "virtual_machines": [
+      "vm-vpn01-mst-dev",
+      "vm-vpn02-mst-dev"
+    ],
+    "service_name": "servicetracer-demo-backend.service",
+    "listener_port": 443,
+    "commands": [
+      "cloud-init status --long",
+      "systemctl status servicetracer-demo-backend.service --no-pager",
+      "systemctl is-active servicetracer-demo-backend.service",
+      "systemctl is-enabled servicetracer-demo-backend.service",
+      "ss -lntp filtered to TCP 443",
+      "journalctl -u servicetracer-demo-backend.service --no-pager -n 100",
+      "ufw status verbose"
+    ]
+  },
+  "authority": {
+    "attempt_limit": 1,
+    "renewable": false,
+    "transferable": false,
+    "azure_authentication_authorized": true,
+    "azure_guest_command_authorized": true,
+    "azure_read_only_queries_authorized": true,
+    "artifact_publication_authorized": true,
+    "azure_mutation_authorized": false,
+    "file_write_authorized": false,
+    "service_restart_authorized": false,
+    "service_enable_disable_authorized": false,
+    "package_change_authorized": false,
+    "guest_firewall_change_authorized": false,
+    "ssh_authorized": false,
+    "deployment_authorized": false,
+    "automatic_retry_authorized": false,
+    "rollback_authorized": false,
+    "rbac_mutation_authorized": false,
+    "cleanup_authorized": false
+  },
+  "consumption_rule": "The one-shot grant is consumed when the workflow begins Azure OIDC login or invokes the first VM guest diagnostic command, regardless of outcome."
+}
