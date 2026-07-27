@@ -1,0 +1,104 @@
+{
+  "schema_version": "project.reconciliation.v1",
+  "reconciliation_id": "probe-packet-observation-plan-20260727",
+  "status": "planned_authorized_unconsumed",
+  "tracking_issue": 160,
+  "base_main": "083efec273229b274e5103464cea72176c277933",
+  "request_file": ".project/diagnostic-requests/probe-packet-observation-run1-20260727.json",
+  "workflow_file": ".github/workflows/one-shot-probe-packet-observation-run1.yml",
+  "intended_architecture": {
+    "path": "Azure Load Balancer probe -> backend NIC -> guest UFW -> TCP/443 listener",
+    "observer": "Azure VM Run Command executing a bounded header-only tcpdump when already installed",
+    "targets": [
+      "vm-vpn01-mst-dev",
+      "vm-vpn02-mst-dev"
+    ],
+    "azure_scope": "rg-servicetracer-dev-westus2 / westus2",
+    "persistent_change": false
+  },
+  "dependencies": [
+    "existing azure-lab OIDC environment",
+    "both VMs running with Azure VM agent",
+    "existing load balancer probe-tcp-443-shallow",
+    "tcpdump already installed for packet-level observation"
+  ],
+  "identity_and_permissions": {
+    "github": [
+      "contents: read",
+      "id-token: write",
+      "issues: write"
+    ],
+    "azure": [
+      "read existing resource and metric state",
+      "invoke one RunShellScript command per authorized VM"
+    ],
+    "excluded": [
+      "RBAC mutation",
+      "resource mutation",
+      "Network Watcher capture creation"
+    ]
+  },
+  "network_paths": [
+    "168.63.129.16 -> 10.20.10.11:443",
+    "168.63.129.16 -> 10.20.10.12:443"
+  ],
+  "security_controls": [
+    "exact VM allowlist",
+    "exact Azure platform VIP and TCP/443 capture filter",
+    "96-byte snap length",
+    "no payload decoding",
+    "12-line packet limit",
+    "150-second timeout",
+    "no package installation",
+    "no guest or Azure mutation",
+    "non-renewing one-shot admission marker"
+  ],
+  "cost_implications": {
+    "expected": "negligible command and monitoring activity",
+    "new_resources": false,
+    "quota_change": false
+  },
+  "deployment_method": "Merge the exact green pull-request head; the request-file path triggers one push workflow on main.",
+  "validation": {
+    "repository": [
+      "ordinary exact-head CI",
+      "request and workflow boundary validation before Azure login"
+    ],
+    "live": [
+      "exact VM identity and private IP checks",
+      "load balancer probe contract check",
+      "service active and enabled",
+      "TCP/443 listener present",
+      "UFW active",
+      "bounded packet header observation",
+      "pre/post DipAvailability"
+    ]
+  },
+  "expected_outputs": [
+    "sanitized-account-context.json",
+    "resource-group.json",
+    "load-balancer.json",
+    "probe.json",
+    "backend-membership.json",
+    "pre-dip-availability.json",
+    "post-dip-availability.json",
+    "vm-vpn01-mst-dev-run-command.json",
+    "vm-vpn02-mst-dev-run-command.json",
+    "vm-vpn01-mst-dev-observation.txt",
+    "vm-vpn02-mst-dev-observation.txt",
+    "analysis.json",
+    "manifest.sha256"
+  ],
+  "failure_and_rollback": {
+    "failure": "Stop after the bounded attempt and preserve partial evidence.",
+    "automatic_retry": false,
+    "rollback": "Not applicable because the diagnostic performs no intended persistent change."
+  },
+  "cleanup": "No cleanup is authorized or required.",
+  "truth_boundaries": [
+    "packet_not_observed != packet_did_not_arrive",
+    "syn_observed != application_healthy",
+    "synack_observed != Azure_metric_healthy",
+    "diagnostic_completed != exact_root_cause_proven"
+  ]
+}
