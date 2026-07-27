@@ -50,14 +50,22 @@ class FrontendAzureProvenanceMonitorTests(unittest.TestCase):
         )
         self.assertNotIn("st-demo-api-vm-aeg30000", config["live_demo_api_url"])
 
-    def test_frontend_correlates_one_request_without_consuming_the_response(self) -> None:
+    def test_frontend_separates_request_and_collector_identity_proofs(self) -> None:
         source = MONITOR.read_text(encoding="utf-8")
 
         self.assertIn("const REQUEST_HEADER = 'X-ServiceTracer-Request-ID';", source)
         self.assertIn("window.fetch = async", source)
         self.assertIn("headers.set(REQUEST_HEADER, requestId);", source)
         self.assertIn("response.clone().json()", source)
-        self.assertIn("responseRequestId !== requestId || !identity", source)
+        self.assertIn("response.headers.get(REQUEST_HEADER)", source)
+        self.assertIn("responseRequestId === requestId", source)
+        self.assertIn("responseBodyRequestId === requestId", source)
+        self.assertIn("identityFromPayload(payload)", source)
+        self.assertIn("Request header identity mismatch · evidence rejected", source)
+        self.assertIn("Request body identity mismatch · evidence rejected", source)
+        self.assertIn("Collector identity mismatch · evidence rejected", source)
+        self.assertIn("request and collector identity verified", source)
+        self.assertNotIn("Request or collector identity mismatch", source)
         self.assertIn("setInterval(pollHealth, HEALTH_INTERVAL_MS)", source)
         self.assertIn("identity.verified !== true", source)
         self.assertIn("identity.resource_group !== expected.resource_group", source)
@@ -76,6 +84,7 @@ class FrontendAzureProvenanceMonitorTests(unittest.TestCase):
         self.assertIn('compute.get("location")', source)
         self.assertIn('"verification_source": "azure_instance_metadata_service"', source)
         self.assertIn('payload["request_id"] = request_id', source)
+        self.assertIn('payload["hosting_model"] = HOSTING_MODEL', source)
         self.assertIn('payload["azure_host"] = azure_host_identity()', source)
         self.assertIn("Access-Control-Expose-Headers", source)
         self.assertNotIn('compute.get("subscriptionId")', source)

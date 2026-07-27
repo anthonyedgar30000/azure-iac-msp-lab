@@ -110,7 +110,7 @@
     return Object.fromEntries(fields.map((field) => [field, expected[field].trim()]));
   }
 
-  function identityFromHealth(payload) {
+  function identityFromPayload(payload) {
     const identity = payload?.azure_host;
     const expected = monitor.expectedHost;
     if (
@@ -131,8 +131,28 @@
     return identity;
   }
 
+  function correlationProof(payload, requestId, responseRequestId) {
+    const responseBodyRequestId = payload?.request_id || null;
+    const collectorIdentity = identityFromPayload(payload);
+    return {
+      requestHeaderMatched: responseRequestId === requestId,
+      requestBodyMatched: responseBodyRequestId === requestId,
+      collectorIdentity,
+      responseRequestId,
+      responseBodyRequestId,
+    };
+  }
+
+  function logCorrelationRejection(proof, expected, observed) {
+    console.warn('Correlation proof rejected.', {
+      proof,
+      expected,
+      observed,
+    });
+  }
+
   function renderHealth(payload, latencyMilliseconds) {
-    const identity = identityFromHealth(payload);
+    const identity = identityFromPayload(payload);
     const apiReady = (
       payload?.schema_version === 'servicetracer.demo-api-health.v1'
       && payload.status === 'healthy'
@@ -209,18 +229,45 @@
     setMonitorState('Correlated frontend request in flight', 'neutral');
   }
 
-  function renderTransactionResponse(payload, requestId, responseStatus) {
-    const responseRequestId = payload?.request_id;
-    const identity = identityFromHealth(payload);
-    if (responseRequestId !== requestId || !identity) {
-      setText(elements.transaction, 'Request or collector identity mismatch · evidence rejected');
-      setMonitorState('Correlation proof rejected', 'warning');
+  function renderTransactionResponse(
+    payload,
+    requestId,
+    responseStatus,
+    responseRequestId,
+  ) {
+    const proof = correlationProof(payload, requestId, responseRequestId);
+
+    if (!proof.requestHeaderMatched) {
+      setText(elements.transaction, 'Request header identity mismatch · evidence rejected');
+      setMonitorState('Request header correlation rejected', 'warning');
+      logCorrelationRejection('request_header', requestId, proof.responseRequestId);
       return;
     }
+
+    if (!proof.requestBodyMatched) {
+      setText(elements.transaction, 'Request body identity mismatch · evidence rejected');
+      setMonitorState('Request body correlation rejected', 'warning');
+      logCorrelationRejection('request_body', requestId, proof.responseBodyRequestId);
+      return;
+    }
+
+    if (!proof.collectorIdentity) {
+      setText(elements.transaction, 'Collector identity mismatch · evidence rejected');
+      setMonitorState('Collector identity proof rejected', 'warning');
+      logCorrelationRejection('collector_identity', monitor.expectedHost, {
+        azure_host: payload?.azure_host || null,
+        hosting_model: payload?.hosting_model || null,
+      });
+      return;
+    }
+
     const transactionCount = Array.isArray(payload?.transactions)
       ? payload.transactions.length
       : 0;
-    setText(elements.transaction, `HTTP ${responseStatus} · ${transactionCount} transactions correlated`);
+    setText(
+      elements.transaction,
+      `HTTP ${responseStatus} · request and collector identity verified · ${transactionCount} transactions correlated`,
+    );
     setMonitorState('Frontend request correlated to governed collector', 'healthy');
   }
 
@@ -245,8 +292,14 @@
 
     try {
       const response = await originalFetch(input, { ...options, headers });
+      const responseRequestId = response.headers.get(REQUEST_HEADER);
       response.clone().json()
-        .then((payload) => renderTransactionResponse(payload, requestId, response.status))
+        .then((payload) => renderTransactionResponse(
+          payload,
+          requestId,
+          response.status,
+          responseRequestId,
+        ))
         .catch(renderTransactionFailure);
       return response;
     } catch (error) {
