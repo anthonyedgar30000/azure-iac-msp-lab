@@ -139,7 +139,7 @@
       && payload.backend_target_configured === true
     );
 
-    setText(elements.api, apiReady ? 'Healthy API response' : 'Health contract rejected');
+    setText(elements.api, apiReady ? 'Health endpoint reachable' : 'Health contract rejected');
     setText(elements.latency, `${Math.round(latencyMilliseconds)} ms`);
     setText(elements.checkedAt, formatClock());
 
@@ -165,7 +165,7 @@
     setText(elements.vm, identity.vm_name);
     setText(elements.location, identity.location);
     setText(elements.sourceRef, shortRef(identity.source_ref));
-    setMonitorState('Frontend ↔ governed collector API live', 'healthy');
+    setMonitorState('Collector health and Azure identity verified', 'healthy');
     elements.panel?.classList.remove('monitor-pulse');
     window.requestAnimationFrame(() => elements.panel?.classList.add('monitor-pulse'));
   }

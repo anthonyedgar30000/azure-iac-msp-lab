@@ -1,0 +1,55 @@
+{
+  "schema_version": "project.collector-analysis-rate-limit-fix.v1",
+  "request_id": "collector-analysis-rate-limit-fix-20260727",
+  "tracking_issue": 171,
+  "status": "authorized_repository_repair_and_single_deployment_pending",
+  "authorized_by": "user instruction: Proceed",
+  "recorded_on": "2026-07-27",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "16b73675415e74ad8593e04fa49958790f8bc36b",
+    "working_branch": "fix/collector-analysis-rate-limit-implementation",
+    "pull_request": 174,
+    "open_pull_requests_observed_before_change": 0,
+    "local_working_tree": "not_observed_connector_backed_repository_changes"
+  },
+  "generation_history": {
+    "reviewed_generator_pr": 172,
+    "trigger_pr": 173,
+    "trigger_pr_merged": false,
+    "generator_validation_claim_accepted": false,
+    "reason": "A shell-status defect allowed a malformed generated test to pass the generator wrapper; exact-head pull-request CI is the authoritative acceptance gate."
+  },
+  "observed_browser_boundary": {
+    "collector_health_and_identity_verified": true,
+    "frontend_request_id_created": true,
+    "accepted_correlation_proof": false,
+    "fixture_fallback_used": true,
+    "exact_http_failure_status": "not_observed"
+  },
+  "operational_authority": {
+    "merge_after_exact_head_ci": true,
+    "one_deployment_attempt": true,
+    "one_browser_api_verification": true,
+    "automatic_retry": false,
+    "rollback": false,
+    "scope_expansion": false
+  },
+  "azure_scope": {
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "collector_vm": "vm-stcollector-mst-dev",
+    "collector_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+    "frontend_origin": "https://anthonyedgar30000.github.io",
+    "new_resources_expected": 0,
+    "quota_delta_expected": 0,
+    "recurring_cost_delta_CAD_expected": 0
+  },
+  "claim_boundaries": [
+    "health_endpoint_reachable != live_analysis_completed",
+    "repository_fix != deployed_fix",
+    "deployment_succeeded != browser_path_verified",
+    "failed_attempt != renewed_authority"
+  ]
+}
