@@ -1,0 +1,143 @@
+{
+  "schema_version": "project.post-pr137-provenance-authority-expiry.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-27T08:36:01-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "repository_observation": {
+    "default_branch": "main",
+    "observed_head": "f6e79818150d72b75d1e4f25be172e6dc577114d",
+    "latest_merged_pull_request": 137,
+    "open_pull_requests_observed_before_increment": [],
+    "local_working_tree": "not_observed",
+    "exact_current_head_ci_run_id": 30224641320,
+    "exact_current_head_ci_conclusion": "success",
+    "current_head_ci_scope": [
+      "workflow-observability validation",
+      "unit tests",
+      "evidence collection and replay compatibility",
+      "infrastructure and workload contracts",
+      "Bicep lint and build"
+    ]
+  },
+  "verified_preflight": {
+    "record": ".project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json",
+    "workflow_run_id": 30206242759,
+    "job_id": 89804704663,
+    "artifact_id": 8633143093,
+    "artifact_digest": "sha256:2f8a63d18d6c2e07e86cc607c49d111e6b788d40637b2adcd30b1d5ce05de902",
+    "manifest_payloads_verified": 26,
+    "manifest_payload_failures": 0,
+    "reviewed_source": "1677606ded960c951fa37f0fdbfae50ba4b3cc34",
+    "arm_validation": "Succeeded",
+    "what_if_change_counts": {
+      "Ignore": 24,
+      "Modify": 3,
+      "NoChange": 3,
+      "Create": 0,
+      "Delete": 0,
+      "Replace": 0
+    },
+    "azure_mutation_performed": false
+  },
+  "azure_observation": {
+    "observed_at": "2026-07-26T14:32:17Z",
+    "subscription_name": "Azure for Students",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "collector_vm": "vm-stcollector-mst-dev",
+    "collector_vm_size": "Standard_B2ats_v2",
+    "collector_vm_power_state": "VM running",
+    "collector_private_ip": "10.20.40.10",
+    "load_balancer": "lb-st-demo-api-mst-dev",
+    "load_balancer_provisioning_state": "Succeeded",
+    "backend_pool": "be-st-demo-api",
+    "backend_address_count": 1,
+    "vm_extension": "servicetracer-demo-api",
+    "vm_extension_provisioning_state": "Succeeded",
+    "currently_deployed_source": "98b092201053fd3592be157a24de6e623e6b74a6",
+    "resource_locks": [],
+    "readiness_blockers": [],
+    "month_to_date_pretax_cost": {
+      "amount": 4.03203831168191,
+      "currency": "CAD"
+    },
+    "remaining_azure_for_students_credit": "not_observed",
+    "quota": {
+      "public_ip_addresses": {
+        "current": 2,
+        "limit": 3
+      },
+      "network_interfaces": {
+        "current": 3,
+        "limit": 65536
+      },
+      "load_balancers": {
+        "current": 2,
+        "limit": 1000
+      },
+      "additional_public_ip_required": 0,
+      "sufficient_for_reviewed_plan": true
+    }
+  },
+  "authorization_resolution": {
+    "authorization_record": ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json",
+    "grant_id": "collector-provenance-deploy-1677606-20260726",
+    "issued_at": "2026-07-26T19:02:36-04:00",
+    "valid_until": "2026-07-26T21:02:36-04:00",
+    "reviewed_source": "1677606ded960c951fa37f0fdbfae50ba4b3cc34",
+    "attempt_limit": 1,
+    "original_recorded_status": "pending_consumption",
+    "current_temporal_status": "expired",
+    "workflow_dispatch_history_available_through_connector": false,
+    "dispatch_observed": false,
+    "artifact_observed": false,
+    "consumption_status": "not_observed",
+    "expired_unused_claimed": false,
+    "consumed_claimed": false,
+    "deployment_success_claimed": false,
+    "deployment_failure_claimed": false,
+    "retry_authorized": false,
+    "rollback_authorized": false,
+    "resolution": "The grant is no longer active. The available connector evidence cannot establish whether a workflow attempt began before expiry. The repository therefore preserves consumption as not_observed and prohibits using the expired grant for a retry."
+  },
+  "source_binding": {
+    "currently_deployed_source": "98b092201053fd3592be157a24de6e623e6b74a6",
+    "selected_provenance_source": "1677606ded960c951fa37f0fdbfae50ba4b3cc34",
+    "current_main": "f6e79818150d72b75d1e4f25be172e6dc577114d",
+    "selected_source_vs_current_main_commit_distance": 12,
+    "deployment_payload_difference_observed": false,
+    "selected_source_deployment_outcome": "not_observed",
+    "current_main_deployed": false
+  },
+  "claim_boundaries": [
+    "verified_preflight != deployment_completed",
+    "authorization_expired != authorization_consumed",
+    "consumption_not_observed != unconsumed",
+    "no_dispatch_observed != no_dispatch_occurred",
+    "CI_clean != Azure_runtime_updated",
+    "selected_source != deployed_source",
+    "workflow_failed != deployment_failed",
+    "month_to_date_cost != remaining_student_credit"
+  ],
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "draft_pull_request_creation_authorized": true,
+    "ordinary_pull_request_ci_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "deployment_authorized": false,
+    "verify_operation_authorized": false,
+    "browser_verification_authorized": false,
+    "transaction_replay_authorized": false,
+    "rollback_authorized": false,
+    "rbac_mutation_authorized": false,
+    "cleanup_authorized": false
+  },
+  "next_gate": {
+    "operation": "human review of this repository-only reconciliation",
+    "after_merge": "If deployment is still desired, create a new exact one-shot non-renewing authorization from freshly reviewed evidence. Do not reuse or reinterpret the expired grant."
+  }
+}

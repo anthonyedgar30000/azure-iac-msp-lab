@@ -1,26 +1,26 @@
 {
   "schema_version": "project.current-reality.v2",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-26T09:43:47-04:00",
+  "recorded_at": "2026-07-27T08:36:01-04:00",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "repository_state": {
     "default_branch": "main",
-    "observed_head": "2f5b60c1d8328d13823e2cc1def09e6be384ecb5",
-    "latest_merged_pull_request": 132,
+    "observed_head": "f6e79818150d72b75d1e4f25be172e6dc577114d",
+    "latest_merged_pull_request": 137,
     "open_pull_requests_observed": [],
-    "observation_boundary": "Observed after PR #132 merged the exact provenance proof-contract repair. No open pull requests were observed before creating the final post-merge truth-lock pull request.",
-    "exact_source_head": "6b7bd5362b17c9edfc0b41da65d5b798e5d00b45",
-    "exact_source_ci_run_id": 30204497860,
+    "observation_boundary": "Observed after PR #137 merged the verified provenance preflight promotion and finite deployment grant. Exact current-main CI run 30224641320 succeeded. No deployment workflow dispatch or artifact was observable through the available GitHub connector during this reconciliation.",
+    "exact_source_head": "f6e79818150d72b75d1e4f25be172e6dc577114d",
+    "exact_source_ci_run_id": 30224641320,
     "exact_source_ci_conclusion": "success",
-    "merge_commit_ci": "not_observed",
+    "merge_commit_ci": "success",
     "local_working_tree": "not_observed",
     "merge_observation": {
-      "pull_request": 132,
-      "merge_commit": "2f5b60c1d8328d13823e2cc1def09e6be384ecb5",
+      "pull_request": 137,
+      "merge_commit": "f6e79818150d72b75d1e4f25be172e6dc577114d",
       "human_or_external_merge_observed": true,
       "assistant_merge_action_performed": false,
       "merge_actor": "not_resolved",
-      "prior_merge_authority": "not_observed"
+      "prior_merge_authority": "recorded_in_pr137_body"
     }
   },
   "historical_snapshot": {
@@ -68,20 +68,32 @@
     "pr132_exact_source_head": "6b7bd5362b17c9edfc0b41da65d5b798e5d00b45",
     "pr132_exact_source_ci_run_id": 30204497860,
     "pr132_exact_source_ci_conclusion": "success",
-    "pr132_merge_commit_ci": "not_observed"
+    "pr132_merge_commit_ci": "not_observed",
+    "pr135_merge_commit": "16a589adfce0816c759f6ea0e8d3a2ed9a0781aa",
+    "preflight_run_id": 30206242759,
+    "preflight_artifact_id": 8633143093,
+    "preflight_artifact_digest": "sha256:2f8a63d18d6c2e07e86cc607c49d111e6b788d40637b2adcd30b1d5ce05de902",
+    "preflight_manifest_payloads_verified": 26,
+    "preflight_manifest_payload_failures": 0,
+    "pr137_merge_commit": "f6e79818150d72b75d1e4f25be172e6dc577114d",
+    "pr137_exact_source_head": "f6e79818150d72b75d1e4f25be172e6dc577114d",
+    "pr137_exact_source_ci_run_id": 30224641320,
+    "pr137_exact_source_ci_conclusion": "success",
+    "pr137_merge_commit_ci": "success",
+    "latest_authorization_resolution": ".project/reconciliations/post-pr137-provenance-authority-expiry-20260727.json"
   },
   "collector_demo_api": {
     "observation": {
-      "observed_at": "2026-07-26T09:26:57Z",
-      "source": "verified_workflow_artifact",
+      "observed_at": "2026-07-26T14:32:17Z",
+      "source": "verified_provenance_preflight_artifact",
       "subscription_name": "Azure for Students",
       "identity_identifiers": "sha256_fingerprints_only",
       "resource_group": "rg-servicetracer-dev-westus2",
       "location": "westus2",
-      "reviewed_commit": "98b092201053fd3592be157a24de6e623e6b74a6",
-      "operation": "deploy",
+      "reviewed_commit": "1677606ded960c951fa37f0fdbfae50ba4b3cc34",
+      "operation": "read_only_preflight",
       "azure_login_succeeded": true,
-      "azure_mutation_performed": true
+      "azure_mutation_performed": false
     },
     "predeployment_state": {
       "resource_group_provisioning_state": "Succeeded",
@@ -92,12 +104,14 @@
       "load_balancer_name": "lb-st-demo-api-mst-dev",
       "load_balancer_provisioning_state": "Succeeded",
       "backend_pool_name": "be-st-demo-api",
-      "backend_pool_address_count": 0,
+      "backend_pool_address_count": 1,
+      "backend_address_name": "collector",
       "vm_extension_name": "servicetracer-demo-api",
-      "vm_extension_provisioning_state": "Failed",
+      "vm_extension_provisioning_state": "Succeeded",
+      "currently_deployed_source": "98b092201053fd3592be157a24de6e623e6b74a6",
       "resource_locks": [],
       "readiness_blockers": [],
-      "observation_boundary": "Historical run-16 state before deployment run 18."
+      "observation_boundary": "Latest verified preflight state before any separately evidenced provenance deployment."
     },
     "accepted_what_if": {
       "classifier_accepted": true,
@@ -111,7 +125,7 @@
         "Replace": 0
       },
       "approved_modifications": [
-        "commit-bound CustomScript extension rerun",
+        "commit-bound CustomScript extension source update to 1677606ded960c951fa37f0fdbfae50ba4b3cc34",
         "exact Standard/Regional load-balancer parent reconciliation",
         "one collector backend address at 10.20.40.10"
       ],
@@ -119,24 +133,48 @@
         "pip-st-demo-api-mst-dev",
         "Allow-Demo-API-HTTP-From-Internet",
         "Allow-Demo-API-HTTPS-From-Internet"
-      ]
+      ],
+      "deployment_decision_ready": true,
+      "deployment_authorized_by_preflight": false,
+      "azure_mutation_performed": false
     },
     "deployment": {
       "decision_ready": true,
-      "authorized": false,
-      "authorized_for_run18": true,
-      "authority_consumed": true,
-      "performed": true,
-      "succeeded": true,
-      "rollback_performed": false,
-      "runtime_verification_performed": true,
-      "transaction_replay_performed": false,
-      "service_restored": "api_healthy_downstream_sample_failed_without_stable_localization"
+      "historical_run18_authorized": true,
+      "historical_run18_authority_consumed": true,
+      "historical_run18_performed": true,
+      "historical_run18_succeeded": true,
+      "historical_run18_rollback_performed": false,
+      "historical_run18_runtime_verification_performed": true,
+      "historical_run18_transaction_replay_performed": false,
+      "service_restored": "api_healthy_downstream_sample_failed_without_stable_localization",
+      "provenance_source_deployment_performed": "not_observed",
+      "provenance_source_deployment_succeeded": "not_observed"
+    },
+    "provenance_deployment_authorization": {
+      "grant_id": "collector-provenance-deploy-1677606-20260726",
+      "authorization_record": ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json",
+      "reviewed_source": "1677606ded960c951fa37f0fdbfae50ba4b3cc34",
+      "issued_at": "2026-07-26T19:02:36-04:00",
+      "valid_until": "2026-07-26T21:02:36-04:00",
+      "current_temporal_status": "expired",
+      "attempt_limit": 1,
+      "consumption_status": "not_observed",
+      "deployment_dispatch_observed": false,
+      "deployment_artifact_observed": false,
+      "retry_authorized": false,
+      "rollback_authorized": false,
+      "resolution_record": ".project/reconciliations/post-pr137-provenance-authority-expiry-20260727.json",
+      "claim_boundary": "The grant is no longer active. Available evidence does not establish whether it was consumed before expiry or expired unused. Either state requires new explicit authority for another attempt."
     },
     "quota": {
       "standard_ipv4_public_ips": {
         "current": 2,
         "limit": 3
+      },
+      "network_interfaces": {
+        "current": 3,
+        "limit": 65536
       },
       "load_balancers": {
         "current": 2,
@@ -144,23 +182,27 @@
       },
       "additional_public_ip_required": 0,
       "sufficient_for_accepted_plan": true,
-      "observation_boundary": "Time-bounded run-16 evidence; no fresh Azure query performed during repository reconciliation."
+      "observation_boundary": "Time-bounded verified preflight evidence generated 2026-07-26T14:32:17Z."
     },
     "cost_and_budget": {
-      "resource_creates_in_run18": 0,
-      "current_billing_cost": "not_observed",
+      "period": "month_to_date",
+      "metric": "PreTaxCost",
+      "actual_cost_cad": 4.03203831168191,
+      "currency": "CAD",
       "remaining_Azure_for_Students_credit": "not_observed",
-      "actual_cost_cad": "not_observed",
-      "cost_delta": "not_quantified"
+      "cost_delta": "not_quantified",
+      "claim_boundary": "Month-to-date cost is not remaining student credit or a final invoice."
     },
     "source_binding": {
-      "predeployment_plan_source": "8de1f61f8a0ea06dcf94b94c798edde2aace357d",
+      "predeployment_plan_source": "1677606ded960c951fa37f0fdbfae50ba4b3cc34",
+      "selected_provenance_deployment_source": "1677606ded960c951fa37f0fdbfae50ba4b3cc34",
       "deployed_source": "98b092201053fd3592be157a24de6e623e6b74a6",
-      "current_main": "2f5b60c1d8328d13823e2cc1def09e6be384ecb5",
+      "current_main": "f6e79818150d72b75d1e4f25be172e6dc577114d",
       "current_main_deployed": false,
+      "selected_provenance_source_deployed": "not_observed",
       "frontend_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
-      "deployment_source_decision": "resolved_to_run18_exact_source",
-      "claim_boundary": "current main contains evidence and frontend changes after the deployed source; it is not itself claimed as deployed to Azure."
+      "deployment_source_decision": "resolved_to_exact_provenance_source_but_deployment_outcome_not_observed",
+      "claim_boundary": "Current main contains evidence and authorization changes after the selected deployment source. Neither current main nor the selected provenance source is claimed as newly deployed."
     },
     "postdeployment_state": {
       "resource_group_provisioning_state": "Succeeded",
@@ -175,7 +217,8 @@
       "backend_pool_address_name": "collector",
       "vm_extension_name": "servicetracer-demo-api",
       "vm_extension_provisioning_state": "Succeeded",
-      "vm_extension_force_update_tag": "98b092201053fd3592be157a24de6e623e6b74a6"
+      "vm_extension_force_update_tag": "98b092201053fd3592be157a24de6e623e6b74a6",
+      "observation_boundary": "Verified preflight observation; no later deployment result was observed."
     },
     "runtime_evidence": {
       "collector_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
@@ -195,7 +238,8 @@
       "cors_allow_origin": "https://anthonyedgar30000.github.io",
       "cors_allows_post": true,
       "workflow_overall_conclusion": "failure",
-      "workflow_failure_classification": "verifier_false_negative_after_successful_deployment_and_runtime_requests"
+      "workflow_failure_classification": "verifier_false_negative_after_successful_deployment_and_runtime_requests",
+      "observation_boundary": "Historical run-18 runtime evidence; not fresh provenance-runtime verification."
     },
     "frontend_binding": {
       "configured_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
@@ -219,11 +263,13 @@
       ],
       "expected_azure_host_committed": true,
       "request_correlation_contract_committed": true,
+      "selected_exact_source": "1677606ded960c951fa37f0fdbfae50ba4b3cc34",
       "exact_source_runtime_deployed": false,
+      "deployment_outcome": "not_observed",
       "azure_host_identity_verified_live": false,
       "browser_rendering_verified": false,
-      "fresh_azure_query_performed": false,
-      "claim_boundary": "The repository contains the provenance monitor and exact proof wording, but the collector VM still runs deployed source 98b0922. Repository implementation does not establish runtime deployment or browser verification."
+      "fresh_azure_query_performed": true,
+      "claim_boundary": "The verified preflight selected source 1677606 and observed Azure state, but no deployment dispatch or artifact was observable. Repository implementation and preflight do not establish runtime deployment or browser verification."
     }
   },
   "independent_demo_api": {
@@ -255,7 +301,10 @@
     "workflow_failed != deployment_failed",
     "API_health_verified != downstream_transaction_success_verified",
     "independent_API_ready != collector_golden_path_verified",
-    "frontend_bound != browser_verified"
+    "frontend_bound != browser_verified",
+    "authorization_expired != authorization_consumed",
+    "consumption_not_observed != unconsumed",
+    "CI_clean != Azure_runtime_updated"
   ],
   "authority": {
     "repository_reconciliation_authorized": true,
@@ -275,14 +324,14 @@
     "browser_verification_authorized": false
   },
   "next_gate": {
-    "operation": "select and review an exact provenance-monitor deployment source, capture fresh Azure state and cost evidence, then seek one-shot deployment authority",
-    "deployment_status": "collector_api_deployed_provenance_contract_repository_only",
+    "operation": "review and merge the post-PR137 truth reconciliation, then make a new authority decision only if deployment is still required",
+    "deployment_status": "verified_preflight_selected_source_grant_expired_consumption_not_observed",
     "required": [
-      "select one exact current source containing the provenance monitor and repaired proof contract",
-      "capture fresh Azure collector state, quota, locks, dependencies, cost or remaining student credit",
-      "capture a fresh FullResourcePayloads What-If for the existing collector API update",
-      "obtain one-shot non-renewing deployment, rollback, and post-deployment verification authority",
-      "after deployment, verify Azure host identity, source ref, CORS, GitHub Pages rendering, and one request-ID-correlated 20-attempt transaction with no automatic retry"
+      "review exact-head CI for this repository-only reconciliation",
+      "preserve the expired grant and unresolved consumption state without manufacturing a dispatch outcome",
+      "do not retry or dispatch the collector deployment under the expired grant",
+      "if deployment remains desired, issue one new exact non-renewing authority record bound to current reviewed evidence",
+      "after any separately authorized deployment, verify Azure host identity, source ref, CORS, GitHub Pages rendering, and one request-ID-correlated 20-attempt transaction with no automatic retry"
     ]
   }
 }
