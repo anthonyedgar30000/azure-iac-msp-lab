@@ -278,6 +278,7 @@ class DemoApiHandler(BaseHTTPRequestHandler):
         transactions = execute_transactions(attempts)
         payload = build_api_response(transactions, source=SOURCE_ID)
         payload["request_id"] = request_id
+        payload["hosting_model"] = HOSTING_MODEL
         payload["azure_host"] = azure_host_identity()
         LOGGER.info("request_id=%s completed transactions=%s", request_id, len(transactions))
         self._send_json(payload, request_id=request_id)
