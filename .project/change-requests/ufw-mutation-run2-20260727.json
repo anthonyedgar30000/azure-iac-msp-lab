@@ -1,0 +1,114 @@
+{
+  "schema_version": "project.ufw-mutation-request.v1",
+  "request_id": "ufw-mutation-run2-20260727",
+  "status": "authorized_unconsumed",
+  "tracking_issue": 156,
+  "supersedes_issue": 153,
+  "authorized_by": "user instruction: Authorize bounded UFW mutation run 2 using Bash, with the same two VMs and firewall rules, no service restart, Azure networking changes, automatic retry, or rollback.",
+  "authorized_at": "2026-07-27T17:04:54Z",
+  "valid_until": "2026-07-28T04:00:00Z",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_main": "4147905d2bbbdbbd7c8b919d11d092364651c7f2",
+    "branch": "ops/bounded-ufw-mutation-run2"
+  },
+  "prior_attempt": {
+    "request_id": "ufw-mutation-run1-20260727",
+    "workflow_run": 30287056582,
+    "status": "consumed_failed",
+    "failure_boundary": "azure_run_command_invoked_bin_sh_and_dash_rejected_pipefail_before_first_ufw_command",
+    "ufw_command_reached": false,
+    "vpn01_run_command_submitted": true,
+    "vpn02_run_command_submitted": false,
+    "automatic_retry_performed": false,
+    "rollback_performed": false
+  },
+  "starting_boundary": {
+    "declared_backend_service_port": 443,
+    "last_observed_backend_service_state": "active_enabled_listening",
+    "last_observed_ufw_state": "inactive_before_run1",
+    "post_run1_live_ufw_state": "not_reobserved",
+    "current_live_state_before_execution": "must_be_reobserved_by_workflow",
+    "declared_azure_nsg_boundary": {
+      "public_https": "tcp/443",
+      "operations_ssh": "tcp/22 from 10.20.40.0/24"
+    }
+  },
+  "execution": {
+    "operation": "bounded_guest_ufw_mutation_and_verification",
+    "shell": "/usr/bin/bash",
+    "shell_invocation_method": "base64_decode_piped_to_absolute_bash_path",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "load_balancer": "lb-remote-access-mst-dev",
+    "public_ip": "pip-remote-access-mst-dev",
+    "virtual_machines": [
+      "vm-vpn01-mst-dev",
+      "vm-vpn02-mst-dev"
+    ],
+    "expected_backend_ips": [
+      "10.20.10.11",
+      "10.20.10.12"
+    ],
+    "listener_port": 443,
+    "operations_source_prefix": "10.20.40.0/24",
+    "transaction_attempts": 10,
+    "settling_seconds": 45,
+    "guest_commands_per_vm": 1,
+    "ufw_policy": {
+      "default_incoming": "deny",
+      "default_outgoing": "allow",
+      "allow_rules": [
+        {
+          "protocol": "tcp",
+          "port": 443,
+          "source": "any",
+          "comment": "ServiceTracer HTTPS"
+        },
+        {
+          "protocol": "tcp",
+          "port": 22,
+          "source": "10.20.40.0/24",
+          "comment": "SSH from operations subnet"
+        }
+      ]
+    }
+  },
+  "authority": {
+    "attempt_limit": 1,
+    "renewable": false,
+    "transferable": false,
+    "repository_write_authorized": true,
+    "azure_authentication_authorized": true,
+    "azure_guest_command_authorized": true,
+    "azure_read_only_queries_authorized": true,
+    "guest_firewall_change_authorized": true,
+    "public_transaction_verification_authorized": true,
+    "artifact_publication_authorized": true,
+    "package_change_authorized": false,
+    "service_restart_authorized": false,
+    "service_stop_authorized": false,
+    "service_disable_authorized": false,
+    "ssh_execution_authorized": false,
+    "nsg_mutation_authorized": false,
+    "load_balancer_mutation_authorized": false,
+    "nic_or_subnet_mutation_authorized": false,
+    "vm_resource_mutation_authorized": false,
+    "rbac_mutation_authorized": false,
+    "policy_or_lock_mutation_authorized": false,
+    "resource_deployment_authorized": false,
+    "automatic_retry_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "cost_and_quota": {
+    "new_resources": false,
+    "sku_change": false,
+    "quota_change": false,
+    "expected_incremental_cost": "negligible operational command and monitoring activity",
+    "workflow_must_capture_best_effort_cost_and_quota_context": true
+  },
+  "failure_behavior": "Stop at the first failed precondition or mutation. Do not retry, roll back, broaden scope, restart services, or mutate Azure networking. Preserve partial evidence and require new explicit authority for any subsequent operational action.",
+  "cleanup": "No cleanup is authorized or required; the intended UFW policy is persistent state.",
+  "consumption_rule": "The grant is consumed when Azure authentication begins or the first target VM Run Command starts, regardless of outcome. Repository-only preparation and CI do not consume it."
+}

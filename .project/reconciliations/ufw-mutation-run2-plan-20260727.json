@@ -1,0 +1,45 @@
+{
+  "schema_version": "project.reconciliation-plan.v1",
+  "request_id": "ufw-mutation-run2-20260727",
+  "base_main": "4147905d2bbbdbbd7c8b919d11d092364651c7f2",
+  "declared_change": "Enable the already-codified UFW policy on exactly vm-vpn01-mst-dev and vm-vpn02-mst-dev using one Bash-backed Azure VM Run Command per VM.",
+  "live_starting_state": {
+    "backend_service": "last observed active, enabled, and listening on tcp/443",
+    "ufw": "inactive before run 1; not re-observed after run 1 because the first command failed before any UFW command",
+    "azure_networking": "no mutation authorized"
+  },
+  "execution_method": {
+    "outer_shell": "/bin/sh supplied by Azure Run Command",
+    "inner_shell": "/usr/bin/bash",
+    "transport": "base64-encoded script decoded by a POSIX-compatible outer command",
+    "commands_per_vm": 1
+  },
+  "validation": {
+    "guest": [
+      "UFW active",
+      "default incoming deny",
+      "default outgoing allow",
+      "tcp/443 allowed from any source",
+      "tcp/22 allowed only from 10.20.40.0/24",
+      "backend service active and enabled",
+      "tcp/443 listener present"
+    ],
+    "azure": [
+      "target VM identity and running state",
+      "load balancer, rule, probe, and public IP read-only capture",
+      "one DipAvailability metric observation",
+      "ten bounded public transaction requests"
+    ]
+  },
+  "failure_and_rollback": {
+    "failure": "stop and preserve partial evidence",
+    "automatic_retry": false,
+    "rollback": false,
+    "cleanup": false
+  },
+  "cost_and_quota": {
+    "new_resources": false,
+    "expected_incremental_cost": "negligible",
+    "best_effort_context_capture": true
+  }
+}
