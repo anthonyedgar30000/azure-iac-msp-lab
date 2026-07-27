@@ -1,0 +1,391 @@
+name: One-shot collector analysis rate-limit deployment run 1
+
+on:
+  pull_request:
+    types: [opened]
+    branches: [main]
+    paths:
+      - '.project/triggers/collector-analysis-rate-limit-deploy-run1.json'
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+
+concurrency:
+  group: one-shot-collector-analysis-rate-limit-deploy-run1
+  cancel-in-progress: false
+
+env:
+  REQUEST_FILE: .project/deployment-requests/collector-analysis-rate-limit-run1.json
+  TRIGGER_FILE: .project/triggers/collector-analysis-rate-limit-deploy-run1.json
+  ARTIFACT_DIR: collector-analysis-rate-limit-run1-evidence
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  dispatch-observe-and-verify:
+    name: Dispatch, observe and verify exact collector repair
+    if: >-
+      github.repository == 'anthonyedgar30000/azure-iac-msp-lab' &&
+      github.event.action == 'opened' &&
+      github.base_ref == 'main' &&
+      github.head_ref == 'trigger/collector-analysis-rate-limit-deploy-run1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Check out trigger context and complete history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate exact one-shot authority and trigger
+        id: request
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          test -f "$REQUEST_FILE"
+          test -f "$TRIGGER_FILE"
+
+          jq -e '
+            .schema_version == "project.collector-analysis-rate-limit-trigger.v1" and
+            .request_id == "collector-analysis-rate-limit-run1" and
+            .tracking_issue == 171 and
+            .authorized_by == "user instruction: Proceed" and
+            .dispatch_requested == true and
+            .merge_authorized == false and
+            .retry_authorized == false
+          ' "$TRIGGER_FILE" > /dev/null
+
+          jq -e '
+            .schema_version == "project.collector-analysis-rate-limit-deployment-request.v1" and
+            .request_id == "collector-analysis-rate-limit-run1" and
+            .status == "authorized_unconsumed" and
+            .tracking_issue == 171 and
+            .source.repair_pull_request == 174 and
+            .source.exact_head == "015dd7bb0fbf72dbbe5af9c6c861cab62edd0514" and
+            .source.merge_commit == "ea34e8cb98ce703552cbccedb4c44d41d6185e86" and
+            .source.ci_run_id == 30307023191 and
+            .source.ci_conclusion == "success" and
+            .execution.workflow == ".github/workflows/collector-demo-api.yml" and
+            .execution.dispatch_ref == "main" and
+            .execution.operation == "deploy" and
+            .execution.reviewed_commit == "ea34e8cb98ce703552cbccedb4c44d41d6185e86" and
+            .execution.environment == "dev" and
+            .execution.resource_group == "rg-servicetracer-dev-westus2" and
+            .execution.location == "westus2" and
+            .execution.prefix == "mst" and
+            .execution.dns_label == "st-demo-api-aeg30000" and
+            .execution.allowed_origin == "https://anthonyedgar30000.github.io" and
+            .execution.confirmation == "COLLECTOR-DEMO-API:deploy:rg-servicetracer-dev-westus2:st-demo-api-aeg30000" and
+            .authority.attempt_limit == 1 and
+            .authority.renewable == false and
+            .authority.transferable == false and
+            .authority.automatic_retry_authorized == false and
+            .authority.rollback_authorized == false and
+            .authorized_mutation_scope.creates == 0 and
+            .authorized_mutation_scope.deletes == 0 and
+            .authorized_mutation_scope.replaces == 0 and
+            (.authorized_mutation_scope.modifies | length) == 3 and
+            .post_deployment_verification.health_requests == 12 and
+            .post_deployment_verification.transaction_attempts == 20
+          ' "$REQUEST_FILE" > /dev/null
+
+          valid_until="$(jq -r '.valid_until' "$REQUEST_FILE")"
+          (( $(date -u +%s) <= $(date -u -d "$valid_until" +%s) ))
+
+          git fetch origin main
+          dispatcher_main_sha="$(git rev-parse origin/main)"
+          reviewed_commit="$(jq -r '.execution.reviewed_commit' "$REQUEST_FILE")"
+          git cat-file -e "${reviewed_commit}^{commit}"
+          git merge-base --is-ancestor "$reviewed_commit" "$dispatcher_main_sha"
+          git cat-file -e "${dispatcher_main_sha}:.github/workflows/collector-analysis-rate-limit-deploy-run1.yml"
+          git cat-file -e "${dispatcher_main_sha}:$REQUEST_FILE"
+
+          cp "$REQUEST_FILE" "$ARTIFACT_DIR/deployment-request.json"
+          cp "$TRIGGER_FILE" "$ARTIFACT_DIR/trigger.json"
+          printf '%s\n' \
+            "reviewed_commit=$reviewed_commit" \
+            "dispatcher_main_sha=$dispatcher_main_sha" \
+            "trigger_pr=${{ github.event.pull_request.number }}" \
+            "event_action=${{ github.event.action }}" \
+            > "$ARTIFACT_DIR/authority.txt"
+
+          echo "reviewed_commit=$reviewed_commit" >> "$GITHUB_OUTPUT"
+          echo "dispatcher_main_sha=$dispatcher_main_sha" >> "$GITHUB_OUTPUT"
+          echo "tracker_issue=$(jq -r '.tracking_issue' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "environment=$(jq -r '.execution.environment' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "resource_group=$(jq -r '.execution.resource_group' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "location=$(jq -r '.execution.location' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "prefix=$(jq -r '.execution.prefix' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "dns_label=$(jq -r '.execution.dns_label' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "allowed_origin=$(jq -r '.execution.allowed_origin' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "confirmation=$(jq -r '.execution.confirmation' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch the governed collector deployment once
+        id: dispatch
+        env:
+          REVIEWED_COMMIT: ${{ steps.request.outputs.reviewed_commit }}
+          DISPATCHER_MAIN_SHA: ${{ steps.request.outputs.dispatcher_main_sha }}
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracker_issue }}
+          LAB_ENVIRONMENT: ${{ steps.request.outputs.environment }}
+          RESOURCE_GROUP: ${{ steps.request.outputs.resource_group }}
+          LOCATION: ${{ steps.request.outputs.location }}
+          PREFIX: ${{ steps.request.outputs.prefix }}
+          DNS_LABEL: ${{ steps.request.outputs.dns_label }}
+          ALLOWED_ORIGIN: ${{ steps.request.outputs.allowed_origin }}
+          CONFIRMATION: ${{ steps.request.outputs.confirmation }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          gh workflow run collector-demo-api.yml \
+            --ref main \
+            -f operation=deploy \
+            -f reviewed_commit="$REVIEWED_COMMIT" \
+            -f environment="$LAB_ENVIRONMENT" \
+            -f resource_group="$RESOURCE_GROUP" \
+            -f location="$LOCATION" \
+            -f prefix="$PREFIX" \
+            -f dns_label="$DNS_LABEL" \
+            -f allowed_origin="$ALLOWED_ORIGIN" \
+            -f confirmation="$CONFIRMATION"
+
+          body=$(cat <<EOF
+          ## Collector rate-limit deployment dispatch accepted
+
+          The one-shot grant is now **consumed**, regardless of terminal outcome.
+
+          - reviewed source: \`$REVIEWED_COMMIT\`
+          - dispatcher main source: \`$DISPATCHER_MAIN_SHA\`
+          - trigger PR: #${{ github.event.pull_request.number }}
+          - accepted at: \`$started_at\`
+          - automatic retry: **not authorized**
+          - automatic rollback: **not authorized**
+          EOF
+          )
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" \
+            -f body="$body" > /dev/null
+
+          echo "started_at=$started_at" >> "$GITHUB_OUTPUT"
+
+      - name: Locate and wait for exact deployment run
+        id: deployment
+        env:
+          STARTED_AT: ${{ steps.dispatch.outputs.started_at }}
+          DISPATCHER_MAIN_SHA: ${{ steps.request.outputs.dispatcher_main_sha }}
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracker_issue }}
+          REVIEWED_COMMIT: ${{ steps.request.outputs.reviewed_commit }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          run_id=""
+          for _ in $(seq 1 60); do
+            runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/collector-demo-api.yml/runs?event=workflow_dispatch&branch=main&per_page=20")"
+            run_id="$(jq -r \
+              --arg started "$STARTED_AT" \
+              --arg sha "$DISPATCHER_MAIN_SHA" \
+              '[.workflow_runs[] | select(.created_at >= $started and .head_sha == $sha)] | sort_by(.created_at) | .[0].id // empty' \
+              <<< "$runs")"
+            [[ -n "$run_id" ]] && break
+            sleep 5
+          done
+          [[ -n "$run_id" ]]
+
+          run_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$run_id"
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" \
+            -f body="Deployment workflow located: [$run_id]($run_url). No second dispatch will be issued." \
+            > /dev/null
+
+          set +e
+          gh run watch "$run_id" --exit-status --interval 10
+          watch_rc=$?
+          set -e
+
+          details="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id")"
+          artifacts="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/artifacts")"
+          status="$(jq -r '.status' <<< "$details")"
+          conclusion="$(jq -r '.conclusion // "not_completed"' <<< "$details")"
+          head_sha="$(jq -r '.head_sha' <<< "$details")"
+          run_html_url="$(jq -r '.html_url' <<< "$details")"
+          artifact_summary="$(jq -c '[.artifacts[] | {id,name,size_in_bytes,digest,expired}]' <<< "$artifacts")"
+
+          jq -n \
+            --argjson run_id "$run_id" \
+            --arg status "$status" \
+            --arg conclusion "$conclusion" \
+            --arg head_sha "$head_sha" \
+            --arg reviewed_commit "$REVIEWED_COMMIT" \
+            --arg url "$run_html_url" \
+            --argjson artifacts "$artifact_summary" \
+            '{run_id:$run_id,status:$status,conclusion:$conclusion,head_sha:$head_sha,reviewed_commit:$reviewed_commit,url:$url,artifacts:$artifacts}' \
+            > "$ARTIFACT_DIR/deployment-terminal.json"
+
+          body=$(cat <<EOF
+          ## Collector rate-limit deployment terminal result
+
+          - workflow: [$run_id]($run_html_url)
+          - workflow head: \`$head_sha\`
+          - reviewed deployment source: \`$REVIEWED_COMMIT\`
+          - status: **$status**
+          - conclusion: **$conclusion**
+          - artifacts: \`$artifact_summary\`
+
+          No retry or rollback was performed by this dispatcher.
+          EOF
+          )
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" \
+            -f body="$body" > /dev/null
+
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "conclusion=$conclusion" >> "$GITHUB_OUTPUT"
+          exit "$watch_rc"
+
+      - name: Verify public API separation, correlation and served frontend assets
+        if: steps.deployment.outputs.conclusion == 'success'
+        env:
+          REVIEWED_COMMIT: ${{ steps.request.outputs.reviewed_commit }}
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracker_issue }}
+          ALLOWED_ORIGIN: ${{ steps.request.outputs.allowed_origin }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          health_url='https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/health'
+          run_url='https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run'
+
+          for attempt in $(seq 1 12); do
+            curl --fail --silent --show-error \
+              --connect-timeout 5 --max-time 15 \
+              "$health_url" > "$ARTIFACT_DIR/health-${attempt}.json"
+          done
+
+          request_id="$(python - <<'PY'
+          import uuid
+          print(uuid.uuid4())
+          PY
+          )"
+
+          preflight_status="$(curl --silent --show-error \
+            --request OPTIONS \
+            --header "Origin: $ALLOWED_ORIGIN" \
+            --header 'Access-Control-Request-Method: POST' \
+            --header 'Access-Control-Request-Headers: Content-Type, X-ServiceTracer-Request-ID' \
+            --dump-header "$ARTIFACT_DIR/preflight-headers.txt" \
+            --output /dev/null \
+            --write-out '%{http_code}' \
+            "$run_url")"
+          [[ "$preflight_status" == '204' ]]
+
+          post_status="$(curl --silent --show-error \
+            --request POST \
+            --header 'Content-Type: application/json' \
+            --header "Origin: $ALLOWED_ORIGIN" \
+            --header "X-ServiceTracer-Request-ID: $request_id" \
+            --data '{"attempts":20}' \
+            --dump-header "$ARTIFACT_DIR/post-headers.txt" \
+            --output "$ARTIFACT_DIR/post-response.json" \
+            --write-out '%{http_code}' \
+            --max-time 90 \
+            "$run_url")"
+          [[ "$post_status" == '200' ]]
+
+          python - "$ALLOWED_ORIGIN" "$request_id" "$REVIEWED_COMMIT" "$ARTIFACT_DIR" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          origin, request_id, reviewed_commit, artifact_dir = sys.argv[1:]
+          root = Path(artifact_dir)
+
+          def headers(path: Path) -> dict[str, str]:
+              parsed: dict[str, str] = {}
+              for line in path.read_bytes().decode('iso-8859-1').splitlines():
+                  if ':' not in line:
+                      continue
+                  name, value = line.split(':', 1)
+                  parsed[name.strip().lower()] = value.strip()
+              return parsed
+
+          for health_path in sorted(root.glob('health-*.json')):
+              payload = json.loads(health_path.read_text(encoding='utf-8'))
+              assert payload['status'] == 'healthy'
+              assert payload['backend_target_configured'] is True
+              assert payload['hosting_model'] == 'collector_vm_systemd'
+              identity = payload['azure_host']
+              assert identity['verified'] is True
+              assert identity['source_ref'] == reviewed_commit
+
+          preflight = headers(root / 'preflight-headers.txt')
+          assert preflight['access-control-allow-origin'] == origin
+          assert 'POST' in preflight['access-control-allow-methods']
+          assert 'x-servicetracer-request-id' in preflight['access-control-allow-headers'].lower()
+
+          post_headers = headers(root / 'post-headers.txt')
+          payload = json.loads((root / 'post-response.json').read_text(encoding='utf-8'))
+          assert post_headers['access-control-allow-origin'] == origin
+          assert post_headers['x-servicetracer-request-id'] == request_id
+          assert payload['request_id'] == request_id
+          assert payload['schema_version'] == 'servicetracer.demo-api-response.v1'
+          assert len(payload['transactions']) == 20
+          assert payload['azure_host']['verified'] is True
+          assert payload['azure_host']['source_ref'] == reviewed_commit
+          assert payload['report']['investigation_boundary']['exact_root_cause_claimed'] is False
+          PY
+
+          pages_ready=false
+          for _ in $(seq 1 36); do
+            curl --fail --silent --show-error \
+              "https://anthonyedgar30000.github.io/live-monitor.js?source=$REVIEWED_COMMIT" \
+              > "$ARTIFACT_DIR/pages-live-monitor.js"
+            curl --fail --silent --show-error \
+              "https://anthonyedgar30000.github.io/app.js?source=$REVIEWED_COMMIT" \
+              > "$ARTIFACT_DIR/pages-app.js"
+            if grep -F 'Collector health and Azure identity verified' "$ARTIFACT_DIR/pages-live-monitor.js" >/dev/null \
+              && grep -F 'Health endpoint reachable' "$ARTIFACT_DIR/pages-live-monitor.js" >/dev/null \
+              && grep -F 'Controlled demo fixture — live analysis unavailable' "$ARTIFACT_DIR/pages-app.js" >/dev/null \
+              && ! grep -F 'Frontend ↔ governed collector API live' "$ARTIFACT_DIR/pages-live-monitor.js" >/dev/null \
+              && ! grep -F 'Controlled demo fixture — API unavailable' "$ARTIFACT_DIR/pages-app.js" >/dev/null; then
+              pages_ready=true
+              break
+            fi
+            sleep 10
+          done
+          [[ "$pages_ready" == true ]]
+
+          jq -n \
+            --arg reviewed_commit "$REVIEWED_COMMIT" \
+            --arg request_id "$request_id" \
+            '{schema_version:"project.collector-analysis-rate-limit-live-verification.v1",reviewed_commit:$reviewed_commit,health_requests:12,health_rate_limit_separation_verified:true,cors_preflight_status:204,post_status:200,request_id:$request_id,request_id_correlation_verified:true,transaction_attempts:20,collector_identity_verified:true,frontend_assets_served_with_clarified_wording:true,browser_render_execution_not_claimed:true}' \
+            > "$ARTIFACT_DIR/live-verification.json"
+
+          body=$(cat <<EOF
+          ## Collector rate-limit live verification passed
+
+          - 12 consecutive health requests: **passed**
+          - CORS preflight: **HTTP 204**
+          - correlated live-analysis POST: **HTTP 200**
+          - request ID header/body match: **verified**
+          - transactions: **20**
+          - governed collector identity and reviewed source: **verified**
+          - GitHub Pages assets with clarified wording: **served**
+          - browser DOM rendering: **not claimed by this API/asset verification**
+
+          \`health_endpoint_reachable != live_analysis_completed\`
+          EOF
+          )
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" \
+            -f body="$body" > /dev/null
+
+      - name: Upload dispatcher and live-verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: collector-analysis-rate-limit-run1-evidence
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
