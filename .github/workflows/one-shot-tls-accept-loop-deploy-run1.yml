@@ -1,0 +1,460 @@
+name: One-shot TLS accept-loop Azure deployment run 1
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/one-shot-tls-accept-loop-deploy-run1.yml
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: one-shot-tls-accept-loop-deploy-run1
+  cancel-in-progress: false
+
+env:
+  RESOURCE_GROUP: rg-servicetracer-dev-westus2
+  LOCATION: westus2
+  LB_NAME: lb-remote-access-mst-dev
+  PIP_NAME: pip-remote-access-mst-dev
+  VPN01_VM: vm-vpn01-mst-dev
+  VPN01_IP: 10.20.10.11
+  VPN02_VM: vm-vpn02-mst-dev
+  VPN02_IP: 10.20.10.12
+  SERVICE_NAME: servicetracer-demo-backend.service
+  ARTIFACT_DIR: tls-accept-loop-deploy-run1-evidence
+  AUTHORIZED_BASE: aa493def60866f3d9452899b131bc2f35cd68bdf
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+
+jobs:
+  deploy-and-verify:
+    name: Stage and validate TLS accept-loop repair
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out exact deployment request
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Validate finite authority and tested source
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          git merge-base --is-ancestor "$AUTHORIZED_BASE" HEAD
+          test -f .project/change-requests/tls-accept-loop-repair-20260727.json
+          python -m unittest discover -s infra/tests -p 'test_vpn_backend_tls_accept_loop.py' -v \
+            > "$ARTIFACT_DIR/tls-accept-loop-regression.log" 2>&1
+          grep -F 'TLSHandshakeThreadingHTTPServer' infra/bootstrap/vpn-backend-cloud-init.yaml >/dev/null
+          grep -F 'do_handshake_on_connect=False' infra/bootstrap/vpn-backend-cloud-init.yaml >/dev/null
+          grep -F 'tls_request.do_handshake()' infra/bootstrap/vpn-backend-cloud-init.yaml >/dev/null
+          printf '%s\n' \
+            'authorization_issue=165' \
+            "authorized_base=$AUTHORIZED_BASE" \
+            "workflow_source=$GITHUB_SHA" \
+            'target_scope=VPN-01 then VPN-02 only' \
+            'new_resources=none' \
+            'recurring_cost_delta_CAD=0' \
+            > "$ARTIFACT_DIR/authority.txt"
+
+      - name: Render exact backend and per-VM systemd units
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          source_path = Path('infra/bootstrap/vpn-backend-cloud-init.yaml')
+          lines = source_path.read_text(encoding='utf-8').splitlines()
+          path_index = lines.index('  - path: /opt/servicetracer-demo/backend.py')
+          content_index = lines.index('    content: |', path_index)
+          source_lines = []
+          for line in lines[content_index + 1:]:
+              if line.startswith('  - path: ') or line == 'runcmd:':
+                  break
+              if line and not line.startswith('      '):
+                  raise SystemExit(f'unexpected backend indentation: {line!r}')
+              source_lines.append(line[6:] if line else '')
+          backend = '\n'.join(source_lines) + '\n'
+          compile(backend, 'backend.py', 'exec')
+          Path('/tmp/backend.py').write_text(backend, encoding='utf-8')
+
+          unit_template = '''[Unit]
+          Description=ServiceTracer simulated remote-access backend
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=simple
+          Environment=SERVICETRACER_BACKEND_ID={backend_id}
+          Environment=SERVICETRACER_BACKEND_MODE={mode}
+          Environment=SERVICETRACER_LISTENER_PORT=443
+          Environment=SERVICETRACER_TLS_HANDSHAKE_TIMEOUT_SECONDS=1.0
+          ExecStart=/usr/bin/python3 /opt/servicetracer-demo/backend.py
+          Restart=always
+          RestartSec=3
+          NoNewPrivileges=true
+          PrivateTmp=true
+          ProtectHome=true
+          ProtectSystem=strict
+          ReadOnlyPaths=/etc/servicetracer-demo
+
+          [Install]
+          WantedBy=multi-user.target
+          '''
+          Path('/tmp/vpn01.service').write_text(
+              unit_template.format(backend_id='VPN-01', mode='healthy'), encoding='utf-8'
+          )
+          Path('/tmp/vpn02.service').write_text(
+              unit_template.format(backend_id='VPN-02', mode='radius-timeout'), encoding='utf-8'
+          )
+          PY
+          python -m py_compile /tmp/backend.py
+          sha256sum /tmp/backend.py /tmp/vpn01.service /tmp/vpn02.service \
+            > "$ARTIFACT_DIR/rendered-file-sha256.txt"
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Inspect exact Azure, region, VM, cost and quota boundary
+        id: azure
+        run: |
+          set -euo pipefail
+          subscription_name="$(az account show --query name --output tsv)"
+          rg_location="$(az group show --name "$RESOURCE_GROUP" --query location --output tsv)"
+          [[ "$rg_location" == "$LOCATION" ]]
+
+          lb_id="$(az network lb show --resource-group "$RESOURCE_GROUP" --name "$LB_NAME" --query id --output tsv)"
+          public_ip="$(az network public-ip show --resource-group "$RESOURCE_GROUP" --name "$PIP_NAME" --query ipAddress --output tsv)"
+          [[ -n "$lb_id" && -n "$public_ip" ]]
+
+          for spec in "$VPN01_VM:$VPN01_IP" "$VPN02_VM:$VPN02_IP"; do
+            vm="${spec%%:*}"
+            expected_ip="${spec##*:}"
+            power="$(az vm get-instance-view --resource-group "$RESOURCE_GROUP" --name "$vm" \
+              --query "instanceView.statuses[?starts_with(code, 'PowerState/')].displayStatus | [0]" --output tsv)"
+            actual_ip="$(az vm list-ip-addresses --resource-group "$RESOURCE_GROUP" --name "$vm" \
+              --query '[0].virtualMachine.network.privateIpAddresses[0]' --output tsv)"
+            size="$(az vm show --resource-group "$RESOURCE_GROUP" --name "$vm" --query hardwareProfile.vmSize --output tsv)"
+            [[ "$power" == 'VM running' ]]
+            [[ "$actual_ip" == "$expected_ip" ]]
+            printf '%s\t%s\t%s\t%s\n' "$vm" "$actual_ip" "$power" "$size"
+          done > "$ARTIFACT_DIR/azure-vm-boundary.tsv"
+
+          jq -n \
+            --arg subscription_name "$subscription_name" \
+            --arg resource_group "$RESOURCE_GROUP" \
+            --arg location "$rg_location" \
+            --arg load_balancer "$LB_NAME" \
+            --arg public_ip "$public_ip" \
+            --arg cost_delta_cad '0' \
+            --arg quota_delta 'none' \
+            '{subscription_name:$subscription_name,resource_group:$resource_group,location:$location,load_balancer:$load_balancer,public_ip:$public_ip,recurring_cost_delta_CAD:$cost_delta_cad,quota_delta:$quota_delta}' \
+            > "$ARTIFACT_DIR/azure-boundary.json"
+
+          printf 'lb_id=%s\n' "$lb_id" >> "$GITHUB_OUTPUT"
+          printf 'public_ip=%s\n' "$public_ip" >> "$GITHUB_OUTPUT"
+
+      - name: Capture read-only pre-change guest evidence
+        run: |
+          set -euo pipefail
+          cat > /tmp/preflight.sh <<'SH'
+          set -euo pipefail
+          printf 'timestamp=%s\n' "$(date -u +%FT%TZ)"
+          systemctl is-active servicetracer-demo-backend.service
+          systemctl is-enabled servicetracer-demo-backend.service
+          sha256sum /opt/servicetracer-demo/backend.py /etc/systemd/system/servicetracer-demo-backend.service
+          ss -lntp '( sport = :443 )'
+          ufw status verbose
+          SH
+          for vm in "$VPN01_VM" "$VPN02_VM"; do
+            az vm run-command invoke \
+              --resource-group "$RESOURCE_GROUP" \
+              --name "$vm" \
+              --command-id RunShellScript \
+              --scripts "$(cat /tmp/preflight.sh)" \
+              --output json > "$ARTIFACT_DIR/${vm}-preflight.json"
+          done
+
+      - name: Deploy and locally validate VPN-01 canary
+        env:
+          TARGET_VM: ${{ env.VPN01_VM }}
+          TARGET_IP: ${{ env.VPN01_IP }}
+          TARGET_BACKEND: VPN-01
+          TARGET_MODE: healthy
+          UNIT_FILE: /tmp/vpn01.service
+        run: |
+          set -euo pipefail
+          backend_b64="$(base64 -w 0 /tmp/backend.py)"
+          unit_b64="$(base64 -w 0 "$UNIT_FILE")"
+          cat > /tmp/deploy.sh <<SH
+          set -euo pipefail
+          umask 0077
+          service='$SERVICE_NAME'
+          backup_dir='/var/lib/servicetracer-demo/deployments/github-${GITHUB_RUN_ID}-${TARGET_VM}'
+          install -d -m 0700 "\$backup_dir"
+          cp -a /opt/servicetracer-demo/backend.py "\$backup_dir/backend.py.before"
+          cp -a /etc/systemd/system/servicetracer-demo-backend.service "\$backup_dir/service.before"
+          printf '%s' '$backend_b64' | base64 -d > /tmp/backend.py.new
+          printf '%s' '$unit_b64' | base64 -d > /tmp/service.new
+          python3 -m py_compile /tmp/backend.py.new
+          install -o root -g root -m 0755 /tmp/backend.py.new /opt/servicetracer-demo/backend.py
+          install -o root -g root -m 0644 /tmp/service.new /etc/systemd/system/servicetracer-demo-backend.service
+          systemctl daemon-reload
+          systemctl restart "\$service"
+
+          validate() {
+            systemctl is-active --quiet "\$service"
+            systemctl is-enabled --quiet "\$service"
+            ss -lnt '( sport = :443 )' | grep -F ':443'
+            ufw status | grep -F 'Status: active'
+            response="\$(curl -kfsS --connect-timeout 2 --max-time 5 https://127.0.0.1/healthz)"
+            python3 -c 'import json,sys; p=json.loads(sys.argv[1]); assert p["backend"]==sys.argv[2]; assert p["listener"]=="available"; assert p["mode"]==sys.argv[3]' "\$response" '$TARGET_BACKEND' '$TARGET_MODE'
+            response="\$(curl -kfsS --connect-timeout 2 --max-time 5 https://$TARGET_IP/healthz)"
+            python3 -c 'import json,sys; p=json.loads(sys.argv[1]); assert p["backend"]==sys.argv[2]; assert p["listener"]=="available"; assert p["mode"]==sys.argv[3]' "\$response" '$TARGET_BACKEND' '$TARGET_MODE'
+            read recvq backlog < <(ss -lnt '( sport = :443 )' | awk 'NR==2 {print \$2, \$3}')
+            [[ "\$recvq" =~ ^[0-9]+$ && "\$backlog" =~ ^[0-9]+$ ]]
+            (( recvq < backlog ))
+          }
+
+          if ! validate; then
+            cp -a "\$backup_dir/backend.py.before" /opt/servicetracer-demo/backend.py
+            cp -a "\$backup_dir/service.before" /etc/systemd/system/servicetracer-demo-backend.service
+            systemctl daemon-reload
+            systemctl restart "\$service"
+            echo 'rollback_performed=true' >&2
+            exit 1
+          fi
+
+          printf 'deployment=success\nvm=%s\nbackend=%s\nmode=%s\n' '$TARGET_VM' '$TARGET_BACKEND' '$TARGET_MODE'
+          sha256sum /opt/servicetracer-demo/backend.py /etc/systemd/system/servicetracer-demo-backend.service
+          ss -lntp '( sport = :443 )'
+          SH
+          az vm run-command invoke \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$TARGET_VM" \
+            --command-id RunShellScript \
+            --scripts "$(cat /tmp/deploy.sh)" \
+            --output json > "$ARTIFACT_DIR/${TARGET_VM}-deployment.json"
+
+      - name: Wait for VPN-01 Azure TCP probe health
+        env:
+          LB_ID: ${{ steps.azure.outputs.lb_id }}
+        run: |
+          set -euo pipefail
+          healthy=false
+          for attempt in $(seq 1 30); do
+            az monitor metrics list \
+              --resource "$LB_ID" \
+              --metric DipAvailability \
+              --aggregation Average \
+              --interval PT1M \
+              --filter "BackendIPAddress eq '*' and BackendPort eq '*'" \
+              --output json > "$ARTIFACT_DIR/vpn01-probe-metrics.json"
+            python - "$ARTIFACT_DIR/vpn01-probe-metrics.json" "$ARTIFACT_DIR/vpn01-probe-status.json" <<'PY'
+          import json, sys
+          from pathlib import Path
+          payload = json.loads(Path(sys.argv[1]).read_text())
+          status = 'unknown'
+          values = payload.get('value') or []
+          if values:
+              for series in values[0].get('timeseries') or []:
+                  dimensions = {item.get('name', {}).get('value'): item.get('value') for item in series.get('metadatavalues') or []}
+                  if dimensions.get('BackendIPAddress') != '10.20.10.11':
+                      continue
+                  averages = [point.get('average') for point in series.get('data') or [] if point.get('average') is not None]
+                  if averages:
+                      status = 'healthy' if averages[-1] >= 1 else 'unhealthy'
+          Path(sys.argv[2]).write_text(json.dumps({'VPN-01': status}, indent=2) + '\n')
+          PY
+            if jq -e '."VPN-01" == "healthy"' "$ARTIFACT_DIR/vpn01-probe-status.json" >/dev/null; then
+              healthy=true
+              break
+            fi
+            sleep 20
+          done
+          [[ "$healthy" == true ]] || {
+            echo 'VPN-01 local validation passed but Azure probe did not become healthy.' >&2
+            cat "$ARTIFACT_DIR/vpn01-probe-status.json" >&2
+            exit 1
+          }
+
+      - name: Deploy and locally validate VPN-02
+        env:
+          TARGET_VM: ${{ env.VPN02_VM }}
+          TARGET_IP: ${{ env.VPN02_IP }}
+          TARGET_BACKEND: VPN-02
+          TARGET_MODE: radius-timeout
+          UNIT_FILE: /tmp/vpn02.service
+        run: |
+          set -euo pipefail
+          backend_b64="$(base64 -w 0 /tmp/backend.py)"
+          unit_b64="$(base64 -w 0 "$UNIT_FILE")"
+          cat > /tmp/deploy.sh <<SH
+          set -euo pipefail
+          umask 0077
+          service='$SERVICE_NAME'
+          backup_dir='/var/lib/servicetracer-demo/deployments/github-${GITHUB_RUN_ID}-${TARGET_VM}'
+          install -d -m 0700 "\$backup_dir"
+          cp -a /opt/servicetracer-demo/backend.py "\$backup_dir/backend.py.before"
+          cp -a /etc/systemd/system/servicetracer-demo-backend.service "\$backup_dir/service.before"
+          printf '%s' '$backend_b64' | base64 -d > /tmp/backend.py.new
+          printf '%s' '$unit_b64' | base64 -d > /tmp/service.new
+          python3 -m py_compile /tmp/backend.py.new
+          install -o root -g root -m 0755 /tmp/backend.py.new /opt/servicetracer-demo/backend.py
+          install -o root -g root -m 0644 /tmp/service.new /etc/systemd/system/servicetracer-demo-backend.service
+          systemctl daemon-reload
+          systemctl restart "\$service"
+
+          validate() {
+            systemctl is-active --quiet "\$service"
+            systemctl is-enabled --quiet "\$service"
+            ss -lnt '( sport = :443 )' | grep -F ':443'
+            ufw status | grep -F 'Status: active'
+            response="\$(curl -kfsS --connect-timeout 2 --max-time 5 https://127.0.0.1/healthz)"
+            python3 -c 'import json,sys; p=json.loads(sys.argv[1]); assert p["backend"]==sys.argv[2]; assert p["listener"]=="available"; assert p["mode"]==sys.argv[3]' "\$response" '$TARGET_BACKEND' '$TARGET_MODE'
+            response="\$(curl -kfsS --connect-timeout 2 --max-time 5 https://$TARGET_IP/healthz)"
+            python3 -c 'import json,sys; p=json.loads(sys.argv[1]); assert p["backend"]==sys.argv[2]; assert p["listener"]=="available"; assert p["mode"]==sys.argv[3]' "\$response" '$TARGET_BACKEND' '$TARGET_MODE'
+            read recvq backlog < <(ss -lnt '( sport = :443 )' | awk 'NR==2 {print \$2, \$3}')
+            [[ "\$recvq" =~ ^[0-9]+$ && "\$backlog" =~ ^[0-9]+$ ]]
+            (( recvq < backlog ))
+          }
+
+          if ! validate; then
+            cp -a "\$backup_dir/backend.py.before" /opt/servicetracer-demo/backend.py
+            cp -a "\$backup_dir/service.before" /etc/systemd/system/servicetracer-demo-backend.service
+            systemctl daemon-reload
+            systemctl restart "\$service"
+            echo 'rollback_performed=true' >&2
+            exit 1
+          fi
+
+          printf 'deployment=success\nvm=%s\nbackend=%s\nmode=%s\n' '$TARGET_VM' '$TARGET_BACKEND' '$TARGET_MODE'
+          sha256sum /opt/servicetracer-demo/backend.py /etc/systemd/system/servicetracer-demo-backend.service
+          ss -lntp '( sport = :443 )'
+          SH
+          az vm run-command invoke \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$TARGET_VM" \
+            --command-id RunShellScript \
+            --scripts "$(cat /tmp/deploy.sh)" \
+            --output json > "$ARTIFACT_DIR/${TARGET_VM}-deployment.json"
+
+      - name: Wait for both Azure TCP probes to report healthy
+        env:
+          LB_ID: ${{ steps.azure.outputs.lb_id }}
+        run: |
+          set -euo pipefail
+          healthy=false
+          for attempt in $(seq 1 30); do
+            az monitor metrics list \
+              --resource "$LB_ID" \
+              --metric DipAvailability \
+              --aggregation Average \
+              --interval PT1M \
+              --filter "BackendIPAddress eq '*' and BackendPort eq '*'" \
+              --output json > "$ARTIFACT_DIR/load-balancer-probe-metrics.json"
+            python - "$ARTIFACT_DIR/load-balancer-probe-metrics.json" "$ARTIFACT_DIR/probe-status.json" <<'PY'
+          import json, sys
+          from pathlib import Path
+          payload = json.loads(Path(sys.argv[1]).read_text())
+          ip_to_backend = {'10.20.10.11': 'VPN-01', '10.20.10.12': 'VPN-02'}
+          status = {backend: 'unknown' for backend in ip_to_backend.values()}
+          values = payload.get('value') or []
+          if values:
+              for series in values[0].get('timeseries') or []:
+                  dimensions = {item.get('name', {}).get('value'): item.get('value') for item in series.get('metadatavalues') or []}
+                  backend = ip_to_backend.get(dimensions.get('BackendIPAddress'))
+                  if not backend:
+                      continue
+                  averages = [point.get('average') for point in series.get('data') or [] if point.get('average') is not None]
+                  if averages:
+                      status[backend] = 'healthy' if averages[-1] >= 1 else 'unhealthy'
+          Path(sys.argv[2]).write_text(json.dumps(status, indent=2) + '\n')
+          PY
+            if jq -e '."VPN-01" == "healthy" and ."VPN-02" == "healthy"' "$ARTIFACT_DIR/probe-status.json" >/dev/null; then
+              healthy=true
+              break
+            fi
+            sleep 20
+          done
+          [[ "$healthy" == true ]] || {
+            echo 'Both guests passed local validation but both Azure probes did not become healthy.' >&2
+            cat "$ARTIFACT_DIR/probe-status.json" >&2
+            exit 1
+          }
+
+      - name: Validate bounded public transaction contrast
+        env:
+          PUBLIC_IP: ${{ steps.azure.outputs.public_ip }}
+          PYTHONPATH: servicetracer/src
+        run: |
+          set -euo pipefail
+          python -m servicetracer.azure_demo \
+            --frontend-url "https://${PUBLIC_IP}" \
+            --probe-status "$ARTIFACT_DIR/probe-status.json" \
+            --attempts 30 \
+            --load-balancer-id "$LB_NAME" \
+            --output "$ARTIFACT_DIR/live-source-records.jsonl" \
+            --raw-output "$ARTIFACT_DIR/live-transactions.json"
+
+          python -m servicetracer.collector_cli ingest \
+            --spool "$ARTIFACT_DIR/live-evidence-spool.jsonl" \
+            --input "$ARTIFACT_DIR/live-source-records.jsonl" \
+            > "$ARTIFACT_DIR/collector-receipt.json"
+          python -m servicetracer.cli \
+            --evidence-records "$ARTIFACT_DIR/live-evidence-spool.jsonl" \
+            --adapter-config servicetracer/examples/evidence_adapters.json \
+            --service-path servicetracer/examples/remote_access_service_path.json \
+            --report-view technician-handoff \
+            --output "$ARTIFACT_DIR/technician-handoff-report.json"
+
+          jq -e '
+            .load_balancer.status == "healthy_under_configured_probe" and
+            .localization.suspect_backend == "VPN-02" and
+            .localization.healthy_comparison_backend == "VPN-01" and
+            .investigation_boundary.exact_root_cause_claimed == false
+          ' "$ARTIFACT_DIR/technician-handoff-report.json" >/dev/null
+
+      - name: Write terminal proof summary
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            echo '## TLS accept-loop Azure deployment run 1'
+            echo
+            echo "- Workflow source: \`$GITHUB_SHA\`"
+            echo '- Authorization: issue #165'
+            echo '- Target: VPN-01 canary, then VPN-02 after canary probe health'
+            echo '- Azure networking changes: none'
+            echo '- New resources or quota: none'
+            echo '- Expected recurring cost delta: CAD $0'
+            if [[ -f "$ARTIFACT_DIR/probe-status.json" ]]; then
+              echo '- Final probe status:'
+              echo '```json'
+              cat "$ARTIFACT_DIR/probe-status.json"
+              echo '```'
+            fi
+            if [[ -f "$ARTIFACT_DIR/technician-handoff-report.json" ]]; then
+              echo '- Deterministic transaction analysis completed.'
+            else
+              echo '- End-to-end transaction analysis was not completed.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload non-secret deployment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tls-accept-loop-deploy-run1-evidence
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
