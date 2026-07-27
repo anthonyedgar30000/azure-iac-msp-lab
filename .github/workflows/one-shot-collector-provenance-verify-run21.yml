@@ -1,0 +1,226 @@
+name: One-shot collector provenance verify-only run 21
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.project/verification-requests/collector-provenance-run21.json'
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+
+concurrency:
+  group: one-shot-collector-provenance-verify-run21
+  cancel-in-progress: false
+
+env:
+  REQUEST_FILE: .project/verification-requests/collector-provenance-run21.json
+  ARTIFACT_DIR: collector-provenance-verify-run21-evidence
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  verify-only:
+    name: Verify deployed collector provenance without mutation
+    if: github.repository == 'anthonyedgar30000/azure-iac-msp-lab'
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact verification request
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate finite verify-only authority
+        id: request
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$REQUEST_FILE"
+          jq -e '
+            .schema_version == "project.collector-provenance-verification-request.v1" and
+            .request_id == "collector-provenance-run21" and
+            .status == "authorized_unconsumed" and
+            .tracking_issue == 142 and
+            .execution.operation == "verify" and
+            .execution.deployed_source == "be7a0215a2ac47dd038b042e6b21e3c2e155d86a" and
+            .execution.resource_group == "rg-servicetracer-dev-westus2" and
+            .execution.location == "westus2" and
+            .execution.environment == "dev" and
+            .execution.prefix == "mst" and
+            .execution.dns_label == "st-demo-api-aeg30000" and
+            .execution.allowed_origin == "https://anthonyedgar30000.github.io" and
+            .execution.expected_vm == "vm-stcollector-mst-dev" and
+            .execution.attempts == 20 and
+            .authority.attempt_limit == 1 and
+            .authority.renewable == false and
+            .authority.transferable == false and
+            .authority.azure_authentication_authorized == true and
+            .authority.azure_read_only_queries_authorized == true and
+            .authority.public_endpoint_verification_authorized == true and
+            .authority.transaction_replay_authorized == true and
+            .authority.azure_mutation_authorized == false and
+            .authority.deployment_authorized == false and
+            .authority.automatic_retry_authorized == false and
+            .authority.rollback_authorized == false and
+            .authority.rbac_mutation_authorized == false and
+            .authority.cleanup_authorized == false
+          ' "$REQUEST_FILE" > /dev/null
+
+          valid_until="$(jq -r '.valid_until' "$REQUEST_FILE")"
+          (( $(date -u +%s) <= $(date -u -d "$valid_until" +%s) ))
+          deployed_source="$(jq -r '.execution.deployed_source' "$REQUEST_FILE")"
+          git cat-file -e "${deployed_source}^{commit}"
+          git merge-base --is-ancestor "$deployed_source" "$GITHUB_SHA"
+
+          mkdir -p "$ARTIFACT_DIR"
+          cp "$REQUEST_FILE" "$ARTIFACT_DIR/request.json"
+          for key in tracking_issue deployed_source resource_group location environment prefix dns_label allowed_origin expected_vm attempts; do
+            echo "$key=$(jq -r --arg key "$key" '.execution[$key] // .[$key]' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          done
+
+      - name: Validate CRLF verifier before Azure login
+        run: |
+          set -euo pipefail
+          python -m unittest infra.tests.test_collector_demo_api_crlf_verifier -v
+
+      - name: Record grant consumption
+        env:
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracking_issue }}
+          DEPLOYED_SOURCE: ${{ steps.request.outputs.deployed_source }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          body=$(cat <<EOF
+          ## Run 21 verify-only attempt started
+
+          The finite verify-only grant is now **consumed**.
+
+          - verification commit: \`$GITHUB_SHA\`
+          - deployed source under test: \`$DEPLOYED_SOURCE\`
+          - Azure mutation authorized: **false**
+          - deployment authorized: **false**
+          - automatic retry: **false**
+          EOF
+          )
+          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" -f body="$body" > /dev/null
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Capture read-only Azure target state
+        env:
+          RESOURCE_GROUP: ${{ steps.request.outputs.resource_group }}
+          PREFIX: ${{ steps.request.outputs.prefix }}
+          LAB_ENVIRONMENT: ${{ steps.request.outputs.environment }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          suffix="${PREFIX}-${LAB_ENVIRONMENT}"
+          az account show --query '{subscriptionName:name,tenantId:tenantId,subscriptionId:id}' --output json > "$ARTIFACT_DIR/azure-context.json"
+          az group show --name "$RESOURCE_GROUP" --output json > "$ARTIFACT_DIR/resource-group.json"
+          az network public-ip show --resource-group "$RESOURCE_GROUP" --name "pip-st-demo-api-${suffix}" --output json > "$ARTIFACT_DIR/demo-api-public-ip.json"
+          az network lb show --resource-group "$RESOURCE_GROUP" --name "lb-st-demo-api-${suffix}" --output json > "$ARTIFACT_DIR/demo-api-load-balancer.json"
+          az vm extension show --resource-group "$RESOURCE_GROUP" --vm-name "vm-stcollector-${suffix}" --name servicetracer-demo-api --output json > "$ARTIFACT_DIR/demo-api-vm-extension.json"
+
+      - name: Verify public API, provenance, CORS, and bounded scenario
+        id: verify
+        env:
+          LOCATION: ${{ steps.request.outputs.location }}
+          DNS_LABEL: ${{ steps.request.outputs.dns_label }}
+          ALLOWED_ORIGIN: ${{ steps.request.outputs.allowed_origin }}
+          DEPLOYED_SOURCE: ${{ steps.request.outputs.deployed_source }}
+          EXPECTED_VM: ${{ steps.request.outputs.expected_vm }}
+          ATTEMPTS: ${{ steps.request.outputs.attempts }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          fqdn="$(jq -r '.dnsSettings.fqdn' "$ARTIFACT_DIR/demo-api-public-ip.json")"
+          [[ "$fqdn" == "${DNS_LABEL}.${LOCATION}.cloudapp.azure.com" ]]
+          health_url="https://${fqdn}/api/health"
+          run_url="https://${fqdn}/api/demo/run"
+
+          curl --fail --silent --show-error "$health_url" > "$ARTIFACT_DIR/api-health.json"
+          curl --fail --silent --show-error \
+            --request POST \
+            --header 'Content-Type: application/json' \
+            --header "Origin: ${ALLOWED_ORIGIN}" \
+            --data "{\"attempts\":${ATTEMPTS}}" \
+            "$run_url" > "$ARTIFACT_DIR/api-run.json"
+          curl --fail --silent --show-error \
+            --request OPTIONS \
+            --header "Origin: ${ALLOWED_ORIGIN}" \
+            --header 'Access-Control-Request-Method: POST' \
+            --dump-header "$ARTIFACT_DIR/cors-headers.txt" \
+            --output /dev/null \
+            "$run_url"
+
+          python infra/scripts/verify_collector_demo_api_evidence.py \
+            --health "$ARTIFACT_DIR/api-health.json" \
+            --run "$ARTIFACT_DIR/api-run.json" \
+            --headers "$ARTIFACT_DIR/cors-headers.txt" \
+            --extension "$ARTIFACT_DIR/demo-api-vm-extension.json" \
+            --allowed-origin "$ALLOWED_ORIGIN" \
+            --expected-source "$DEPLOYED_SOURCE" \
+            --expected-vm "$EXPECTED_VM" \
+            --expected-region "$LOCATION" \
+            --attempts "$ATTEMPTS" \
+            --output "$ARTIFACT_DIR/verification.json"
+
+      - name: Write evidence manifest
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          find "$ARTIFACT_DIR" -maxdepth 1 -type f ! -name evidence-manifest.json ! -name sha256sums.txt -print0 \
+            | sort -z | xargs -0 -r sha256sum > "$ARTIFACT_DIR/sha256sums.txt"
+          jq -n \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg head_sha "$GITHUB_SHA" \
+            --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --rawfile sums "$ARTIFACT_DIR/sha256sums.txt" \
+            '{schema_version:"servicetracer.collector-verify-evidence.v1",operation:"verify",azure_mutation_performed:false,run_id:$run_id,run_attempt:$run_attempt,head_sha:$head_sha,generated_at:$generated_at,sha256sums:$sums}' \
+            > "$ARTIFACT_DIR/evidence-manifest.json"
+
+      - name: Upload verify-only evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: collector-provenance-verify-run21-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish terminal result
+        if: always()
+        env:
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracking_issue }}
+          DEPLOYED_SOURCE: ${{ steps.request.outputs.deployed_source }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          verification="not_produced"
+          if [[ -f "$ARTIFACT_DIR/verification.json" ]]; then
+            verification="$(jq -c '{service_validated,tls_verified,health_verified,azure_host_verified,exact_source_verified,extension_verified,cors_verified,transactions_verified,transaction_status_counts,failure_boundary_counts,exact_root_cause_claimed}' "$ARTIFACT_DIR/verification.json")"
+          fi
+          body=$(cat <<EOF
+          ## Run 21 terminal result
+
+          - workflow run: [$GITHUB_RUN_ID](https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)
+          - verification commit: \`$GITHUB_SHA\`
+          - deployed source tested: \`$DEPLOYED_SOURCE\`
+          - job status: **$JOB_STATUS**
+          - verification: \`$verification\`
+          - Azure mutation performed: **false**
+          - retry performed: **false**
+          EOF
+          )
+          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" -f body="$body" > /dev/null
