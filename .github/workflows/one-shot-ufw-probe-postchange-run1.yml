@@ -1,0 +1,353 @@
+name: One-shot UFW and probe post-change verification run 1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.project/verification-requests/ufw-probe-postchange-run1-20260727.json'
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+
+concurrency:
+  group: one-shot-ufw-probe-postchange-run1
+  cancel-in-progress: false
+
+env:
+  REQUEST_FILE: .project/verification-requests/ufw-probe-postchange-run1-20260727.json
+  ARTIFACT_DIR: ufw-probe-postchange-run1-evidence
+  GH_TOKEN: ${{ github.token }}
+  AZURE_CORE_ONLY_SHOW_ERRORS: true
+
+jobs:
+  verify:
+    name: Verify UFW state, Azure probes, and bounded transactions
+    if: github.repository == 'anthonyedgar30000/azure-iac-msp-lab'
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 35
+    steps:
+      - name: Check out exact verification request
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate finite post-change verification authority
+        id: request
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$REQUEST_FILE"
+          jq -e '
+            .schema_version == "project.ufw-probe-postchange-verification-request.v1" and
+            .request_id == "ufw-probe-postchange-run1-20260727" and
+            .status == "authorized_unconsumed" and
+            .dispatch_revision == 2 and
+            .tracking_issue == 150 and
+            .repository.base_main == "e48a91f731ba489b2480895390c153de0d8bd7ab" and
+            .preflight_failures[0].workflow_run == 30284269404 and
+            .preflight_failures[0].failed_step == "Record grant consumption" and
+            .preflight_failures[0].azure_login_performed == false and
+            .preflight_failures[0].guest_command_performed == false and
+            .preflight_failures[0].public_transaction_performed == false and
+            .preflight_failures[0].authority_consumed == false and
+            .operator_report.ufw_enabled == true and
+            .operator_report.appropriate_firewall_rules_applied == true and
+            .operator_report.verification_state == "user_reported_not_yet_observed" and
+            .execution.operation == "read_only_postchange_verification" and
+            .execution.resource_group == "rg-servicetracer-dev-westus2" and
+            .execution.location == "westus2" and
+            .execution.load_balancer == "lb-remote-access-mst-dev" and
+            .execution.public_ip == "pip-remote-access-mst-dev" and
+            .execution.virtual_machines == ["vm-vpn01-mst-dev", "vm-vpn02-mst-dev"] and
+            .execution.expected_backend_ips == ["10.20.10.11", "10.20.10.12"] and
+            .execution.listener_port == 443 and
+            .execution.probe_poll_attempts == 30 and
+            .execution.probe_poll_interval_seconds == 10 and
+            .execution.transaction_attempts == 30 and
+            .authority.attempt_limit == 1 and
+            .authority.renewable == false and
+            .authority.transferable == false and
+            .authority.azure_authentication_authorized == true and
+            .authority.azure_guest_command_authorized == true and
+            .authority.azure_read_only_queries_authorized == true and
+            .authority.public_transaction_verification_authorized == true and
+            .authority.bounded_probe_polling_authorized == true and
+            .authority.artifact_publication_authorized == true and
+            .authority.azure_mutation_authorized == false and
+            .authority.file_write_authorized == false and
+            .authority.service_restart_authorized == false and
+            .authority.service_enable_disable_authorized == false and
+            .authority.guest_firewall_change_authorized == false and
+            .authority.network_configuration_change_authorized == false and
+            .authority.deployment_authorized == false and
+            .authority.automatic_retry_authorized == false and
+            .authority.rollback_authorized == false and
+            .authority.rbac_mutation_authorized == false and
+            .authority.cleanup_authorized == false
+          ' "$REQUEST_FILE" > /dev/null
+
+          valid_until="$(jq -r '.valid_until' "$REQUEST_FILE")"
+          (( $(date -u +%s) <= $(date -u -d "$valid_until" +%s) ))
+          base_main="$(jq -r '.repository.base_main' "$REQUEST_FILE")"
+          git cat-file -e "${base_main}^{commit}"
+          git merge-base --is-ancestor "$base_main" "$GITHUB_SHA"
+
+          mkdir -p "$ARTIFACT_DIR"
+          cp "$REQUEST_FILE" "$ARTIFACT_DIR/request.json"
+          echo "tracking_issue=$(jq -r '.tracking_issue' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "resource_group=$(jq -r '.execution.resource_group' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "load_balancer=$(jq -r '.execution.load_balancer' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "public_ip=$(jq -r '.execution.public_ip' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "vm1=$(jq -r '.execution.virtual_machines[0]' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "vm2=$(jq -r '.execution.virtual_machines[1]' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "probe_attempts=$(jq -r '.execution.probe_poll_attempts' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "probe_interval=$(jq -r '.execution.probe_poll_interval_seconds' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "transaction_attempts=$(jq -r '.execution.transaction_attempts' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+
+      - name: Validate deterministic analyzer before Azure login
+        run: |
+          set -euo pipefail
+          python -m unittest infra.tests.test_analyze_ufw_probe_postchange -v
+
+      - name: Publish execution-start marker best effort
+        env:
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracking_issue }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          body=$(cat <<EOF
+          ## UFW and probe post-change verification started
+
+          The finite operational grant is consumed when Azure authentication begins.
+
+          - verification commit: \`$GITHUB_SHA\`
+          - guest commands: **read-only only**
+          - firewall mutation: **false**
+          - service restart: **false**
+          - deployment: **false**
+          - automatic retry: **false**
+          EOF
+          )
+          if ! gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" -f body="$body" > /dev/null; then
+            echo "::warning::Unable to publish the execution-start issue comment; continuing because issue publication is not an operational precondition."
+          fi
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Capture current Azure boundary
+        env:
+          RESOURCE_GROUP: ${{ steps.request.outputs.resource_group }}
+          LOAD_BALANCER: ${{ steps.request.outputs.load_balancer }}
+          PUBLIC_IP: ${{ steps.request.outputs.public_ip }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          az account show --query '{name:name,state:state}' --output json > "$ARTIFACT_DIR/account.json"
+          az group show --name "$RESOURCE_GROUP" --query '{name:name,location:location,provisioningState:properties.provisioningState}' --output json > "$ARTIFACT_DIR/resource-group.json"
+          az network lb show --resource-group "$RESOURCE_GROUP" --name "$LOAD_BALANCER" --output json > "$ARTIFACT_DIR/load-balancer.json"
+          az network lb probe list --resource-group "$RESOURCE_GROUP" --lb-name "$LOAD_BALANCER" --output json > "$ARTIFACT_DIR/load-balancer-probes.json"
+          az network lb rule list --resource-group "$RESOURCE_GROUP" --lb-name "$LOAD_BALANCER" --output json > "$ARTIFACT_DIR/load-balancer-rules.json"
+          az network lb address-pool list --resource-group "$RESOURCE_GROUP" --lb-name "$LOAD_BALANCER" --output json > "$ARTIFACT_DIR/load-balancer-pools.json"
+          az network public-ip show --resource-group "$RESOURCE_GROUP" --name "$PUBLIC_IP" --output json > "$ARTIFACT_DIR/public-ip.json"
+
+      - name: Verify VPN-01 UFW and listener state
+        env:
+          RESOURCE_GROUP: ${{ steps.request.outputs.resource_group }}
+          VM: ${{ steps.request.outputs.vm1 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          az vm run-command invoke \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$VM" \
+            --command-id RunShellScript \
+            --scripts '
+              set +e
+              echo "=== SYSTEMD_ACTIVE ==="
+              systemctl is-active servicetracer-demo-backend.service 2>&1 | cut -c1-240
+              echo "=== SYSTEMD_ENABLED ==="
+              systemctl is-enabled servicetracer-demo-backend.service 2>&1 | cut -c1-240
+              echo "=== TCP_443_LISTENER ==="
+              ss -H -lntp "sport = :443" 2>&1 | head -n 5 | cut -c1-240
+              echo "=== UFW ==="
+              ufw status numbered 2>&1 | head -n 30 | cut -c1-240
+              echo "=== END ==="
+              exit 0
+            ' \
+            --output json > "$ARTIFACT_DIR/${VM}-run-command.json"
+
+      - name: Verify VPN-02 UFW and listener state
+        env:
+          RESOURCE_GROUP: ${{ steps.request.outputs.resource_group }}
+          VM: ${{ steps.request.outputs.vm2 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          az vm run-command invoke \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$VM" \
+            --command-id RunShellScript \
+            --scripts '
+              set +e
+              echo "=== SYSTEMD_ACTIVE ==="
+              systemctl is-active servicetracer-demo-backend.service 2>&1 | cut -c1-240
+              echo "=== SYSTEMD_ENABLED ==="
+              systemctl is-enabled servicetracer-demo-backend.service 2>&1 | cut -c1-240
+              echo "=== TCP_443_LISTENER ==="
+              ss -H -lntp "sport = :443" 2>&1 | head -n 5 | cut -c1-240
+              echo "=== UFW ==="
+              ufw status numbered 2>&1 | head -n 30 | cut -c1-240
+              echo "=== END ==="
+              exit 0
+            ' \
+            --output json > "$ARTIFACT_DIR/${VM}-run-command.json"
+
+      - name: Poll current Azure TCP probe health within the bounded window
+        env:
+          PROBE_ATTEMPTS: ${{ steps.request.outputs.probe_attempts }}
+          PROBE_INTERVAL: ${{ steps.request.outputs.probe_interval }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          lb_id="$(jq -r '.id' "$ARTIFACT_DIR/load-balancer.json")"
+          observed_healthy=false
+          for attempt in $(seq 1 "$PROBE_ATTEMPTS"); do
+            az monitor metrics list \
+              --resource "$lb_id" \
+              --metric DipAvailability \
+              --aggregation Average \
+              --interval PT1M \
+              --filter "BackendIPAddress eq '*' and BackendPort eq '*'" \
+              --output json > "$ARTIFACT_DIR/probe-metrics-${attempt}.json"
+            cp "$ARTIFACT_DIR/probe-metrics-${attempt}.json" "$ARTIFACT_DIR/probe-metrics-final.json"
+            if python - "$ARTIFACT_DIR/probe-metrics-final.json" <<'PY'
+          import json
+          import sys
+          payload = json.load(open(sys.argv[1], encoding="utf-8"))
+          expected = {"10.20.10.11", "10.20.10.12"}
+          latest = {}
+          for metric in payload.get("value", []):
+              for series in metric.get("timeseries", []):
+                  metadata = {}
+                  for item in series.get("metadatavalues", []):
+                      name = item.get("name", {})
+                      if isinstance(name, dict) and isinstance(name.get("value"), str):
+                          metadata[name["value"]] = str(item.get("value", ""))
+                  ip = metadata.get("BackendIPAddress")
+                  if ip not in expected:
+                      continue
+                  points = [point for point in series.get("data", []) if point.get("average") is not None]
+                  if points:
+                      point = max(points, key=lambda value: str(value.get("timeStamp", "")))
+                      latest[ip] = float(point["average"])
+          raise SystemExit(0 if expected == set(latest) and all(value > 0 for value in latest.values()) else 1)
+          PY
+            then
+              observed_healthy=true
+              break
+            fi
+            if [[ "$attempt" -lt "$PROBE_ATTEMPTS" ]]; then
+              sleep "$PROBE_INTERVAL"
+            fi
+          done
+          printf '%s\n' "$observed_healthy" > "$ARTIFACT_DIR/probe-healthy-during-window.txt"
+
+      - name: Execute one bounded public transaction scenario
+        env:
+          TRANSACTION_ATTEMPTS: ${{ steps.request.outputs.transaction_attempts }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          public_ip="$(jq -r '.ipAddress' "$ARTIFACT_DIR/public-ip.json")"
+          test -n "$public_ip"
+          : > "$ARTIFACT_DIR/transactions.jsonl"
+          for attempt in $(seq 1 "$TRANSACTION_ATTEMPTS"); do
+            response_file="$(mktemp)"
+            http_code="$(curl --insecure --silent --show-error --connect-timeout 5 --max-time 10 \
+              --output "$response_file" --write-out '%{http_code}' \
+              "https://${public_ip}/transaction?correlation_id=ufw-postchange-${GITHUB_RUN_ID}-${attempt}" || true)"
+            [[ -n "$http_code" ]] || http_code="000"
+            jq -n \
+              --argjson attempt "$attempt" \
+              --arg http_code "$http_code" \
+              --rawfile body "$response_file" \
+              '{attempt:$attempt,http_code:($http_code|tonumber? // $http_code),response:($body|fromjson? // {raw:$body})}' \
+              >> "$ARTIFACT_DIR/transactions.jsonl"
+            rm -f "$response_file"
+          done
+          jq -s '.' "$ARTIFACT_DIR/transactions.jsonl" > "$ARTIFACT_DIR/transactions.json"
+
+      - name: Analyze post-change evidence deterministically
+        run: |
+          set -euo pipefail
+          python infra/scripts/analyze_ufw_probe_postchange.py \
+            --evidence-dir "$ARTIFACT_DIR" \
+            --output-json "$ARTIFACT_DIR/verification.json" \
+            --output-md "$ARTIFACT_DIR/verification.md"
+
+      - name: Write evidence manifest
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          find "$ARTIFACT_DIR" -maxdepth 1 -type f ! -name evidence-manifest.json ! -name sha256sums.txt -print0 \
+            | sort -z | xargs -0 -r sha256sum > "$ARTIFACT_DIR/sha256sums.txt"
+          jq -n \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg head_sha "$GITHUB_SHA" \
+            --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --rawfile sums "$ARTIFACT_DIR/sha256sums.txt" \
+            '{schema_version:"servicetracer.ufw-probe-postchange-evidence.v1",operation:"read_only_postchange_verification",azure_mutation_performed:false,guest_mutation_performed:false,service_restart_performed:false,automatic_retry_performed:false,run_id:$run_id,run_attempt:$run_attempt,head_sha:$head_sha,generated_at:$generated_at,sha256sums:$sums}' \
+            > "$ARTIFACT_DIR/evidence-manifest.json"
+
+      - name: Upload post-change verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ufw-probe-postchange-run1-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish terminal verification result best effort
+        if: always()
+        env:
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracking_issue }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          verification="not_produced"
+          if [[ -f "$ARTIFACT_DIR/verification.json" ]]; then
+            verification="$(jq -c '{conclusion,operator_report_verified,both_ufw_active,both_tcp_443_allow_rules_observed,both_services_active,both_tcp_443_listeners_observed,both_azure_probes_healthy,transactions,causal_attribution_supported,exact_root_cause_claimed}' "$ARTIFACT_DIR/verification.json")"
+          fi
+          body=$(cat <<EOF
+          ## UFW and probe post-change verification terminal result
+
+          - workflow run: [$GITHUB_RUN_ID](https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)
+          - verification commit: \`$GITHUB_SHA\`
+          - job status: **$JOB_STATUS**
+          - verification: \`$verification\`
+          - Azure mutation performed: **false**
+          - guest mutation performed: **false**
+          - service restart performed: **false**
+          - automatic retry performed: **false**
+          EOF
+          )
+          if ! gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" -f body="$body" > /dev/null; then
+            echo "::warning::Unable to publish the terminal issue comment; the artifact remains authoritative."
+          fi
