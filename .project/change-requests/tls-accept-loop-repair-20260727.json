@@ -1,0 +1,73 @@
+{
+  "schema_version": "project.repository-repair-request.v1",
+  "request_id": "tls-accept-loop-repair-20260727",
+  "status": "authorized_repository_only",
+  "authorized_by": "user instruction: Authorize a repository-only TLS accept-loop repair with deterministic tests and a draft pull request",
+  "recorded_on": "2026-07-27",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "b35e2dd256c536ca3b507b5f8f8bc3e0b39fcea8",
+    "repair_branch": "fix/tls-accept-loop",
+    "local_working_tree": "not_observed_connector_backed_repository_changes"
+  },
+  "diagnostic_evidence": {
+    "tracking_issue": 163,
+    "packet_observation_workflow_run": 30291575564,
+    "packet_observation_artifact": 8662996675,
+    "canary_vm": "vm-vpn01-mst-dev",
+    "listener": "0.0.0.0:443",
+    "listener_receive_queue": 6,
+    "listener_backlog": 5,
+    "azure_probe_established_connection_observed": true,
+    "local_loopback_https_timed_out": true,
+    "local_private_ip_https_timed_out": true,
+    "process_threads_observed": 1,
+    "deployed_failure_boundary": "TLS_handshake_on_accepting_thread_blocks_accept_loop_and_saturates_backlog",
+    "exact_application_repair_target": "defer_TLS_handshake_to_bounded_worker_thread"
+  },
+  "authorized_changes": {
+    "repository_branch": true,
+    "backend_bootstrap_code": true,
+    "deterministic_regression_tests": true,
+    "project_evidence": true,
+    "draft_pull_request": true,
+    "ordinary_pull_request_CI": true
+  },
+  "explicit_exclusions": {
+    "azure_authentication": false,
+    "azure_queries": false,
+    "deployment": false,
+    "pull_request_merge": false,
+    "guest_mutation": false,
+    "service_restart": false,
+    "load_balancer_probe_change": false,
+    "firewall_change": false,
+    "automatic_retry": false,
+    "rollback": false,
+    "cleanup": false
+  },
+  "intended_repair": {
+    "accept_raw_TCP_connections_on_main_thread": true,
+    "dispatch_connection_before_TLS_handshake": true,
+    "perform_TLS_handshake_in_daemon_worker": true,
+    "handshake_timeout_seconds": 1.0,
+    "request_queue_size": 128,
+    "preserve_shallow_TCP_443_probe": true,
+    "preserve_application_endpoints_and_response_contract": true
+  },
+  "validation_contract": [
+    "embedded_backend_source_compiles",
+    "listener_socket_is_not_wrapped_for_eager_TLS_handshake",
+    "raw_TCP_connections_do_not_starve_a_valid_HTTPS_health_request",
+    "existing_remote_access_backend_contract_tests_pass",
+    "Bicep_lint_and_build_pass"
+  ],
+  "failure_behavior": "Stop at repository and draft-PR evidence. Do not merge, authenticate to Azure, deploy, mutate a guest, restart a service, change the probe, retry operational execution, roll back, or clean up.",
+  "claim_boundaries": [
+    "repository_repair_created != CI_passed",
+    "CI_passed != deployed_to_Azure",
+    "deployed_to_Azure != service_recovered",
+    "shallow_probe_preserved != transaction_health_proven"
+  ]
+}
