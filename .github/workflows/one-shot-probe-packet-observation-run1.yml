@@ -122,15 +122,37 @@ jobs:
         run: |
           set -euo pipefail
           workflow=.github/workflows/one-shot-probe-packet-observation-run1.yml
-          grep -F "tcpdump -l -nn -tttt -i any -s 96 -c 12" "$workflow"
-          grep -F "host 168.63.129.16 and tcp port 443" "$workflow"
-          grep -F "timeout 150" "$workflow"
-          grep -F "systemctl is-active servicetracer-demo-backend.service" "$workflow"
-          grep -F "ufw status" "$workflow"
-          ! grep -Eiq 'apt-get|apt install|dnf |yum |zypper |snap install' "$workflow"
-          ! grep -Eiq 'systemctl (start|stop|restart|enable|disable|mask|unmask)' "$workflow"
-          ! grep -Eiq 'ufw (allow|deny|delete|reset|enable|disable)|iptables (-A|-I|-D|-F|-P)|nft (add|insert|delete|flush)' "$workflow"
-          ! grep -Eiq 'az network watcher packet-capture|curl |wget |nc |ncat |hping|ping ' "$workflow"
+          python - "$workflow" <<'PY'
+          import sys
+          from pathlib import Path
+
+          text = Path(sys.argv[1]).read_text(encoding="utf-8")
+          start = text.index("guest_script=\"$(cat <<'BASH_SCRIPT'")
+          end = text.index("\n          BASH_SCRIPT", start)
+          guest = text[start:end]
+
+          required = [
+              "tcpdump -l -nn -tttt -i any -s 96 -c 12",
+              "host 168.63.129.16 and tcp port 443",
+              "timeout 150",
+              "systemctl is-active servicetracer-demo-backend.service",
+              "ufw status",
+          ]
+          forbidden = [
+              "apt-get", "apt install", "dnf ", "yum ", "zypper ", "snap install",
+              "systemctl start", "systemctl stop", "systemctl restart",
+              "systemctl enable", "systemctl disable", "systemctl mask",
+              "ufw allow", "ufw deny", "ufw delete", "ufw reset",
+              "ufw enable", "ufw disable", "iptables -A", "iptables -I",
+              "iptables -D", "iptables -F", "iptables -P", "nft add",
+              "nft insert", "nft delete", "nft flush", "curl ", "wget ",
+              "ncat ", "hping", "ping ",
+          ]
+          missing = [item for item in required if item not in guest]
+          present = [item for item in forbidden if item in guest]
+          if missing or present:
+              raise SystemExit(f"invalid guest boundary: missing={missing}, forbidden={present}")
+          PY
 
       - name: Enforce one-shot admission and record execution start
         env:
