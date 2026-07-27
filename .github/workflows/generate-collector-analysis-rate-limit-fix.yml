@@ -1,0 +1,119 @@
+name: Generate collector analysis rate-limit implementation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/generate-collector-analysis-rate-limit-fix.yml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: generate-collector-analysis-rate-limit-fix
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      IMPLEMENTATION_BRANCH: fix/collector-analysis-rate-limit-implementation
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out merged generator source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Generate exact implementation and remove transient helpers
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git switch -c "$IMPLEMENTATION_BRANCH"
+          python -m py_compile tools/apply_collector_analysis_rate_limit_fix.py
+          python tools/apply_collector_analysis_rate_limit_fix.py
+          rm -f \
+            .github/workflows/apply-collector-analysis-rate-limit-fix.yml \
+            .github/workflows/generate-collector-analysis-rate-limit-fix.yml \
+            tools/apply_collector_analysis_rate_limit_fix.py
+
+      - name: Validate generated implementation
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          bash -n infra/scripts/install_collector_demo_api.sh
+          node --check docs/app.js
+          node --check docs/live-monitor.js
+          python -m unittest \
+            infra.tests.test_collector_demo_api \
+            infra.tests.test_collector_analysis_rate_limit_fix \
+            infra.tests.test_frontend_azure_provenance_monitor \
+            -v
+          git diff --check
+          test ! -e .github/workflows/apply-collector-analysis-rate-limit-fix.yml
+          test ! -e .github/workflows/generate-collector-analysis-rate-limit-fix.yml
+          test ! -e tools/apply_collector_analysis_rate_limit_fix.py
+
+      - name: Commit and push implementation branch
+        id: commit
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'Separate collector health polling from analysis rate limiting'
+          implementation_sha="$(git rev-parse HEAD)"
+          git push --force-with-lease origin "$IMPLEMENTATION_BRANCH"
+          echo "implementation_sha=$implementation_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Open implementation pull request
+        env:
+          IMPLEMENTATION_SHA: ${{ steps.commit.outputs.implementation_sha }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          body=$(cat <<EOF
+          ## Objective
+
+          Apply the exact repository implementation generated from the reviewed and merged bounded helper in #172.
+
+          Tracks #171.
+
+          ## Changes
+
+          - exempt exact \`/api/health\` from the expensive analysis limiter;
+          - retain rate limiting on exact \`/api/demo/run\` with capacity for browser preflight plus POST;
+          - return 404 for unknown API paths;
+          - distinguish collector health from live-analysis completion in frontend wording;
+          - add deterministic regression coverage and a finite authority record;
+          - remove all transient generation helpers from the resulting diff.
+
+          ## Validation performed before this PR
+
+          - installer Bash syntax;
+          - frontend JavaScript syntax;
+          - focused collector, rate-limit and provenance-monitor unit tests;
+          - whitespace validation;
+          - transient-helper removal.
+
+          Generated implementation head: \`$IMPLEMENTATION_SHA\`.
+
+          ```text
+          health_endpoint_reachable != live_analysis_completed
+          repository_fix != deployed_fix
+          deployment_succeeded != browser_path_verified
+          ```
+
+          No Azure authentication, query, mutation or deployment was performed by the generator.
+          EOF
+          )
+          gh pr create \
+            --base main \
+            --head "$IMPLEMENTATION_BRANCH" \
+            --title 'Separate collector health polling from live-analysis rate limiting' \
+            --body "$body" \
+            --draft
