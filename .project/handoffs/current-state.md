@@ -2,7 +2,7 @@
 
 ## Interpretation boundary
 
-This handoff reflects GitHub state observed at **2026-07-27T08:37:39-04:00** and the verified artifact from collector provenance deployment run `30224770178`. It is not a continuously refreshed Azure dashboard.
+This handoff reflects GitHub state observed at **2026-07-27T09:22:25-04:00**, the PR #138 merge, and the independently verified artifact from collector provenance deployment run `30224770178`. It is not a continuously refreshed Azure dashboard.
 
 ```text
 declared_in_code != deployed_in_azure
@@ -10,6 +10,7 @@ deployment_succeeded != service_validated
 files_replaced != running_process_restarted
 network_reconciliation_succeeded != deployment_succeeded
 failed_attempt != authorization_to_retry
+PR_head_CI != merge_commit_CI
 not_observed != false
 ```
 
@@ -22,17 +23,27 @@ completion gate: .project/lab-v1-completion-gate-v2.json
 latest verified preflight: .project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json
 latest deployment reconciliation: .project/reconciliations/collector-provenance-deployment-run19-20260726.json
 consumed grant: .project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json
+prior expiry resolution: .project/reconciliations/post-pr137-provenance-authority-expiry-20260727.json
 ```
 
 ## Repository watermark
 
 ```text
 repository: anthonyedgar30000/azure-iac-msp-lab
-observed main before this reconciliation: f6e79818150d72b75d1e4f25be172e6dc577114d
-latest completed merge before this reconciliation: PR #137
-exact-head CI: 30224641320 / success
-open pull requests observed before this reconciliation: none
+observed main: bd1ef50451c85d9f0e9e77c9ac54882d44940933
+latest completed merge: PR #138
+PR #138 exact source: db2c95d279f06f379c13b4cd8664518eda417843
+PR #138 exact-head CI: 30267618707 / success
+PR #138 merge-commit CI: not observed
+open pull request: PR #139 / restart repair and run-19 reconciliation
 local working tree: not observed
+```
+
+PR #138 merged the repository-only record that the earlier grant was temporally expired while its consumption was not observable through the available connector. The subsequently inspected run-19 artifact supplies stronger evidence: the grant was consumed by an actual deployment attempt. The earlier record remains historical evidence of the observation boundary at that time; it does not override the later artifact.
+
+```text
+earlier_not_observed != later_false
+later_evidence_may_resolve_prior_uncertainty
 ```
 
 ## Run 19 deployment reality
@@ -45,7 +56,7 @@ exact source: 1677606ded960c951fa37f0fdbfae50ba4b3cc34
 artifact: 8638260753
 artifact digest: sha256:3cd4993461de1545bc52885bbf8118d74f861d651f5aac692e4e06e4b3f16fab
 manifest: 44 of 44 payloads verified
-grant: consumed / non-renewing
+grant: consumed / non-renewing / non-transferable
 retry: unauthorized
 rollback: unauthorized
 ```
@@ -60,7 +71,7 @@ The installer copied source `1677606ded960c951fa37f0fdbfae50ba4b3cc34`, rewrote 
 Azure host identity was not verified: {}
 ```
 
-Repository repair:
+PR #139 carries the repository repair:
 
 ```bash
 systemctl daemon-reload
@@ -69,20 +80,20 @@ systemctl restart servicetracer-demo-api.service
 systemctl is-active --quiet servicetracer-demo-api.service
 ```
 
-The repair is repository-only until a separately reviewed source is deployed.
+The repair is repository-only until separately merged, reviewed through a fresh preflight and deployed under new authority.
 
 ## Current Lab v1 gate
 
 ```text
 fresh provenance preflight: complete
 current cost observation: CAD 4.03203831168191 month-to-date
+remaining Azure for Students credit: not observed
 run 19 deployment attempt: failed closed
 run 19 evidence lock: complete
-systemd restart repair in repository: in progress
+systemd restart repair: under PR #139 review
 provenance runtime verified: false
 browser correlated transaction: false
 monitoring and alert delivery: unverified
-remaining Azure for Students credit: not observed
 ```
 
 ## Historical compatibility anchors
@@ -116,7 +127,7 @@ GitHub Pages publication authorized: false
 repository restart repair: authorized
 repository truth reconciliation: authorized
 ordinary PR CI: authorized
-exact-head merge: authorized
+PR #139 merge: unauthorized
 Azure query or mutation: unauthorized
 workflow retry or dispatch: unauthorized
 rollback: unauthorized
@@ -126,4 +137,4 @@ RBAC or cleanup: unauthorized
 
 ## Next gate
 
-Merge the exact-head green restart repair. Then capture fresh Azure state and a fresh `FullResourcePayloads` What-If for the repaired exact source. A new explicit, non-renewing deployment grant is required before another Azure attempt.
+Review exact-head CI for the rebased PR #139 and make a separate merge decision. After a merge, capture fresh Azure state and a fresh `FullResourcePayloads` What-If for the repaired exact source. A new explicit, non-renewing deployment and rollback decision is required before another Azure attempt.
