@@ -1,0 +1,10 @@
+{
+  "schema_version": "project.collector-analysis-rate-limit-trigger.v1",
+  "request_id": "collector-analysis-rate-limit-run1",
+  "tracking_issue": 171,
+  "authorized_by": "user instruction: Proceed",
+  "dispatch_requested": true,
+  "merge_authorized": false,
+  "retry_authorized": false,
+  "purpose": "Open exactly one pull-request event that admits the already reviewed one-shot dispatcher. This trigger file and pull request must never be merged."
+}
