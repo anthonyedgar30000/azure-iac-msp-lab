@@ -1,0 +1,109 @@
+{
+  "schema_version": "project.probe-packet-observation-request.v1",
+  "request_id": "probe-packet-observation-run1-20260727",
+  "status": "authorized_unconsumed",
+  "tracking_issue": 160,
+  "authorized_by": "user instruction: Proceed",
+  "authorized_at": "2026-07-27T17:46:18Z",
+  "valid_until": "2026-07-28T04:00:00Z",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_main": "083efec273229b274e5103464cea72176c277933",
+    "branch": "diagnose/probe-packet-observation-run1"
+  },
+  "starting_evidence": {
+    "probe_scope_workflow_run": 30289145840,
+    "probe_scope_artifact_id": 8662373618,
+    "probe_scope_artifact_digest": "sha256:c75ca0ad5eb9076c527f013b1b817be4b559ba2325227c99bba5fa299b85f0d5",
+    "probe_scope_result": {
+      "vpn01": "unhealthy",
+      "vpn02": "unhealthy",
+      "dip_availability_vpn01": 0.0,
+      "dip_availability_vpn02": 0.0,
+      "frontend_transactions_executed": false
+    },
+    "ufw_run2_workflow_run": 30288168484,
+    "ufw_run2_status": "consumed_succeeded",
+    "guest_boundary": "both_vms_ufw_active_service_active_enabled_tcp443_listening"
+  },
+  "execution": {
+    "operation": "bounded_read_only_probe_packet_observation",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "load_balancer": "lb-remote-access-mst-dev",
+    "probe_name": "probe-tcp-443-shallow",
+    "probe_protocol": "Tcp",
+    "probe_port": 443,
+    "probe_interval_seconds": 5,
+    "probe_threshold": 2,
+    "azure_platform_virtual_ip": "168.63.129.16",
+    "virtual_machines": [
+      {
+        "name": "vm-vpn01-mst-dev",
+        "private_ip": "10.20.10.11"
+      },
+      {
+        "name": "vm-vpn02-mst-dev",
+        "private_ip": "10.20.10.12"
+      }
+    ],
+    "guest_commands_per_vm": 1,
+    "guest_shell": "/usr/bin/bash",
+    "capture_tool": "tcpdump_if_already_installed",
+    "capture_duration_seconds": 150,
+    "maximum_packet_lines": 12,
+    "snap_length_bytes": 96,
+    "capture_filter": "host 168.63.129.16 and tcp port 443",
+    "payload_decoding": false,
+    "public_transactions": 0,
+    "metric_queries": {
+      "name": "DipAvailability",
+      "pre_observation": 1,
+      "post_observation": 1
+    }
+  },
+  "authority": {
+    "attempt_limit": 1,
+    "renewable": false,
+    "transferable": false,
+    "repository_write_authorized": true,
+    "azure_authentication_authorized": true,
+    "azure_read_only_queries_authorized": true,
+    "azure_vm_run_command_authorized": true,
+    "read_only_guest_observation_authorized": true,
+    "packet_header_observation_authorized": true,
+    "artifact_publication_authorized": true,
+    "issue_comment_publication_authorized": true,
+    "package_change_authorized": false,
+    "ssh_authorized": false,
+    "service_mutation_authorized": false,
+    "guest_firewall_mutation_authorized": false,
+    "routing_or_sysctl_mutation_authorized": false,
+    "packet_injection_authorized": false,
+    "packet_payload_capture_authorized": false,
+    "public_transaction_authorized": false,
+    "network_watcher_capture_authorized": false,
+    "azure_resource_mutation_authorized": false,
+    "rbac_mutation_authorized": false,
+    "automatic_retry_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "expected_classifications": [
+    "probe_packets_not_observed",
+    "probe_syn_observed_no_guest_response",
+    "probe_syn_and_synack_observed",
+    "probe_rst_observed",
+    "packet_observation_unavailable"
+  ],
+  "cost_and_quota": {
+    "new_resources": false,
+    "sku_change": false,
+    "quota_change": false,
+    "expected_incremental_cost": "negligible command and monitoring activity",
+    "capture_best_effort_context": true
+  },
+  "failure_behavior": "Stop after the first bounded attempt, preserve available evidence, and do not retry, roll back, broaden scope, install tools, mutate guest networking, or mutate Azure resources.",
+  "cleanup": "No cleanup is authorized or required because no intended persistent change is performed.",
+  "consumption_rule": "The grant is consumed when Azure authentication begins or the first authorized VM Run Command is submitted, regardless of outcome."
+}
