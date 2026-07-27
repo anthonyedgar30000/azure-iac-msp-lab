@@ -1,0 +1,63 @@
+{
+  "schema_version": "project.vpn-backend-guest-compact-request.v1",
+  "request_id": "vpn-backend-guest-compact-run2-20260727",
+  "status": "authorized_unconsumed",
+  "tracking_issue": 148,
+  "authorized_by": "user instruction: Proceed",
+  "authorized_at": "2026-07-27T16:00:00Z",
+  "valid_until": "2026-07-28T04:00:00Z",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_main": "b0083a763ab6d210145174de1b0802309bacf8c2"
+  },
+  "execution": {
+    "operation": "read_only_compact_guest_inspection",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "virtual_machines": [
+      "vm-vpn01-mst-dev",
+      "vm-vpn02-mst-dev"
+    ],
+    "service_name": "servicetracer-demo-backend.service",
+    "listener_port": 443,
+    "journal_line_limit": 10,
+    "journal_character_limit_per_line": 240
+  },
+  "authority": {
+    "attempt_limit": 1,
+    "renewable": false,
+    "transferable": false,
+    "azure_authentication_authorized": true,
+    "azure_guest_command_authorized": true,
+    "azure_read_only_queries_authorized": true,
+    "artifact_publication_authorized": true,
+    "azure_mutation_authorized": false,
+    "file_write_authorized": false,
+    "service_restart_authorized": false,
+    "service_enable_disable_authorized": false,
+    "package_change_authorized": false,
+    "guest_firewall_change_authorized": false,
+    "ssh_authorized": false,
+    "deployment_authorized": false,
+    "automatic_retry_authorized": false,
+    "rollback_authorized": false,
+    "rbac_mutation_authorized": false,
+    "cleanup_authorized": false
+  },
+  "expected_evidence": [
+    "cloud-init status",
+    "systemd active state",
+    "systemd enablement",
+    "systemd result and exit state",
+    "TCP 443 listener state",
+    "bounded recent service journal",
+    "UFW state",
+    "VM instance view"
+  ],
+  "failure_behavior": {
+    "stop_after_single_attempt": true,
+    "upload_partial_evidence": true,
+    "automatic_retry": false,
+    "repair_requires_new_authority": true
+  }
+}
