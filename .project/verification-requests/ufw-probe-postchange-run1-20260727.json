@@ -1,0 +1,60 @@
+{
+  "schema_version": "project.ufw-probe-postchange-verification-request.v1",
+  "request_id": "ufw-probe-postchange-run1-20260727",
+  "status": "authorized_unconsumed",
+  "tracking_issue": 150,
+  "authorized_by": "user instruction: Proceed",
+  "authorized_at": "2026-07-27T16:13:45Z",
+  "valid_until": "2026-07-28T04:00:00Z",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_main": "e48a91f731ba489b2480895390c153de0d8bd7ab"
+  },
+  "operator_report": {
+    "ufw_enabled": true,
+    "appropriate_firewall_rules_applied": true,
+    "verification_state": "user_reported_not_yet_observed"
+  },
+  "execution": {
+    "operation": "read_only_postchange_verification",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "load_balancer": "lb-remote-access-mst-dev",
+    "public_ip": "pip-remote-access-mst-dev",
+    "virtual_machines": [
+      "vm-vpn01-mst-dev",
+      "vm-vpn02-mst-dev"
+    ],
+    "expected_backend_ips": [
+      "10.20.10.11",
+      "10.20.10.12"
+    ],
+    "listener_port": 443,
+    "probe_poll_attempts": 30,
+    "probe_poll_interval_seconds": 10,
+    "transaction_attempts": 30
+  },
+  "authority": {
+    "attempt_limit": 1,
+    "renewable": false,
+    "transferable": false,
+    "azure_authentication_authorized": true,
+    "azure_guest_command_authorized": true,
+    "azure_read_only_queries_authorized": true,
+    "public_transaction_verification_authorized": true,
+    "bounded_probe_polling_authorized": true,
+    "artifact_publication_authorized": true,
+    "azure_mutation_authorized": false,
+    "file_write_authorized": false,
+    "service_restart_authorized": false,
+    "service_enable_disable_authorized": false,
+    "guest_firewall_change_authorized": false,
+    "network_configuration_change_authorized": false,
+    "deployment_authorized": false,
+    "automatic_retry_authorized": false,
+    "rollback_authorized": false,
+    "rbac_mutation_authorized": false,
+    "cleanup_authorized": false
+  },
+  "consumption_rule": "The grant is consumed when Azure login, the first VM-agent guest command, or the first public transaction begins, regardless of outcome."
+}
