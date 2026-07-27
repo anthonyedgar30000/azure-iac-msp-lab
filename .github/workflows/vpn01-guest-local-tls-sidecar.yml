@@ -1,0 +1,387 @@
+name: VPN-01 guest-local TLS sidecar validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type AUTHORIZE-VPN01-GUEST-LOCAL-SIDECAR to run the bounded test
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: vpn01-guest-local-tls-sidecar
+  cancel-in-progress: false
+
+env:
+  RESOURCE_GROUP: rg-servicetracer-dev-westus2
+  LOCATION: westus2
+  TARGET_VM: vm-vpn01-mst-dev
+  TARGET_IP: 10.20.10.11
+  PRODUCTION_SERVICE: servicetracer-demo-backend.service
+  PRODUCTION_BACKEND: /opt/servicetracer-demo/backend.py
+  PRODUCTION_UNIT: /etc/systemd/system/servicetracer-demo-backend.service
+  CANARY_SERVICE: servicetracer-demo-backend-canary.service
+  CANARY_ROOT: /opt/servicetracer-demo-canary
+  CANARY_PORT: '8443'
+  ARTIFACT_DIR: vpn01-guest-local-tls-sidecar-evidence
+  AUTHORIZED_REPAIR: aa493def60866f3d9452899b131bc2f35cd68bdf
+  AUTHORITY_RECORD: .project/change-requests/vpn01-guest-local-tls-sidecar-20260727.json
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+
+jobs:
+  guest-local-sidecar:
+    name: Validate repaired TLS accept loop beside production
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out exact workflow source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate finite authority and source
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          [[ '${{ inputs.confirmation }}' == 'AUTHORIZE-VPN01-GUEST-LOCAL-SIDECAR' ]]
+          git merge-base --is-ancestor "$AUTHORIZED_REPAIR" HEAD
+          test -f "$AUTHORITY_RECORD"
+          python -m unittest discover -s infra/tests -p 'test_vpn_backend_tls_accept_loop.py' -v \
+            > "$ARTIFACT_DIR/tls-accept-loop-regression.log" 2>&1
+          python -m unittest discover -s infra/tests -p 'test_vpn01_guest_local_sidecar_workflow.py' -v \
+            > "$ARTIFACT_DIR/sidecar-workflow-contract.log" 2>&1
+          printf '%s\n' \
+            'tracking_issue=167' \
+            "workflow_source=$GITHUB_SHA" \
+            'target_vm=vm-vpn01-mst-dev' \
+            'production_service_mutation=forbidden' \
+            'production_listener=TCP/443 unchanged' \
+            'temporary_listener=TCP/8443 loopback-tested' \
+            'vpn02_access=forbidden' \
+            'azure_network_mutation=forbidden' \
+            'recurring_cost_delta_CAD=0' \
+            > "$ARTIFACT_DIR/authority.txt"
+
+      - name: Render exact repaired backend
+        run: |
+          set -Eeuo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          source_path = Path('infra/bootstrap/vpn-backend-cloud-init.yaml')
+          lines = source_path.read_text(encoding='utf-8').splitlines()
+          path_index = lines.index('  - path: /opt/servicetracer-demo/backend.py')
+          content_index = lines.index('    content: |', path_index)
+          source_lines = []
+          for line in lines[content_index + 1:]:
+              if line.startswith('  - path: ') or line == 'runcmd:':
+                  break
+              if line and not line.startswith('      '):
+                  raise SystemExit(f'unexpected backend indentation: {line!r}')
+              source_lines.append(line[6:] if line else '')
+          backend = '\n'.join(source_lines) + '\n'
+          compile(backend, 'backend.py', 'exec')
+          Path('/tmp/backend.py').write_text(backend, encoding='utf-8')
+          PY
+          python -m py_compile /tmp/backend.py
+          sha256sum /tmp/backend.py > "$ARTIFACT_DIR/rendered-backend-sha256.txt"
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Inspect exact Azure and VM boundary
+        run: |
+          set -Eeuo pipefail
+          subscription_name="$(az account show --query name --output tsv)"
+          tenant_id="$(az account show --query tenantId --output tsv)"
+          rg_location="$(az group show --name "$RESOURCE_GROUP" --query location --output tsv)"
+          power="$(az vm get-instance-view --resource-group "$RESOURCE_GROUP" --name "$TARGET_VM" \
+            --query "instanceView.statuses[?starts_with(code, 'PowerState/')].displayStatus | [0]" --output tsv)"
+          private_ip="$(az vm list-ip-addresses --resource-group "$RESOURCE_GROUP" --name "$TARGET_VM" \
+            --query '[0].virtualMachine.network.privateIpAddresses[0]' --output tsv)"
+          size="$(az vm show --resource-group "$RESOURCE_GROUP" --name "$TARGET_VM" --query hardwareProfile.vmSize --output tsv)"
+          [[ "$rg_location" == "$LOCATION" ]]
+          [[ "$power" == 'VM running' ]]
+          [[ "$private_ip" == "$TARGET_IP" ]]
+          jq -n \
+            --arg subscription_name "$subscription_name" \
+            --arg tenant_id "$tenant_id" \
+            --arg resource_group "$RESOURCE_GROUP" \
+            --arg location "$rg_location" \
+            --arg vm "$TARGET_VM" \
+            --arg private_ip "$private_ip" \
+            --arg power "$power" \
+            --arg size "$size" \
+            '{subscription_name:$subscription_name,tenant_id:$tenant_id,resource_group:$resource_group,location:$location,vm:$vm,private_ip:$private_ip,power:$power,size:$size,new_resources:"none",recurring_cost_delta_CAD:0,quota_delta:"none"}' \
+            > "$ARTIFACT_DIR/azure-boundary.json"
+
+      - name: Run guest-local sidecar validation on VPN-01
+        run: |
+          set -Eeuo pipefail
+          backend_b64="$(base64 -w 0 /tmp/backend.py)"
+
+          cat > /tmp/guest-sidecar-test.sh <<GUEST
+          #!/usr/bin/env bash
+          set -Eeuo pipefail
+
+          production_service='$PRODUCTION_SERVICE'
+          production_backend='$PRODUCTION_BACKEND'
+          production_unit='$PRODUCTION_UNIT'
+          canary_service='$CANARY_SERVICE'
+          canary_root='$CANARY_ROOT'
+          canary_unit="/etc/systemd/system/$CANARY_SERVICE"
+          canary_port='$CANARY_PORT'
+          evidence_root="/var/tmp/servicetracer-sidecar-${GITHUB_RUN_ID}"
+          pre_hashes="\${evidence_root}/production-pre.sha256"
+          test_rc=0
+
+          checkpoint() {
+            printf 'CHECKPOINT %-36s %s\n' "\$1" "\$(date -u +%FT%TZ)"
+          }
+
+          cleanup_and_exit() {
+            local incoming_rc="\$1"
+            local cleanup_rc=0
+            trap - EXIT
+            set +e
+            checkpoint 'cleanup-start'
+            systemctl stop "\$canary_service" >/dev/null 2>&1 || true
+            systemctl disable "\$canary_service" >/dev/null 2>&1 || true
+            rm -f "\$canary_unit"
+            rm -rf "\$canary_root"
+            systemctl daemon-reload
+            systemctl reset-failed "\$canary_service" >/dev/null 2>&1 || true
+
+            if ss -lnt "( sport = :\${canary_port} )" | grep -F ":\${canary_port}" >/dev/null; then
+              echo 'cleanup_error=canary_listener_remains' >&2
+              cleanup_rc=1
+            fi
+            if ! systemctl is-active --quiet "\$production_service"; then
+              echo 'integrity_error=production_service_not_active' >&2
+              cleanup_rc=1
+            fi
+            if ! sha256sum -c "\$pre_hashes"; then
+              echo 'integrity_error=production_hash_changed' >&2
+              cleanup_rc=1
+            fi
+            if [[ -e "\$canary_unit" || -e "\$canary_root" ]]; then
+              echo 'cleanup_error=temporary_files_remain' >&2
+              cleanup_rc=1
+            fi
+            checkpoint 'cleanup-complete'
+            set -e
+
+            if [[ "\$incoming_rc" -eq 0 && "\$cleanup_rc" -eq 0 ]]; then
+              echo 'SERVICETRACER_GUEST_LOCAL_SIDECAR_SUCCESS vm=$TARGET_VM port=$CANARY_PORT cleanup=verified production_integrity=verified'
+              exit 0
+            fi
+            echo "SERVICETRACER_GUEST_LOCAL_SIDECAR_FAILED test_rc=\${incoming_rc} cleanup_rc=\${cleanup_rc}" >&2
+            exit 1
+          }
+          trap 'cleanup_and_exit \$?' EXIT
+
+          install -d -m 0700 "\$evidence_root"
+          checkpoint 'production-preflight'
+          systemctl is-active --quiet "\$production_service"
+          systemctl is-enabled --quiet "\$production_service"
+          sha256sum "\$production_backend" "\$production_unit" | tee "\$pre_hashes"
+          ss -lntp '( sport = :443 )'
+          ufw status verbose
+          ufw status | grep -F 'Status: active' >/dev/null
+          if ufw status | grep -E '(^|[[:space:]])8443(/tcp)?([[:space:]]|$)' >/dev/null; then
+            echo 'preflight_error=unexpected_ufw_8443_rule' >&2
+            exit 1
+          fi
+          [[ ! -e "\$canary_unit" ]]
+          [[ ! -e "\$canary_root" ]]
+          if ss -lnt "( sport = :\${canary_port} )" | grep -F ":\${canary_port}" >/dev/null; then
+            echo 'preflight_error=port_8443_in_use' >&2
+            exit 1
+          fi
+
+          checkpoint 'install-temporary-sidecar'
+          install -d -o root -g root -m 0755 "\$canary_root"
+          printf '%s' '$backend_b64' | base64 -d > "\$canary_root/backend.py"
+          chown root:root "\$canary_root/backend.py"
+          chmod 0755 "\$canary_root/backend.py"
+          python3 -m py_compile "\$canary_root/backend.py"
+
+          cat > "\$canary_unit" <<UNIT
+          [Unit]
+          Description=ServiceTracer temporary TLS accept-loop validation sidecar
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=simple
+          Environment=SERVICETRACER_BACKEND_ID=VPN-01-CANARY
+          Environment=SERVICETRACER_BACKEND_MODE=healthy
+          Environment=SERVICETRACER_LISTENER_PORT=8443
+          Environment=SERVICETRACER_TLS_HANDSHAKE_TIMEOUT_SECONDS=1.0
+          ExecStart=/usr/bin/python3 /opt/servicetracer-demo-canary/backend.py
+          Restart=no
+          NoNewPrivileges=true
+          PrivateTmp=true
+          ProtectHome=true
+          ProtectSystem=strict
+          ReadOnlyPaths=/etc/servicetracer-demo
+
+          [Install]
+          WantedBy=multi-user.target
+          UNIT
+          chmod 0644 "\$canary_unit"
+          systemctl daemon-reload
+          systemctl start "\$canary_service"
+
+          checkpoint 'wait-sidecar-active'
+          for attempt in \$(seq 1 20); do
+            systemctl is-active --quiet "\$canary_service" && break
+            sleep 0.5
+          done
+          systemctl is-active --quiet "\$canary_service"
+
+          checkpoint 'wait-sidecar-listener'
+          for attempt in \$(seq 1 20); do
+            ss -lnt "( sport = :\${canary_port} )" | grep -F ":\${canary_port}" >/dev/null && break
+            sleep 0.5
+          done
+          ss -lntp "( sport = :\${canary_port} )"
+
+          validate_health() {
+            local payload
+            payload="\$(curl -kfsS --connect-timeout 1 --max-time 3 "https://127.0.0.1:\${canary_port}/healthz")"
+            python3 - "\$payload" <<'PY'
+          import json
+          import sys
+          payload = json.loads(sys.argv[1])
+          assert payload['backend'] == 'VPN-01-CANARY'
+          assert payload['listener'] == 'available'
+          assert payload['mode'] == 'healthy'
+          PY
+          }
+
+          checkpoint 'loopback-health'
+          for attempt in \$(seq 1 20); do
+            validate_health && break
+            sleep 0.5
+          done
+          validate_health
+
+          cat > "\$evidence_root/hold_raw_probes.py" <<'PY'
+          import socket
+          import sys
+          import time
+
+          host = sys.argv[1]
+          port = int(sys.argv[2])
+          count = int(sys.argv[3])
+          hold_seconds = float(sys.argv[4])
+          sockets = []
+          try:
+              for _ in range(count):
+                  sockets.append(socket.create_connection((host, port), timeout=2.0))
+              print(f'RAW_PROBES_CONNECTED count={len(sockets)}', flush=True)
+              time.sleep(hold_seconds)
+          finally:
+              for connection in sockets:
+                  connection.close()
+          PY
+
+          checkpoint 'start-raw-tcp-probes'
+          python3 "\$evidence_root/hold_raw_probes.py" 127.0.0.1 "\$canary_port" 12 3 \
+            > "\$evidence_root/raw-probes.log" 2>&1 &
+          raw_probe_pid=\$!
+          for attempt in \$(seq 1 20); do
+            grep -F 'RAW_PROBES_CONNECTED count=12' "\$evidence_root/raw-probes.log" >/dev/null 2>&1 && break
+            sleep 0.1
+          done
+          grep -F 'RAW_PROBES_CONNECTED count=12' "\$evidence_root/raw-probes.log"
+          checkpoint 'raw-probes-connected'
+
+          validate_health
+          checkpoint 'https-survives-raw-probes'
+
+          read -r recvq backlog < <(ss -lnt "( sport = :\${canary_port} )" | awk 'NR == 2 {print \$2, \$3}')
+          [[ "\$recvq" =~ ^[0-9]+$ && "\$backlog" =~ ^[0-9]+$ ]]
+          (( recvq < backlog ))
+          printf 'listener_recvq=%s listener_backlog=%s\n' "\$recvq" "\$backlog"
+          checkpoint 'listener-queue-below-backlog'
+
+          ps -eLf | grep '[b]ackend.py'
+          ss -ntp "( sport = :\${canary_port} )" || true
+          wait "\$raw_probe_pid"
+          checkpoint 'raw-probe-simulation-complete'
+
+          checkpoint 'capture-terminal-evidence'
+          systemctl show "\$canary_service" -p ActiveState -p SubState -p ExecMainPID -p ExecMainStatus
+          journalctl -u "\$canary_service" --since '-10 minutes' --no-pager | tail -n 100
+          sha256sum "\$canary_root/backend.py"
+          systemctl is-active --quiet "\$production_service"
+          sha256sum -c "\$pre_hashes"
+          checkpoint 'sidecar-validation-complete'
+          GUEST
+
+          chmod 0700 /tmp/guest-sidecar-test.sh
+          payload_b64="$(base64 -w 0 /tmp/guest-sidecar-test.sh)"
+          wrapper="$(cat <<WRAPPER
+          set -eu
+          printf '%s' '$payload_b64' | base64 -d > /tmp/servicetracer-guest-local-sidecar.sh
+          chmod 0700 /tmp/servicetracer-guest-local-sidecar.sh
+          exec /usr/bin/bash /tmp/servicetracer-guest-local-sidecar.sh
+          WRAPPER
+          )"
+
+          az vm run-command invoke \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$TARGET_VM" \
+            --command-id RunShellScript \
+            --scripts "$wrapper" \
+            --output json > "$ARTIFACT_DIR/run-command.json"
+
+          jq -e '.value and (.value | type == "array")' "$ARTIFACT_DIR/run-command.json" >/dev/null
+          jq -r '.value[]?.message // empty' "$ARTIFACT_DIR/run-command.json" \
+            | tee "$ARTIFACT_DIR/guest-output.txt"
+          grep -F 'SERVICETRACER_GUEST_LOCAL_SIDECAR_SUCCESS' "$ARTIFACT_DIR/guest-output.txt" >/dev/null
+          grep -F 'cleanup=verified production_integrity=verified' "$ARTIFACT_DIR/guest-output.txt" >/dev/null
+
+      - name: Write terminal summary
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            echo '## VPN-01 guest-local TLS sidecar validation'
+            echo
+            echo "- Workflow source: \`$GITHUB_SHA\`"
+            echo '- Tracking issue: #167'
+            echo '- Target: vm-vpn01-mst-dev only'
+            echo '- Temporary service: servicetracer-demo-backend-canary.service'
+            echo '- Temporary listener: TCP/8443'
+            echo '- Production TCP/443 service mutation: forbidden'
+            echo '- VPN-02 access: none'
+            echo '- Azure networking changes: none'
+            echo '- Expected recurring cost delta: CAD $0'
+            if [[ -f "$ARTIFACT_DIR/guest-output.txt" ]] && grep -F 'SERVICETRACER_GUEST_LOCAL_SIDECAR_SUCCESS' "$ARTIFACT_DIR/guest-output.txt" >/dev/null; then
+              echo '- Result: guest-local sidecar passed and cleanup/integrity markers were observed.'
+            else
+              echo '- Result: terminal success marker not observed; inspect the uploaded evidence.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload non-secret evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vpn01-guest-local-tls-sidecar-evidence
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
