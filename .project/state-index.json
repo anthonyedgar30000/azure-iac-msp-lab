@@ -1,14 +1,14 @@
 {
   "schema_version": "project.state-index.v1",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-27T08:36:01-04:00",
+  "recorded_at": "2026-07-27T08:37:39-04:00",
   "canonical_current_reality": ".project/current-reality-v2.json",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
   "canonical_handoff": ".project/handoffs/current-state.md",
   "latest_verified_reconciliation": ".project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json",
-  "latest_deployment_authorization": ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json",
+  "latest_deployment_reconciliation": ".project/reconciliations/collector-provenance-deployment-run19-20260726.json",
   "active_deployment_authorization": null,
-  "latest_authorization_resolution": ".project/reconciliations/post-pr137-provenance-authority-expiry-20260727.json",
+  "consumed_deployment_authorization": ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json",
   "legacy_compatibility_snapshots": [
     {
       "path": ".project/current-reality.json",
@@ -29,14 +29,14 @@
       ]
     }
   ],
-  "selection_rule": "Operational consumers must resolve canonical paths, the latest verified reconciliation, and the latest authorization resolution through this index rather than assuming a legacy filename or expired grant is current.",
+  "selection_rule": "Operational consumers must resolve canonical paths, verified preflight evidence, latest deployment reconciliation, and authorization status through this index.",
   "claim_boundaries": [
     "legacy_filename != current_authority",
     "historical_snapshot != live_state",
     "verified_preflight != deployment_completed",
-    "active_authorization != expired_authorization",
-    "authorization_expired != authorization_consumed",
-    "consumption_not_observed != unconsumed",
+    "deployment_reconciliation != deployment_success",
+    "consumed_authorization != active_authorization",
+    "failed_attempt != authorization_to_retry",
     "not_observed != false"
   ]
 }

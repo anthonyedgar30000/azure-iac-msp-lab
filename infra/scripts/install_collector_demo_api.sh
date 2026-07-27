@@ -138,7 +138,10 @@ EOF
 ln -sfn /etc/nginx/sites-available/servicetracer-demo-api /etc/nginx/sites-enabled/servicetracer-demo-api
 
 systemctl daemon-reload
-systemctl enable --now "$SERVICE_NAME"
+# enable --now does not restart an already-running process after code or environment replacement.
+systemctl enable "$SERVICE_NAME"
+systemctl restart "$SERVICE_NAME"
+systemctl is-active --quiet "$SERVICE_NAME"
 nginx -t
 systemctl enable --now nginx
 systemctl reload nginx
