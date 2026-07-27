@@ -156,6 +156,12 @@ runcmd:
     -subj '/CN=__BACKEND_ID__'
     -addext 'subjectAltName=DNS:__BACKEND_ID__'
   - chmod 0600 /etc/servicetracer-demo/backend.key
+  - command -v ufw
+  - ufw default deny incoming
+  - ufw default allow outgoing
+  - ufw allow 443/tcp comment 'ServiceTracer HTTPS'
+  - ufw allow proto tcp from 10.20.40.0/24 to any port 22 comment 'SSH from operations subnet'
+  - ufw --force enable
   - systemctl daemon-reload
   - systemctl enable --now servicetracer-demo-backend.service
   - systemctl is-active --quiet servicetracer-demo-backend.service

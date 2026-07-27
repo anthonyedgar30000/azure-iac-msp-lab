@@ -1,0 +1,445 @@
+name: One-shot bounded UFW mutation run 1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.project/change-requests/ufw-mutation-run1-20260727.json'
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+
+concurrency:
+  group: one-shot-ufw-mutation-run1
+  cancel-in-progress: false
+
+env:
+  REQUEST_FILE: .project/change-requests/ufw-mutation-run1-20260727.json
+  ARTIFACT_DIR: ufw-mutation-run1-evidence
+  GH_TOKEN: ${{ github.token }}
+  AZURE_CORE_ONLY_SHOW_ERRORS: true
+
+jobs:
+  mutate:
+    name: Apply and verify bounded UFW policy
+    if: github.repository == 'anthonyedgar30000/azure-iac-msp-lab'
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out exact mutation request
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate finite mutation authority
+        id: request
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test -f "$REQUEST_FILE"
+
+          jq -e '
+            .schema_version == "project.ufw-mutation-request.v1" and
+            .request_id == "ufw-mutation-run1-20260727" and
+            .status == "authorized_unconsumed" and
+            .tracking_issue == 153 and
+            .supersedes_verification_issue == 150 and
+            .repository.name == "anthonyedgar30000/azure-iac-msp-lab" and
+            .repository.base_main == "740af61d3814ca17d1e4230381241f42fe1aaeb1" and
+            .execution.operation == "bounded_guest_ufw_mutation_and_verification" and
+            .execution.resource_group == "rg-servicetracer-dev-westus2" and
+            .execution.location == "westus2" and
+            .execution.load_balancer == "lb-remote-access-mst-dev" and
+            .execution.public_ip == "pip-remote-access-mst-dev" and
+            .execution.virtual_machines == ["vm-vpn01-mst-dev", "vm-vpn02-mst-dev"] and
+            .execution.expected_backend_ips == ["10.20.10.11", "10.20.10.12"] and
+            .execution.listener_port == 443 and
+            .execution.operations_source_prefix == "10.20.40.0/24" and
+            .execution.transaction_attempts == 10 and
+            .execution.settling_seconds == 45 and
+            .execution.guest_commands_per_vm == 1 and
+            .execution.ufw_policy.default_incoming == "deny" and
+            .execution.ufw_policy.default_outgoing == "allow" and
+            .execution.ufw_policy.allow_rules == [
+              {"protocol":"tcp","port":443,"source":"any","comment":"ServiceTracer HTTPS"},
+              {"protocol":"tcp","port":22,"source":"10.20.40.0/24","comment":"SSH from operations subnet"}
+            ] and
+            .authority.attempt_limit == 1 and
+            .authority.renewable == false and
+            .authority.transferable == false and
+            .authority.repository_write_authorized == true and
+            .authority.azure_authentication_authorized == true and
+            .authority.azure_guest_command_authorized == true and
+            .authority.azure_read_only_queries_authorized == true and
+            .authority.guest_firewall_change_authorized == true and
+            .authority.public_transaction_verification_authorized == true and
+            .authority.artifact_publication_authorized == true and
+            .authority.package_change_authorized == false and
+            .authority.service_restart_authorized == false and
+            .authority.service_stop_authorized == false and
+            .authority.service_disable_authorized == false and
+            .authority.ssh_execution_authorized == false and
+            .authority.nsg_mutation_authorized == false and
+            .authority.load_balancer_mutation_authorized == false and
+            .authority.nic_or_subnet_mutation_authorized == false and
+            .authority.vm_resource_mutation_authorized == false and
+            .authority.rbac_mutation_authorized == false and
+            .authority.policy_or_lock_mutation_authorized == false and
+            .authority.resource_deployment_authorized == false and
+            .authority.automatic_retry_authorized == false and
+            .authority.rollback_authorized == false and
+            .authority.cleanup_authorized == false
+          ' "$REQUEST_FILE" > /dev/null
+
+          valid_until="$(jq -r '.valid_until' "$REQUEST_FILE")"
+          (( $(date -u +%s) <= $(date -u -d "$valid_until" +%s) ))
+
+          base_main="$(jq -r '.repository.base_main' "$REQUEST_FILE")"
+          git cat-file -e "${base_main}^{commit}"
+          git merge-base --is-ancestor "$base_main" "$GITHUB_SHA"
+
+          mkdir -p "$ARTIFACT_DIR"
+          cp "$REQUEST_FILE" "$ARTIFACT_DIR/request.json"
+
+          echo "tracking_issue=$(jq -r '.tracking_issue' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "resource_group=$(jq -r '.execution.resource_group' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "location=$(jq -r '.execution.location' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "load_balancer=$(jq -r '.execution.load_balancer' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "public_ip=$(jq -r '.execution.public_ip' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "vm1=$(jq -r '.execution.virtual_machines[0]' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "vm2=$(jq -r '.execution.virtual_machines[1]' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "settling_seconds=$(jq -r '.execution.settling_seconds' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "transaction_attempts=$(jq -r '.execution.transaction_attempts' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+
+      - name: Validate declared UFW policy before Azure login
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest infra.tests.test_remote_access_backends -v
+          grep -F "ufw default deny incoming" infra/bootstrap/vpn-backend-cloud-init.yaml
+          grep -F "ufw default allow outgoing" infra/bootstrap/vpn-backend-cloud-init.yaml
+          grep -F "ufw allow 443/tcp comment 'ServiceTracer HTTPS'" infra/bootstrap/vpn-backend-cloud-init.yaml
+          grep -F "ufw allow proto tcp from 10.20.40.0/24 to any port 22 comment 'SSH from operations subnet'" infra/bootstrap/vpn-backend-cloud-init.yaml
+          ! grep -F "ufw allow 22/tcp" infra/bootstrap/vpn-backend-cloud-init.yaml
+          ! grep -F "ufw --force reset" infra/bootstrap/vpn-backend-cloud-init.yaml
+
+      - name: Enforce one-shot admission and record execution start
+        env:
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracking_issue }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          existing="$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" --jq '[.[] | select(.body | contains("<!-- ufw-mutation-run1-admitted -->"))] | length')"
+          test "$existing" = "0"
+
+          cat > start-comment.md <<EOF
+          <!-- ufw-mutation-run1-admitted -->
+          ## Bounded UFW mutation admitted
+
+          The next step begins Azure authentication and consumes the finite operational grant.
+
+          - workflow run: [$GITHUB_RUN_ID]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)
+          - commit: \`$GITHUB_SHA\`
+          - target VMs: \`vm-vpn01-mst-dev\`, \`vm-vpn02-mst-dev\`
+          - guest commands: **one per VM**
+          - service restart: **false**
+          - Azure networking mutation: **false**
+          - automatic retry: **false**
+          - rollback: **false**
+          EOF
+          gh issue comment "$TRACKER_ISSUE" --repo "$GITHUB_REPOSITORY" --body-file start-comment.md
+
+      - name: Log in to Azure with workload identity federation
+        id: azure_login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Capture Azure, target, cost, and quota boundary
+        env:
+          RESOURCE_GROUP: ${{ steps.request.outputs.resource_group }}
+          LOCATION: ${{ steps.request.outputs.location }}
+          VM1: ${{ steps.request.outputs.vm1 }}
+          VM2: ${{ steps.request.outputs.vm2 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          az account show \
+            --query '{subscriptionId:id,subscriptionName:name,tenantId:tenantId,state:state}' \
+            --output json > "$ARTIFACT_DIR/account.json"
+
+          az group show \
+            --name "$RESOURCE_GROUP" \
+            --query '{name:name,location:location,provisioningState:properties.provisioningState}' \
+            --output json > "$ARTIFACT_DIR/resource-group.json"
+          test "$(jq -r '.name' "$ARTIFACT_DIR/resource-group.json")" = "$RESOURCE_GROUP"
+          test "$(jq -r '.location' "$ARTIFACT_DIR/resource-group.json")" = "$LOCATION"
+
+          for vm in "$VM1" "$VM2"; do
+            az vm show \
+              --resource-group "$RESOURCE_GROUP" \
+              --name "$vm" \
+              --query '{id:id,name:name,location:location,provisioningState:provisioningState,osType:storageProfile.osDisk.osType}' \
+              --output json > "$ARTIFACT_DIR/${vm}-resource.json"
+            test "$(jq -r '.name' "$ARTIFACT_DIR/${vm}-resource.json")" = "$vm"
+            test "$(jq -r '.location' "$ARTIFACT_DIR/${vm}-resource.json")" = "$LOCATION"
+
+            power_state="$(az vm get-instance-view \
+              --resource-group "$RESOURCE_GROUP" \
+              --name "$vm" \
+              --query "instanceView.statuses[?starts_with(code, 'PowerState/')].code | [0]" \
+              --output tsv)"
+            printf '%s\n' "$power_state" > "$ARTIFACT_DIR/${vm}-power-state.txt"
+            test "$power_state" = "PowerState/running"
+          done
+
+          if ! az vm list-usage --location "$LOCATION" --output json > "$ARTIFACT_DIR/compute-quota.json" 2> "$ARTIFACT_DIR/compute-quota-error.txt"; then
+            printf '{"observed":false,"reason":"query_failed"}\n' > "$ARTIFACT_DIR/compute-quota.json"
+          fi
+
+          start_date="$(date -u -d '7 days ago' +%F)"
+          end_date="$(date -u +%F)"
+          if ! az consumption usage list \
+            --start-date "$start_date" \
+            --end-date "$end_date" \
+            --top 20 \
+            --output json > "$ARTIFACT_DIR/recent-consumption-context.json" 2> "$ARTIFACT_DIR/recent-consumption-context-error.txt"; then
+            printf '{"observed":false,"reason":"query_failed_or_not_authorized"}\n' > "$ARTIFACT_DIR/recent-consumption-context.json"
+          fi
+
+      - name: Apply exact UFW policy once to each authorized VM
+        id: apply_ufw
+        env:
+          RESOURCE_GROUP: ${{ steps.request.outputs.resource_group }}
+          VM1: ${{ steps.request.outputs.vm1 }}
+          VM2: ${{ steps.request.outputs.vm2 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          guest_script="$(cat <<'SCRIPT'
+          set -euo pipefail
+          command -v ufw >/dev/null
+          ufw default deny incoming
+          ufw default allow outgoing
+          ufw allow 443/tcp comment 'ServiceTracer HTTPS'
+          ufw allow proto tcp from 10.20.40.0/24 to any port 22 comment 'SSH from operations subnet'
+          ufw --force enable
+
+          echo '=== UFW_STATUS_VERBOSE ==='
+          ufw status verbose
+          echo "SYSTEMD_ACTIVE=$(systemctl is-active servicetracer-demo-backend.service)"
+          echo "SYSTEMD_ENABLED=$(systemctl is-enabled servicetracer-demo-backend.service)"
+          if ss -H -lnt 'sport = :443' | grep -q .; then
+            echo 'TCP443_LISTENER_PRESENT=true'
+          else
+            echo 'TCP443_LISTENER_PRESENT=false'
+            exit 1
+          fi
+          echo 'MUTATION_COMPLETE=true'
+          SCRIPT
+          )"
+
+          for vm in "$VM1" "$VM2"; do
+            az vm run-command invoke \
+              --resource-group "$RESOURCE_GROUP" \
+              --name "$vm" \
+              --command-id RunShellScript \
+              --scripts "$guest_script" \
+              --output json > "$ARTIFACT_DIR/${vm}-ufw-mutation.json"
+
+            jq -r '.value[]?.message // empty' \
+              "$ARTIFACT_DIR/${vm}-ufw-mutation.json" \
+              > "$ARTIFACT_DIR/${vm}-ufw-mutation.txt"
+
+            output="$ARTIFACT_DIR/${vm}-ufw-mutation.txt"
+            grep -F 'Status: active' "$output"
+            grep -F 'Default: deny (incoming), allow (outgoing)' "$output"
+            grep -Eq '443/tcp[[:space:]]+ALLOW IN[[:space:]]+Anywhere' "$output"
+            grep -Eq '22/tcp[[:space:]]+ALLOW IN[[:space:]]+10\.20\.40\.0/24' "$output"
+            ! grep -Eq '22/tcp[[:space:]]+ALLOW IN[[:space:]]+Anywhere' "$output"
+            grep -F 'SYSTEMD_ACTIVE=active' "$output"
+            grep -F 'SYSTEMD_ENABLED=enabled' "$output"
+            grep -F 'TCP443_LISTENER_PRESENT=true' "$output"
+            grep -F 'MUTATION_COMPLETE=true' "$output"
+          done
+
+      - name: Capture one bounded post-change observation
+        id: observe
+        env:
+          RESOURCE_GROUP: ${{ steps.request.outputs.resource_group }}
+          LOAD_BALANCER: ${{ steps.request.outputs.load_balancer }}
+          PUBLIC_IP: ${{ steps.request.outputs.public_ip }}
+          SETTLING_SECONDS: ${{ steps.request.outputs.settling_seconds }}
+          TRANSACTION_ATTEMPTS: ${{ steps.request.outputs.transaction_attempts }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          sleep "$SETTLING_SECONDS"
+
+          az network lb show \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$LOAD_BALANCER" \
+            --output json > "$ARTIFACT_DIR/load-balancer.json"
+          az network lb probe list \
+            --resource-group "$RESOURCE_GROUP" \
+            --lb-name "$LOAD_BALANCER" \
+            --output json > "$ARTIFACT_DIR/load-balancer-probes.json"
+          az network lb rule list \
+            --resource-group "$RESOURCE_GROUP" \
+            --lb-name "$LOAD_BALANCER" \
+            --output json > "$ARTIFACT_DIR/load-balancer-rules.json"
+          az network public-ip show \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$PUBLIC_IP" \
+            --output json > "$ARTIFACT_DIR/public-ip.json"
+
+          lb_id="$(jq -r '.id' "$ARTIFACT_DIR/load-balancer.json")"
+          az monitor metrics list \
+            --resource "$lb_id" \
+            --metric DipAvailability \
+            --aggregation Average \
+            --interval PT1M \
+            --filter "BackendIPAddress eq '*' and BackendPort eq '*'" \
+            --output json > "$ARTIFACT_DIR/probe-metrics.json"
+
+          public_ip="$(jq -r '.ipAddress' "$ARTIFACT_DIR/public-ip.json")"
+          test -n "$public_ip"
+          : > "$ARTIFACT_DIR/transactions.jsonl"
+
+          for attempt in $(seq 1 "$TRANSACTION_ATTEMPTS"); do
+            correlation_id="ufw-run1-${GITHUB_RUN_ID}-${attempt}"
+            headers="$RUNNER_TEMP/headers-${attempt}.txt"
+            body="$RUNNER_TEMP/body-${attempt}.json"
+            http_code="$(curl \
+              --insecure \
+              --silent \
+              --show-error \
+              --connect-timeout 5 \
+              --max-time 20 \
+              --dump-header "$headers" \
+              --output "$body" \
+              --write-out '%{http_code}' \
+              "https://${public_ip}/transaction?correlation_id=${correlation_id}")"
+            backend="$(awk -F': ' 'tolower($1) == "x-servicetracer-backend" {gsub("\r", "", $2); print $2}' "$headers" | tail -n 1)"
+
+            python - "$attempt" "$correlation_id" "$http_code" "$backend" "$body" <<'PY' >> "$ARTIFACT_DIR/transactions.jsonl"
+          import json
+          import pathlib
+          import sys
+
+          attempt, correlation_id, http_code, backend, body_path = sys.argv[1:]
+          raw = pathlib.Path(body_path).read_text(encoding="utf-8")
+          try:
+              body = json.loads(raw)
+          except json.JSONDecodeError:
+              body = {"unparsed_body": raw[:1000]}
+          print(json.dumps({
+              "attempt": int(attempt),
+              "correlation_id": correlation_id,
+              "http_code": int(http_code),
+              "backend_header": backend or None,
+              "body": body,
+          }, separators=(",", ":")))
+          PY
+          done
+
+          python - "$ARTIFACT_DIR" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          root = pathlib.Path(sys.argv[1])
+          transactions = [
+              json.loads(line)
+              for line in (root / "transactions.jsonl").read_text(encoding="utf-8").splitlines()
+              if line.strip()
+          ]
+          summary = {
+              "schema_version": "project.ufw-mutation-result.v1",
+              "mutation_complete": True,
+              "targets": ["vm-vpn01-mst-dev", "vm-vpn02-mst-dev"],
+              "ufw_expected_state": {
+                  "status": "active",
+                  "default_incoming": "deny",
+                  "default_outgoing": "allow",
+                  "tcp_443": "allow_any",
+                  "tcp_22": "allow_10.20.40.0/24_only",
+              },
+              "service_restart_performed": False,
+              "azure_network_mutation_performed": False,
+              "automatic_retry_performed": False,
+              "rollback_performed": False,
+              "transaction_attempts": len(transactions),
+              "observed_backends": sorted({
+                  item.get("backend_header")
+                  for item in transactions
+                  if item.get("backend_header")
+              }),
+              "http_status_counts": {},
+              "causal_attribution_supported": False,
+          }
+          for item in transactions:
+              key = str(item["http_code"])
+              summary["http_status_counts"][key] = summary["http_status_counts"].get(key, 0) + 1
+          (root / "summary.json").write_text(
+              json.dumps(summary, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload bounded mutation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ufw-mutation-run1-evidence
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Publish terminal result
+        if: always()
+        env:
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracking_issue }}
+          JOB_STATUS: ${{ job.status }}
+          AZURE_LOGIN_OUTCOME: ${{ steps.azure_login.outcome }}
+          MUTATION_OUTCOME: ${{ steps.apply_ufw.outcome }}
+          OBSERVATION_OUTCOME: ${{ steps.observe.outcome }}
+        shell: bash
+        run: |
+          set +e
+          consumed=false
+          if [[ "$AZURE_LOGIN_OUTCOME" != "" && "$AZURE_LOGIN_OUTCOME" != "skipped" ]]; then
+            consumed=true
+          fi
+          mutation_attempted=false
+          if [[ "$MUTATION_OUTCOME" != "" && "$MUTATION_OUTCOME" != "skipped" ]]; then
+            mutation_attempted=true
+          fi
+
+          cat > terminal-comment.md <<EOF
+          ## Bounded UFW mutation terminal result
+
+          - workflow run: [$GITHUB_RUN_ID]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)
+          - commit: \`$GITHUB_SHA\`
+          - job status: **$JOB_STATUS**
+          - authority consumed: **$consumed**
+          - guest mutation attempted: **$mutation_attempted**
+          - mutation step: \`${MUTATION_OUTCOME:-not_started}\`
+          - post-change observation: \`${OBSERVATION_OUTCOME:-not_started}\`
+          - service restart authorized/performed: **false**
+          - Azure networking mutation authorized/performed: **false**
+          - automatic retry authorized/performed: **false**
+          - rollback authorized/performed: **false**
+
+          Evidence is attached to this workflow run as \`ufw-mutation-run1-evidence\` when artifact publication succeeded.
+          EOF
+          gh issue comment "$TRACKER_ISSUE" --repo "$GITHUB_REPOSITORY" --body-file terminal-comment.md || true
