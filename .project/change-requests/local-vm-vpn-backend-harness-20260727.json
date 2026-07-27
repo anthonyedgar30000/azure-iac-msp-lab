@@ -1,0 +1,74 @@
+{
+  "schema_version": "project.local-vm-test-request.v1",
+  "request_id": "local-vm-vpn-backend-harness-20260727",
+  "status": "authorized_repository_and_local_only",
+  "authorized_by": "user instruction: Lets set up the local vm side",
+  "recorded_on": "2026-07-27",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "15346792d5905b3d00db8bc6a7a48a879f359ae6",
+    "working_branch": "test/local-vm-vpn-backend",
+    "local_working_tree": "not_observed"
+  },
+  "purpose": "Reproduce the Azure Ubuntu 24.04 VPN backend guest environment locally and validate the exact TLS accept-loop deployment artifact, systemd unit, readiness checks, shallow TCP probe tolerance, and rollback behavior before any further Azure deployment.",
+  "target_parity": {
+    "os": "Ubuntu 24.04 LTS",
+    "azure_vm_reference": "Canonical ubuntu-24_04-lts server latest",
+    "service": "servicetracer-demo-backend.service",
+    "listener": "TCP/443 with HTTPS application traffic",
+    "backend_mode": "healthy",
+    "runtime": "systemd plus Python 3 plus OpenSSL",
+    "probe_model": "raw TCP connections that send no TLS ClientHello"
+  },
+  "authorized_changes": {
+    "repository_branch": true,
+    "local_vm_harness": true,
+    "local_cloud_init": true,
+    "local_install_and_test_scripts": true,
+    "deterministic_repository_tests": true,
+    "draft_pull_request": true,
+    "local_disposable_vm_creation": true,
+    "local_service_restart": true,
+    "local_firewall_configuration": true,
+    "local_rollback_testing": true
+  },
+  "explicit_exclusions": {
+    "azure_authentication": false,
+    "azure_query": false,
+    "azure_deployment": false,
+    "azure_guest_mutation": false,
+    "azure_network_change": false,
+    "azure_probe_change": false,
+    "merge_to_main": false,
+    "automatic_azure_retry": false
+  },
+  "local_vm_scope": {
+    "name": "servicetracer-vpn-local",
+    "platform": "Multipass preferred; any Ubuntu 24.04 VM is acceptable",
+    "cpu": 1,
+    "memory": "2G",
+    "disk": "12G",
+    "network": "NAT or host-only; no public exposure required",
+    "expected_recurring_cost_delta_CAD": 0
+  },
+  "validation_contract": [
+    "exact embedded backend source renders and compiles",
+    "systemd service becomes active and enabled",
+    "TCP/443 listener appears",
+    "loopback HTTPS health returns the expected payload",
+    "private-IP HTTPS health returns the expected payload",
+    "twelve raw TCP probe connections do not starve a legitimate HTTPS request",
+    "listener queue remains below configured backlog",
+    "deployed file hashes equal rendered artifact hashes",
+    "named checkpoint failure records the exact boundary",
+    "forced local validation failure restores the previous backend and unit"
+  ],
+  "failure_behavior": "Stop locally, preserve logs and hashes, and do not authorize or trigger another Azure deployment from this harness.",
+  "claim_boundaries": [
+    "local_vm_test_passed != Azure_guest_updated",
+    "systemd_active != Azure_probe_healthy",
+    "local_probe_simulation_passed != load_balancer_path_validated",
+    "local_rollback_passed != production_rollback_required"
+  ]
+}
