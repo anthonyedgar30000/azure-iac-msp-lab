@@ -1,0 +1,69 @@
+{
+  "schema_version": "project.reconciliation-result.v1",
+  "request_id": "ufw-mutation-run2-20260727",
+  "tracking_issue": 156,
+  "execution_commit": "092ea681b8cb0312580f18bb44e264b129145fb0",
+  "workflow_run": 30288168484,
+  "artifact": {
+    "id": 8661765887,
+    "name": "ufw-mutation-run2-evidence",
+    "digest": "sha256:1eccc10d39c22567e35edcdb25e1b0f600bf667d8e4fdc7a049e6e185a06f5eb"
+  },
+  "authority": {
+    "status": "consumed_succeeded",
+    "consumed": true,
+    "renewable": false,
+    "additional_action_authorized": false
+  },
+  "declared_vs_deployed": {
+    "cloud_init_declares_ufw_policy": true,
+    "vpn01_ufw_policy_observed": true,
+    "vpn02_ufw_policy_observed": true,
+    "declared_and_deployed_ufw_alignment": "verified"
+  },
+  "guest_observation": {
+    "vm-vpn01-mst-dev": {
+      "ufw": "active",
+      "default_incoming": "deny",
+      "default_outgoing": "allow",
+      "tcp_443": "allow_anywhere",
+      "tcp_22": "allow_10.20.40.0/24_only",
+      "service": "active_enabled",
+      "listener_tcp_443": "present"
+    },
+    "vm-vpn02-mst-dev": {
+      "ufw": "active",
+      "default_incoming": "deny",
+      "default_outgoing": "allow",
+      "tcp_443": "allow_anywhere",
+      "tcp_22": "allow_10.20.40.0/24_only",
+      "service": "active_enabled",
+      "listener_tcp_443": "present"
+    }
+  },
+  "service_observation": {
+    "load_balancer_probe": {
+      "10.20.10.11:443": 0.0,
+      "10.20.10.12:443": 0.0
+    },
+    "public_transaction_attempts": 10,
+    "http_responses_received": 0,
+    "observed_backends": [],
+    "service_recovery_verified": false,
+    "causal_attribution_supported": false
+  },
+  "canonical_boundaries": [
+    "declared_in_code == deployed_for_ufw_policy",
+    "ufw_configured_and_verified != load_balanced_service_recovered",
+    "listener_present != load_balancer_probe_healthy",
+    "mutation_succeeded != end_to_end_service_validated"
+  ],
+  "explicit_non_actions": {
+    "service_restart": false,
+    "azure_networking_mutation": false,
+    "automatic_retry": false,
+    "rollback": false,
+    "cleanup": false
+  },
+  "next_gate": "Any further diagnosis or repair of the unhealthy load-balanced service requires new explicit authorization."
+}
