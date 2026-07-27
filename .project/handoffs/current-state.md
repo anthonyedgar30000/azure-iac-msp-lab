@@ -2,21 +2,15 @@
 
 ## Interpretation boundary
 
-This handoff reflects GitHub state observed after PR #137, the verified provenance preflight artifact from run `30206242759`, and the latest durable Azure observation generated on `2026-07-26`. It is not a continuously refreshed Azure or GitHub Actions dashboard.
+This handoff reflects GitHub state observed at **2026-07-27T09:22:25-04:00**, the PR #138 merge, and the independently verified artifact from collector provenance deployment run `30224770178`. It is not a continuously refreshed Azure dashboard.
 
 ```text
 declared_in_code != deployed_in_azure
 deployment_succeeded != service_validated
-workflow_failed != deployment_failed
-PR_merged != exact_head_CI_passed
-repository_implemented != deployed_to_collector_VM
-API_health_verified != Azure_host_identity_verified
-frontend_bound != browser_verified
-monitoring_enabled != alerts_verified
-estimated_cost != actual_cost
-authorization_expired != authorization_consumed
-consumption_not_observed != unconsumed
-CI_clean != Azure_runtime_updated
+files_replaced != running_process_restarted
+network_reconciliation_succeeded != deployment_succeeded
+failed_attempt != authorization_to_retry
+PR_head_CI != merge_commit_CI
 not_observed != false
 ```
 
@@ -25,147 +19,88 @@ not_observed != false
 ```text
 state index: .project/state-index.json
 current reality: .project/current-reality-v2.json
-current completion gate: .project/lab-v1-completion-gate-v2.json
+completion gate: .project/lab-v1-completion-gate-v2.json
 latest verified preflight: .project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json
-latest authorization resolution: .project/reconciliations/post-pr137-provenance-authority-expiry-20260727.json
-legacy reality snapshot: .project/current-reality.json
-legacy completion gate: .project/lab-v1-completion-gate.json
+latest deployment reconciliation: .project/reconciliations/collector-provenance-deployment-run19-20260726.json
+consumed grant: .project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json
+prior expiry resolution: .project/reconciliations/post-pr137-provenance-authority-expiry-20260727.json
 ```
 
 ## Repository watermark
 
 ```text
 repository: anthonyedgar30000/azure-iac-msp-lab
-observed main: f6e79818150d72b75d1e4f25be172e6dc577114d
-latest merge: PR #137
-PR #137 merge commit: f6e79818150d72b75d1e4f25be172e6dc577114d
-PR #137 exact source: f6e79818150d72b75d1e4f25be172e6dc577114d
-PR #137 exact-current-head CI: 30224641320 / success
-open pull requests observed before this reconciliation: none
+observed main: bd1ef50451c85d9f0e9e77c9ac54882d44940933
+latest completed merge: PR #138
+PR #138 exact source: db2c95d279f06f379c13b4cd8664518eda417843
+PR #138 exact-head CI: 30267618707 / success
+PR #138 merge-commit CI: not observed
+open pull request: PR #139 / restart repair and run-19 reconciliation
 local working tree: not observed
 ```
 
-The current `main` commit is also the PR #137 resulting commit. Exact-current-head CI passed workflow-observability validation, unit tests, evidence checks, infrastructure and workload contracts, and Bicep lint/build.
-
-## Verified provenance preflight
+PR #138 merged the repository-only record that the earlier grant was temporally expired while its consumption was not observable through the available connector. The subsequently inspected run-19 artifact supplies stronger evidence: the grant was consumed by an actual deployment attempt. The earlier record remains historical evidence of the observation boundary at that time; it does not override the later artifact.
 
 ```text
-workflow run: 30206242759
-job: 89804704663
-artifact: 8633143093
-artifact digest: sha256:2f8a63d18d6c2e07e86cc607c49d111e6b788d40637b2adcd30b1d5ce05de902
-manifest verification: 26 / 26 payloads
-reviewed source: 1677606ded960c951fa37f0fdbfae50ba4b3cc34
-ARM validation: Succeeded
-What-If: 24 Ignore / 3 Modify / 3 NoChange / 0 Create / 0 Delete / 0 Replace
-Azure mutation performed: false
+earlier_not_observed != later_false
+later_evidence_may_resolve_prior_uncertainty
 ```
 
-The reviewed source and current `main` differ only through preflight, evidence, authorization, documentation, and testing changes. No deployment-payload difference was observed.
-
-## Latest durable Azure observation
+## Run 19 deployment reality
 
 ```text
-subscription: Azure for Students
-resource group: rg-servicetracer-dev-westus2
-region: westus2
-collector VM: vm-stcollector-mst-dev / Standard_B2ats_v2 / VM running
-collector private IP: 10.20.40.10
-load balancer: lb-st-demo-api-mst-dev / Succeeded
-backend pool: be-st-demo-api / collector address present
-VM extension: servicetracer-demo-api / Succeeded
-currently deployed source: 98b092201053fd3592be157a24de6e623e6b74a6
-resource locks: none
-readiness blockers: none
+dispatcher: 30224765833 / failure
+deployment: 30224770178 / run 19 / attempt 1 / failure
+job: 89853061733
+exact source: 1677606ded960c951fa37f0fdbfae50ba4b3cc34
+artifact: 8638260753
+artifact digest: sha256:3cd4993461de1545bc52885bbf8118d74f861d651f5aac692e4e06e4b3f16fab
+manifest: 44 of 44 payloads verified
+grant: consumed / non-renewing / non-transferable
+retry: unauthorized
+rollback: unauthorized
 ```
 
+Azure login, readiness, ARM validation and the accepted `24 Ignore / 3 Modify / 3 NoChange / 0 Create/Delete/Replace` What-If passed. The dedicated load balancer and `collector / 10.20.40.10` backend pool reconciled successfully. The commit-bound VM extension reached terminal `Failed`, so public runtime verification and browser execution were skipped.
+
+## Deterministic failure classification
+
+The installer copied source `1677606ded960c951fa37f0fdbfae50ba4b3cc34`, rewrote the environment file and systemd unit, then called `systemctl enable --now`. On an already-running unit that enables the service but does not restart the existing Python process. The subsequent health request therefore reached the older process, which did not return the new `azure_host` object:
+
 ```text
-month-to-date PreTaxCost: CAD 4.03203831168191
+Azure host identity was not verified: {}
+```
+
+PR #139 carries the repository repair:
+
+```bash
+systemctl daemon-reload
+systemctl enable servicetracer-demo-api.service
+systemctl restart servicetracer-demo-api.service
+systemctl is-active --quiet servicetracer-demo-api.service
+```
+
+The repair is repository-only until separately merged, reviewed through a fresh preflight and deployed under new authority.
+
+## Current Lab v1 gate
+
+```text
+fresh provenance preflight: complete
+current cost observation: CAD 4.03203831168191 month-to-date
 remaining Azure for Students credit: not observed
-public IP addresses: 2 / 3
-network interfaces: 3 / 65536
-load balancers: 2 / 1000
-additional public IP required: 0
-quota sufficient for reviewed plan: true
-```
-
-The observation is point-in-time evidence from the verified preflight, not continuous Azure truth.
-
-## Collector golden path — preserved deployed reality
-
-Historical collector deployment run `30196388398` remains the latest deployment whose artifact has been promoted into repository evidence.
-
-```text
-deployed source: 98b092201053fd3592be157a24de6e623e6b74a6
-collector API: https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run
-health: healthy
-CORS: GitHub Pages origin allowed / POST allowed
-transaction request: HTTP 200 / 20 attempts
-downstream results: 0 successful / 20 failed
-stable backend localization: false
-exact root cause claimed: false
-```
-
-```text
-API_health_verified != downstream_transaction_success_verified
-workflow_failed != deployment_failed
-```
-
-## Provenance deployment authorization resolution
-
-PR #137 recorded one finite grant:
-
-```text
-grant: collector-provenance-deploy-1677606-20260726
-reviewed source: 1677606ded960c951fa37f0fdbfae50ba4b3cc34
-issued: 2026-07-26T19:02:36-04:00
-valid until: 2026-07-26T21:02:36-04:00
-attempt limit: 1
-original recorded status: pending_consumption
-current temporal status: expired
-```
-
-The available GitHub connector exposes PR-head and commit-associated checks but not the required manual `workflow_dispatch` history. No deployment artifact or repository reconciliation of an attempt was observed.
-
-Canonical resolution:
-
-```text
-deployment dispatch observed: false
-deployment artifact observed: false
-consumption status: not_observed
-expired unused claimed: false
-consumed claimed: false
-deployment succeeded claimed: false
-deployment failed claimed: false
-retry authorized: false
-rollback authorized: false
-```
-
-The expired grant is not active authority. Whether it was consumed before expiry remains unresolved; either outcome requires new explicit authority for another attempt.
-
-## Lab v1 gate
-
-```text
-exact-source preflight and What-If: complete
-exact deployment source selected: complete
-month-to-date actual-cost evidence in CAD: complete
-historical collector deployment: complete
-provenance source deployment: not observed
-live Azure host identity and source-ref verification: not performed
-browser live-path verification: not performed
-stable ServiceTracer localization: not established
-monitoring and alert delivery: not verified
-full evidence lock: incomplete
+run 19 deployment attempt: failed closed
+run 19 evidence lock: complete
+systemd restart repair: under PR #139 review
+provenance runtime verified: false
+browser correlated transaction: false
+monitoring and alert delivery: unverified
 ```
 
 ## Historical compatibility anchors
 
-Historical evidence remains bounded to its original context:
+These markers remain durable for bounded historical validators. They do not supersede the current canonical v2 records.
 
 ```text
-PR #84 merge: c96d9cbb765a023921fa819cf7d99c957e8ad608
-PR #84 source: 5c938a7e07da3a22b27bb5ac5aa52b7ccf22ba37
-merged_into_main != deployed_to_VM
 legacy canonical main: 665e051375594d11e58e434231bd06775dbdc560
 PR #92 source: 5b5af74d57fb5fd87ece2a34239cc6f29d04b12b
 PR #93 source: eecb5c872f76cb5e51df6f5451d5a61b79d87bba
@@ -189,26 +124,17 @@ GitHub Pages publication authorized: false
 ## Current authority
 
 ```text
-repository reconciliation authorized: true
-draft pull request creation authorized: true
-ordinary pull request CI authorized: true
-pull request merge authorized: false
-workflow dispatch authorized: false
-Azure authentication authorized: false
-Azure query authorized: false
-Azure mutation authorized: false
-deployment authorized: false
-browser verification authorized: false
-transaction replay authorized: false
-rollback authorized: false
-RBAC mutation authorized: false
-cleanup authorized: false
+repository restart repair: authorized
+repository truth reconciliation: authorized
+ordinary PR CI: authorized
+PR #139 merge: unauthorized
+Azure query or mutation: unauthorized
+workflow retry or dispatch: unauthorized
+rollback: unauthorized
+browser transaction: unauthorized
+RBAC or cleanup: unauthorized
 ```
 
 ## Next gate
 
-1. Review this repository-only reconciliation and its exact-head CI.
-2. Preserve the expired grant and unresolved consumption status.
-3. Do not dispatch, retry, or verify under the expired grant.
-4. If deployment remains desired, issue one new exact, non-renewing authority record from freshly reviewed evidence.
-5. After a separately authorized deployment, verify Azure host identity, deployed source ref, CORS, GitHub Pages rendering, and one request-ID-correlated 20-attempt transaction with no automatic retry.
+Review exact-head CI for the rebased PR #139 and make a separate merge decision. After a merge, capture fresh Azure state and a fresh `FullResourcePayloads` What-If for the repaired exact source. A new explicit, non-renewing deployment and rollback decision is required before another Azure attempt.

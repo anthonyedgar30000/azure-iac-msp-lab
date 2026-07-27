@@ -88,20 +88,21 @@ class CollectorProvenancePreflightRun1PromotionTests(unittest.TestCase):
         self.assertFalse(scope["rbac_mutation_authorized"])
         self.assertFalse(scope["cleanup_authorized"])
 
-    def test_state_index_preserves_preflight_and_resolves_expired_grant(self) -> None:
+    def test_state_index_preserves_preflight_and_records_consumed_grant(self) -> None:
         self.assertEqual(
             self.state_index["latest_verified_reconciliation"],
             ".project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json",
         )
-        self.assertEqual(
-            self.state_index["latest_deployment_authorization"],
-            ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json",
-        )
         self.assertIsNone(self.state_index["active_deployment_authorization"])
         self.assertEqual(
-            self.state_index["latest_authorization_resolution"],
-            ".project/reconciliations/post-pr137-provenance-authority-expiry-20260727.json",
+            self.state_index["consumed_deployment_authorization"],
+            ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json",
         )
+        consumption = self.authorization["consumption"]
+        self.assertEqual(consumption["status"], "consumed")
+        self.assertFalse(consumption["renewable"])
+        self.assertFalse(consumption["transferable"])
+        self.assertTrue(consumption["new_authority_required"])
 
 
 if __name__ == "__main__":
