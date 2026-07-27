@@ -2,7 +2,7 @@
 
 ## Interpretation boundary
 
-This handoff reflects GitHub state observed after PR #132 and durable Azure evidence from collector deployment run `30196388398`. It is not a continuously refreshed Azure dashboard.
+This handoff reflects GitHub state observed after PR #137, the verified provenance preflight artifact from run `30206242759`, and the latest durable Azure observation generated on `2026-07-26`. It is not a continuously refreshed Azure or GitHub Actions dashboard.
 
 ```text
 declared_in_code != deployed_in_azure
@@ -12,9 +12,11 @@ PR_merged != exact_head_CI_passed
 repository_implemented != deployed_to_collector_VM
 API_health_verified != Azure_host_identity_verified
 frontend_bound != browser_verified
-human_or_external_merge_observed != assistant_merge_action
 monitoring_enabled != alerts_verified
 estimated_cost != actual_cost
+authorization_expired != authorization_consumed
+consumption_not_observed != unconsumed
+CI_clean != Azure_runtime_updated
 not_observed != false
 ```
 
@@ -24,6 +26,8 @@ not_observed != false
 state index: .project/state-index.json
 current reality: .project/current-reality-v2.json
 current completion gate: .project/lab-v1-completion-gate-v2.json
+latest verified preflight: .project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json
+latest authorization resolution: .project/reconciliations/post-pr137-provenance-authority-expiry-20260727.json
 legacy reality snapshot: .project/current-reality.json
 legacy completion gate: .project/lab-v1-completion-gate.json
 ```
@@ -32,31 +36,67 @@ legacy completion gate: .project/lab-v1-completion-gate.json
 
 ```text
 repository: anthonyedgar30000/azure-iac-msp-lab
-observed main: 2f5b60c1d8328d13823e2cc1def09e6be384ecb5
-latest merge: PR #132
-PR #132 merge commit: 2f5b60c1d8328d13823e2cc1def09e6be384ecb5
-PR #132 exact source: 6b7bd5362b17c9edfc0b41da65d5b798e5d00b45
-PR #132 exact-head CI: 30204497860 / success
-PR #132 merge-commit CI: not observed
-open pull requests observed before this truth lock: none
+observed main: f6e79818150d72b75d1e4f25be172e6dc577114d
+latest merge: PR #137
+PR #137 merge commit: f6e79818150d72b75d1e4f25be172e6dc577114d
+PR #137 exact source: f6e79818150d72b75d1e4f25be172e6dc577114d
+PR #137 exact-current-head CI: 30224641320 / success
+open pull requests observed before this reconciliation: none
 local working tree: not observed
 ```
 
-The PR #132 merge was observed externally. This assistant did not invoke the merge action; merge actor and prior merge authority were not resolved from the observed evidence.
+The current `main` commit is also the PR #137 resulting commit. Exact-current-head CI passed workflow-observability validation, unit tests, evidence checks, infrastructure and workload contracts, and Bicep lint/build.
 
-## Collector golden path — deployed reality
+## Verified provenance preflight
+
+```text
+workflow run: 30206242759
+job: 89804704663
+artifact: 8633143093
+artifact digest: sha256:2f8a63d18d6c2e07e86cc607c49d111e6b788d40637b2adcd30b1d5ce05de902
+manifest verification: 26 / 26 payloads
+reviewed source: 1677606ded960c951fa37f0fdbfae50ba4b3cc34
+ARM validation: Succeeded
+What-If: 24 Ignore / 3 Modify / 3 NoChange / 0 Create / 0 Delete / 0 Replace
+Azure mutation performed: false
+```
+
+The reviewed source and current `main` differ only through preflight, evidence, authorization, documentation, and testing changes. No deployment-payload difference was observed.
+
+## Latest durable Azure observation
 
 ```text
 subscription: Azure for Students
 resource group: rg-servicetracer-dev-westus2
 region: westus2
-deployed source: 98b092201053fd3592be157a24de6e623e6b74a6
-deployment workflow run: 30196388398 / run 18
-artifact: 8630260279 / 48 of 48 manifest payloads verified
-collector VM: vm-stcollector-mst-dev / running
+collector VM: vm-stcollector-mst-dev / Standard_B2ats_v2 / VM running
 collector private IP: 10.20.40.10
-load balancer backend: collector / 10.20.40.10
+load balancer: lb-st-demo-api-mst-dev / Succeeded
+backend pool: be-st-demo-api / collector address present
 VM extension: servicetracer-demo-api / Succeeded
+currently deployed source: 98b092201053fd3592be157a24de6e623e6b74a6
+resource locks: none
+readiness blockers: none
+```
+
+```text
+month-to-date PreTaxCost: CAD 4.03203831168191
+remaining Azure for Students credit: not observed
+public IP addresses: 2 / 3
+network interfaces: 3 / 65536
+load balancers: 2 / 1000
+additional public IP required: 0
+quota sufficient for reviewed plan: true
+```
+
+The observation is point-in-time evidence from the verified preflight, not continuous Azure truth.
+
+## Collector golden path — preserved deployed reality
+
+Historical collector deployment run `30196388398` remains the latest deployment whose artifact has been promoted into repository evidence.
+
+```text
+deployed source: 98b092201053fd3592be157a24de6e623e6b74a6
 collector API: https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run
 health: healthy
 CORS: GitHub Pages origin allowed / POST allowed
@@ -66,40 +106,55 @@ stable backend localization: false
 exact root cause claimed: false
 ```
 
-## Provenance-monitor repository increment
-
-PR #130 merged the frontend/API provenance monitor and expected Azure host contract. Its exact-head CI run `30204308669` failed on a deterministic proof-wording contract. PR #131 attempted the wording repair but exact-head CI `30204440155` still failed. PR #132 restored the exact canonical proof phrase and exact-head CI `30204497860` passed.
-
 ```text
-PR #130 merge: ede8b7b32fe4dfe0e817d224a3cf9a9c1c6b9489
-PR #130 source / CI: 07e7056b3d66e88055f93d7f3c27d31f8281c316 / failure
-PR #131 merge: 1accc46f2c4b585510f3b0919a15467a4e5d5769
-PR #131 source / CI: bec88217096dce5ac205b93bb5f019f0f801fe62 / failure
-PR #132 merge: 2f5b60c1d8328d13823e2cc1def09e6be384ecb5
-PR #132 source / CI: 6b7bd5362b17c9edfc0b41da65d5b798e5d00b45 / success
+API_health_verified != downstream_transaction_success_verified
+workflow_failed != deployment_failed
 ```
 
-The repository now requires the exact collector resource group, VM name, region, hosting model, deployed source ref, and request-ID correlation. **Those new fields are not deployed to the collector VM.** The VM still runs run-18 source `98b092201053fd3592be157a24de6e623e6b74a6`.
+## Provenance deployment authorization resolution
+
+PR #137 recorded one finite grant:
 
 ```text
-repository_provenance_contract != deployed_provenance_contract
-expected_azure_host != observed_azure_host
-monitor_rendered != browser_path_verified
+grant: collector-provenance-deploy-1677606-20260726
+reviewed source: 1677606ded960c951fa37f0fdbfae50ba4b3cc34
+issued: 2026-07-26T19:02:36-04:00
+valid until: 2026-07-26T21:02:36-04:00
+attempt limit: 1
+original recorded status: pending_consumption
+current temporal status: expired
 ```
+
+The available GitHub connector exposes PR-head and commit-associated checks but not the required manual `workflow_dispatch` history. No deployment artifact or repository reconciliation of an attempt was observed.
+
+Canonical resolution:
+
+```text
+deployment dispatch observed: false
+deployment artifact observed: false
+consumption status: not_observed
+expired unused claimed: false
+consumed claimed: false
+deployment succeeded claimed: false
+deployment failed claimed: false
+retry authorized: false
+rollback authorized: false
+```
+
+The expired grant is not active authority. Whether it was consumed before expiry remains unresolved; either outcome requires new explicit authority for another attempt.
 
 ## Lab v1 gate
 
 ```text
-collector deployment: complete
-collector endpoint binding: merged
-base API health and CORS: observed
-provenance monitor repository implementation: merged
-provenance monitor exact-head CI after repair: success
-provenance runtime deployment: not performed
-live Azure host identity and source ref verification: not performed
+exact-source preflight and What-If: complete
+exact deployment source selected: complete
+month-to-date actual-cost evidence in CAD: complete
+historical collector deployment: complete
+provenance source deployment: not observed
+live Azure host identity and source-ref verification: not performed
 browser live-path verification: not performed
+stable ServiceTracer localization: not established
 monitoring and alert delivery: not verified
-actual cost in CAD and remaining student credit: not observed
 full evidence lock: incomplete
 ```
 
@@ -152,8 +207,8 @@ cleanup authorized: false
 
 ## Next gate
 
-1. Select one exact source containing the provenance monitor and repaired proof contract.
-2. Capture fresh Azure collector state, dependencies, locks, quota, and current cost or student credit.
-3. Capture a fresh FullResourcePayloads What-If for the existing collector API update.
-4. Obtain one-shot non-renewing deployment, rollback, and post-deployment verification authority.
-5. Verify live Azure host identity, deployed source ref, CORS, GitHub Pages rendering, and one request-ID-correlated 20-attempt transaction with no automatic retry.
+1. Review this repository-only reconciliation and its exact-head CI.
+2. Preserve the expired grant and unresolved consumption status.
+3. Do not dispatch, retry, or verify under the expired grant.
+4. If deployment remains desired, issue one new exact, non-renewing authority record from freshly reviewed evidence.
+5. After a separately authorized deployment, verify Azure host identity, deployed source ref, CORS, GitHub Pages rendering, and one request-ID-correlated 20-attempt transaction with no automatic retry.
