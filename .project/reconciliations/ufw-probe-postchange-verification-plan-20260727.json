@@ -1,0 +1,77 @@
+{
+  "schema_version": "project.verification-plan.v1",
+  "title": "UFW and Azure probe post-change verification",
+  "tracking_issue": 150,
+  "repository_base": "e48a91f731ba489b2480895390c153de0d8bd7ab",
+  "intended_scope": {
+    "subscription": "Azure subscription 1",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "region": "westus2",
+    "resources": [
+      "lb-remote-access-mst-dev",
+      "pip-remote-access-mst-dev",
+      "vm-vpn01-mst-dev",
+      "vm-vpn02-mst-dev"
+    ]
+  },
+  "dependencies": [
+    "existing Azure OIDC environment azure-lab",
+    "both VPN VMs running with Azure VM agent",
+    "existing TCP 443 load-balancer probe and rule",
+    "operator-reported UFW changes already applied outside this increment"
+  ],
+  "identity_and_permissions": {
+    "identity": "existing GitHub Actions federated Azure identity",
+    "required": [
+      "read Azure network and VM state",
+      "invoke one read-only RunShellScript command per VM",
+      "read Azure Monitor load-balancer metrics"
+    ],
+    "mutating_permissions_used": false
+  },
+  "network_paths": [
+    "Azure Load Balancer probe source to 10.20.10.11:443",
+    "Azure Load Balancer probe source to 10.20.10.12:443",
+    "GitHub-hosted runner to the public load-balancer IPv4 address on TCP 443"
+  ],
+  "security_controls": [
+    "finite one-shot authority",
+    "no secrets in artifacts",
+    "read-only guest commands",
+    "no firewall or service mutation",
+    "bounded polling and transaction attempts",
+    "deterministic analyzer preserves uncertainty and avoids causal overclaim"
+  ],
+  "cost_implications": "No new Azure resources. Existing VM, public IP, load-balancer, Azure Monitor and GitHub Actions usage only; incremental cost expected to be negligible but not asserted as zero.",
+  "execution_method": "Merge-triggered one-shot GitHub Actions workflow after exact-head CI passes.",
+  "validation": [
+    "observe UFW active on both guests",
+    "observe at least one TCP 443 allow rule on both guests",
+    "observe systemd active and TCP 443 listener on both guests",
+    "poll current DipAvailability for both backend IPs",
+    "execute 30 public transactions",
+    "observe VPN-01 success and VPN-02 radius_response failure if the intended scenario is working"
+  ],
+  "expected_outputs": [
+    "raw guest Run Command responses",
+    "load-balancer configuration and metrics",
+    "30 transaction records",
+    "deterministic verification JSON and Markdown",
+    "SHA-256 evidence manifest",
+    "terminal issue comment"
+  ],
+  "failure_and_rollback": {
+    "failure_behavior": "Stop after the single bounded run and upload partial evidence.",
+    "rollback": "Not applicable because this verification increment performs no mutation."
+  },
+  "cleanup": "No resources are created. Artifacts expire after 30 days; repository evidence remains durable.",
+  "evidence_to_capture": [
+    "request and authority record",
+    "Azure boundary JSON",
+    "guest UFW/listener evidence",
+    "probe metric snapshots",
+    "transaction JSON",
+    "verification result",
+    "artifact digest and workflow run ID"
+  ]
+}
