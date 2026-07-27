@@ -1,0 +1,61 @@
+{
+  "schema_version": "project.listener-boundary-diagnostic-request.v1",
+  "request_id": "listener-boundary-run1-20260727",
+  "issued_at": "2026-07-27T11:30:00-04:00",
+  "valid_until": "2026-07-27T14:30:00-04:00",
+  "status": "authorized_unconsumed",
+  "authorized_by": {
+    "authority": "user",
+    "instruction": "Proceed",
+    "interpretation": "Perform one read-only Azure diagnostic to distinguish load-balancer, backend membership, VM runtime and NSG boundaries after both TCP 443 probes remained unhealthy."
+  },
+  "tracking_issue": 144,
+  "repository": {
+    "base_main": "a3e8dee18b28e056a7074011a7e14539e276d459",
+    "open_pull_requests_observed_before_increment": [],
+    "local_working_tree": "not_observed"
+  },
+  "prior_evidence": {
+    "probe_workflow_run_id": 30278408467,
+    "probe_workflow_job_id": 90018246662,
+    "artifact_id": 8658098158,
+    "artifact_digest": "sha256:b9912520f3f1d84cfac284c16c489abe05e50062c46faa716ebc4b06e09c2cf0",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "load_balancer": "lb-remote-access-mst-dev",
+    "metric": "DipAvailability",
+    "backend_observation": {
+      "VPN-01": {"private_ip": "10.20.10.11", "probe_health": "unhealthy"},
+      "VPN-02": {"private_ip": "10.20.10.12", "probe_health": "unhealthy"}
+    }
+  },
+  "execution": {
+    "operation": "read_only_diagnostic",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "load_balancer": "lb-remote-access-mst-dev",
+    "expected_backend_ips": ["10.20.10.11", "10.20.10.12"],
+    "expected_probe_protocol": "Tcp",
+    "expected_probe_port": 443
+  },
+  "authority": {
+    "attempt_limit": 1,
+    "renewable": false,
+    "transferable": false,
+    "azure_authentication_authorized": true,
+    "azure_read_only_queries_authorized": true,
+    "effective_nsg_query_authorized": true,
+    "cost_quota_lock_observation_authorized": true,
+    "artifact_publication_authorized": true,
+    "azure_mutation_authorized": false,
+    "guest_command_authorized": false,
+    "ssh_authorized": false,
+    "service_restart_authorized": false,
+    "deployment_authorized": false,
+    "automatic_retry_authorized": false,
+    "rollback_authorized": false,
+    "rbac_mutation_authorized": false,
+    "cleanup_authorized": false
+  },
+  "consumption_rule": "This one-shot diagnostic grant is consumed when the workflow begins Azure OIDC authentication, regardless of outcome."
+}
