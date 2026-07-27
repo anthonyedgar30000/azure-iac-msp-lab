@@ -1,7 +1,7 @@
 {
   "schema_version": "project.ufw-mutation-request.v1",
   "request_id": "ufw-mutation-run1-20260727",
-  "status": "authorized_unconsumed",
+  "status": "consumed_failed",
   "tracking_issue": 153,
   "supersedes_verification_issue": 150,
   "authorized_by": "user instruction: Proceed with the bounded UFW mutation",
@@ -10,13 +10,13 @@
   "repository": {
     "name": "anthonyedgar30000/azure-iac-msp-lab",
     "base_main": "740af61d3814ca17d1e4230381241f42fe1aaeb1",
+    "execution_merge_commit": "544aaf6a0e8a9768cf93bf68eb04a74d53977658",
     "branch": "ops/bounded-ufw-mutation-run1"
   },
   "starting_boundary": {
     "declared_backend_service_port": 443,
     "last_observed_backend_service_state": "active_enabled_listening",
     "last_observed_ufw_state": "inactive",
-    "current_live_state_before_execution": "must_be_reobserved_by_workflow",
     "declared_azure_nsg_boundary": {
       "public_https": "tcp/443",
       "operations_ssh": "tcp/22 from 10.20.40.0/24"
@@ -97,9 +97,33 @@
     "sku_change": false,
     "quota_change": false,
     "expected_incremental_cost": "negligible operational command and monitoring activity",
-    "workflow_must_capture_best_effort_cost_and_quota_context": true
+    "observed_subscription": "Azure for Students",
+    "observed_regional_vcpu_usage": 6,
+    "observed_regional_vcpu_limit": 6,
+    "cost_values": "not_returned_by_usage_details_query"
   },
-  "failure_behavior": "Stop at the first failed precondition or mutation. Do not retry, roll back, broaden scope, restart services, or mutate Azure networking. Preserve partial evidence and require new explicit authority for any subsequent operational action.",
-  "cleanup": "No cleanup is authorized or required; the intended UFW policy is persistent state.",
-  "consumption_rule": "The grant is consumed when Azure authentication begins or the first target VM Run Command starts, regardless of outcome. Repository-only preparation and CI do not consume it."
+  "result": {
+    "workflow_run": 30287056582,
+    "job_conclusion": "failure",
+    "authority_consumed": true,
+    "azure_login_performed": true,
+    "azure_boundary_capture_performed": true,
+    "vpn01_run_command_submitted": true,
+    "vpn02_run_command_submitted": false,
+    "guest_firewall_mutation_performed": false,
+    "service_restart_performed": false,
+    "azure_networking_mutation_performed": false,
+    "post_change_observation_performed": false,
+    "automatic_retry_performed": false,
+    "rollback_performed": false,
+    "failure_boundary": "vpn01_guest_script_shell_initialization",
+    "failure_detail": "/bin/sh rejected set -o pipefail before the first UFW command",
+    "evidence_artifact_id": 8661262875,
+    "evidence_artifact_digest": "sha256:8c228b42069007812f81f3870edb8db52f812d5ffdbf60081624f69c0b5c1a00",
+    "live_ufw_state_after_attempt": "not_reobserved; no UFW command was reached"
+  },
+  "required_future_correction": "Any separately authorized future attempt must explicitly invoke Bash, such as bash -lc, or use a POSIX-compatible script. This consumed request cannot be retried.",
+  "failure_behavior": "The run stopped at the first failed guest command. No retry, rollback, scope expansion, service restart, or Azure networking mutation occurred.",
+  "cleanup": "No cleanup was performed or required because no guest firewall mutation occurred.",
+  "consumption_rule": "The grant was consumed when Azure authentication began. Any subsequent operational attempt requires new explicit authorization."
 }
