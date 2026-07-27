@@ -1,0 +1,49 @@
+{
+  "schema_version": "project.collector-provenance-verification-request.v1",
+  "request_id": "collector-provenance-run21",
+  "issued_at": "2026-07-27T09:59:44-04:00",
+  "valid_until": "2026-07-27T15:00:00-04:00",
+  "status": "authorized_unconsumed",
+  "authorized_by": {
+    "authority": "user",
+    "instruction": "Proceed",
+    "interpretation": "Repair the deterministic CRLF CORS verifier and execute one verify-only observation against the already-deployed collector provenance source."
+  },
+  "tracking_issue": 142,
+  "execution": {
+    "operation": "verify",
+    "deployed_source": "be7a0215a2ac47dd038b042e6b21e3c2e155d86a",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "environment": "dev",
+    "prefix": "mst",
+    "dns_label": "st-demo-api-aeg30000",
+    "allowed_origin": "https://anthonyedgar30000.github.io",
+    "expected_vm": "vm-stcollector-mst-dev",
+    "attempts": 20
+  },
+  "authority": {
+    "attempt_limit": 1,
+    "renewable": false,
+    "transferable": false,
+    "azure_authentication_authorized": true,
+    "azure_read_only_queries_authorized": true,
+    "public_endpoint_verification_authorized": true,
+    "transaction_replay_authorized": true,
+    "azure_mutation_authorized": false,
+    "deployment_authorized": false,
+    "automatic_retry_authorized": false,
+    "rollback_authorized": false,
+    "rbac_mutation_authorized": false,
+    "cleanup_authorized": false
+  },
+  "evidence_basis": {
+    "deployment_run_id": 30271836659,
+    "deployment_artifact_id": 8655218760,
+    "deployment_artifact_digest": "sha256:07d7e703645ab37fd93ac2419be259627642536987888c33f272182bfa70f40e",
+    "deployment_succeeded": true,
+    "exact_source_runtime_verified": true,
+    "known_verifier_defect": "GNU grep -E did not interpret \\r as a carriage-return byte in the CORS header expression."
+  },
+  "consumption_rule": "The verify-only grant is consumed when the workflow starts Azure OIDC login or public endpoint verification, regardless of outcome."
+}
