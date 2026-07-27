@@ -14,6 +14,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 concurrency:
   group: generate-collector-analysis-rate-limit-fix
@@ -25,6 +26,7 @@ jobs:
     timeout-minutes: 20
     env:
       IMPLEMENTATION_BRANCH: fix/collector-analysis-rate-limit-implementation
+      TRACKER_ISSUE: '171'
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Check out merged generator source
@@ -49,18 +51,54 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          bash -n infra/scripts/install_collector_demo_api.sh
-          node --check docs/app.js
-          node --check docs/live-monitor.js
-          python -m unittest \
+          validation_log="$RUNNER_TEMP/collector-generator-validation.log"
+          : > "$validation_log"
+
+          run_check() {
+            local label="$1"
+            shift
+            printf '\n## %s\n' "$label" | tee -a "$validation_log"
+            if "$@" >> "$validation_log" 2>&1; then
+              printf 'PASS: %s\n' "$label" | tee -a "$validation_log"
+              return 0
+            fi
+            local rc=$?
+            printf 'FAIL: %s rc=%s\n' "$label" "$rc" | tee -a "$validation_log"
+            return "$rc"
+          }
+
+          validation_rc=0
+          run_check 'installer Bash syntax' bash -n infra/scripts/install_collector_demo_api.sh || validation_rc=$?
+          run_check 'application JavaScript syntax' node --check docs/app.js || validation_rc=$?
+          run_check 'monitor JavaScript syntax' node --check docs/live-monitor.js || validation_rc=$?
+          run_check 'focused unit tests' python -m unittest \
             infra.tests.test_collector_demo_api \
             infra.tests.test_collector_analysis_rate_limit_fix \
             infra.tests.test_frontend_azure_provenance_monitor \
-            -v
-          git diff --check
-          test ! -e .github/workflows/apply-collector-analysis-rate-limit-fix.yml
-          test ! -e .github/workflows/generate-collector-analysis-rate-limit-fix.yml
-          test ! -e tools/apply_collector_analysis_rate_limit_fix.py
+            -v || validation_rc=$?
+          run_check 'whitespace validation' git diff --check || validation_rc=$?
+          run_check 'old helper removed' test ! -e .github/workflows/apply-collector-analysis-rate-limit-fix.yml || validation_rc=$?
+          run_check 'generator removed' test ! -e .github/workflows/generate-collector-analysis-rate-limit-fix.yml || validation_rc=$?
+          run_check 'patch helper removed' test ! -e tools/apply_collector_analysis_rate_limit_fix.py || validation_rc=$?
+
+          cat "$validation_log"
+          if [[ "$validation_rc" != '0' ]]; then
+            diagnostic="$(tail -n 180 "$validation_log")"
+            body=$(cat <<EOF
+          ## Repository generator validation failed
+
+          No implementation branch was pushed and no Azure access occurred.
+
+          \`\`\`text
+          $diagnostic
+          \`\`\`
+          EOF
+            )
+            gh api --method POST \
+              "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" \
+              -f body="$body" > /dev/null
+            exit "$validation_rc"
+          fi
 
       - name: Commit and push implementation branch
         id: commit
