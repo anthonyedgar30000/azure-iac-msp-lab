@@ -1,0 +1,267 @@
+name: One-shot VPN backend compact guest inspection run 2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.project/diagnostic-requests/vpn-backend-guest-compact-run2-20260727.json'
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+
+concurrency:
+  group: one-shot-vpn-backend-guest-compact-run2
+  cancel-in-progress: false
+
+env:
+  REQUEST_FILE: .project/diagnostic-requests/vpn-backend-guest-compact-run2-20260727.json
+  ARTIFACT_DIR: vpn-backend-guest-compact-run2-evidence
+  GH_TOKEN: ${{ github.token }}
+  AZURE_CORE_ONLY_SHOW_ERRORS: true
+
+jobs:
+  inspect:
+    name: Collect compact VPN guest listener evidence without mutation
+    if: github.repository == 'anthonyedgar30000/azure-iac-msp-lab'
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact diagnostic request
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate finite compact guest-inspection authority
+        id: request
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$REQUEST_FILE"
+          jq -e '
+            .schema_version == "project.vpn-backend-guest-compact-request.v1" and
+            .request_id == "vpn-backend-guest-compact-run2-20260727" and
+            .status == "authorized_unconsumed" and
+            .tracking_issue == 148 and
+            .execution.operation == "read_only_compact_guest_inspection" and
+            .execution.resource_group == "rg-servicetracer-dev-westus2" and
+            .execution.location == "westus2" and
+            .execution.virtual_machines == ["vm-vpn01-mst-dev", "vm-vpn02-mst-dev"] and
+            .execution.service_name == "servicetracer-demo-backend.service" and
+            .execution.listener_port == 443 and
+            .execution.journal_line_limit == 10 and
+            .execution.journal_character_limit_per_line == 240 and
+            .authority.attempt_limit == 1 and
+            .authority.renewable == false and
+            .authority.transferable == false and
+            .authority.azure_authentication_authorized == true and
+            .authority.azure_guest_command_authorized == true and
+            .authority.azure_read_only_queries_authorized == true and
+            .authority.artifact_publication_authorized == true and
+            .authority.azure_mutation_authorized == false and
+            .authority.file_write_authorized == false and
+            .authority.service_restart_authorized == false and
+            .authority.service_enable_disable_authorized == false and
+            .authority.package_change_authorized == false and
+            .authority.guest_firewall_change_authorized == false and
+            .authority.ssh_authorized == false and
+            .authority.deployment_authorized == false and
+            .authority.automatic_retry_authorized == false and
+            .authority.rollback_authorized == false and
+            .authority.rbac_mutation_authorized == false and
+            .authority.cleanup_authorized == false
+          ' "$REQUEST_FILE" > /dev/null
+
+          valid_until="$(jq -r '.valid_until' "$REQUEST_FILE")"
+          (( $(date -u +%s) <= $(date -u -d "$valid_until" +%s) ))
+          base_main="$(jq -r '.repository.base_main' "$REQUEST_FILE")"
+          git cat-file -e "${base_main}^{commit}"
+          git merge-base --is-ancestor "$base_main" "$GITHUB_SHA"
+
+          mkdir -p "$ARTIFACT_DIR"
+          cp "$REQUEST_FILE" "$ARTIFACT_DIR/request.json"
+          echo "tracking_issue=$(jq -r '.tracking_issue' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "resource_group=$(jq -r '.execution.resource_group' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "vm1=$(jq -r '.execution.virtual_machines[0]' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+          echo "vm2=$(jq -r '.execution.virtual_machines[1]' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
+
+      - name: Validate existing deterministic analyzer before Azure login
+        run: |
+          set -euo pipefail
+          python -m unittest infra.tests.test_analyze_vpn_backend_guest_inspection -v
+
+      - name: Record grant consumption
+        env:
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracking_issue }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          body=$(cat <<EOF
+          ## Compact VPN guest inspection started
+
+          The finite compact guest-inspection grant is now **consumed**.
+
+          - diagnostic commit: \`$GITHUB_SHA\`
+          - one VM-agent command per VM: **authorized**
+          - guest mutation: **false**
+          - service restart: **false**
+          - automatic retry: **false**
+          EOF
+          )
+          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" -f body="$body" > /dev/null
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Capture target VM control-plane state
+        env:
+          RESOURCE_GROUP: ${{ steps.request.outputs.resource_group }}
+          VM1: ${{ steps.request.outputs.vm1 }}
+          VM2: ${{ steps.request.outputs.vm2 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          az account show --query '{name:name,state:state}' --output json > "$ARTIFACT_DIR/account.json"
+          az group show --name "$RESOURCE_GROUP" --query '{name:name,location:location,provisioningState:properties.provisioningState}' --output json > "$ARTIFACT_DIR/resource-group.json"
+          for vm in "$VM1" "$VM2"; do
+            az vm get-instance-view \
+              --resource-group "$RESOURCE_GROUP" \
+              --name "$vm" \
+              --query '{name:name,location:location,provisioningState:provisioningState,statuses:instanceView.statuses}' \
+              --output json > "$ARTIFACT_DIR/${vm}-instance-view.json"
+          done
+
+      - name: Inspect VPN-01 compact guest state
+        env:
+          RESOURCE_GROUP: ${{ steps.request.outputs.resource_group }}
+          VM: ${{ steps.request.outputs.vm1 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          az vm run-command invoke \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$VM" \
+            --command-id RunShellScript \
+            --scripts '
+              set +e
+              echo "=== CLOUD_INIT ==="
+              cloud-init status --long 2>&1 | head -n 20 | cut -c1-240
+              echo "=== SYSTEMD_SHOW ==="
+              systemctl show servicetracer-demo-backend.service --no-pager --property=LoadState,ActiveState,SubState,UnitFileState,Result,ExecMainStatus,ExecMainCode,FragmentPath,ExecStart 2>&1 | cut -c1-240
+              echo "=== SYSTEMD_ACTIVE ==="
+              systemctl is-active servicetracer-demo-backend.service 2>&1 | cut -c1-240
+              echo "=== SYSTEMD_ENABLED ==="
+              systemctl is-enabled servicetracer-demo-backend.service 2>&1 | cut -c1-240
+              echo "=== TCP_443_LISTENER ==="
+              ss -H -lntp "sport = :443" 2>&1 | head -n 5 | cut -c1-240
+              echo "=== UFW ==="
+              ufw status verbose 2>&1 | head -n 10 | cut -c1-240
+              echo "=== JOURNAL ==="
+              journalctl -u servicetracer-demo-backend.service --no-pager -n 10 -o short-iso 2>&1 | tail -n 10 | cut -c1-240
+              echo "=== END ==="
+              exit 0
+            ' \
+            --output json > "$ARTIFACT_DIR/${VM}-run-command.json"
+
+      - name: Inspect VPN-02 compact guest state
+        env:
+          RESOURCE_GROUP: ${{ steps.request.outputs.resource_group }}
+          VM: ${{ steps.request.outputs.vm2 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          az vm run-command invoke \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$VM" \
+            --command-id RunShellScript \
+            --scripts '
+              set +e
+              echo "=== CLOUD_INIT ==="
+              cloud-init status --long 2>&1 | head -n 20 | cut -c1-240
+              echo "=== SYSTEMD_SHOW ==="
+              systemctl show servicetracer-demo-backend.service --no-pager --property=LoadState,ActiveState,SubState,UnitFileState,Result,ExecMainStatus,ExecMainCode,FragmentPath,ExecStart 2>&1 | cut -c1-240
+              echo "=== SYSTEMD_ACTIVE ==="
+              systemctl is-active servicetracer-demo-backend.service 2>&1 | cut -c1-240
+              echo "=== SYSTEMD_ENABLED ==="
+              systemctl is-enabled servicetracer-demo-backend.service 2>&1 | cut -c1-240
+              echo "=== TCP_443_LISTENER ==="
+              ss -H -lntp "sport = :443" 2>&1 | head -n 5 | cut -c1-240
+              echo "=== UFW ==="
+              ufw status verbose 2>&1 | head -n 10 | cut -c1-240
+              echo "=== JOURNAL ==="
+              journalctl -u servicetracer-demo-backend.service --no-pager -n 10 -o short-iso 2>&1 | tail -n 10 | cut -c1-240
+              echo "=== END ==="
+              exit 0
+            ' \
+            --output json > "$ARTIFACT_DIR/${VM}-run-command.json"
+
+      - name: Analyze compact guest evidence deterministically
+        run: |
+          set -euo pipefail
+          python infra/scripts/analyze_vpn_backend_guest_inspection.py \
+            --evidence-dir "$ARTIFACT_DIR" \
+            --output-json "$ARTIFACT_DIR/diagnosis.json" \
+            --output-md "$ARTIFACT_DIR/diagnosis.md"
+
+      - name: Write evidence manifest
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          find "$ARTIFACT_DIR" -maxdepth 1 -type f ! -name evidence-manifest.json ! -name sha256sums.txt -print0 \
+            | sort -z | xargs -0 -r sha256sum > "$ARTIFACT_DIR/sha256sums.txt"
+          jq -n \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg head_sha "$GITHUB_SHA" \
+            --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --rawfile sums "$ARTIFACT_DIR/sha256sums.txt" \
+            '{schema_version:"servicetracer.vpn-backend-compact-guest-inspection-evidence.v1",operation:"read_only_compact_guest_inspection",azure_mutation_performed:false,service_restart_performed:false,guest_firewall_change_performed:false,automatic_retry_performed:false,run_id:$run_id,run_attempt:$run_attempt,head_sha:$head_sha,generated_at:$generated_at,sha256sums:$sums}' \
+            > "$ARTIFACT_DIR/evidence-manifest.json"
+
+      - name: Upload compact guest-inspection evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vpn-backend-guest-compact-run2-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish terminal compact guest-inspection result
+        if: always()
+        env:
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracking_issue }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          diagnosis="not_produced"
+          if [[ -f "$ARTIFACT_DIR/diagnosis.json" ]]; then
+            diagnosis="$(jq -c '{conclusion,both_tcp_443_listeners_observed,virtual_machines,exact_root_cause_claimed,azure_mutation_performed,service_restart_performed,guest_firewall_change_performed,automatic_retry_performed}' "$ARTIFACT_DIR/diagnosis.json")"
+          fi
+          body=$(cat <<EOF
+          ## Compact VPN guest inspection terminal result
+
+          - workflow run: [$GITHUB_RUN_ID](https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)
+          - diagnostic commit: \`$GITHUB_SHA\`
+          - job status: **$JOB_STATUS**
+          - diagnosis: \`$diagnosis\`
+          - Azure configuration mutation performed: **false**
+          - service restart performed: **false**
+          - guest firewall change performed: **false**
+          - automatic retry performed: **false**
+          EOF
+          )
+          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" -f body="$body" > /dev/null
