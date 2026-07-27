@@ -49,8 +49,15 @@ jobs:
             .schema_version == "project.ufw-probe-postchange-verification-request.v1" and
             .request_id == "ufw-probe-postchange-run1-20260727" and
             .status == "authorized_unconsumed" and
+            .dispatch_revision == 2 and
             .tracking_issue == 150 and
             .repository.base_main == "e48a91f731ba489b2480895390c153de0d8bd7ab" and
+            .preflight_failures[0].workflow_run == 30284269404 and
+            .preflight_failures[0].failed_step == "Record grant consumption" and
+            .preflight_failures[0].azure_login_performed == false and
+            .preflight_failures[0].guest_command_performed == false and
+            .preflight_failures[0].public_transaction_performed == false and
+            .preflight_failures[0].authority_consumed == false and
             .operator_report.ufw_enabled == true and
             .operator_report.appropriate_firewall_rules_applied == true and
             .operator_report.verification_state == "user_reported_not_yet_observed" and
@@ -97,7 +104,6 @@ jobs:
           cp "$REQUEST_FILE" "$ARTIFACT_DIR/request.json"
           echo "tracking_issue=$(jq -r '.tracking_issue' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
           echo "resource_group=$(jq -r '.execution.resource_group' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
-          echo "location=$(jq -r '.execution.location' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
           echo "load_balancer=$(jq -r '.execution.load_balancer' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
           echo "public_ip=$(jq -r '.execution.public_ip' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
           echo "vm1=$(jq -r '.execution.virtual_machines[0]' "$REQUEST_FILE")" >> "$GITHUB_OUTPUT"
@@ -111,7 +117,7 @@ jobs:
           set -euo pipefail
           python -m unittest infra.tests.test_analyze_ufw_probe_postchange -v
 
-      - name: Record grant consumption
+      - name: Publish execution-start marker best effort
         env:
           TRACKER_ISSUE: ${{ steps.request.outputs.tracking_issue }}
         shell: bash
@@ -120,7 +126,7 @@ jobs:
           body=$(cat <<EOF
           ## UFW and probe post-change verification started
 
-          The finite verification grant is now **consumed**.
+          The finite operational grant is consumed when Azure authentication begins.
 
           - verification commit: \`$GITHUB_SHA\`
           - guest commands: **read-only only**
@@ -130,7 +136,9 @@ jobs:
           - automatic retry: **false**
           EOF
           )
-          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" -f body="$body" > /dev/null
+          if ! gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" -f body="$body" > /dev/null; then
+            echo "::warning::Unable to publish the execution-start issue comment; continuing because issue publication is not an operational precondition."
+          fi
 
       - name: Log in to Azure with workload identity federation
         uses: azure/login@v2
@@ -315,7 +323,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish terminal verification result
+      - name: Publish terminal verification result best effort
         if: always()
         env:
           TRACKER_ISSUE: ${{ steps.request.outputs.tracking_issue }}
@@ -340,4 +348,6 @@ jobs:
           - automatic retry performed: **false**
           EOF
           )
-          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" -f body="$body" > /dev/null
+          if ! gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" -f body="$body" > /dev/null; then
+            echo "::warning::Unable to publish the terminal issue comment; the artifact remains authoritative."
+          fi

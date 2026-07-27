@@ -2,6 +2,7 @@
   "schema_version": "project.ufw-probe-postchange-verification-request.v1",
   "request_id": "ufw-probe-postchange-run1-20260727",
   "status": "authorized_unconsumed",
+  "dispatch_revision": 2,
   "tracking_issue": 150,
   "authorized_by": "user instruction: Proceed",
   "authorized_at": "2026-07-27T16:13:45Z",
@@ -10,6 +11,17 @@
     "name": "anthonyedgar30000/azure-iac-msp-lab",
     "base_main": "e48a91f731ba489b2480895390c153de0d8bd7ab"
   },
+  "preflight_failures": [
+    {
+      "workflow_run": 30284269404,
+      "failed_step": "Record grant consumption",
+      "classification": "issue_comment_preflight_failure",
+      "azure_login_performed": false,
+      "guest_command_performed": false,
+      "public_transaction_performed": false,
+      "authority_consumed": false
+    }
+  ],
   "operator_report": {
     "ufw_enabled": true,
     "appropriate_firewall_rules_applied": true,
