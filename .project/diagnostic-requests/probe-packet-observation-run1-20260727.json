@@ -1,15 +1,18 @@
 {
   "schema_version": "project.probe-packet-observation-request.v1",
   "request_id": "probe-packet-observation-run1-20260727",
-  "status": "authorized_unconsumed",
+  "status": "consumed_succeeded",
   "tracking_issue": 160,
   "authorized_by": "user instruction: Proceed",
   "authorized_at": "2026-07-27T17:46:18Z",
   "valid_until": "2026-07-28T04:00:00Z",
+  "consumed_at": "2026-07-27T17:57:00Z",
+  "completed_at": "2026-07-27T17:58:31Z",
   "repository": {
     "name": "anthonyedgar30000/azure-iac-msp-lab",
     "base_main": "083efec273229b274e5103464cea72176c277933",
-    "branch": "diagnose/probe-packet-observation-run1"
+    "branch": "diagnose/probe-packet-observation-run1",
+    "execution_commit": "abe7a80ae9e9176ec3ffe2b6191169407e3048e7"
   },
   "starting_evidence": {
     "probe_scope_workflow_run": 30289145840,
@@ -89,21 +92,79 @@
     "rollback_authorized": false,
     "cleanup_authorized": false
   },
-  "expected_classifications": [
-    "probe_packets_not_observed",
-    "probe_syn_observed_no_guest_response",
-    "probe_syn_and_synack_observed",
-    "probe_rst_observed",
-    "packet_observation_unavailable"
-  ],
+  "terminal_evidence": {
+    "workflow_run": 30291575564,
+    "workflow_conclusion": "success",
+    "artifact_id": 8662996675,
+    "artifact_digest": "sha256:5bfed2cf170eb25f7c135c930708afaa5907ee1370ec2e361b8f6396f35dec26",
+    "manifest_verified_by_workflow": true,
+    "load_balancer": {
+      "name": "lb-remote-access-mst-dev",
+      "provisioning_state": "Succeeded",
+      "sku": "Standard",
+      "tier": "Regional",
+      "backend_pool": "be-vpn-gateways",
+      "probe": "probe-tcp-443-shallow",
+      "rule": "rule-remote-access-443"
+    },
+    "probe": {
+      "protocol": "Tcp",
+      "port": 443,
+      "interval_seconds": 5,
+      "number_of_probes": 2,
+      "provisioning_state": "Succeeded"
+    },
+    "observations": {
+      "vm-vpn01-mst-dev": {
+        "hostname": "vpn01-dev",
+        "systemd_active": true,
+        "systemd_enabled": true,
+        "tcp443_listener_present": true,
+        "ufw_active": true,
+        "tcpdump_available": true,
+        "packet_count": 12,
+        "inbound_syn_count": 4,
+        "outbound_synack_count": 0,
+        "outbound_rst_count": 0,
+        "classification": "probe_syn_observed_no_guest_response",
+        "latest_dip_availability": 0.0
+      },
+      "vm-vpn02-mst-dev": {
+        "hostname": "vpn02-dev",
+        "systemd_active": true,
+        "systemd_enabled": true,
+        "tcp443_listener_present": true,
+        "ufw_active": true,
+        "tcpdump_available": true,
+        "packet_count": 12,
+        "inbound_syn_count": 4,
+        "outbound_synack_count": 0,
+        "outbound_rst_count": 0,
+        "classification": "probe_syn_observed_no_guest_response",
+        "latest_dip_availability": 0.0
+      }
+    },
+    "service_or_firewall_mutation_performed": false,
+    "azure_resource_mutation_performed": false,
+    "public_transactions_executed": 0,
+    "automatic_retry_performed": false,
+    "rollback_performed": false,
+    "exact_root_cause_claimed": false
+  },
+  "result": {
+    "shared_boundary": "Azure probe SYN packets reach both guest eth0 interfaces, but no SYN-ACK or RST response was observed from either guest during the bounded capture.",
+    "fault_domain": "guest_receive_path_after_eth0_packet_arrival_before_tcp_response",
+    "exact_root_cause": "not_proven",
+    "next_authority_required": true
+  },
   "cost_and_quota": {
     "new_resources": false,
     "sku_change": false,
     "quota_change": false,
     "expected_incremental_cost": "negligible command and monitoring activity",
-    "capture_best_effort_context": true
+    "context_captured": true
   },
   "failure_behavior": "Stop after the first bounded attempt, preserve available evidence, and do not retry, roll back, broaden scope, install tools, mutate guest networking, or mutate Azure resources.",
-  "cleanup": "No cleanup is authorized or required because no intended persistent change is performed.",
-  "consumption_rule": "The grant is consumed when Azure authentication begins or the first authorized VM Run Command is submitted, regardless of outcome."
+  "cleanup": "No cleanup is authorized or required because no intended persistent change was performed.",
+  "consumption_rule": "The grant was consumed when Azure authentication began. It cannot be reused for another observation, diagnosis or repair."
 }
