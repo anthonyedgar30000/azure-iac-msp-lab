@@ -6,6 +6,10 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/generate-collector-analysis-rate-limit-fix.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.project/triggers/generate-collector-analysis-rate-limit-fix.json'
 
 permissions:
   contents: write
