@@ -1,7 +1,7 @@
 {
   "schema_version": "project.ufw-mutation-request.v1",
   "request_id": "ufw-mutation-run2-20260727",
-  "status": "authorized_unconsumed",
+  "status": "consumed_succeeded",
   "tracking_issue": 156,
   "supersedes_issue": 153,
   "authorized_by": "user instruction: Authorize bounded UFW mutation run 2 using Bash, with the same two VMs and firewall rules, no service restart, Azure networking changes, automatic retry, or rollback.",
@@ -10,6 +10,7 @@
   "repository": {
     "name": "anthonyedgar30000/azure-iac-msp-lab",
     "base_main": "4147905d2bbbdbbd7c8b919d11d092364651c7f2",
+    "execution_commit": "092ea681b8cb0312580f18bb44e264b129145fb0",
     "branch": "ops/bounded-ufw-mutation-run2"
   },
   "prior_attempt": {
@@ -28,7 +29,7 @@
     "last_observed_backend_service_state": "active_enabled_listening",
     "last_observed_ufw_state": "inactive_before_run1",
     "post_run1_live_ufw_state": "not_reobserved",
-    "current_live_state_before_execution": "must_be_reobserved_by_workflow",
+    "current_live_state_before_execution": "reobserved_by_run2",
     "declared_azure_nsg_boundary": {
       "public_https": "tcp/443",
       "operations_ssh": "tcp/22 from 10.20.40.0/24"
@@ -101,14 +102,60 @@
     "rollback_authorized": false,
     "cleanup_authorized": false
   },
+  "terminal_result": {
+    "workflow_run": 30288168484,
+    "job_status": "success",
+    "authority_consumed": true,
+    "mutation_step": "success",
+    "postchange_observation_step": "success",
+    "artifact_id": 8661765887,
+    "artifact_digest": "sha256:1eccc10d39c22567e35edcdb25e1b0f600bf667d8e4fdc7a049e6e185a06f5eb",
+    "vpn01": {
+      "ufw_status": "active",
+      "default_incoming": "deny",
+      "default_outgoing": "allow",
+      "tcp_443": "allow_anywhere",
+      "tcp_22": "allow_10.20.40.0/24_only",
+      "service_active": true,
+      "service_enabled": true,
+      "tcp_443_listener_present": true,
+      "mutation_complete": true
+    },
+    "vpn02": {
+      "ufw_status": "active",
+      "default_incoming": "deny",
+      "default_outgoing": "allow",
+      "tcp_443": "allow_anywhere",
+      "tcp_22": "allow_10.20.40.0/24_only",
+      "service_active": true,
+      "service_enabled": true,
+      "tcp_443_listener_present": true,
+      "mutation_complete": true
+    },
+    "load_balancer_observation": {
+      "dip_availability": {
+        "10.20.10.11:443": 0.0,
+        "10.20.10.12:443": 0.0
+      },
+      "transaction_attempts": 10,
+      "http_responses_received": 0,
+      "observed_backend_headers": [],
+      "service_recovery_verified": false,
+      "causal_attribution_supported": false
+    },
+    "service_restart_performed": false,
+    "azure_network_mutation_performed": false,
+    "automatic_retry_performed": false,
+    "rollback_performed": false
+  },
   "cost_and_quota": {
     "new_resources": false,
     "sku_change": false,
     "quota_change": false,
     "expected_incremental_cost": "negligible operational command and monitoring activity",
-    "workflow_must_capture_best_effort_cost_and_quota_context": true
+    "workflow_captured_best_effort_context": true
   },
   "failure_behavior": "Stop at the first failed precondition or mutation. Do not retry, roll back, broaden scope, restart services, or mutate Azure networking. Preserve partial evidence and require new explicit authority for any subsequent operational action.",
   "cleanup": "No cleanup is authorized or required; the intended UFW policy is persistent state.",
-  "consumption_rule": "The grant is consumed when Azure authentication begins or the first target VM Run Command starts, regardless of outcome. Repository-only preparation and CI do not consume it."
+  "consumption_rule": "The grant was consumed when Azure authentication began. It is non-renewing and cannot authorize any additional operational action."
 }
