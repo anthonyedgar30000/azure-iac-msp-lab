@@ -24,6 +24,6 @@ write_files:
 
 runcmd:
   - systemctl daemon-reload
-  - cloud-init status --wait || true
+  - touch /var/lib/cloud/instance/servicetracer-local-vm-ready
 
 final_message: "ServiceTracer local Ubuntu VM bootstrap completed after $UPTIME seconds"
