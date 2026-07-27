@@ -1,0 +1,82 @@
+{
+  "schema_version": "project.azure-deployment-request.v1",
+  "request_id": "tls-accept-loop-deploy-run2-20260727",
+  "status": "authorized_pending_execution",
+  "authorized_by": "user instruction: Deploy run 2 using an explicit Bash wrapper and mandatory guest success-marker validation, with the same VPN-01-first staged scope and existing rollback boundary. Authorized",
+  "recorded_on": "2026-07-27",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "branch": "main",
+    "observed_base_commit": "0efbf74041c96a3292eb4a6cb1215820b6026b48",
+    "merged_repair_commit": "aa493def60866f3d9452899b131bc2f35cd68bdf",
+    "open_pull_requests_observed": 0,
+    "local_working_tree": "not_observed_connector_backed_operation"
+  },
+  "run1_terminal_evidence": {
+    "workflow_run_id": 30295204303,
+    "artifact_id": 8664692595,
+    "workflow_source": "0efbf74041c96a3292eb4a6cb1215820b6026b48",
+    "extension_state": "ProvisioningState/succeeded",
+    "guest_error": "script.sh: 1: set: Illegal option -o pipefail",
+    "vpn01_files_updated": false,
+    "vpn01_service_restarted": false,
+    "vpn02_attempted": false,
+    "azure_networking_changed": false,
+    "classification": "guest_payload_not_executed_due_to_shell_interpreter_mismatch"
+  },
+  "azure_scope": {
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "region": "westus2",
+    "load_balancer": "lb-remote-access-mst-dev",
+    "public_ip_resource": "pip-remote-access-mst-dev",
+    "canary_vm": "vm-vpn01-mst-dev",
+    "canary_private_ip": "10.20.10.11",
+    "second_vm": "vm-vpn02-mst-dev",
+    "second_private_ip": "10.20.10.12",
+    "service": "servicetracer-demo-backend.service"
+  },
+  "execution_contract": {
+    "outer_run_command_wrapper": "POSIX_sh_compatible",
+    "payload_interpreter": "/usr/bin/bash",
+    "mandatory_guest_success_marker": true,
+    "extension_success_is_not_guest_success": true,
+    "vpn01_first": true,
+    "vpn02_requires_vpn01_local_validation": true,
+    "vpn02_requires_vpn01_probe_health": true,
+    "exact_rendered_file_hash_validation": true,
+    "local_https_validation": true,
+    "azure_probe_validation": true,
+    "bounded_transaction_validation": true,
+    "automatic_rerun": false
+  },
+  "rollback_boundary": {
+    "backup_files_before_each_vm_change": true,
+    "restore_only_backend_and_unit_on_immediate_local_failure": true,
+    "restart_only_backend_service_after_restore": true,
+    "no_automatic_rollback_for_probe_or_transaction_failure": true,
+    "no_cross_vm_rollback": true
+  },
+  "explicit_exclusions": {
+    "ufw_change": false,
+    "nftables_or_iptables_change": false,
+    "sysctl_or_route_change": false,
+    "nsg_or_azure_network_change": false,
+    "load_balancer_or_probe_change": false,
+    "certificate_or_key_change": false,
+    "package_change": false,
+    "vm_lifecycle_change": false,
+    "rbac_policy_lock_budget_quota_change": false,
+    "collector_mutation_or_report_publication": false,
+    "new_resources": false
+  },
+  "cost_and_quota": {
+    "expected_recurring_cost_delta_CAD": 0,
+    "expected_quota_delta": "none"
+  },
+  "truth_boundaries": [
+    "run_command_extension_succeeded != guest_payload_succeeded",
+    "guest_success_marker_absent != deployment_succeeded",
+    "vpn01_local_validation_passed != azure_probe_healthy",
+    "azure_probe_healthy != transaction_contract_validated"
+  ]
+}
