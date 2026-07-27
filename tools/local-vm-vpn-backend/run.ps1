@@ -53,9 +53,10 @@ if (-not $instanceExists) {
         --cloud-init $cloudInit
 } else {
     Write-Host "Reusing existing instance: $Name"
-    Invoke-Multipass start $Name
+    & multipass start $Name *> $null
 }
 
+Invoke-Multipass wait-ready $Name
 Invoke-Multipass exec $Name -- cloud-init status --wait
 
 $enableUfw = if ($DisableUfw) { "0" } else { "1" }
