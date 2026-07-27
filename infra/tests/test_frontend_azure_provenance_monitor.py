@@ -64,7 +64,7 @@ class FrontendAzureProvenanceMonitorTests(unittest.TestCase):
         self.assertIn("identity.vm_name !== expected.vm_name", source)
         self.assertIn("identity.location !== expected.location", source)
         self.assertIn("payload.hosting_model !== expected.hosting_model", source)
-        self.assertIn("Frontend ↔ governed collector API live", source)
+        self.assertIn("Collector health and Azure identity verified", source)
 
     def test_api_uses_azure_instance_metadata_without_exposing_subscription_identity(self) -> None:
         source = SERVER.read_text(encoding="utf-8")

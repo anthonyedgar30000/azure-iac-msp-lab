@@ -408,8 +408,8 @@ async function runAnalysis() {
       apiError = error;
       console.error('Could not run the live Azure demo API; using the controlled fixture.', error);
       state.demoApiReady = false;
-      elements.reportSourceName.textContent = 'Controlled demo fixture — API unavailable';
-      elements.reportSourceDetail.textContent = 'The live Azure API failed; using the controlled fixture.';
+      elements.reportSourceName.textContent = 'Controlled demo fixture — live analysis unavailable';
+      elements.reportSourceDetail.textContent = 'Collector health was verified, but the live analysis request did not complete; using the controlled fixture.';
     }
   }
 
@@ -486,7 +486,7 @@ async function loadReport() {
       } catch (error) {
         state.demoApiReady = false;
         console.error('Could not verify the Azure demo API health contract.', error);
-        elements.reportSourceName.textContent = 'Controlled demo fixture — API unavailable';
+        elements.reportSourceName.textContent = 'Controlled demo fixture — API health unavailable';
         elements.reportSourceDetail.textContent = 'The configured API did not pass its health contract; no live transactions will run.';
       }
     }

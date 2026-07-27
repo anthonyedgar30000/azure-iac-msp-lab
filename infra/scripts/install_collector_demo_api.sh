@@ -118,8 +118,23 @@ server {
     listen [::]:80;
     server_name ${PUBLIC_FQDN};
 
-    location /api/ {
-        limit_req zone=servicetracer_demo_api burst=2 nodelay;
+    # Health and provenance polling are deliberately outside the analysis limiter.
+    # A healthy endpoint does not prove that a live analysis request completed.
+    location = /api/health {
+        proxy_pass http://127.0.0.1:${LOCAL_PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 10s;
+    }
+
+    # Browser execution requires a CORS preflight and a POST. Keep rate limiting
+    # on the expensive analysis path while reserving enough burst for that pair.
+    location = /api/demo/run {
+        limit_req zone=servicetracer_demo_api burst=4 nodelay;
+        limit_req_status 429;
         proxy_pass http://127.0.0.1:${LOCAL_PORT};
         proxy_http_version 1.1;
         proxy_set_header Host \$host;
@@ -128,6 +143,10 @@ server {
         proxy_connect_timeout 5s;
         proxy_read_timeout ${PROXY_READ_TIMEOUT_SECONDS}s;
         client_max_body_size 4k;
+    }
+
+    location /api/ {
+        return 404;
     }
 
     location / {
