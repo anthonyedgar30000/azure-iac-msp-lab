@@ -1,0 +1,211 @@
+name: One-shot collector provenance deployment run 20
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.project/deployment-requests/collector-provenance-run20.json'
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+
+concurrency:
+  group: one-shot-collector-provenance-run20
+  cancel-in-progress: false
+
+env:
+  REQUEST_FILE: .project/deployment-requests/collector-provenance-run20.json
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  dispatch-and-observe:
+    name: Dispatch and observe exact deployment
+    if: github.repository == 'anthonyedgar30000/azure-iac-msp-lab'
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    steps:
+      - name: Check out deployment request
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate exact one-shot authority
+        id: request
+        shell: bash
+        run: |
+          set -euo pipefail
+          request="$REQUEST_FILE"
+          test -f "$request"
+
+          jq -e '
+            .schema_version == "project.collector-provenance-deployment-request.v1" and
+            .request_id == "collector-provenance-run20" and
+            .status == "authorized_unconsumed" and
+            .tracking_issue == 140 and
+            .execution.workflow == ".github/workflows/collector-demo-api.yml" and
+            .execution.dispatch_ref == "main" and
+            .execution.operation == "deploy" and
+            .execution.reviewed_commit == "be7a0215a2ac47dd038b042e6b21e3c2e155d86a" and
+            .execution.environment == "dev" and
+            .execution.resource_group == "rg-servicetracer-dev-westus2" and
+            .execution.location == "westus2" and
+            .execution.prefix == "mst" and
+            .execution.dns_label == "st-demo-api-aeg30000" and
+            .execution.allowed_origin == "https://anthonyedgar30000.github.io" and
+            .execution.confirmation == "COLLECTOR-DEMO-API:deploy:rg-servicetracer-dev-westus2:st-demo-api-aeg30000" and
+            .authority.attempt_limit == 1 and
+            .authority.renewable == false and
+            .authority.transferable == false and
+            .authority.automatic_retry_authorized == false and
+            .authority.rollback_authorized == false and
+            .authorized_mutation_scope.creates == 0 and
+            .authorized_mutation_scope.deletes == 0 and
+            .authorized_mutation_scope.replaces == 0 and
+            (.authorized_mutation_scope.modifies | length) == 3
+          ' "$request" > /dev/null
+
+          valid_until="$(jq -r '.valid_until' "$request")"
+          now_epoch="$(date -u +%s)"
+          valid_until_epoch="$(date -u -d "$valid_until" +%s)"
+          (( now_epoch <= valid_until_epoch ))
+
+          reviewed_commit="$(jq -r '.execution.reviewed_commit' "$request")"
+          git cat-file -e "${reviewed_commit}^{commit}"
+          git merge-base --is-ancestor "$reviewed_commit" "$GITHUB_SHA"
+
+          echo "reviewed_commit=$reviewed_commit" >> "$GITHUB_OUTPUT"
+          echo "tracker_issue=$(jq -r '.tracking_issue' "$request")" >> "$GITHUB_OUTPUT"
+          echo "environment=$(jq -r '.execution.environment' "$request")" >> "$GITHUB_OUTPUT"
+          echo "resource_group=$(jq -r '.execution.resource_group' "$request")" >> "$GITHUB_OUTPUT"
+          echo "location=$(jq -r '.execution.location' "$request")" >> "$GITHUB_OUTPUT"
+          echo "prefix=$(jq -r '.execution.prefix' "$request")" >> "$GITHUB_OUTPUT"
+          echo "dns_label=$(jq -r '.execution.dns_label' "$request")" >> "$GITHUB_OUTPUT"
+          echo "allowed_origin=$(jq -r '.execution.allowed_origin' "$request")" >> "$GITHUB_OUTPUT"
+          echo "confirmation=$(jq -r '.execution.confirmation' "$request")" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch the governed deployment workflow once
+        id: dispatch
+        env:
+          REVIEWED_COMMIT: ${{ steps.request.outputs.reviewed_commit }}
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracker_issue }}
+          LAB_ENVIRONMENT: ${{ steps.request.outputs.environment }}
+          RESOURCE_GROUP: ${{ steps.request.outputs.resource_group }}
+          LOCATION: ${{ steps.request.outputs.location }}
+          PREFIX: ${{ steps.request.outputs.prefix }}
+          DNS_LABEL: ${{ steps.request.outputs.dns_label }}
+          ALLOWED_ORIGIN: ${{ steps.request.outputs.allowed_origin }}
+          CONFIRMATION: ${{ steps.request.outputs.confirmation }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          gh workflow run collector-demo-api.yml \
+            --ref main \
+            -f operation=deploy \
+            -f reviewed_commit="$REVIEWED_COMMIT" \
+            -f environment="$LAB_ENVIRONMENT" \
+            -f resource_group="$RESOURCE_GROUP" \
+            -f location="$LOCATION" \
+            -f prefix="$PREFIX" \
+            -f dns_label="$DNS_LABEL" \
+            -f allowed_origin="$ALLOWED_ORIGIN" \
+            -f confirmation="$CONFIRMATION"
+
+          body=$(cat <<EOF
+          ## Run 20 dispatch accepted
+
+          The one-shot grant is now **consumed**, regardless of terminal outcome.
+
+          - reviewed source: \`$REVIEWED_COMMIT\`
+          - dispatcher commit: \`$GITHUB_SHA\`
+          - accepted at: \`$started_at\`
+          - automatic retry: **not authorized**
+          - rollback: **not authorized**
+          EOF
+          )
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" \
+            -f body="$body" > /dev/null
+
+          echo "started_at=$started_at" >> "$GITHUB_OUTPUT"
+
+      - name: Locate the exact workflow-dispatch run
+        id: locate
+        env:
+          STARTED_AT: ${{ steps.dispatch.outputs.started_at }}
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracker_issue }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_id=""
+          for _ in $(seq 1 60); do
+            runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/collector-demo-api.yml/runs?event=workflow_dispatch&branch=main&per_page=20")"
+            run_id="$(jq -r \
+              --arg started "$STARTED_AT" \
+              --arg sha "$GITHUB_SHA" \
+              '[.workflow_runs[] | select(.created_at >= $started and .head_sha == $sha)] | sort_by(.created_at) | .[0].id // empty' \
+              <<< "$runs")"
+            if [[ -n "$run_id" ]]; then
+              break
+            fi
+            sleep 5
+          done
+          [[ -n "$run_id" ]]
+
+          run_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$run_id"
+          body=$(cat <<EOF
+          Deployment workflow located: [$run_id]($run_url).
+
+          No second dispatch will be issued by this one-shot workflow.
+          EOF
+          )
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" \
+            -f body="$body" > /dev/null
+
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for terminal deployment evidence
+        env:
+          RUN_ID: ${{ steps.locate.outputs.run_id }}
+          TRACKER_ISSUE: ${{ steps.request.outputs.tracker_issue }}
+          REVIEWED_COMMIT: ${{ steps.request.outputs.reviewed_commit }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          gh run watch "$RUN_ID" --exit-status --interval 10
+          watch_rc=$?
+          set -e
+
+          details="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID")"
+          artifacts="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/artifacts")"
+          status="$(jq -r '.status' <<< "$details")"
+          conclusion="$(jq -r '.conclusion // "not_completed"' <<< "$details")"
+          run_url="$(jq -r '.html_url' <<< "$details")"
+          head_sha="$(jq -r '.head_sha' <<< "$details")"
+          artifact_summary="$(jq -c '[.artifacts[] | {id,name,size_in_bytes,digest,expired}]' <<< "$artifacts")"
+
+          body=$(cat <<EOF
+          ## Run 20 terminal result
+
+          - workflow: [$RUN_ID]($run_url)
+          - workflow head: \`$head_sha\`
+          - reviewed deployment source: \`$REVIEWED_COMMIT\`
+          - status: **$status**
+          - conclusion: **$conclusion**
+          - artifacts: \`$artifact_summary\`
+
+          \`deployment_succeeded != service_validated\`
+
+          No retry or rollback was performed by the one-shot dispatcher.
+          EOF
+          )
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/issues/$TRACKER_ISSUE/comments" \
+            -f body="$body" > /dev/null
+
+          exit "$watch_rc"
