@@ -1,0 +1,29 @@
+#cloud-config
+package_update: true
+package_upgrade: false
+
+packages:
+  - ca-certificates
+  - curl
+  - git
+  - iproute2
+  - jq
+  - openssl
+  - python3
+  - ufw
+
+write_files:
+  - path: /etc/servicetracer-local-vm
+    owner: root:root
+    permissions: '0644'
+    content: |
+      purpose=ServiceTracer VPN backend local deployment validation
+      source=azure-iac-msp-lab/tools/local-vm-vpn-backend
+      expected_os=Ubuntu 24.04 LTS
+      azure_mutation=none
+
+runcmd:
+  - systemctl daemon-reload
+  - cloud-init status --wait || true
+
+final_message: "ServiceTracer local Ubuntu VM bootstrap completed after $UPTIME seconds"
