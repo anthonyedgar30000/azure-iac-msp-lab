@@ -1,6 +1,7 @@
 name: Generate collector analysis rate-limit implementation
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
