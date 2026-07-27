@@ -38,6 +38,19 @@ class RemoteAccessBackendTests(unittest.TestCase):
         self.assertIn("vTpmEnabled: true", MODULE)
         self.assertIn("Microsoft.Compute/availabilitySets", MODULE)
 
+    def test_backends_declare_bounded_ufw_policy(self) -> None:
+        for expected in (
+            "command -v ufw",
+            "ufw default deny incoming",
+            "ufw default allow outgoing",
+            "ufw allow 443/tcp comment 'ServiceTracer HTTPS'",
+            "ufw allow proto tcp from 10.20.40.0/24 to any port 22 comment 'SSH from operations subnet'",
+            "ufw --force enable",
+        ):
+            self.assertIn(expected, BOOTSTRAP)
+        self.assertNotIn("ufw allow 22/tcp", BOOTSTRAP)
+        self.assertNotIn("ufw --force reset", BOOTSTRAP)
+
     def test_probe_scope_contradiction_is_deliberate_and_bounded(self) -> None:
         self.assertIn("mode: 'healthy'", MODULE)
         self.assertIn("mode: 'radius-timeout'", MODULE)
