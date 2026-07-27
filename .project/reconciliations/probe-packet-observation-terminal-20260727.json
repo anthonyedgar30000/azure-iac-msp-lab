@@ -1,0 +1,121 @@
+{
+  "schema_version": "project.reconciliation.v1",
+  "reconciliation_id": "probe-packet-observation-terminal-20260727",
+  "status": "terminal",
+  "tracking_issue": 160,
+  "pull_request": 161,
+  "execution_commit": "abe7a80ae9e9176ec3ffe2b6191169407e3048e7",
+  "workflow_run": 30291575564,
+  "artifact": {
+    "id": 8662996675,
+    "name": "probe-packet-observation-run1-evidence",
+    "digest": "sha256:5bfed2cf170eb25f7c135c930708afaa5907ee1370ec2e361b8f6396f35dec26",
+    "expires_at": "2026-08-26T17:58:30Z"
+  },
+  "azure_boundary": {
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "load_balancer": "lb-remote-access-mst-dev",
+    "load_balancer_provisioning_state": "Succeeded",
+    "load_balancer_sku": "Standard",
+    "load_balancer_tier": "Regional",
+    "backend_pool": "be-vpn-gateways",
+    "load_balancing_rule": "rule-remote-access-443",
+    "probe": {
+      "name": "probe-tcp-443-shallow",
+      "protocol": "Tcp",
+      "port": 443,
+      "interval_seconds": 5,
+      "number_of_probes": 2,
+      "provisioning_state": "Succeeded"
+    }
+  },
+  "guest_observations": {
+    "vm-vpn01-mst-dev": {
+      "private_ip": "10.20.10.11",
+      "hostname": "vpn01-dev",
+      "power_state": "running",
+      "backend_membership": "verified",
+      "systemd_active": true,
+      "systemd_enabled": true,
+      "tcp443_listener_present": true,
+      "ufw_active": true,
+      "tcpdump_available": true,
+      "capture": {
+        "filter": "host 168.63.129.16 and tcp port 443",
+        "packet_count": 12,
+        "inbound_syn_count": 4,
+        "outbound_synack_count": 0,
+        "outbound_rst_count": 0,
+        "kernel_drop_count_reported_by_tcpdump": 0
+      },
+      "classification": "probe_syn_observed_no_guest_response",
+      "latest_dip_availability": 0.0
+    },
+    "vm-vpn02-mst-dev": {
+      "private_ip": "10.20.10.12",
+      "hostname": "vpn02-dev",
+      "power_state": "running",
+      "backend_membership": "verified",
+      "systemd_active": true,
+      "systemd_enabled": true,
+      "tcp443_listener_present": true,
+      "ufw_active": true,
+      "tcpdump_available": true,
+      "capture": {
+        "filter": "host 168.63.129.16 and tcp port 443",
+        "packet_count": 12,
+        "inbound_syn_count": 4,
+        "outbound_synack_count": 0,
+        "outbound_rst_count": 0,
+        "kernel_drop_count_reported_by_tcpdump": 0
+      },
+      "classification": "probe_syn_observed_no_guest_response",
+      "latest_dip_availability": 0.0
+    }
+  },
+  "verified_non_actions": {
+    "package_change": false,
+    "ssh": false,
+    "service_mutation": false,
+    "guest_firewall_mutation": false,
+    "routing_or_sysctl_mutation": false,
+    "packet_injection": false,
+    "packet_payload_capture": false,
+    "public_transactions": false,
+    "network_watcher_capture": false,
+    "azure_resource_mutation": false,
+    "rbac_mutation": false,
+    "automatic_retry": false,
+    "rollback": false,
+    "cleanup": false
+  },
+  "deterministic_conclusion": {
+    "probe_packets_reach_guest_eth0": true,
+    "guest_tcp_response_observed": false,
+    "shared_failure_boundary": "after packet arrival at guest eth0 and before an observable SYN-ACK or RST leaves the guest",
+    "azure_backend_path_to_guest": "verified_for_inbound_probe_syn",
+    "end_to_end_service_health": "unverified_unhealthy_probe",
+    "exact_root_cause": "not_proven"
+  },
+  "candidate_next_read_only_checks": [
+    "UFW and netfilter rule counters before and after probe arrivals",
+    "full read-only nftables or iptables ruleset inspection",
+    "reverse-path filtering sysctl values",
+    "route lookup to 168.63.129.16 from each backend private IP",
+    "kernel drop and martian-source logs where already enabled"
+  ],
+  "truth_boundaries": [
+    "syn_arrived_at_eth0 != accepted_by_guest_firewall",
+    "listener_present != kernel_generated_synack",
+    "ufw_rule_declared != packet_matched_allow_rule",
+    "shared_guest_symptom != exact_shared_root_cause",
+    "packet_capture_completed != repair_authorized"
+  ],
+  "authority": {
+    "status": "consumed",
+    "retry_authorized": false,
+    "repair_authorized": false,
+    "next_action_requires_new_explicit_authorization": true
+  }
+}
