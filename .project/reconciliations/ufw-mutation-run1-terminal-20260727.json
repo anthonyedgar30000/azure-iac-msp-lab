@@ -1,0 +1,52 @@
+{
+  "schema_version": "project.ufw-mutation-reconciliation.v1",
+  "reconciliation_id": "ufw-mutation-run1-terminal-20260727",
+  "request_id": "ufw-mutation-run1-20260727",
+  "tracking_issue": 153,
+  "workflow_run": 30287056582,
+  "source_commit": "544aaf6a0e8a9768cf93bf68eb04a74d53977658",
+  "terminal_state": "consumed_failed_no_guest_mutation",
+  "observations": {
+    "azure_login": "succeeded",
+    "subscription": "Azure for Students",
+    "subscription_state": "Enabled",
+    "tenant_observed": true,
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "resource_group_location": "westus2",
+    "resource_group_provisioning_state": "Succeeded",
+    "vm_vpn01_power_state": "PowerState/running",
+    "vm_vpn02_power_state": "PowerState/running",
+    "regional_vcpu_usage": 6,
+    "regional_vcpu_limit": 6,
+    "vpn01_run_command_submitted": true,
+    "vpn02_run_command_submitted": false,
+    "first_ufw_command_reached": false,
+    "guest_firewall_mutation_performed": false,
+    "service_restart_performed": false,
+    "azure_networking_mutation_performed": false,
+    "post_change_probe_observation_performed": false,
+    "public_transaction_scenario_performed": false,
+    "automatic_retry_performed": false,
+    "rollback_performed": false
+  },
+  "failure": {
+    "boundary": "vpn01_guest_script_shell_initialization",
+    "command_interpreter": "/bin/sh",
+    "message": "set: Illegal option -o pipefail",
+    "effect": "The script exited on line 1 before any UFW command."
+  },
+  "evidence": {
+    "artifact_id": 8661262875,
+    "artifact_digest": "sha256:8c228b42069007812f81f3870edb8db52f812d5ffdbf60081624f69c0b5c1a00",
+    "issue_comment_id": 5094293997
+  },
+  "truth_boundary": {
+    "ufw_enabled": "not_observed",
+    "ufw_changed_by_run": false,
+    "vpn02_guest_state_after_run": "not_observed",
+    "service_health_after_run": "not_observed",
+    "load_balancer_probe_health_after_run": "not_observed"
+  },
+  "required_future_action": "A new explicit authorization is required. Any future guest script must invoke Bash explicitly with bash -lc or remain POSIX-compatible.",
+  "retired_workflow": ".github/workflows/one-shot-ufw-mutation-run1.yml"
+}
