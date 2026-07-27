@@ -1,0 +1,129 @@
+{
+  "schema_version": "project.azure-deployment-request.v1",
+  "request_id": "tls-accept-loop-deploy-run3-20260727",
+  "status": "authorized_one_shot_production_execution",
+  "authorized_by": "user instruction: Proceed",
+  "tracking_issue": 169,
+  "recorded_on": "2026-07-27",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "681a7b25b7b5a14b4daabd9ea06d66c0f648f16f",
+    "working_branch": "deploy/tls-accept-loop-run3",
+    "open_pull_requests_observed_before_change": 0,
+    "local_working_tree": "not_observed_connector_backed_repository_changes"
+  },
+  "prerequisite_evidence": {
+    "merged_repair_commit": "aa493def60866f3d9452899b131bc2f35cd68bdf",
+    "sidecar_workflow_merge_commit": "681a7b25b7b5a14b4daabd9ea06d66c0f648f16f",
+    "sidecar_pr_ci_run": 30300707285,
+    "sidecar_pr_ci_conclusion": "success",
+    "user_provided_log_archive_sha256": "af076e5101a0dd9b95962f476306d80800be0926bebf5ccfd44c980a9608be78",
+    "terminal_marker": "SERVICETRACER_GUEST_LOCAL_SIDECAR_SUCCESS vm=vm-vpn01-mst-dev port=8443 cleanup=verified production_integrity=verified",
+    "observed_result": "The exact repaired backend ran under systemd in the Azure Ubuntu guest, served HTTPS while twelve raw TCP clients remained connected, and was cleaned up without changing production hashes."
+  },
+  "azure_scope": {
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "load_balancer": "lb-remote-access-mst-dev",
+    "public_ip_resource": "pip-remote-access-mst-dev",
+    "service": "servicetracer-demo-backend.service",
+    "listener": "TCP/443",
+    "targets": [
+      {
+        "order": 1,
+        "vm": "vm-vpn01-mst-dev",
+        "private_ip": "10.20.10.11",
+        "backend_id": "VPN-01",
+        "mode": "healthy",
+        "role": "canary"
+      },
+      {
+        "order": 2,
+        "vm": "vm-vpn02-mst-dev",
+        "private_ip": "10.20.10.12",
+        "backend_id": "VPN-02",
+        "mode": "radius-timeout",
+        "gate": "VPN-01 local validation and backend-specific Azure probe health"
+      }
+    ]
+  },
+  "execution": {
+    "one_shot_push_authorized": true,
+    "merge_to_main_authorized_after_exact_head_ci": true,
+    "workflow_execution_authorized": true,
+    "first_run_attempt_only": true,
+    "rerun_authorized": false,
+    "automatic_retry_authorized": false
+  },
+  "authorized_guest_changes": [
+    "create a root-only backup directory on the currently targeted VM",
+    "replace /opt/servicetracer-demo/backend.py with the exact tested source",
+    "replace /etc/systemd/system/servicetracer-demo-backend.service with the exact rendered unit",
+    "run systemctl daemon-reload",
+    "restart servicetracer-demo-backend.service once after installation",
+    "perform loopback and private-IP HTTPS validation",
+    "perform bounded local raw-TCP tolerance validation",
+    "capture non-secret service, journal, listener, queue, hash, UFW, certificate, and key evidence"
+  ],
+  "rollback": {
+    "trigger": "immediate local validation failure on the currently modified VM",
+    "scope": "restore only the backed-up backend.py and production unit on that same VM",
+    "service_action": "daemon-reload and one restart after restoration",
+    "required_proof": [
+      "restored backend and unit hashes",
+      "service active",
+      "TCP/443 listener present",
+      "rollback marker naming the failed checkpoint"
+    ],
+    "not_triggered_by": [
+      "Azure probe timeout after successful local validation",
+      "transaction-contract failure after successful local and probe validation"
+    ]
+  },
+  "validation_contract": [
+    "subscription and tenant observed during execution",
+    "resource group and VM region match westus2",
+    "both VMs are running with expected private IPs",
+    "regional compute usage captured without quota mutation",
+    "production service active and enabled before mutation",
+    "exact target backend and unit hashes installed",
+    "service and TCP/443 listener become ready through bounded polling",
+    "loopback and private-IP health payloads match backend identity and mode",
+    "twelve raw TCP connections do not starve valid HTTPS",
+    "listener receive queue remains below backlog",
+    "UFW configuration and certificate/key hashes remain unchanged",
+    "VPN-01 backend-specific DipAvailability becomes healthy before VPN-02 mutation",
+    "both backend-specific probes become healthy",
+    "thirty bounded public transactions preserve the intended VPN-01 versus VPN-02 contrast"
+  ],
+  "cost_and_quota": {
+    "new_resources": "none",
+    "expected_recurring_cost_delta_CAD": 0,
+    "quota_delta": "none",
+    "regional_usage_observation_required": true
+  },
+  "explicit_exclusions": {
+    "workflow_rerun": false,
+    "second_execution_attempt": false,
+    "vm_redeploy_resize_reboot_or_deallocate": false,
+    "disk_image_or_extension_change": false,
+    "certificate_or_key_change": false,
+    "package_change": false,
+    "ufw_or_packet_filter_change": false,
+    "sysctl_route_dns_or_interface_change": false,
+    "nsg_nic_subnet_vnet_change": false,
+    "load_balancer_or_probe_change": false,
+    "public_ip_change": false,
+    "rbac_policy_lock_budget_or_quota_change": false,
+    "collector_vm_change": false,
+    "third_vm_access": false
+  },
+  "failure_behavior": "Stop at the first failed gate, preserve evidence, do not rerun, and do not broaden scope. Roll back only an immediate local failure on the currently modified VM. Do not roll back a locally validated deployment merely because later Azure probe or transaction validation fails.",
+  "claim_boundaries": [
+    "sidecar_validation_passed != production_deployed",
+    "production_local_validation_passed != Azure_probe_healthy",
+    "both_probes_healthy != transaction_contract_validated",
+    "workflow_attempt_started != authorization_renewed"
+  ]
+}

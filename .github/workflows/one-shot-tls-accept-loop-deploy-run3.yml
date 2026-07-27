@@ -1,0 +1,713 @@
+name: One-shot TLS accept-loop Azure deployment run 3
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/one-shot-tls-accept-loop-deploy-run3.yml
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: one-shot-tls-accept-loop-deploy-run3
+  cancel-in-progress: false
+
+env:
+  RESOURCE_GROUP: rg-servicetracer-dev-westus2
+  LOCATION: westus2
+  LB_NAME: lb-remote-access-mst-dev
+  PIP_NAME: pip-remote-access-mst-dev
+  VPN01_VM: vm-vpn01-mst-dev
+  VPN01_IP: 10.20.10.11
+  VPN02_VM: vm-vpn02-mst-dev
+  VPN02_IP: 10.20.10.12
+  SERVICE_NAME: servicetracer-demo-backend.service
+  ARTIFACT_DIR: tls-accept-loop-deploy-run3-evidence
+  AUTHORIZED_REPAIR: aa493def60866f3d9452899b131bc2f35cd68bdf
+  SIDECAR_PROOF_SOURCE: 681a7b25b7b5a14b4daabd9ea06d66c0f648f16f
+  AUTHORITY_RECORD: .project/change-requests/tls-accept-loop-deploy-run3-20260727.json
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+
+jobs:
+  deploy-and-verify:
+    name: Stage and validate TLS accept-loop repair run 3
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out exact deployment request
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate one-shot authority and proven source
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          [[ "$GITHUB_EVENT_NAME" == 'push' ]]
+          [[ "$GITHUB_REF" == 'refs/heads/main' ]]
+          [[ "$GITHUB_RUN_ATTEMPT" == '1' ]]
+          git merge-base --is-ancestor "$AUTHORIZED_REPAIR" HEAD
+          git merge-base --is-ancestor "$SIDECAR_PROOF_SOURCE" HEAD
+          test -f "$AUTHORITY_RECORD"
+          jq -e '
+            .status == "authorized_one_shot_production_execution" and
+            .execution.one_shot_push_authorized == true and
+            .execution.workflow_execution_authorized == true and
+            .execution.first_run_attempt_only == true and
+            .execution.rerun_authorized == false
+          ' "$AUTHORITY_RECORD" >/dev/null
+          python -m unittest discover -s infra/tests -p 'test_vpn_backend_tls_accept_loop.py' -v \
+            > "$ARTIFACT_DIR/tls-accept-loop-regression.log" 2>&1
+          python -m unittest discover -s infra/tests -p 'test_vpn01_guest_local_sidecar_workflow.py' -v \
+            > "$ARTIFACT_DIR/sidecar-workflow-contract.log" 2>&1
+          python -m unittest discover -s infra/tests -p 'test_tls_accept_loop_deploy_run3_workflow.py' -v \
+            > "$ARTIFACT_DIR/run3-workflow-contract.log" 2>&1
+          printf '%s\n' \
+            'authorization_issue=169' \
+            'authorized_instruction=Proceed' \
+            "authorized_repair=$AUTHORIZED_REPAIR" \
+            "sidecar_proof_source=$SIDECAR_PROOF_SOURCE" \
+            "workflow_source=$GITHUB_SHA" \
+            "workflow_run_attempt=$GITHUB_RUN_ATTEMPT" \
+            'sidecar_log_archive_sha256=af076e5101a0dd9b95962f476306d80800be0926bebf5ccfd44c980a9608be78' \
+            'target_scope=VPN-01 then VPN-02 after canary probe health' \
+            'new_resources=none' \
+            'recurring_cost_delta_CAD=0' \
+            'quota_delta=none' \
+            > "$ARTIFACT_DIR/authority.txt"
+
+      - name: Render exact backend, units, and bounded guest scripts
+        run: |
+          set -Eeuo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          source_path = Path('infra/bootstrap/vpn-backend-cloud-init.yaml')
+          lines = source_path.read_text(encoding='utf-8').splitlines()
+
+          def extract(path: str) -> str:
+              path_index = lines.index(f'  - path: {path}')
+              content_index = lines.index('    content: |', path_index)
+              extracted: list[str] = []
+              for line in lines[content_index + 1:]:
+                  if line.startswith('  - path: ') or line == 'runcmd:':
+                      break
+                  if line and not line.startswith('      '):
+                      raise SystemExit(f'unexpected indentation for {path}: {line!r}')
+                  extracted.append(line[6:] if line else '')
+              return '\n'.join(extracted) + '\n'
+
+          backend = extract('/opt/servicetracer-demo/backend.py')
+          compile(backend, 'backend.py', 'exec')
+          Path('/tmp/backend.py').write_text(backend, encoding='utf-8')
+
+          unit_template = extract('/etc/systemd/system/servicetracer-demo-backend.service')
+          Path('/tmp/vpn01.service').write_text(
+              unit_template
+              .replace('__BACKEND_ID__', 'VPN-01')
+              .replace('__BACKEND_MODE__', 'healthy')
+              .replace('__LISTENER_PORT__', '443'),
+              encoding='utf-8',
+          )
+          Path('/tmp/vpn02.service').write_text(
+              unit_template
+              .replace('__BACKEND_ID__', 'VPN-02')
+              .replace('__BACKEND_MODE__', 'radius-timeout')
+              .replace('__LISTENER_PORT__', '443'),
+              encoding='utf-8',
+          )
+          PY
+          python -m py_compile /tmp/backend.py
+          sha256sum /tmp/backend.py /tmp/vpn01.service /tmp/vpn02.service \
+            > "$ARTIFACT_DIR/rendered-file-sha256.txt"
+
+          cat > /tmp/guest-production-deploy.sh <<'GUEST'
+          #!/usr/bin/env bash
+          set -Eeuo pipefail
+          umask 0077
+
+          vm_name="$1"
+          private_ip="$2"
+          backend_id="$3"
+          backend_mode="$4"
+          backend_b64="$5"
+          unit_b64="$6"
+          expected_backend_sha="$7"
+          expected_unit_sha="$8"
+          run_id="$9"
+
+          service='servicetracer-demo-backend.service'
+          backend_path='/opt/servicetracer-demo/backend.py'
+          unit_path='/etc/systemd/system/servicetracer-demo-backend.service'
+          cert_path='/etc/servicetracer-demo/backend.crt'
+          key_path='/etc/servicetracer-demo/backend.key'
+          backup_dir="/var/lib/servicetracer-demo/deployments/github-run3-${run_id}-${vm_name}"
+          current_checkpoint='initial'
+          rollback_armed=0
+
+          checkpoint() {
+            current_checkpoint="$1"
+            printf 'CHECKPOINT vm=%s name=%s timestamp=%s\n' \
+              "$vm_name" "$current_checkpoint" "$(date -u +%FT%TZ)"
+          }
+
+          service_active() {
+            systemctl is-active --quiet "$service"
+          }
+
+          listener_present() {
+            ss -lnt '( sport = :443 )' | grep -F ':443' >/dev/null
+          }
+
+          health_matches() {
+            local url="$1"
+            local payload
+            payload="$(curl -kfsS --connect-timeout 1 --max-time 3 "$url")" || return 1
+            python3 - "$payload" "$backend_id" "$backend_mode" <<'PY'
+          import json
+          import sys
+          payload = json.loads(sys.argv[1])
+          assert payload['backend'] == sys.argv[2]
+          assert payload['listener'] == 'available'
+          assert payload['mode'] == sys.argv[3]
+          PY
+          }
+
+          loopback_health() {
+            health_matches 'https://127.0.0.1/healthz'
+          }
+
+          private_ip_health() {
+            health_matches "https://${private_ip}/healthz"
+          }
+
+          wait_until() {
+            local name="$1"
+            local attempts="$2"
+            local delay="$3"
+            shift 3
+            checkpoint "$name"
+            local attempt
+            for attempt in $(seq 1 "$attempts"); do
+              if "$@"; then
+                printf 'CHECKPOINT_PASS vm=%s name=%s attempt=%s\n' "$vm_name" "$name" "$attempt"
+                return 0
+              fi
+              sleep "$delay"
+            done
+            return 1
+          }
+
+          capture_state() {
+            local prefix="$1"
+            {
+              printf 'timestamp=%s\n' "$(date -u +%FT%TZ)"
+              printf 'vm=%s\n' "$vm_name"
+              printf 'checkpoint=%s\n' "$current_checkpoint"
+              systemctl show "$service" \
+                -p ActiveState -p SubState -p UnitFileState -p ExecMainPID -p ExecMainStatus || true
+              ss -lntp '( sport = :443 )' || true
+              ss -ntp '( sport = :443 )' || true
+              sha256sum "$backend_path" "$unit_path" "$cert_path" "$key_path" || true
+              ufw status verbose || true
+              journalctl -u "$service" --since '-10 minutes' --no-pager | tail -n 160 || true
+            } > "${backup_dir}/${prefix}-state.txt" 2>&1
+          }
+
+          on_error() {
+            local rc=$?
+            local failed_checkpoint="$current_checkpoint"
+            trap - ERR
+            set +e
+            printf 'CHECKPOINT_FAIL vm=%s name=%s rc=%s\n' "$vm_name" "$current_checkpoint" "$rc" >&2
+            capture_state 'failure'
+            if [[ -n "${raw_probe_pid:-}" ]]; then
+              kill "$raw_probe_pid" >/dev/null 2>&1 || true
+              wait "$raw_probe_pid" >/dev/null 2>&1 || true
+            fi
+
+            if [[ "$rollback_armed" == '1' ]]; then
+              checkpoint 'rollback-start'
+              install -o root -g root -m 0755 "$backup_dir/backend.py.before" "$backend_path"
+              install -o root -g root -m 0644 "$backup_dir/service.before" "$unit_path"
+              systemctl daemon-reload
+              systemctl restart "$service"
+
+              rollback_ok=1
+              for _ in $(seq 1 20); do
+                systemctl is-active --quiet "$service" && break
+                sleep 0.5
+              done
+              systemctl is-active --quiet "$service" || rollback_ok=0
+              listener_present || rollback_ok=0
+              [[ "$(sha256sum "$backend_path" | awk '{print $1}')" == "$(awk '$2 ~ /backend.py.before$/ {print $1}' "$backup_dir/backup.sha256")" ]] || rollback_ok=0
+              [[ "$(sha256sum "$unit_path" | awk '{print $1}')" == "$(awk '$2 ~ /service.before$/ {print $1}' "$backup_dir/backup.sha256")" ]] || rollback_ok=0
+              capture_state 'rollback'
+              if [[ "$rollback_ok" == '1' ]]; then
+                printf 'SERVICETRACER_ROLLBACK_PERFORMED vm=%s failed_checkpoint=%s rollback=verified rc=%s\n' \
+                  "$vm_name" "$failed_checkpoint" "$rc" >&2
+              else
+                printf 'SERVICETRACER_ROLLBACK_FAILED vm=%s failed_checkpoint=%s rc=%s\n' \
+                  "$vm_name" "$failed_checkpoint" "$rc" >&2
+              fi
+            fi
+            exit "$rc"
+          }
+          trap on_error ERR
+
+          checkpoint 'preflight-required-files'
+          test -f "$backend_path"
+          test -f "$unit_path"
+          test -f "$cert_path"
+          test -f "$key_path"
+          systemctl is-active --quiet "$service"
+          systemctl is-enabled --quiet "$service"
+          listener_present
+          ufw status | grep -F 'Status: active' >/dev/null
+
+          checkpoint 'backup-current-production'
+          install -d -m 0700 "$backup_dir"
+          cp -a "$backend_path" "$backup_dir/backend.py.before"
+          cp -a "$unit_path" "$backup_dir/service.before"
+          sha256sum "$backup_dir/backend.py.before" "$backup_dir/service.before" > "$backup_dir/backup.sha256"
+          sha256sum "$cert_path" "$key_path" > "$backup_dir/cert-key-before.sha256"
+          ufw status verbose > "$backup_dir/ufw-before.txt"
+          capture_state 'pre'
+
+          checkpoint 'render-and-verify-new-files'
+          printf '%s' "$backend_b64" | base64 -d > "$backup_dir/backend.py.new"
+          printf '%s' "$unit_b64" | base64 -d > "$backup_dir/service.new"
+          python3 -m py_compile "$backup_dir/backend.py.new"
+          [[ "$(sha256sum "$backup_dir/backend.py.new" | awk '{print $1}')" == "$expected_backend_sha" ]]
+          [[ "$(sha256sum "$backup_dir/service.new" | awk '{print $1}')" == "$expected_unit_sha" ]]
+
+          current_backend_sha="$(sha256sum "$backend_path" | awk '{print $1}')"
+          current_unit_sha="$(sha256sum "$unit_path" | awk '{print $1}')"
+          if [[ "$current_backend_sha" == "$expected_backend_sha" || "$current_unit_sha" == "$expected_unit_sha" ]]; then
+            echo "precondition_error=target_or_partial_target_state backend=$current_backend_sha unit=$current_unit_sha" >&2
+            false
+          fi
+
+          checkpoint 'install-production-files'
+          rollback_armed=1
+          install -o root -g root -m 0755 "$backup_dir/backend.py.new" "$backend_path"
+          install -o root -g root -m 0644 "$backup_dir/service.new" "$unit_path"
+
+          checkpoint 'daemon-reload-and-restart-once'
+          systemctl daemon-reload
+          systemctl restart "$service"
+
+          wait_until 'service-active' 30 0.5 service_active
+          checkpoint 'service-enabled'
+          systemctl is-enabled --quiet "$service"
+          wait_until 'listener-present' 30 0.5 listener_present
+          wait_until 'loopback-health' 30 0.5 loopback_health
+          wait_until 'private-ip-health' 30 0.5 private_ip_health
+
+          checkpoint 'start-production-raw-tcp-test'
+          cat > "$backup_dir/hold_raw_probes.py" <<'PY'
+          import socket
+          import sys
+          import time
+          host = sys.argv[1]
+          port = int(sys.argv[2])
+          count = int(sys.argv[3])
+          hold_seconds = float(sys.argv[4])
+          sockets = []
+          try:
+              for _ in range(count):
+                  sockets.append(socket.create_connection((host, port), timeout=2.0))
+              print(f'RAW_PROBES_CONNECTED count={len(sockets)}', flush=True)
+              time.sleep(hold_seconds)
+          finally:
+              for connection in sockets:
+                  connection.close()
+          PY
+          python3 "$backup_dir/hold_raw_probes.py" 127.0.0.1 443 12 3 \
+            > "$backup_dir/raw-probes.log" 2>&1 &
+          raw_probe_pid=$!
+          for _ in $(seq 1 20); do
+            grep -F 'RAW_PROBES_CONNECTED count=12' "$backup_dir/raw-probes.log" >/dev/null 2>&1 && break
+            sleep 0.1
+          done
+          grep -F 'RAW_PROBES_CONNECTED count=12' "$backup_dir/raw-probes.log"
+          checkpoint 'raw-probes-connected'
+          checkpoint 'https-survives-raw-probes'
+          loopback_health
+          checkpoint 'private-ip-survives-raw-probes'
+          private_ip_health
+
+          checkpoint 'listener-queue-below-backlog'
+          read -r recvq backlog < <(ss -lnt '( sport = :443 )' | awk 'NR == 2 {print $2, $3}')
+          [[ "$recvq" =~ ^[0-9]+$ && "$backlog" =~ ^[0-9]+$ ]]
+          (( recvq < backlog ))
+          printf 'listener_recvq=%s listener_backlog=%s\n' "$recvq" "$backlog" | tee "$backup_dir/listener-queue.txt"
+          ps -eLf | grep '[b]ackend.py' > "$backup_dir/backend-threads.txt"
+          ss -ntp '( sport = :443 )' > "$backup_dir/production-connections.txt" || true
+          wait "$raw_probe_pid"
+          checkpoint 'raw-probe-test-complete'
+
+          checkpoint 'verify-installed-hashes'
+          [[ "$(sha256sum "$backend_path" | awk '{print $1}')" == "$expected_backend_sha" ]]
+          [[ "$(sha256sum "$unit_path" | awk '{print $1}')" == "$expected_unit_sha" ]]
+
+          checkpoint 'verify-unchanged-security-boundary'
+          sha256sum -c "$backup_dir/cert-key-before.sha256"
+          ufw status verbose > "$backup_dir/ufw-after.txt"
+          cmp -s "$backup_dir/ufw-before.txt" "$backup_dir/ufw-after.txt"
+
+          checkpoint 'capture-success-evidence'
+          capture_state 'success'
+          rollback_armed=0
+          trap - ERR
+          printf 'SERVICETRACER_PRODUCTION_DEPLOYMENT_SUCCESS vm=%s backend=%s mode=%s local_validation=verified\n' \
+            "$vm_name" "$backend_id" "$backend_mode"
+          GUEST
+          chmod 0700 /tmp/guest-production-deploy.sh
+          bash -n /tmp/guest-production-deploy.sh
+
+          cat > /tmp/invoke-bash-run-command.sh <<'BASH'
+          #!/usr/bin/env bash
+          set -Eeuo pipefail
+          resource_group="$1"
+          vm_name="$2"
+          payload_path="$3"
+          required_marker="$4"
+          output_path="$5"
+          shift 5
+          guest_output_path="${output_path%.json}.guest-output.txt"
+
+          payload_b64="$(base64 -w 0 "$payload_path")"
+          quoted_args=''
+          for argument in "$@"; do
+            printf -v quoted '%q' "$argument"
+            quoted_args+=" ${quoted}"
+          done
+          wrapper="$(cat <<SH
+          set -eu
+          printf '%s' '$payload_b64' | base64 -d > /tmp/servicetracer-run3-payload.sh
+          chmod 0700 /tmp/servicetracer-run3-payload.sh
+          exec /usr/bin/bash /tmp/servicetracer-run3-payload.sh${quoted_args}
+          SH
+          )"
+
+          az vm run-command invoke \
+            --resource-group "$resource_group" \
+            --name "$vm_name" \
+            --command-id RunShellScript \
+            --scripts "$wrapper" \
+            --output json > "$output_path"
+
+          jq -e '.value and (.value | type == "array")' "$output_path" >/dev/null
+          jq -r '.value[]?.message // empty' "$output_path" > "$guest_output_path"
+          cat "$guest_output_path"
+          grep -F -- "$required_marker" "$guest_output_path" >/dev/null
+          BASH
+          chmod 0700 /tmp/invoke-bash-run-command.sh
+          bash -n /tmp/invoke-bash-run-command.sh
+
+          cat > /tmp/deploy-one-vm.sh <<'BASH'
+          #!/usr/bin/env bash
+          set -Eeuo pipefail
+          resource_group="$1"
+          vm_name="$2"
+          private_ip="$3"
+          backend_id="$4"
+          backend_mode="$5"
+          unit_file="$6"
+          artifact_prefix="$7"
+
+          backend_b64="$(base64 -w 0 /tmp/backend.py)"
+          unit_b64="$(base64 -w 0 "$unit_file")"
+          backend_sha="$(sha256sum /tmp/backend.py | awk '{print $1}')"
+          unit_sha="$(sha256sum "$unit_file" | awk '{print $1}')"
+          marker="SERVICETRACER_PRODUCTION_DEPLOYMENT_SUCCESS vm=${vm_name} backend=${backend_id} mode=${backend_mode} local_validation=verified"
+
+          /tmp/invoke-bash-run-command.sh \
+            "$resource_group" "$vm_name" /tmp/guest-production-deploy.sh "$marker" \
+            "${artifact_prefix}.json" \
+            "$vm_name" "$private_ip" "$backend_id" "$backend_mode" \
+            "$backend_b64" "$unit_b64" "$backend_sha" "$unit_sha" "$GITHUB_RUN_ID"
+          BASH
+          chmod 0700 /tmp/deploy-one-vm.sh
+          bash -n /tmp/deploy-one-vm.sh
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Inspect Azure, region, VM, cost and quota boundary
+        id: azure
+        run: |
+          set -Eeuo pipefail
+          subscription_id="$(az account show --query id --output tsv)"
+          subscription_name="$(az account show --query name --output tsv)"
+          tenant_id="$(az account show --query tenantId --output tsv)"
+          rg_location="$(az group show --name "$RESOURCE_GROUP" --query location --output tsv)"
+          [[ "$rg_location" == "$LOCATION" ]]
+
+          lb_id="$(az network lb show --resource-group "$RESOURCE_GROUP" --name "$LB_NAME" --query id --output tsv)"
+          public_ip="$(az network public-ip show --resource-group "$RESOURCE_GROUP" --name "$PIP_NAME" --query ipAddress --output tsv)"
+          [[ -n "$lb_id" && -n "$public_ip" ]]
+
+          az vm list-usage --location "$LOCATION" --output json \
+            > "$ARTIFACT_DIR/regional-compute-usage.json"
+          az resource list --resource-group "$RESOURCE_GROUP" --output json \
+            > "$ARTIFACT_DIR/resource-group-inventory.json"
+
+          for spec in "$VPN01_VM:$VPN01_IP" "$VPN02_VM:$VPN02_IP"; do
+            vm="${spec%%:*}"
+            expected_ip="${spec##*:}"
+            power="$(az vm get-instance-view --resource-group "$RESOURCE_GROUP" --name "$vm" \
+              --query "instanceView.statuses[?starts_with(code, 'PowerState/')].displayStatus | [0]" --output tsv)"
+            actual_ip="$(az vm list-ip-addresses --resource-group "$RESOURCE_GROUP" --name "$vm" \
+              --query '[0].virtualMachine.network.privateIpAddresses[0]' --output tsv)"
+            size="$(az vm show --resource-group "$RESOURCE_GROUP" --name "$vm" --query hardwareProfile.vmSize --output tsv)"
+            location="$(az vm show --resource-group "$RESOURCE_GROUP" --name "$vm" --query location --output tsv)"
+            [[ "$power" == 'VM running' ]]
+            [[ "$actual_ip" == "$expected_ip" ]]
+            [[ "$location" == "$LOCATION" ]]
+            printf '%s\t%s\t%s\t%s\t%s\n' "$vm" "$actual_ip" "$power" "$size" "$location"
+          done > "$ARTIFACT_DIR/azure-vm-boundary.tsv"
+
+          jq -n \
+            --arg subscription_id "$subscription_id" \
+            --arg subscription_name "$subscription_name" \
+            --arg tenant_id "$tenant_id" \
+            --arg resource_group "$RESOURCE_GROUP" \
+            --arg location "$rg_location" \
+            --arg load_balancer "$LB_NAME" \
+            --arg public_ip "$public_ip" \
+            '{subscription_id:$subscription_id,subscription_name:$subscription_name,tenant_id:$tenant_id,resource_group:$resource_group,location:$location,load_balancer:$load_balancer,public_ip:$public_ip,new_resources:"none",recurring_cost_delta_CAD:0,quota_delta:"none"}' \
+            > "$ARTIFACT_DIR/azure-boundary.json"
+
+          printf 'lb_id=%s\n' "$lb_id" >> "$GITHUB_OUTPUT"
+          printf 'public_ip=%s\n' "$public_ip" >> "$GITHUB_OUTPUT"
+
+      - name: Capture read-only pre-change guest evidence
+        run: |
+          set -Eeuo pipefail
+          for vm in "$VPN01_VM" "$VPN02_VM"; do
+            cat > /tmp/preflight.sh <<'BASH'
+          #!/usr/bin/env bash
+          set -Eeuo pipefail
+          printf 'timestamp=%s\n' "$(date -u +%FT%TZ)"
+          systemctl is-active servicetracer-demo-backend.service
+          systemctl is-enabled servicetracer-demo-backend.service
+          sha256sum \
+            /opt/servicetracer-demo/backend.py \
+            /etc/systemd/system/servicetracer-demo-backend.service \
+            /etc/servicetracer-demo/backend.crt \
+            /etc/servicetracer-demo/backend.key
+          systemctl show servicetracer-demo-backend.service \
+            -p ActiveState -p SubState -p UnitFileState -p ExecMainPID -p ExecMainStatus
+          ss -lntp '( sport = :443 )'
+          ufw status verbose
+          BASH
+            printf "printf 'SERVICETRACER_RUN3_PREFLIGHT_SUCCESS vm=%%s\\n' '%s'\n" "$vm" >> /tmp/preflight.sh
+            marker="SERVICETRACER_RUN3_PREFLIGHT_SUCCESS vm=$vm"
+            /tmp/invoke-bash-run-command.sh \
+              "$RESOURCE_GROUP" "$vm" /tmp/preflight.sh "$marker" \
+              "$ARTIFACT_DIR/${vm}-preflight.json"
+          done
+
+      - name: Deploy and locally validate VPN-01 production canary
+        run: |
+          set -Eeuo pipefail
+          /tmp/deploy-one-vm.sh \
+            "$RESOURCE_GROUP" "$VPN01_VM" "$VPN01_IP" VPN-01 healthy \
+            /tmp/vpn01.service "$ARTIFACT_DIR/${VPN01_VM}-deployment"
+
+      - name: Wait for VPN-01 Azure TCP probe health
+        env:
+          LB_ID: ${{ steps.azure.outputs.lb_id }}
+        run: |
+          set -Eeuo pipefail
+          healthy=false
+          for attempt in $(seq 1 30); do
+            az monitor metrics list \
+              --resource "$LB_ID" \
+              --metric DipAvailability \
+              --aggregation Average \
+              --interval PT1M \
+              --filter "BackendIPAddress eq '*' and BackendPort eq '*'" \
+              --output json > "$ARTIFACT_DIR/vpn01-probe-metrics.json"
+            python - "$ARTIFACT_DIR/vpn01-probe-metrics.json" "$ARTIFACT_DIR/vpn01-probe-status.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          payload = json.loads(Path(sys.argv[1]).read_text())
+          status = 'unknown'
+          values = payload.get('value') or []
+          if values:
+              for series in values[0].get('timeseries') or []:
+                  dimensions = {
+                      item.get('name', {}).get('value'): item.get('value')
+                      for item in series.get('metadatavalues') or []
+                  }
+                  if dimensions.get('BackendIPAddress') != '10.20.10.11':
+                      continue
+                  averages = [
+                      point.get('average')
+                      for point in series.get('data') or []
+                      if point.get('average') is not None
+                  ]
+                  if averages:
+                      status = 'healthy' if averages[-1] >= 1 else 'unhealthy'
+          Path(sys.argv[2]).write_text(json.dumps({'VPN-01': status}, indent=2) + '\n')
+          PY
+            if jq -e '."VPN-01" == "healthy"' "$ARTIFACT_DIR/vpn01-probe-status.json" >/dev/null; then
+              healthy=true
+              break
+            fi
+            sleep 20
+          done
+          [[ "$healthy" == true ]] || {
+            echo 'VPN-01 passed local production validation but its Azure probe did not become healthy.' >&2
+            cat "$ARTIFACT_DIR/vpn01-probe-status.json" >&2
+            exit 1
+          }
+
+      - name: Deploy and locally validate VPN-02
+        run: |
+          set -Eeuo pipefail
+          /tmp/deploy-one-vm.sh \
+            "$RESOURCE_GROUP" "$VPN02_VM" "$VPN02_IP" VPN-02 radius-timeout \
+            /tmp/vpn02.service "$ARTIFACT_DIR/${VPN02_VM}-deployment"
+
+      - name: Wait for both Azure TCP probes to report healthy
+        env:
+          LB_ID: ${{ steps.azure.outputs.lb_id }}
+        run: |
+          set -Eeuo pipefail
+          healthy=false
+          for attempt in $(seq 1 30); do
+            az monitor metrics list \
+              --resource "$LB_ID" \
+              --metric DipAvailability \
+              --aggregation Average \
+              --interval PT1M \
+              --filter "BackendIPAddress eq '*' and BackendPort eq '*'" \
+              --output json > "$ARTIFACT_DIR/load-balancer-probe-metrics.json"
+            python - "$ARTIFACT_DIR/load-balancer-probe-metrics.json" "$ARTIFACT_DIR/probe-status.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          payload = json.loads(Path(sys.argv[1]).read_text())
+          ip_to_backend = {'10.20.10.11': 'VPN-01', '10.20.10.12': 'VPN-02'}
+          status = {backend: 'unknown' for backend in ip_to_backend.values()}
+          values = payload.get('value') or []
+          if values:
+              for series in values[0].get('timeseries') or []:
+                  dimensions = {
+                      item.get('name', {}).get('value'): item.get('value')
+                      for item in series.get('metadatavalues') or []
+                  }
+                  backend = ip_to_backend.get(dimensions.get('BackendIPAddress'))
+                  if not backend:
+                      continue
+                  averages = [
+                      point.get('average')
+                      for point in series.get('data') or []
+                      if point.get('average') is not None
+                  ]
+                  if averages:
+                      status[backend] = 'healthy' if averages[-1] >= 1 else 'unhealthy'
+          Path(sys.argv[2]).write_text(json.dumps(status, indent=2) + '\n')
+          PY
+            if jq -e '."VPN-01" == "healthy" and ."VPN-02" == "healthy"' "$ARTIFACT_DIR/probe-status.json" >/dev/null; then
+              healthy=true
+              break
+            fi
+            sleep 20
+          done
+          [[ "$healthy" == true ]] || {
+            echo 'Both guests passed local validation but both Azure probes did not become healthy.' >&2
+            cat "$ARTIFACT_DIR/probe-status.json" >&2
+            exit 1
+          }
+
+      - name: Validate bounded public transaction contrast
+        env:
+          PUBLIC_IP: ${{ steps.azure.outputs.public_ip }}
+          PYTHONPATH: servicetracer/src
+        run: |
+          set -Eeuo pipefail
+          python -m servicetracer.azure_demo \
+            --frontend-url "https://${PUBLIC_IP}" \
+            --probe-status "$ARTIFACT_DIR/probe-status.json" \
+            --attempts 30 \
+            --load-balancer-id "$LB_NAME" \
+            --output "$ARTIFACT_DIR/live-source-records.jsonl" \
+            --raw-output "$ARTIFACT_DIR/live-transactions.json"
+
+          python -m servicetracer.collector_cli ingest \
+            --spool "$ARTIFACT_DIR/live-evidence-spool.jsonl" \
+            --input "$ARTIFACT_DIR/live-source-records.jsonl" \
+            > "$ARTIFACT_DIR/collector-receipt.json"
+          python -m servicetracer.cli \
+            --evidence-records "$ARTIFACT_DIR/live-evidence-spool.jsonl" \
+            --adapter-config servicetracer/examples/evidence_adapters.json \
+            --service-path servicetracer/examples/remote_access_service_path.json \
+            --report-view technician-handoff \
+            --output "$ARTIFACT_DIR/technician-handoff-report.json"
+
+          jq -e '
+            .load_balancer.status == "healthy_under_configured_probe" and
+            .localization.suspect_backend == "VPN-02" and
+            .localization.healthy_comparison_backend == "VPN-01" and
+            .investigation_boundary.exact_root_cause_claimed == false
+          ' "$ARTIFACT_DIR/technician-handoff-report.json" >/dev/null
+
+      - name: Write terminal proof summary
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            echo '## TLS accept-loop Azure deployment run 3'
+            echo
+            echo "- Workflow source: \`$GITHUB_SHA\`"
+            echo "- Run attempt: \`$GITHUB_RUN_ATTEMPT\`"
+            echo '- Authorization: issue #169 / user instruction “Proceed”'
+            echo '- Sidecar prerequisite: proven in the Azure Ubuntu/systemd guest'
+            echo '- Target order: VPN-01, probe gate, then VPN-02'
+            echo '- Azure networking changes: none'
+            echo '- New resources or quota: none'
+            echo '- Expected recurring cost delta: CAD $0'
+            if [[ -f "$ARTIFACT_DIR/vpn01-probe-status.json" ]]; then
+              echo '- VPN-01 probe status:'
+              echo '```json'
+              cat "$ARTIFACT_DIR/vpn01-probe-status.json"
+              echo '```'
+            fi
+            if [[ -f "$ARTIFACT_DIR/probe-status.json" ]]; then
+              echo '- Final probe status:'
+              echo '```json'
+              cat "$ARTIFACT_DIR/probe-status.json"
+              echo '```'
+            fi
+            if [[ -f "$ARTIFACT_DIR/technician-handoff-report.json" ]]; then
+              echo '- Deterministic transaction analysis completed.'
+            else
+              echo '- End-to-end transaction analysis was not completed.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload non-secret deployment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tls-accept-loop-deploy-run3-evidence
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
