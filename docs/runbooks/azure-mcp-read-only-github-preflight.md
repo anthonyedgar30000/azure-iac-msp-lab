@@ -17,7 +17,7 @@ Observed repository baseline for this increment:
 
 ```text
 main = 07f32b59eda11b5a3627d398f1ffca00c8c88e69
-open pull request = #188
+open pull requests = #188 and #189
 fresh Azure query = not performed
 actual Azure cost and quota = not freshly observed
 ```
