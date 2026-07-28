@@ -2,18 +2,24 @@
 
 ## Status
 
-**Canonical `main` at the branch boundary: Proposed, not implemented.**
+**Historical branch-boundary marker: Proposed, not implemented.** This sentence is retained only so historical validators can reproduce the pre-merge observation boundary.
 
-**Implementation candidate on `agent/durable-single-use-authorization-ledger-v1`; not merged or activated.** The branch implements the deterministic immutable-request verifier and a reusable no-OIDC claim workflow that uses GitHub's create-reference API. The collector Azure workflow remains quarantined.
+**Current canonical status: implementation merged to `main` in PR #186; merged, not activated.** The exact implementation head `138659609b15ef80f6cce12d916e26382ab71205` passed CI run `30389249099` and merged at `30e312ef5122831a8233835db2f541437a97b125`.
+
+The deterministic immutable-request verifier and reusable no-OIDC claim workflow are now repository implementation. They are not yet an operationally verified authorization control.
 
 The following remain deliberately incomplete:
 
 - the protected `refs/tags/authority-consumed/**` repository ruleset is not configured or independently inspected;
-- no live claim, replay, or concurrent-claim test has been dispatched;
+- no live first-claim, replay, or concurrent-claim test has been dispatched;
 - no collector deployment workflow calls this reusable workflow;
+- the collector Azure workflow remains quarantined and fail-closed;
 - no Azure authentication, query, mutation, deployment, verification, rollback, cleanup, or RBAC authority exists.
 
-`implementation_candidate != activated_control`
+```text
+implementation_merged != control_activated
+atomic_claim_workflow_present != protected_ledger_verified
+```
 
 ## Problem statement
 
@@ -27,7 +33,7 @@ deployment_succeeded != authority_valid
 
 The replacement must make consumption atomic, durable, immutable, independently auditable, and effective before any job capable of requesting Azure OIDC starts.
 
-## Implemented branch components
+## Implemented repository components
 
 ```text
 infra/scripts/authority_claim.py
@@ -44,7 +50,7 @@ infra/scripts/authority_claim.py
   -> exact caller commit checkout
   -> claim-authority job with contents: write and id-token: none
   -> atomic POST create refs/tags/authority-consumed/<request_id>
-  -> replay/duplicate failure before any downstream job
+  -> replay or duplicate failure before any downstream job
   -> durable-ref verification and sanitized evidence artifact
 
 infra/tests/test_durable_authorization_claim.py
@@ -53,7 +59,7 @@ infra/tests/test_durable_authorization_claim.py
   -> static replay and activation-boundary tests
 ```
 
-The verifier performs no GitHub mutation. The workflow performs only the first-writer-wins reference creation and read-back verification. It contains no Azure command and cannot be invoked manually because it exposes only `workflow_call`.
+The verifier performs no GitHub mutation. The workflow performs only first-writer-wins reference creation and read-back verification. It contains no Azure command and cannot be invoked manually because it exposes only `workflow_call`.
 
 ## Intended architecture
 
@@ -119,7 +125,7 @@ A repository ruleset must still protect `refs/tags/authority-consumed/**` from u
 
 ### 4. Future OIDC-capable Azure job
 
-No Azure job is implemented or restored by this branch.
+No Azure job is implemented or restored by this mechanism.
 
 A future Azure job must be a distinct caller job with:
 
@@ -171,7 +177,7 @@ Terminal reconciliation must keep authority validity, claim outcome, cloud outco
 
 ## Validation state
 
-Automated local and ordinary PR CI tests cover:
+Automated local and exact-head PR CI tests cover:
 
 - valid deterministic request validation;
 - tampered digest rejection;
@@ -212,15 +218,16 @@ The ledger uses GitHub repository references and has no expected Azure recurring
 
 ## Activation and restoration gates
 
-1. Complete exact-head ordinary PR CI with no Azure authentication.
-2. Review the complete diff and generated test evidence.
-3. Merge only under explicit merge authority.
-4. Configure and independently inspect the protected tag ruleset under separate repository-settings authority.
-5. Obtain fresh explicit authority for a bounded non-production live claim and replay test.
-6. Obtain fresh explicit authority for a concurrent duplicate-claim test.
-7. Reconcile observed results into canonical `.project/` state.
-8. Obtain separate fresh non-renewing authority before modifying or restoring any Azure-capable workflow.
-9. Keep a rapid quarantine path that removes OIDC and Azure commands if an invariant fails.
+1. Review the merged implementation and its exact-head CI evidence.
+2. Reconcile the merge into canonical `.project/` state.
+3. Configure and independently inspect the protected tag ruleset under separate repository-settings authority.
+4. Obtain fresh explicit authority for a bounded non-production live first-claim and replay test.
+5. Obtain fresh explicit authority for a concurrent duplicate-claim test.
+6. Reconcile observed test results into canonical `.project/` state.
+7. Obtain separate fresh non-renewing authority before modifying or restoring any Azure-capable workflow.
+8. Keep a rapid quarantine path that removes OIDC and Azure commands if an invariant fails.
+
+Merge authority used for PR #186 does not transfer to any later gate.
 
 ## Cleanup and decommissioning
 
@@ -237,6 +244,7 @@ Consumption references are durable audit records and are not routine cleanup tar
 - exact request JSON and digest;
 - authorization commit;
 - exact-head CI;
+- merge commit and canonical reconciliation;
 - ruleset configuration with sensitive values redacted;
 - first-claim, replay, and concurrent-claim results;
 - expiry, authorization-commit, repository, and workflow rejection results;
