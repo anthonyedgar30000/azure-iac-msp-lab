@@ -1,7 +1,7 @@
 {
   "schema_version": "project.state-index.v5",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-28T15:04:23-04:00",
+  "recorded_at": "2026-07-28T19:30:04-04:00",
   "canonical_current_reality": ".project/current-reality-v2.json",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
   "canonical_handoff": ".project/handoffs/current-state.md",
@@ -12,6 +12,8 @@
   "latest_control_incident": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
   "latest_repository_reconciliation": ".project/reconciliations/post-pr185-repository-watermark-20260728.json",
   "latest_repository_watermark_reconciliation": ".project/reconciliations/post-pr185-repository-watermark-20260728.json",
+  "latest_lifecycle_reconciliation": ".project/reconciliations/post-pr187-authorization-control-reconciliation-20260728.json",
+  "latest_authorization_control_reconciliation": ".project/reconciliations/post-pr187-authorization-control-reconciliation-20260728.json",
   "previous_repository_reconciliation": ".project/reconciliations/post-pr183-repository-watermark-20260728.json",
   "current_containment_reconciliation": ".project/reconciliations/post-pr182-containment-20260727.json",
   "replacement_authorization_design": ".project/designs/durable-single-use-authorization-ledger-v1.md",
@@ -50,13 +52,19 @@
       ]
     }
   ],
-  "selection_rule": "Operational consumers must resolve canonical paths, the preserved preflight, the latest terminal reconciliation, the latest repository reconciliation, current live GitHub state, and current authorization status before every write, merge, dispatch, authentication, or cloud action.",
+  "selection_rule": "Operational consumers must resolve canonical paths, the preserved preflight, the latest terminal reconciliation, the historical repository watermark reconciliation, the latest lifecycle reconciliation, the latest authorization-control reconciliation, current live GitHub state, and current authorization status before every write, merge, dispatch, authentication, ruleset change, live claim, or cloud action.",
   "claim_boundaries": [
     "legacy_filename != current_authority",
     "historical_snapshot != live_state",
     "verified_preflight != latest_runtime_reconciliation",
     "terminal_deployment_reconciliation != post_merge_repository_reconciliation",
     "repository_watermark_reconciliation != fresh_Azure_observation",
+    "control_implemented_on_main != control_activated",
+    "exact_head_CI_success != live_claim_verified",
+    "claim_workflow_id_token_none != protected_ruleset_configured",
+    "atomic_claim_code_present != concurrent_duplicate_claim_proven",
+    "stale_snapshot_lifecycle != live_repository_state",
+    "repository_setting_not_observed != false",
     "main_contains_frontend_implementation != GitHub_Pages_publication_observed",
     "architecture_explained != runtime_proof_manufactured",
     "workflow_conclusion != live_service_truth",
