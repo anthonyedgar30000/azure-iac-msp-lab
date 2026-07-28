@@ -1,7 +1,7 @@
 {
   "schema_version": "project.lab-v1-completion-gate.v6",
   "project": "ServiceTracer — Governed Azure Operations Lab",
-  "recorded_at": "2026-07-28T14:48:16-04:00",
+  "recorded_at": "2026-07-28T15:04:23-04:00",
   "governing_objective": "Complete and evidence-lock one production-shaped ServiceTracer workload from infrastructure-as-code declaration through deployment, security, runtime validation, monitoring, cost observation, and portfolio demonstration.",
   "decision_status": "runtime_verified_post_pr185_repository_reconciled_pr186_candidate_open_deployment_automation_quarantined",
   "active_golden_path": "collector-hosted demo API in rg-servicetracer-dev-westus2",
