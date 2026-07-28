@@ -1,0 +1,106 @@
+{
+  "schema_version": "project.azure-mcp-read-only-preflight-workflow.v1",
+  "status": "implementation_candidate_not_executed",
+  "project": "Azure IaC MSP Lab",
+  "objective": "Provide a manually dispatched, exact-commit-bound, OIDC-authenticated, read-only GitHub Actions preflight that observes Azure MCP hosting prerequisites and downloads the selected managed-identity template for review without provisioning Azure resources or calling the OpenAI API.",
+  "canonical_distinctions": [
+    "workflow_implemented != workflow_dispatched",
+    "azure_authentication_succeeded != azure_mutation_authorized",
+    "template_downloaded != template_approved",
+    "template_hashed != template_source_pinned",
+    "resource_group_observed != resource_group_created",
+    "preflight_passed != endpoint_deployed",
+    "endpoint_deployed != openai_client_connected",
+    "not_observed != absent"
+  ],
+  "repository_baseline": {
+    "observed_main": "07f32b59eda11b5a3627d398f1ffca00c8c88e69",
+    "open_pull_requests_observed": [
+      188,
+      189
+    ],
+    "fresh_azure_query_performed": false,
+    "local_working_tree_observed": false
+  },
+  "implementation": {
+    "workflow": ".github/workflows/azure-mcp-read-only-preflight.yml",
+    "script": "scripts/azure_mcp_cloud_shell_preflight.sh",
+    "test": "infra/tests/test_azure_mcp_read_only_preflight_workflow.py",
+    "runbook": "docs/runbooks/azure-mcp-read-only-github-preflight.md",
+    "trigger": "workflow_dispatch_only",
+    "exact_reviewed_commit_required": true,
+    "explicit_confirmation_required": true,
+    "github_environment": "azure-lab",
+    "azure_login": "workload_identity_federation",
+    "template_candidate": "azmcp-copilot-studio-aca-mi",
+    "template_source_pinned": false,
+    "azure_developer_cli_noninteractive": true,
+    "evidence_retention_days": 30
+  },
+  "permissions": {
+    "contents": "read",
+    "id_token": "write",
+    "azure_scope_source": "existing_AZURE_SUBSCRIPTION_ID_secret_and_federated_identity",
+    "azure_mutation_permissions_requested_by_workflow": false,
+    "effective_azure_rbac_freshly_observed": false
+  },
+  "allowed_observations": [
+    "account_context",
+    "subscription_location_catalog",
+    "provider_registration_state",
+    "resource_group_state",
+    "existing_resource_inventory",
+    "azure_cli_version",
+    "azure_developer_cli_version",
+    "downloaded_template_manifest_digest",
+    "downloaded_template_static_risk_scan"
+  ],
+  "denied_operations": [
+    "provider_registration",
+    "resource_group_creation",
+    "resource_creation",
+    "resource_update",
+    "resource_deletion",
+    "role_assignment_creation",
+    "role_assignment_deletion",
+    "entra_application_mutation",
+    "managed_identity_mutation",
+    "container_apps_provisioning",
+    "azd_up",
+    "azd_provision",
+    "azd_deploy",
+    "azd_down",
+    "openai_api_execution",
+    "cleanup"
+  ],
+  "repository_implementation_authorized": true,
+  "draft_pull_request_creation_authorized": true,
+  "workflow_dispatch_authorized": false,
+  "azure_authentication_performed": false,
+  "azure_mutation_authorized": false,
+  "azure_deployment_authorized": false,
+  "openai_api_execution_authorized": false,
+  "cleanup_authorized": false,
+  "cost_and_quota": {
+    "expected_azure_recurring_resource_cost_delta_cad": 0,
+    "actual_azure_cost_freshly_observed": false,
+    "quota_freshly_observed": false,
+    "github_actions_usage_may_apply": true
+  },
+  "failure_and_rollback": {
+    "fail_closed_conditions": [
+      "reviewed_commit_mismatch",
+      "confirmation_mismatch",
+      "azure_subscription_mismatch",
+      "subscription_disabled",
+      "location_not_available",
+      "azure_observation_failed",
+      "template_download_failed",
+      "template_hash_failed",
+      "template_source_unpinned"
+    ],
+    "rollback": "Close or revert the repository change before dispatch. A failed preflight creates no Azure resources; discard the runner workspace after preserving the protected evidence artifact.",
+    "cleanup": "No Azure cleanup is applicable because this workflow is prohibited from provisioning. Deletion of future Azure MCP resources requires separate cleanup authority."
+  },
+  "next_gate": "merge_exact_reviewed_commit_then_separately_authorize_one_read_only_preflight_dispatch"
+}

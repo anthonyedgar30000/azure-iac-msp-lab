@@ -1,0 +1,159 @@
+name: Azure MCP read-only preflight
+
+on:
+  workflow_dispatch:
+    inputs:
+      resource_group:
+        description: Proposed dedicated Azure MCP resource group to observe
+        required: true
+        default: rg-azure-mcp-dev-westus2
+        type: string
+      location:
+        description: Proposed Azure region to validate
+        required: true
+        default: westus2
+        type: string
+      reviewed_commit:
+        description: Exact 40-character repository commit reviewed for this preflight
+        required: true
+        type: string
+      confirmation:
+        description: Enter OBSERVE-AZURE-MCP:<resource-group>:<location>:<reviewed-commit>
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: azure-mcp-read-only-preflight
+  cancel-in-progress: false
+
+env:
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+  AZD_NON_INTERACTIVE: 'true'
+  AZD_SKIP_FIRST_RUN: 'true'
+
+jobs:
+  preflight:
+    name: Observe Azure MCP prerequisites without mutation
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact reviewed repository state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.reviewed_commit }}
+          fetch-depth: 0
+
+      - name: Validate bounded read-only authority
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RESOURCE_GROUP" =~ ^[A-Za-z0-9._()-]{1,90}$ ]]
+          [[ "$RESOURCE_GROUP" != *. ]]
+          [[ "$LOCATION" =~ ^[a-z0-9]+$ ]]
+          [[ "$REVIEWED_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$(git rev-parse HEAD)" == "$REVIEWED_COMMIT" ]]
+          expected="OBSERVE-AZURE-MCP:${RESOURCE_GROUP}:${LOCATION}:${REVIEWED_COMMIT}"
+          [[ "$CONFIRMATION" == "$expected" ]] || {
+            echo "Confirmation must exactly equal: $expected" >&2
+            exit 1
+          }
+
+          workdir="$RUNNER_TEMP/azure-mcp-read-only-preflight"
+          mkdir -p "$workdir/evidence"
+          jq -n \
+            --arg operation azure_mcp_read_only_preflight \
+            --arg reviewed_commit "$REVIEWED_COMMIT" \
+            --arg resource_group "$RESOURCE_GROUP" \
+            --arg location "$LOCATION" \
+            '{
+              operation:$operation,
+              reviewed_commit:$reviewed_commit,
+              resource_group:$resource_group,
+              location:$location,
+              template:"azmcp-copilot-studio-aca-mi",
+              template_source_pinned:false,
+              azure_authentication_authorized:true,
+              azure_mutations_authorized:false,
+              deployment_authorized:false,
+              openai_api_execution_authorized:false
+            }' > "$workdir/evidence/request.json"
+
+      - name: Verify static workflow and script boundaries before Azure login
+        run: python -m unittest infra.tests.test_azure_mcp_read_only_preflight_workflow -v
+
+      - name: Set up Azure Developer CLI
+        uses: Azure/setup-azd@v2
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Run read-only Azure MCP preflight
+        env:
+          AZURE_MCP_HOSTING_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_MCP_LOCATION: ${{ inputs.location }}
+          AZURE_MCP_RESOURCE_GROUP: ${{ inputs.resource_group }}
+          AZURE_MCP_TEMPLATE: azmcp-copilot-studio-aca-mi
+          AZURE_MCP_AZD_ENVIRONMENT_NAME: azmcp-preflight
+          AZURE_MCP_WORKDIR: ${{ runner.temp }}/azure-mcp-read-only-preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/azure_mcp_cloud_shell_preflight.sh
+          scripts/azure_mcp_cloud_shell_preflight.sh
+
+      - name: Write protected evidence manifest
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence_dir="$RUNNER_TEMP/azure-mcp-read-only-preflight/evidence"
+          if [[ -d "$evidence_dir" ]]; then
+            find "$evidence_dir" -type f ! -name artifact-manifest.sha256 -print0 \
+              | sort -z \
+              | xargs -0 -r sha256sum \
+              > "$evidence_dir/artifact-manifest.sha256"
+          fi
+
+      - name: Summarize authority boundary
+        if: always()
+        env:
+          RESOURCE_GROUP: ${{ inputs.resource_group }}
+          LOCATION: ${{ inputs.location }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+        shell: bash
+        run: |
+          {
+            echo '## Azure MCP read-only preflight'
+            echo
+            echo "- Reviewed commit: \`$REVIEWED_COMMIT\`"
+            echo "- Proposed resource group: \`$RESOURCE_GROUP\`"
+            echo "- Proposed location: \`$LOCATION\`"
+            echo '- Azure authentication: authorized only for this bounded preflight'
+            echo '- Azure mutation authority: `false`'
+            echo '- Azure deployment authority: `false`'
+            echo '- OpenAI API execution authority: `false`'
+            echo '- The downloaded template alias remains unpinned and cannot pass the deployment gate.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload protected non-secret preflight evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-mcp-read-only-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/azure-mcp-read-only-preflight/evidence
+          if-no-files-found: error
+          retention-days: 30
