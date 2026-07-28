@@ -7,6 +7,7 @@
   <title>ServiceTracer — Remote Access Incident</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="live-monitor.css">
+  <link rel="stylesheet" href="architecture.css">
 </head>
 <body>
   <main class="shell">
@@ -207,6 +208,129 @@
       <ol id="workflow-list" class="workflow-list"></ol>
       <div id="completion-message" class="completion-message is-hidden">
         Controlled validation complete. The original user has been returned to VPN-02 and service is verified.
+      </div>
+    </section>
+
+    <section id="architecture-explainer" class="panel architecture-panel" aria-labelledby="architecture-title">
+      <div class="architecture-heading">
+        <div>
+          <p class="eyebrow">Application architecture</p>
+          <h2 id="architecture-title">How ServiceTracer works</h2>
+          <p class="architecture-intro">The page above shows the incident result. This map explains the request path, the private application security boundary, and how correlated backend evidence becomes a bounded diagnostic report.</p>
+        </div>
+        <span class="architecture-state">Current collector-hosted golden path</span>
+      </div>
+
+      <div class="architecture-zones" aria-label="ServiceTracer request path from the browser through the private collector to the synthetic VPN backends">
+        <section class="architecture-zone architecture-zone-public" aria-labelledby="public-zone-title">
+          <div class="architecture-zone-heading">
+            <span>Zone 1</span>
+            <strong id="public-zone-title">Public presentation and ingress</strong>
+          </div>
+          <article class="architecture-node">
+            <span class="architecture-node-kicker">Browser</span>
+            <strong>GitHub Pages frontend</strong>
+            <span class="architecture-node-detail">Loads the operator console, checks <code>/api/health</code>, and sends <code>POST /api/demo/run</code>.</span>
+          </article>
+          <article class="architecture-node">
+            <span class="architecture-node-kicker">Name and address</span>
+            <strong>Azure DNS → pip-st-demo-api-mst-dev</strong>
+            <span class="architecture-node-detail">Resolves the public ServiceTracer hostname to the dedicated Standard public IP.</span>
+          </article>
+          <article class="architecture-node architecture-node-emphasis">
+            <span class="architecture-node-kicker">Controlled ingress</span>
+            <strong>lb-st-demo-api-mst-dev</strong>
+            <span class="architecture-node-detail">Forwards TCP 80/443 to the private collector. The load balancer does not inspect the application request or terminate TLS.</span>
+          </article>
+        </section>
+
+        <div class="architecture-arrow" aria-hidden="true"><span>TCP 80/443</span></div>
+
+        <section class="architecture-zone architecture-zone-controlled" aria-labelledby="controlled-zone-title">
+          <div class="architecture-zone-heading">
+            <span>Zone 2</span>
+            <strong id="controlled-zone-title">Private application security boundary</strong>
+          </div>
+          <span class="security-boundary-label">Mediated access only</span>
+          <article class="architecture-node architecture-node-emphasis">
+            <span class="architecture-node-kicker">Private collector</span>
+            <strong>vm-stcollector-mst-dev · 10.20.40.10</strong>
+            <span class="architecture-node-detail">The collector has no directly attached public IP. NSG rules admit only the required web path from the public ingress.</span>
+          </article>
+          <article class="architecture-node">
+            <span class="architecture-node-kicker">Security gateway</span>
+            <strong>Nginx reverse proxy</strong>
+            <span class="architecture-node-detail">Terminates TLS, redirects HTTP, rate-limits analysis requests, restricts request size, and exposes only the approved API routes.</span>
+          </article>
+          <article class="architecture-node architecture-node-emphasis">
+            <span class="architecture-node-kicker">Application process</span>
+            <strong>Python API · 127.0.0.1:8090</strong>
+            <span class="architecture-node-detail">Listens only on loopback, validates the browser origin, creates request identities, and runs bounded parallel transactions.</span>
+          </article>
+        </section>
+
+        <div class="architecture-arrow" aria-hidden="true"><span>HTTPS /transaction</span></div>
+
+        <section class="architecture-zone architecture-zone-services" aria-labelledby="services-zone-title">
+          <div class="architecture-zone-heading">
+            <span>Zone 3</span>
+            <strong id="services-zone-title">Synthetic remote-access service</strong>
+          </div>
+          <article class="architecture-node architecture-node-emphasis">
+            <span class="architecture-node-kicker">Traffic distribution</span>
+            <strong>lb-remote-access-mst-dev</strong>
+            <span class="architecture-node-detail">Distributes each correlated transaction across the two synthetic VPN backends.</span>
+          </article>
+          <div class="architecture-backends">
+            <article class="architecture-node architecture-node-healthy">
+              <span class="architecture-node-kicker">Backend</span>
+              <strong>vm-vpn01-mst-dev</strong>
+              <span class="architecture-node-detail">Returns a successful synthetic transaction.</span>
+            </article>
+            <article class="architecture-node architecture-node-failed">
+              <span class="architecture-node-kicker">Backend</span>
+              <strong>vm-vpn02-mst-dev</strong>
+              <span class="architecture-node-detail">Returns a controlled dependency failure for localization.</span>
+            </article>
+          </div>
+          <article class="architecture-node architecture-node-result">
+            <span class="architecture-node-kicker">Evidence output</span>
+            <strong>Correlated comparison</strong>
+            <span class="architecture-node-detail">ServiceTracer compares backend outcomes, preserves uncertainty, and reports where a technician should continue investigating.</span>
+          </article>
+        </section>
+      </div>
+
+      <div class="architecture-return">
+        <span class="architecture-return-arrow" aria-hidden="true">↩</span>
+        <span><strong>Return path:</strong> structured backend evidence travels back through the collector API and demo API load balancer, then the browser renders the finding and investigation boundary.</span>
+      </div>
+
+      <div class="architecture-explanation-grid">
+        <section class="architecture-subpanel" aria-labelledby="walkthrough-title">
+          <h3 id="walkthrough-title">Request walkthrough</h3>
+          <ol class="architecture-steps">
+            <li>The browser verifies the live API health contract and Azure host identity.</li>
+            <li>The operator starts a bounded incident-analysis request.</li>
+            <li>The dedicated public load balancer forwards TCP 443 to the private collector.</li>
+            <li>Nginx applies the public security controls and proxies the accepted request to loopback.</li>
+            <li>The Python API creates unique correlations and sends bounded parallel transactions.</li>
+            <li>The remote-access load balancer selects VPN-01 or VPN-02 for each transaction.</li>
+            <li>ServiceTracer compares successful and failed outcomes without inventing an exact root cause.</li>
+            <li>The frontend renders the finding, evidence summary, and technician-owned next steps.</li>
+          </ol>
+        </section>
+
+        <section class="architecture-subpanel" aria-labelledby="truth-title">
+          <h3 id="truth-title">Evidence and truth boundaries</h3>
+          <div class="truth-boundaries">
+            <div class="truth-boundary"><code>load_balancer_probe_healthy != complete_transaction_healthy</code></div>
+            <div class="truth-boundary"><code>resource_deployed != service_validated</code></div>
+            <div class="truth-boundary"><code>API_reachable != backend_dependency_healthy</code></div>
+            <div class="truth-boundary"><code>finding_localized != exact_root_cause_proven</code></div>
+          </div>
+          <p class="architecture-note">The live provenance panel remains the authority for the currently observed endpoint, Azure identity, deployed source, request correlation, and transaction state. This architecture section explains the path; it does not manufacture runtime proof.</p>
+        </section>
       </div>
     </section>
 
