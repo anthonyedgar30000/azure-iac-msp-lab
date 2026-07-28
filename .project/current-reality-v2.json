@@ -1,7 +1,7 @@
 {
   "schema_version": "project.current-reality.v6",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-28T14:48:16-04:00",
+  "recorded_at": "2026-07-28T15:04:23-04:00",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "interpretation_boundary": "This is a time-bounded evidence reconciliation, not a continuously refreshed GitHub or Azure dashboard. Live repository state must be queried before every write, merge, dispatch, authentication, or cloud action.",
   "repository_state": {
