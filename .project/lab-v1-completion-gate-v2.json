@@ -1,9 +1,9 @@
 {
-  "schema_version": "project.lab-v1-completion-gate.v4",
+  "schema_version": "project.lab-v1-completion-gate.v5",
   "project": "ServiceTracer — Governed Azure Operations Lab",
-  "recorded_at": "2026-07-27T23:33:20-04:00",
+  "recorded_at": "2026-07-28T00:55:38-04:00",
   "governing_objective": "Complete and evidence-lock one production-shaped ServiceTracer workload from infrastructure-as-code declaration through deployment, security, runtime validation, monitoring, cost observation, and portfolio demonstration.",
-  "decision_status": "runtime_verified_containment_merged_deployment_automation_quarantined",
+  "decision_status": "runtime_verified_post_containment_reconciled_deployment_automation_quarantined",
   "active_golden_path": "collector-hosted demo API in rg-servicetracer-dev-westus2",
   "scope_control": {
     "parallel_feature_expansion_allowed": false,
@@ -53,7 +53,7 @@
       {
         "criterion_id": "p0-evidence-lock",
         "requirement": "Capture source, CI, authorization, deployment, control-plane, endpoint, transaction, browser, and sanitized portfolio evidence.",
-        "current_status": "source_CI_authority_two_attempts_runtime_and_containment_locked_browser_monitoring_cost_and_control_restoration_pending",
+        "current_status": "source_CI_authority_two_attempts_runtime_containment_and_post_PR183_repository_watermark_locked_browser_monitoring_cost_and_control_restoration_pending",
         "complete": false
       }
     ]
@@ -110,6 +110,7 @@
     "canonical_state_index": ".project/state-index.json",
     "terminal_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
     "post_containment_reconciliation": ".project/reconciliations/post-pr182-containment-20260727.json",
+    "post_pr183_repository_reconciliation": ".project/reconciliations/post-pr183-repository-watermark-20260728.json",
     "consumed_request": ".project/deployment-requests/correlation-identity-run1.json",
     "replacement_authorization_design": ".project/designs/durable-single-use-authorization-ledger-v1.md",
     "reviewed_source": "0b6b5322f25b3d0289f6c0febdcfd800ea4b909a",
@@ -118,7 +119,11 @@
     "authorized_deployment_artifact": 8670172029,
     "unauthorized_replay_run": 30315658677,
     "unauthorized_replay_artifact": 8672070574,
-    "observed_main": "516cc45972725f494815449f55f02f96727afbde",
+    "observed_main": "db74fc764f93a972344dae35ed906e8128f51eb8",
+    "latest_merged_pull_request": 183,
+    "latest_merged_source_head": "52ab387418e77aed0cd23a2d827b359a8ae0ac40",
+    "latest_exact_head_ci_run": 30326878347,
+    "merge_commit_pr_triggered_ci": "not_observed",
     "trigger_pull_request_181": "closed_without_merge",
     "containment_pull_request_182": "merged",
     "containment_exact_head": "5e544794243f814bca19210e65943995f4f6b2de",
@@ -139,13 +144,16 @@
       "issue_comment_consumption_record != enforced_single_use",
       "closed_trigger_PR != historical_run_unrerunnable",
       "API_contract_verified != browser_DOM_render_verified",
+      "repository_watermark_reconciled != Azure_freshly_observed",
       "static_repository_proof != fresh_Azure_observation"
     ]
   },
   "authority": {
     "repository_gate_reconciliation": true,
+    "repository_watermark_reconciliation": true,
     "repository_authorization_design": true,
     "ordinary_pull_request_ci": true,
+    "pull_request_merge": false,
     "workflow_dispatch_or_rerun": false,
     "azure_authentication": false,
     "azure_query": false,

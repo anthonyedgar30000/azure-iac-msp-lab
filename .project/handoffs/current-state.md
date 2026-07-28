@@ -2,7 +2,7 @@
 
 ## Interpretation boundary
 
-This handoff records repository state observed through **2026-07-27T23:33:20-04:00** and Azure evidence last captured by preserved workflow artifacts. It is not a continuously refreshed GitHub or Azure dashboard. Query live GitHub state and obtain fresh Azure evidence before any write, merge, dispatch, authentication, or cloud action.
+This handoff records repository state observed through **2026-07-28T00:55:38-04:00** and Azure evidence last captured by preserved workflow artifacts. It is not a continuously refreshed GitHub or Azure dashboard. Query live GitHub state and obtain fresh Azure evidence before any write, merge, dispatch, authentication, or cloud action.
 
 ```text
 declared_in_code != deployed_in_azure
@@ -11,6 +11,7 @@ workflow_conclusion != live_service_truth
 deployment_succeeded != authority_valid
 issue_comment_consumption_record != enforced_single_use
 closed_trigger_PR != historical_run_unrerunnable
+repository_watermark_reconciled != Azure_freshly_observed
 static_repository_proof != fresh_Azure_observation
 not_observed != false
 ```
@@ -23,7 +24,8 @@ current reality: .project/current-reality-v2.json
 completion gate: .project/lab-v1-completion-gate-v2.json
 current handoff: .project/handoffs/current-state.md
 latest terminal deployment reconciliation: .project/reconciliations/correlation-identity-run1-terminal-20260727.json
-post-containment repository reconciliation: .project/reconciliations/post-pr182-containment-20260727.json
+containment reconciliation: .project/reconciliations/post-pr182-containment-20260727.json
+latest repository reconciliation: .project/reconciliations/post-pr183-repository-watermark-20260728.json
 consumed request: .project/deployment-requests/correlation-identity-run1.json
 replacement authorization design: .project/designs/durable-single-use-authorization-ledger-v1.md
 ```
@@ -32,19 +34,20 @@ replacement authorization design: .project/designs/durable-single-use-authorizat
 
 ```text
 repository: anthonyedgar30000/azure-iac-msp-lab
-observed main: 516cc45972725f494815449f55f02f96727afbde
-latest merged PR: #182
-PR #182 exact tested head: 5e544794243f814bca19210e65943995f4f6b2de
-PR #182 CI: 30324033493 / success
-current-reality lifecycle: 30324033482 / success
-shared-state reconciliation: 30324033498 / success
-Azure architecture plan: 30324033472 / success
+observed main: db74fc764f93a972344dae35ed906e8128f51eb8
+latest merged PR: #183
+PR #183 exact tested head: 52ab387418e77aed0cd23a2d827b359a8ae0ac40
+PR #183 CI: 30326878347 / success
+current-reality lifecycle: 30326878314 / success
+shared-state reconciliation: 30326878316 / success
+Azure architecture plan: 30326878319 / success
+merge-commit PR-triggered CI: not observed
 trigger PR #181: closed without merge
 open pull requests observed: none
 local working tree: not observed; connector-backed repository operations
 ```
 
-The deployed application source remains `0b6b5322f25b3d0289f6c0febdcfd800ea4b909a`. Main is newer because it contains governance containment, state reconciliation, and tests. No newer application implementation was observed.
+The deployed application source remains `0b6b5322f25b3d0289f6c0febdcfd800ea4b909a`. Main is newer because it contains governance containment, post-containment reconciliation, the authorization-ledger design, canonical state, and tests. No newer application implementation was observed.
 
 ## Correlation deployment authority
 
@@ -149,6 +152,8 @@ new Azure authority created: false
 
 Static repository proof establishes that a replay can no longer obtain Azure OIDC or execute Azure commands through the current child workflow. This is not a fresh Azure runtime observation.
 
+PR #183 then reconciled that containment into canonical state and documented the proposed durable single-use authorization ledger. The design is proposed, not implemented; the collector workflow remains quarantined.
+
 ## Lab v1 gate
 
 ```text
@@ -164,7 +169,7 @@ deployment automation safely available: false / quarantined
 
 ## Historical compatibility anchors
 
-The following markers remain only so durable historical validators can reproduce their original observation boundaries. They do not override the current terminal or post-containment reconciliation.
+The following markers remain only so durable historical validators can reproduce their original observation boundaries. They do not override the current terminal or repository reconciliation.
 
 ```text
 legacy canonical main: 665e051375594d11e58e434231bd06775dbdc560
@@ -193,8 +198,9 @@ prior run-19 reconciliation: .project/reconciliations/collector-provenance-deplo
 ## Current authority
 
 ```text
-repository reconciliation and design: authorized
+repository watermark reconciliation: authorized
 ordinary pull-request CI: authorized
+pull-request merge: unauthorized
 workflow dispatch or rerun: unauthorized
 Azure authentication, query, or mutation: unauthorized
 rollback: unauthorized

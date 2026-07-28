@@ -1,38 +1,41 @@
 {
-  "schema_version": "project.current-reality.v4",
+  "schema_version": "project.current-reality.v5",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-27T23:33:20-04:00",
+  "recorded_at": "2026-07-28T00:55:38-04:00",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "interpretation_boundary": "This is a time-bounded evidence reconciliation, not a continuously refreshed GitHub or Azure dashboard. Live repository state must be queried before every write, merge, dispatch, or cloud action.",
   "repository_state": {
     "default_branch": "main",
-    "observed_main": "516cc45972725f494815449f55f02f96727afbde",
-    "latest_merged_pull_request": 182,
-    "latest_merged_source_head": "5e544794243f814bca19210e65943995f4f6b2de",
-    "latest_exact_head_ci_run": 30324033493,
+    "observed_main": "db74fc764f93a972344dae35ed906e8128f51eb8",
+    "latest_merged_pull_request": 183,
+    "latest_merged_source_head": "52ab387418e77aed0cd23a2d827b359a8ae0ac40",
+    "latest_exact_head_ci_run": 30326878347,
     "latest_exact_head_ci_conclusion": "success",
-    "containment_ci_runs": {
+    "post_containment_ci_runs": {
       "ci": {
-        "run_id": 30324033493,
+        "run_id": 30326878347,
         "conclusion": "success"
       },
       "current_reality_lifecycle": {
-        "run_id": 30324033482,
+        "run_id": 30326878314,
         "conclusion": "success"
       },
       "shared_state_reconciliation": {
-        "run_id": 30324033498,
+        "run_id": 30326878316,
         "conclusion": "success"
       },
       "azure_architecture_plan": {
-        "run_id": 30324033472,
+        "run_id": 30326878319,
         "conclusion": "success"
       }
     },
     "trigger_pull_request_181": "closed_without_merge",
     "containment_pull_request_182": "merged",
     "containment_merge_commit": "516cc45972725f494815449f55f02f96727afbde",
-    "open_pull_requests_after_containment_merge": [],
+    "post_containment_pull_request_183": "merged",
+    "post_containment_merge_commit": "db74fc764f93a972344dae35ed906e8128f51eb8",
+    "merge_commit_pr_triggered_ci": "not_observed",
+    "open_pull_requests_after_post_containment_merge": [],
     "local_working_tree": "not_observed_connector_backed"
   },
   "source_lineage": {
@@ -43,7 +46,7 @@
     "repair_ci_conclusion": "success",
     "current_main_contains_reviewed_source": true,
     "current_main_equals_deployed_source": false,
-    "main_delta_after_deployed_source": "governance containment, canonical state reconciliation, and tests; no newer application implementation observed"
+    "main_delta_after_deployed_source": "governance containment, post-containment reconciliation, authorization-ledger design, canonical state, and tests; no newer application implementation observed"
   },
   "authorization_state": {
     "request": ".project/deployment-requests/correlation-identity-run1.json",
@@ -157,6 +160,7 @@
     "mechanism": "Issue-comment consumption was evidentiary but not an enforced external single-use ledger. A GitHub Actions rerun reused the original opened-event request snapshot.",
     "terminal_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
     "post_merge_reconciliation": ".project/reconciliations/post-pr182-containment-20260727.json",
+    "latest_repository_reconciliation": ".project/reconciliations/post-pr183-repository-watermark-20260728.json",
     "containment": {
       "collector_workflow_quarantined": true,
       "collector_workflow_state": "quarantined_on_main",
@@ -185,8 +189,10 @@
   },
   "authority": {
     "repository_reconciliation_authorized": true,
+    "repository_watermark_reconciliation_authorized": true,
     "repository_design_authorized": true,
     "ordinary_pull_request_ci_authorized": true,
+    "pull_request_merge_authorized": false,
     "workflow_dispatch_or_rerun_authorized": false,
     "azure_authentication_authorized": false,
     "azure_query_authorized": false,
@@ -202,6 +208,7 @@
     "deployment_succeeded != authority_valid",
     "issue_comment_consumption_record != enforced_single_use",
     "closed_trigger_PR != historical_run_unrerunnable",
+    "repository_watermark_reconciled != Azure_freshly_observed",
     "static_repository_proof != fresh_Azure_observation",
     "not_observed != false",
     "estimated_cost != actual_cost",
