@@ -34,6 +34,7 @@ PR #180 source: 51286ff49b86e02d69a4169925880d0970a82e36
 PR #180 exact-head CI: 30310296654 / success
 trigger PR #181: closed without merge
 containment branch: agent/quarantine-correlation-replay
+containment PR: #182
 local working tree: not observed; connector-backed changes
 ```
 
@@ -120,7 +121,7 @@ browser DOM refresh: pending user observation
 
 ## Control incident and containment
 
-The root cause is an **authorization consumption control failure**. The dispatcher wrote a consumed marker to an issue comment but did not consult a durable external single-use ledger before every cloud dispatch. A GitHub Actions rerun reused the original opened-event request snapshot and dispatched a second child run.
+The root cause is an **authorization consumption control failure** under the canonical **Authorization Consumption Principle**. The dispatcher wrote a consumed marker to an issue comment but did not consult a durable external single-use ledger before every cloud dispatch. A GitHub Actions rerun reused the original opened-event request snapshot and dispatched a second child run.
 
 Repository-only containment on `agent/quarantine-correlation-replay`:
 
@@ -147,6 +148,16 @@ monitoring and alert delivery verified: false
 effective least privilege verified: false
 fresh actual cost observed: false
 deployment automation safely available: false / quarantined
+```
+
+## Historical compatibility anchors
+
+These values remain historical evidence only. They do not override the current terminal reconciliation.
+
+```text
+authorization reconciliation merge: 92b0c3b1064158684a4b280348c77eeedba6dfc3
+preserved verified preflight: .project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json
+prior run-19 reconciliation: .project/reconciliations/collector-provenance-deployment-run19-20260726.json
 ```
 
 ## Current authority
