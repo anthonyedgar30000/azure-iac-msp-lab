@@ -2,6 +2,8 @@
 
 ## Status
 
+**Canonical `main` at the branch boundary: Proposed, not implemented.**
+
 **Implementation candidate on `agent/durable-single-use-authorization-ledger-v1`; not merged or activated.** The branch implements the deterministic immutable-request verifier and a reusable no-OIDC claim workflow that uses GitHub's create-reference API. The collector Azure workflow remains quarantined.
 
 The following remain deliberately incomplete:
