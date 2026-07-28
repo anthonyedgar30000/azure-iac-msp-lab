@@ -1,16 +1,28 @@
 {
-  "schema_version": "project.state-index.v1",
+  "schema_version": "project.state-index.v2",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-27T09:22:25-04:00",
+  "recorded_at": "2026-07-27T22:34:00-04:00",
   "canonical_current_reality": ".project/current-reality-v2.json",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
   "canonical_handoff": ".project/handoffs/current-state.md",
-  "latest_verified_reconciliation": ".project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json",
-  "latest_deployment_reconciliation": ".project/reconciliations/collector-provenance-deployment-run19-20260726.json",
-  "latest_authorization_resolution": ".project/reconciliations/collector-provenance-deployment-run19-20260726.json",
-  "prior_authorization_resolution": ".project/reconciliations/post-pr137-provenance-authority-expiry-20260727.json",
+  "latest_verified_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
+  "latest_deployment_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
+  "latest_authorization_resolution": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
+  "latest_control_incident": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
   "active_deployment_authorization": null,
-  "consumed_deployment_authorization": ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json",
+  "consumed_deployment_authorization": ".project/deployment-requests/correlation-identity-run1.json",
+  "historical_reconciliations": [
+    {
+      "path": ".project/reconciliations/collector-provenance-deployment-run19-20260726.json",
+      "classification": "historical_failed_extension_lifecycle_attempt",
+      "authoritative_for_current_operations": false
+    },
+    {
+      "path": ".project/reconciliations/post-pr137-provenance-authority-expiry-20260727.json",
+      "classification": "historical_observation_boundary_before_run19_artifact_review",
+      "authoritative_for_current_operations": false
+    }
+  ],
   "legacy_compatibility_snapshots": [
     {
       "path": ".project/current-reality.json",
@@ -31,13 +43,14 @@
       ]
     }
   ],
-  "selection_rule": "Operational consumers must resolve canonical paths, verified preflight evidence, the latest deployment reconciliation, and current authorization status through this index.",
+  "selection_rule": "Operational consumers must resolve canonical paths, the latest terminal reconciliation, current live GitHub state, and current authorization status before every write, merge, dispatch, authentication, or cloud action.",
   "claim_boundaries": [
     "legacy_filename != current_authority",
     "historical_snapshot != live_state",
-    "verified_preflight != deployment_completed",
-    "deployment_reconciliation != deployment_success",
-    "authorization_expired != authorization_consumed",
+    "workflow_conclusion != live_service_truth",
+    "deployment_succeeded != authority_valid",
+    "issue_comment_consumption_record != enforced_single_use",
+    "closed_trigger_PR != historical_run_unrerunnable",
     "consumed_authorization != active_authorization",
     "failed_attempt != authorization_to_retry",
     "not_observed != false"
