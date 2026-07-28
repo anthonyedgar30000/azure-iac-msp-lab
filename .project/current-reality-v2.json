@@ -14,7 +14,7 @@
     "trigger_pull_request_181": "closed_without_merge",
     "open_pull_requests_after_trigger_closure": [],
     "reconciliation_branch": "agent/quarantine-correlation-replay",
-    "reconciliation_pull_request": "not_created_at_recording_time",
+    "reconciliation_pull_request": 182,
     "local_working_tree": "not_observed_connector_backed"
   },
   "source_lineage": {
@@ -104,6 +104,32 @@
     "failed_transactions": 10,
     "exact_root_cause_claimed": false,
     "browser_dom_refresh_verified": false
+  },
+  "collector_demo_api": {
+    "compatibility_projection": "Derived from azure_state and runtime_state for established consumers; not a second source of truth.",
+    "frontend_binding": {
+      "configured_endpoint": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+      "collector_golden_path_required": true,
+      "browser_transaction_verified": false
+    },
+    "deployment": {
+      "performed": true,
+      "succeeded": true,
+      "authority_consumed": true,
+      "unauthorized_replay_observed": true,
+      "latest_observed_run_id": 30315658677
+    },
+    "runtime_evidence": {
+      "health_verified": true,
+      "azure_host_identity_verified_live": true,
+      "request_correlation_verified": true,
+      "transactions_verified": true,
+      "browser_transaction_verified": false
+    }
+  },
+  "independent_demo_api": {
+    "collector_golden_path": false,
+    "classification": "historical_non_golden_path"
   },
   "control_incident": {
     "classification": "authorization_consumption_control_failure",
