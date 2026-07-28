@@ -1,9 +1,9 @@
 {
-  "schema_version": "project.lab-v1-completion-gate.v5",
+  "schema_version": "project.lab-v1-completion-gate.v6",
   "project": "ServiceTracer — Governed Azure Operations Lab",
-  "recorded_at": "2026-07-28T00:55:38-04:00",
+  "recorded_at": "2026-07-28T14:48:16-04:00",
   "governing_objective": "Complete and evidence-lock one production-shaped ServiceTracer workload from infrastructure-as-code declaration through deployment, security, runtime validation, monitoring, cost observation, and portfolio demonstration.",
-  "decision_status": "runtime_verified_post_containment_reconciled_deployment_automation_quarantined",
+  "decision_status": "runtime_verified_post_pr185_repository_reconciled_deployment_automation_quarantined",
   "active_golden_path": "collector-hosted demo API in rg-servicetracer-dev-westus2",
   "scope_control": {
     "parallel_feature_expansion_allowed": false,
@@ -46,14 +46,14 @@
       },
       {
         "criterion_id": "p0-browser-demonstration",
-        "requirement": "Verify the public operator console renders the exact governed API result.",
-        "current_status": "API_and_served_contract_verified_browser_DOM_refresh_pending_user_observation",
+        "requirement": "Verify the public operator console renders the exact governed API result and the merged architecture explainer.",
+        "current_status": "API_and_served_contract_verified_PR185_frontend_source_CI_verified_GitHub_Pages_publication_and_browser_DOM_refresh_not_freshly_observed",
         "complete": false
       },
       {
         "criterion_id": "p0-evidence-lock",
         "requirement": "Capture source, CI, authorization, deployment, control-plane, endpoint, transaction, browser, and sanitized portfolio evidence.",
-        "current_status": "source_CI_authority_two_attempts_runtime_containment_and_post_PR183_repository_watermark_locked_browser_monitoring_cost_and_control_restoration_pending",
+        "current_status": "source_CI_authority_two_attempts_runtime_containment_and_post_PR185_repository_watermark_locked_browser_monitoring_cost_and_control_restoration_pending",
         "complete": false
       }
     ]
@@ -97,6 +97,7 @@
       "healthy corrected API",
       "bounded synthetic service failure",
       "deterministic ServiceTracer localization",
+      "verified frontend architecture explainer",
       "verified alert or operational evidence",
       "bounded technician handoff",
       "cost observation",
@@ -110,7 +111,8 @@
     "canonical_state_index": ".project/state-index.json",
     "terminal_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
     "post_containment_reconciliation": ".project/reconciliations/post-pr182-containment-20260727.json",
-    "post_pr183_repository_reconciliation": ".project/reconciliations/post-pr183-repository-watermark-20260728.json",
+    "previous_repository_reconciliation": ".project/reconciliations/post-pr183-repository-watermark-20260728.json",
+    "post_pr185_repository_reconciliation": ".project/reconciliations/post-pr185-repository-watermark-20260728.json",
     "consumed_request": ".project/deployment-requests/correlation-identity-run1.json",
     "replacement_authorization_design": ".project/designs/durable-single-use-authorization-ledger-v1.md",
     "reviewed_source": "0b6b5322f25b3d0289f6c0febdcfd800ea4b909a",
@@ -119,10 +121,10 @@
     "authorized_deployment_artifact": 8670172029,
     "unauthorized_replay_run": 30315658677,
     "unauthorized_replay_artifact": 8672070574,
-    "observed_main": "db74fc764f93a972344dae35ed906e8128f51eb8",
-    "latest_merged_pull_request": 183,
-    "latest_merged_source_head": "52ab387418e77aed0cd23a2d827b359a8ae0ac40",
-    "latest_exact_head_ci_run": 30326878347,
+    "observed_main": "ca994ce53642587bea370bee1c5a0633faaaece8",
+    "latest_merged_pull_request": 185,
+    "latest_merged_source_head": "36bbd5ab1ef3c579c43ad2df589f44362feced37",
+    "latest_exact_head_ci_run": 30359529916,
     "merge_commit_pr_triggered_ci": "not_observed",
     "trigger_pull_request_181": "closed_without_merge",
     "containment_pull_request_182": "merged",
@@ -145,6 +147,8 @@
       "closed_trigger_PR != historical_run_unrerunnable",
       "API_contract_verified != browser_DOM_render_verified",
       "repository_watermark_reconciled != Azure_freshly_observed",
+      "main_contains_frontend_implementation != GitHub_Pages_publication_observed",
+      "architecture_explained != runtime_proof_manufactured",
       "static_repository_proof != fresh_Azure_observation"
     ]
   },
@@ -153,6 +157,7 @@
     "repository_watermark_reconciliation": true,
     "repository_authorization_design": true,
     "ordinary_pull_request_ci": true,
+    "pull_request_creation": true,
     "pull_request_merge": false,
     "workflow_dispatch_or_rerun": false,
     "azure_authentication": false,
@@ -165,8 +170,8 @@
     "cleanup": false
   },
   "next_gate": {
-    "operation": "review the durable single-use authorization-ledger design while the collector workflow remains quarantined",
-    "after_review": "implement only under fresh explicit repository authority, prove replay rejection before any OIDC-capable job starts, and obtain separate fresh authority before restoring any Azure operation",
-    "claim_boundary": "This reconciliation and design create no Azure retry, rollback, verification, browser, RBAC, cleanup, or future deployment authority."
+    "operation": "review this repository-only reconciliation through ordinary pull-request CI while the collector workflow remains quarantined",
+    "after_review": "merge only under fresh explicit authority; separately observe GitHub Pages and browser rendering before claiming the frontend is published; review and implement the authorization ledger only under fresh authority before restoring any Azure operation",
+    "claim_boundary": "This reconciliation creates no Azure retry, rollback, verification, browser, RBAC, cleanup, merge, or future deployment authority."
   }
 }
