@@ -1,31 +1,19 @@
 {
-  "schema_version": "project.current-reality.v5",
+  "schema_version": "project.current-reality.v6",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-28T00:55:38-04:00",
+  "recorded_at": "2026-07-28T14:48:16-04:00",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
-  "interpretation_boundary": "This is a time-bounded evidence reconciliation, not a continuously refreshed GitHub or Azure dashboard. Live repository state must be queried before every write, merge, dispatch, or cloud action.",
+  "interpretation_boundary": "This is a time-bounded evidence reconciliation, not a continuously refreshed GitHub or Azure dashboard. Live repository state must be queried before every write, merge, dispatch, authentication, or cloud action.",
   "repository_state": {
     "default_branch": "main",
-    "observed_main": "db74fc764f93a972344dae35ed906e8128f51eb8",
-    "latest_merged_pull_request": 183,
-    "latest_merged_source_head": "52ab387418e77aed0cd23a2d827b359a8ae0ac40",
-    "latest_exact_head_ci_run": 30326878347,
+    "observed_main": "ca994ce53642587bea370bee1c5a0633faaaece8",
+    "latest_merged_pull_request": 185,
+    "latest_merged_source_head": "36bbd5ab1ef3c579c43ad2df589f44362feced37",
+    "latest_exact_head_ci_run": 30359529916,
     "latest_exact_head_ci_conclusion": "success",
-    "post_containment_ci_runs": {
+    "latest_exact_head_ci_runs": {
       "ci": {
-        "run_id": 30326878347,
-        "conclusion": "success"
-      },
-      "current_reality_lifecycle": {
-        "run_id": 30326878314,
-        "conclusion": "success"
-      },
-      "shared_state_reconciliation": {
-        "run_id": 30326878316,
-        "conclusion": "success"
-      },
-      "azure_architecture_plan": {
-        "run_id": 30326878319,
+        "run_id": 30359529916,
         "conclusion": "success"
       }
     },
@@ -34,8 +22,12 @@
     "containment_merge_commit": "516cc45972725f494815449f55f02f96727afbde",
     "post_containment_pull_request_183": "merged",
     "post_containment_merge_commit": "db74fc764f93a972344dae35ed906e8128f51eb8",
+    "repository_watermark_pull_request_184": "merged",
+    "repository_watermark_merge_commit": "b92e9e0d6c4c2bcb8d4b7628eb21fb342a19f686",
+    "frontend_architecture_pull_request_185": "merged",
+    "frontend_architecture_merge_commit": "ca994ce53642587bea370bee1c5a0633faaaece8",
     "merge_commit_pr_triggered_ci": "not_observed",
-    "open_pull_requests_after_post_containment_merge": [],
+    "open_pull_requests_after_frontend_architecture_merge": [],
     "local_working_tree": "not_observed_connector_backed"
   },
   "source_lineage": {
@@ -46,7 +38,7 @@
     "repair_ci_conclusion": "success",
     "current_main_contains_reviewed_source": true,
     "current_main_equals_deployed_source": false,
-    "main_delta_after_deployed_source": "governance containment, post-containment reconciliation, authorization-ledger design, canonical state, and tests; no newer application implementation observed"
+    "main_delta_after_deployed_source": "governance containment, repository reconciliations, authorization-ledger design, frontend architecture explainer, and deterministic tests; the newer frontend implementation is not promoted as freshly published or browser-verified"
   },
   "authorization_state": {
     "request": ".project/deployment-requests/correlation-identity-run1.json",
@@ -126,7 +118,17 @@
     "successful_transactions": 10,
     "failed_transactions": 10,
     "exact_root_cause_claimed": false,
-    "browser_dom_refresh_verified": false
+    "browser_dom_refresh_verified": false,
+    "freshly_observed_during_repository_reconciliation": false
+  },
+  "frontend_state": {
+    "repository_implementation": "architecture explainer merged by pull request 185",
+    "exact_tested_source_head": "36bbd5ab1ef3c579c43ad2df589f44362feced37",
+    "exact_head_ci_run": 30359529916,
+    "exact_head_ci_conclusion": "success",
+    "github_pages_publication_freshly_observed": false,
+    "browser_render_freshly_verified": false,
+    "azure_collector_runtime_change_claimed": false
   },
   "collector_demo_api": {
     "compatibility_projection": "Derived from azure_state and runtime_state for established consumers; not a second source of truth.",
@@ -160,7 +162,7 @@
     "mechanism": "Issue-comment consumption was evidentiary but not an enforced external single-use ledger. A GitHub Actions rerun reused the original opened-event request snapshot.",
     "terminal_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
     "post_merge_reconciliation": ".project/reconciliations/post-pr182-containment-20260727.json",
-    "latest_repository_reconciliation": ".project/reconciliations/post-pr183-repository-watermark-20260728.json",
+    "latest_repository_reconciliation": ".project/reconciliations/post-pr185-repository-watermark-20260728.json",
     "containment": {
       "collector_workflow_quarantined": true,
       "collector_workflow_state": "quarantined_on_main",
@@ -192,6 +194,7 @@
     "repository_watermark_reconciliation_authorized": true,
     "repository_design_authorized": true,
     "ordinary_pull_request_ci_authorized": true,
+    "pull_request_creation_authorized": true,
     "pull_request_merge_authorized": false,
     "workflow_dispatch_or_rerun_authorized": false,
     "azure_authentication_authorized": false,
@@ -209,6 +212,8 @@
     "issue_comment_consumption_record != enforced_single_use",
     "closed_trigger_PR != historical_run_unrerunnable",
     "repository_watermark_reconciled != Azure_freshly_observed",
+    "main_contains_frontend_implementation != GitHub_Pages_publication_observed",
+    "architecture_explained != runtime_proof_manufactured",
     "static_repository_proof != fresh_Azure_observation",
     "not_observed != false",
     "estimated_cost != actual_cost",
@@ -216,14 +221,13 @@
     "API_contract_verified != browser_DOM_render_verified"
   ],
   "next_gate": {
-    "operation": "review the durable single-use authorization-ledger design while keeping all collector Azure operations quarantined",
+    "operation": "review this repository-only reconciliation through ordinary pull-request CI while keeping all collector Azure operations quarantined",
     "requirements": [
-      "use a unique immutable request identifier and exact request commit",
-      "atomically claim each request in a durable ledger before any OIDC-capable job starts",
-      "reject consumed, replayed, expired, mismatched-source, and mismatched-scope requests",
-      "protect consumption records from update and deletion",
-      "prove concurrent duplicate dispatches admit exactly one claimant",
-      "obtain fresh explicit non-renewing authority before implementing or restoring Azure execution",
+      "preserve the exact PR 185 source and CI lineage",
+      "do not promote GitHub Pages publication or browser rendering without direct observation",
+      "review the durable single-use authorization-ledger design",
+      "keep the collector workflow fail-closed until replay rejection is implemented and tested",
+      "obtain fresh explicit non-renewing authority before merge, implementation, workflow restoration, Azure query, deployment, rollback, or cleanup",
       "complete browser DOM refresh observation",
       "verify alert delivery, least privilege, and current actual cost"
     ]
