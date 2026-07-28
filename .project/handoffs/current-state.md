@@ -44,13 +44,15 @@ PR #185 CI: 30359529916 / success
 merge-commit PR-triggered CI: not observed
 intermediate repository watermark PR #184: merged at b92e9e0d6c4c2bcb8d4b7628eb21fb342a19f686
 trigger PR #181: closed without merge
-open pull requests observed: none
+open pull requests observed: #186 / draft / durable authorization implementation candidate
 local working tree: not observed; connector-backed repository operations
 ```
 
 The deployed collector application source remains `0b6b5322f25b3d0289f6c0febdcfd800ea4b909a`. Main is newer because it contains governance containment, repository reconciliations, the authorization-ledger design, the frontend architecture explainer, and deterministic tests.
 
 The frontend architecture implementation is present in the repository and its exact PR head passed CI. GitHub Pages publication and browser rendering were not freshly observed, so the repository implementation is not promoted as deployed presentation truth.
+
+Draft PR #186 is concurrently open from the same `main@ca994ce...` base. Its exact head `138659609b15ef80f6cce12d916e26382ab71205` passed CI run `30389249099`, but it remains an unmerged implementation candidate. No ruleset, live claim, concurrent claim proof, collector restoration, or Azure operation is promoted from that branch.
 
 ## Correlation deployment authority
 
@@ -167,7 +169,7 @@ new Azure authority created: false
 
 Static repository proof establishes that a replay can no longer obtain Azure OIDC or execute Azure commands through the current child workflow. This is not a fresh Azure runtime observation.
 
-PR #183 reconciled that containment into canonical state and documented the proposed durable single-use authorization ledger. PR #184 advanced the repository watermark through that reconciliation. PR #185 added the frontend architecture explainer without restoring Azure execution. The authorization-ledger design remains proposed, not implemented; the collector workflow remains quarantined.
+PR #183 reconciled that containment into canonical state and documented the proposed durable single-use authorization ledger. PR #184 advanced the repository watermark through that reconciliation. PR #185 added the frontend architecture explainer without restoring Azure execution. Draft PR #186 now carries a CI-verified implementation candidate, but it is not merged, activated, ruleset-protected, or operationally claim-tested. Canonical `main` still treats the authorization ledger as proposed, not implemented; the collector workflow remains quarantined.
 
 ## Lab v1 gate
 
@@ -227,4 +229,4 @@ RBAC mutation: unauthorized
 
 ## Next gate
 
-Review this repository-only reconciliation through ordinary pull-request CI. Merge requires fresh explicit authority. Separately observe GitHub Pages and browser rendering before claiming that the architecture explainer is publicly deployed. Review `.project/designs/durable-single-use-authorization-ledger-v1.md`; implementation and any Azure restoration require fresh explicit non-renewing authority.
+Review this repository-only reconciliation and draft PR #186 through their ordinary pull-request CI evidence. Merge of either PR requires fresh explicit authority. PR #186 remains only an implementation candidate until merged, protected by the required ruleset, and independently claim-tested. Separately observe GitHub Pages and browser rendering before claiming that the architecture explainer is publicly deployed. Any Azure restoration requires fresh explicit non-renewing authority.
