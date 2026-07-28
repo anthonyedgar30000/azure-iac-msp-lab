@@ -1,9 +1,9 @@
 {
-  "schema_version": "project.lab-v1-completion-gate.v3",
+  "schema_version": "project.lab-v1-completion-gate.v4",
   "project": "ServiceTracer — Governed Azure Operations Lab",
-  "recorded_at": "2026-07-27T22:34:00-04:00",
+  "recorded_at": "2026-07-27T23:33:20-04:00",
   "governing_objective": "Complete and evidence-lock one production-shaped ServiceTracer workload from infrastructure-as-code declaration through deployment, security, runtime validation, monitoring, cost observation, and portfolio demonstration.",
-  "decision_status": "runtime_verified_deployment_automation_quarantined_after_authority_replay",
+  "decision_status": "runtime_verified_containment_merged_deployment_automation_quarantined",
   "active_golden_path": "collector-hosted demo API in rg-servicetracer-dev-westus2",
   "scope_control": {
     "parallel_feature_expansion_allowed": false,
@@ -53,7 +53,7 @@
       {
         "criterion_id": "p0-evidence-lock",
         "requirement": "Capture source, CI, authorization, deployment, control-plane, endpoint, transaction, browser, and sanitized portfolio evidence.",
-        "current_status": "source_CI_authority_two_attempts_and_runtime_locked_browser_monitoring_cost_and_control-restoration_pending",
+        "current_status": "source_CI_authority_two_attempts_runtime_and_containment_locked_browser_monitoring_cost_and_control_restoration_pending",
         "complete": false
       }
     ]
@@ -109,16 +109,20 @@
     "current_handoff": ".project/handoffs/current-state.md",
     "canonical_state_index": ".project/state-index.json",
     "terminal_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
+    "post_containment_reconciliation": ".project/reconciliations/post-pr182-containment-20260727.json",
     "consumed_request": ".project/deployment-requests/correlation-identity-run1.json",
+    "replacement_authorization_design": ".project/designs/durable-single-use-authorization-ledger-v1.md",
     "reviewed_source": "0b6b5322f25b3d0289f6c0febdcfd800ea4b909a",
     "source_ci_run": 30309238071,
     "authorized_deployment_run": 30310439500,
     "authorized_deployment_artifact": 8670172029,
     "unauthorized_replay_run": 30315658677,
     "unauthorized_replay_artifact": 8672070574,
-    "observed_main": "767a0482cdfff689e430ebe4a5a08fc339f1a291",
+    "observed_main": "516cc45972725f494815449f55f02f96727afbde",
     "trigger_pull_request_181": "closed_without_merge",
-    "containment_branch": "agent/quarantine-correlation-replay"
+    "containment_pull_request_182": "merged",
+    "containment_exact_head": "5e544794243f814bca19210e65943995f4f6b2de",
+    "containment_exact_head_ci_run": 30324033493
   },
   "completion_definition": {
     "rule": "Lab v1 is complete only when one exact source lineage connects reviewed IaC, authorized deployment, deployed Azure resources, validated runtime, bounded ServiceTracer evidence, effective security, verified monitoring delivery, current cost evidence, and a reproducible demonstration.",
@@ -134,15 +138,14 @@
       "fixture_demo != live_demo",
       "issue_comment_consumption_record != enforced_single_use",
       "closed_trigger_PR != historical_run_unrerunnable",
-      "API_contract_verified != browser_DOM_render_verified"
+      "API_contract_verified != browser_DOM_render_verified",
+      "static_repository_proof != fresh_Azure_observation"
     ]
   },
   "authority": {
     "repository_gate_reconciliation": true,
-    "repository_replay_containment": true,
+    "repository_authorization_design": true,
     "ordinary_pull_request_ci": true,
-    "trigger_pull_request_closure": true,
-    "containment_pull_request_merge": "not_separately_recorded",
     "workflow_dispatch_or_rerun": false,
     "azure_authentication": false,
     "azure_query": false,
@@ -154,8 +157,8 @@
     "cleanup": false
   },
   "next_gate": {
-    "operation": "review exact-head CI for the replay-containment pull request",
-    "after_merge": "prove the historical dispatcher cannot obtain OIDC or execute Azure commands, then design a durable external consumption ledger before any workflow restoration",
-    "claim_boundary": "The containment repair creates no Azure retry, rollback, verification, browser, RBAC, cleanup, or future deployment authority."
+    "operation": "review the durable single-use authorization-ledger design while the collector workflow remains quarantined",
+    "after_review": "implement only under fresh explicit repository authority, prove replay rejection before any OIDC-capable job starts, and obtain separate fresh authority before restoring any Azure operation",
+    "claim_boundary": "This reconciliation and design create no Azure retry, rollback, verification, browser, RBAC, cleanup, or future deployment authority."
   }
 }

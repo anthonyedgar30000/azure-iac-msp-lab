@@ -2,7 +2,7 @@
 
 ## Interpretation boundary
 
-This handoff records evidence observed through **2026-07-27T22:34:00-04:00**. It is not a continuously refreshed GitHub or Azure dashboard. Query live GitHub state and obtain fresh Azure evidence before any write, merge, dispatch, authentication, or cloud action.
+This handoff records repository state observed through **2026-07-27T23:33:20-04:00** and Azure evidence last captured by preserved workflow artifacts. It is not a continuously refreshed GitHub or Azure dashboard. Query live GitHub state and obtain fresh Azure evidence before any write, merge, dispatch, authentication, or cloud action.
 
 ```text
 declared_in_code != deployed_in_azure
@@ -11,6 +11,7 @@ workflow_conclusion != live_service_truth
 deployment_succeeded != authority_valid
 issue_comment_consumption_record != enforced_single_use
 closed_trigger_PR != historical_run_unrerunnable
+static_repository_proof != fresh_Azure_observation
 not_observed != false
 ```
 
@@ -20,25 +21,30 @@ not_observed != false
 state index: .project/state-index.json
 current reality: .project/current-reality-v2.json
 completion gate: .project/lab-v1-completion-gate-v2.json
-latest terminal reconciliation: .project/reconciliations/correlation-identity-run1-terminal-20260727.json
+current handoff: .project/handoffs/current-state.md
+latest terminal deployment reconciliation: .project/reconciliations/correlation-identity-run1-terminal-20260727.json
+post-containment repository reconciliation: .project/reconciliations/post-pr182-containment-20260727.json
 consumed request: .project/deployment-requests/correlation-identity-run1.json
+replacement authorization design: .project/designs/durable-single-use-authorization-ledger-v1.md
 ```
 
 ## Repository watermark
 
 ```text
 repository: anthonyedgar30000/azure-iac-msp-lab
-observed main: 767a0482cdfff689e430ebe4a5a08fc339f1a291
-latest merged PR: #180
-PR #180 source: 51286ff49b86e02d69a4169925880d0970a82e36
-PR #180 exact-head CI: 30310296654 / success
+observed main: 516cc45972725f494815449f55f02f96727afbde
+latest merged PR: #182
+PR #182 exact tested head: 5e544794243f814bca19210e65943995f4f6b2de
+PR #182 CI: 30324033493 / success
+current-reality lifecycle: 30324033482 / success
+shared-state reconciliation: 30324033498 / success
+Azure architecture plan: 30324033472 / success
 trigger PR #181: closed without merge
-containment branch: agent/quarantine-correlation-replay
-containment PR: #182
-local working tree: not observed; connector-backed changes
+open pull requests observed: none
+local working tree: not observed; connector-backed repository operations
 ```
 
-The deployed application source is `0b6b5322f25b3d0289f6c0febdcfd800ea4b909a`. Main is newer because it includes governance workflow, request, and test changes. No newer application implementation was observed.
+The deployed application source remains `0b6b5322f25b3d0289f6c0febdcfd800ea4b909a`. Main is newer because it contains governance containment, state reconciliation, and tests. No newer application implementation was observed.
 
 ## Correlation deployment authority
 
@@ -66,6 +72,7 @@ ARM parent: Succeeded
 ARM nested: Succeeded
 VM extension: Succeeded
 workflow conclusion: failure
+failure boundary: legacy CORS and GitHub Pages evidence observer
 ```
 
 ### Attempt 2
@@ -80,11 +87,14 @@ ARM parent: Succeeded
 ARM nested: Succeeded
 VM extension: Succeeded
 workflow conclusion: failure
+failure boundary: presentation evidence observer
 ```
 
-The red child conclusions came from legacy or presentation evidence observers. They do not negate the successful ARM deployment, extension convergence, or live API verification.
+The red child conclusions came from legacy or presentation evidence observers. They do not negate successful ARM convergence, extension convergence, or the preserved API evidence. They also do not make the unauthorized replay valid.
 
-## Latest Azure evidence
+## Last evidenced Azure state
+
+No fresh Azure query was performed by this reconciliation.
 
 ```text
 subscription: Azure for Students
@@ -102,7 +112,7 @@ resource locks: 0
 actual cost: not observed
 ```
 
-## Live service verification
+## Last evidenced live service state
 
 ```text
 health: healthy
@@ -119,23 +129,25 @@ exact root cause claimed: false
 browser DOM refresh: pending user observation
 ```
 
-## Control incident and containment
+## Control incident and merged containment
 
-The root cause is an **authorization consumption control failure** under the canonical **Authorization Consumption Principle**. The dispatcher wrote a consumed marker to an issue comment but did not consult a durable external single-use ledger before every cloud dispatch. A GitHub Actions rerun reused the original opened-event request snapshot and dispatched a second child run.
+The root cause is an **authorization consumption control failure** under the canonical **Authorization Consumption Principle**. The dispatcher wrote a consumed marker to an issue comment but did not consult a durable external single-use ledger before every dispatch. A GitHub Actions rerun reused the original opened-event request snapshot.
 
-Repository-only containment on `agent/quarantine-correlation-replay`:
+PR #182 merged the repository-only containment:
 
 ```text
-shared collector workflow: quarantined fail-closed
+shared collector workflow: quarantined fail-closed on main
 OIDC permission: absent
 Azure environment: absent
+Azure login: absent
 Azure commands: absent
-consumed one-shot dispatcher: deleted from branch
+terminal behavior: reject and exit 1
+consumed one-shot dispatcher: deleted from main
 trigger PR #181: closed without merge
 new Azure authority created: false
 ```
 
-The quarantine is intentionally broad. It blocks `what-if`, `deploy`, and `verify` through the shared collector workflow until a replacement workflow is reviewed with durable replay protection.
+Static repository proof establishes that a replay can no longer obtain Azure OIDC or execute Azure commands through the current child workflow. This is not a fresh Azure runtime observation.
 
 ## Lab v1 gate
 
@@ -152,7 +164,7 @@ deployment automation safely available: false / quarantined
 
 ## Historical compatibility anchors
 
-The following markers remain only so durable historical validators can reproduce their original observation boundaries. They do not override the current terminal reconciliation.
+The following markers remain only so durable historical validators can reproduce their original observation boundaries. They do not override the current terminal or post-containment reconciliation.
 
 ```text
 legacy canonical main: 665e051375594d11e58e434231bd06775dbdc560
@@ -181,10 +193,8 @@ prior run-19 reconciliation: .project/reconciliations/collector-provenance-deplo
 ## Current authority
 
 ```text
-repository containment and reconciliation: authorized
+repository reconciliation and design: authorized
 ordinary pull-request CI: authorized
-PR #181 closure without merge: completed
-containment PR merge: not separately recorded
 workflow dispatch or rerun: unauthorized
 Azure authentication, query, or mutation: unauthorized
 rollback: unauthorized
@@ -194,4 +204,4 @@ RBAC mutation: unauthorized
 
 ## Next gate
 
-Review exact-head CI for the containment pull request. After merge, prove that replaying the historical dispatcher cannot obtain OIDC or execute Azure commands. Do not restore the collector workflow until a durable external consumption ledger, unique immutable request IDs, replay tests, and fresh explicit authority exist.
+Review `.project/designs/durable-single-use-authorization-ledger-v1.md`. The proposed design uses a separate no-OIDC claim job and an atomic, protected, first-writer-wins Git reference as the durable consumption ledger. The collector workflow remains quarantined. Implementation and any Azure restoration require fresh explicit non-renewing authority.

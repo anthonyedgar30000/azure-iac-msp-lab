@@ -1,0 +1,101 @@
+{
+  "schema_version": "project.post-containment-reconciliation.v1",
+  "recorded_at": "2026-07-27T23:33:20-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "purpose": "Reconcile canonical project state after PR #182 merged the repository-only replay containment. This record performs no Azure query, authentication, mutation, retry, rollback, cleanup, or RBAC action.",
+  "github_state": {
+    "default_branch": "main",
+    "observed_main": "516cc45972725f494815449f55f02f96727afbde",
+    "latest_merged_pull_request": 182,
+    "containment_exact_head": "5e544794243f814bca19210e65943995f4f6b2de",
+    "open_pull_requests": [],
+    "exact_head_ci": {
+      "ci": {
+        "run_id": 30324033493,
+        "conclusion": "success"
+      },
+      "current_reality_lifecycle": {
+        "run_id": 30324033482,
+        "conclusion": "success"
+      },
+      "shared_state_reconciliation": {
+        "run_id": 30324033498,
+        "conclusion": "success"
+      },
+      "azure_architecture_plan": {
+        "run_id": 30324033472,
+        "conclusion": "success"
+      }
+    },
+    "merge_content_delta_from_exact_head": 0
+  },
+  "azure_observation_boundary": {
+    "fresh_query_performed": false,
+    "latest_evidence_source": "verified workflow artifacts",
+    "authorized_attempt": {
+      "run_id": 30310439500,
+      "artifact_id": 8670172029,
+      "digest": "sha256:8917c2adea01c881a7382020bad06dd94288c576141c0d80b865f382c3eecb7b"
+    },
+    "unauthorized_replay": {
+      "run_id": 30315658677,
+      "artifact_id": 8672070574,
+      "digest": "sha256:8e551e4b770996db41befc6f95b4dd6af08f674ae098e6bcde0d22234a049c8e"
+    },
+    "last_evidenced_resource_group": "rg-servicetracer-dev-westus2",
+    "last_evidenced_region": "westus2",
+    "last_evidenced_runtime": "healthy",
+    "actual_cost_CAD": "not_observed"
+  },
+  "containment_static_proof": {
+    "collector_workflow": ".github/workflows/collector-demo-api.yml",
+    "workflow_quarantined_on_main": true,
+    "id_token_write_present": false,
+    "azure_environment_present": false,
+    "azure_login_present": false,
+    "azure_cli_commands_present": false,
+    "terminal_behavior": "reject request and exit 1 before cloud access",
+    "retired_dispatcher": ".github/workflows/correlation-identity-deploy-run1.yml",
+    "retired_dispatcher_present": false,
+    "claim": "A historical dispatcher replay can still invoke the current child workflow, but the current child workflow cannot obtain Azure OIDC or execute Azure commands."
+  },
+  "drift_reconciled": [
+    "observed main advanced from 767a0482cdfff689e430ebe4a5a08fc339f1a291 to 516cc45972725f494815449f55f02f96727afbde",
+    "latest merged pull request advanced from 180 to 182",
+    "containment state advanced from pending review to merged on main",
+    "next gate advanced from containment merge review to durable single-use ledger design review"
+  ],
+  "authorization": {
+    "user_instruction": "Proceed",
+    "interpretation": "Authorize repository-only canonical reconciliation and design work.",
+    "repository_writes_authorized": true,
+    "ordinary_pull_request_ci_authorized": true,
+    "workflow_dispatch_or_rerun_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false,
+    "rbac_mutation_authorized": false
+  },
+  "next_gate": {
+    "design": ".project/designs/durable-single-use-authorization-ledger-v1.md",
+    "workflow_restoration_allowed": false,
+    "requirements": [
+      "atomic first-writer-wins consumption claim",
+      "immutable unique request IDs",
+      "request source and scope binding",
+      "replay rejection before any OIDC-capable job starts",
+      "protected non-deletable consumption records",
+      "concurrency tests proving exactly one winner",
+      "fresh explicit non-renewing authority before implementation or Azure restoration"
+    ]
+  },
+  "claim_boundaries": [
+    "repository_reconciled != Azure_freshly_observed",
+    "containment_merged != deployment_workflow_restored",
+    "design_proposed != control_implemented",
+    "static_workflow_proof != runtime_cloud_verification",
+    "deployment_succeeded != authority_valid"
+  ]
+}

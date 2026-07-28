@@ -17,6 +17,18 @@ RECONCILIATION = (
     / "reconciliations"
     / "correlation-identity-run1-terminal-20260727.json"
 )
+POST_CONTAINMENT_RECONCILIATION = (
+    ROOT
+    / ".project"
+    / "reconciliations"
+    / "post-pr182-containment-20260727.json"
+)
+DESIGN = (
+    ROOT
+    / ".project"
+    / "designs"
+    / "durable-single-use-authorization-ledger-v1.md"
+)
 REQUEST = (
     ROOT
     / ".project"
@@ -24,7 +36,7 @@ REQUEST = (
     / "correlation-identity-run1.json"
 )
 
-MAIN = "767a0482cdfff689e430ebe4a5a08fc339f1a291"
+MAIN = "516cc45972725f494815449f55f02f96727afbde"
 DEPLOYED_SOURCE = "0b6b5322f25b3d0289f6c0febdcfd800ea4b909a"
 PREFLIGHT_PATH = (
     ".project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json"
@@ -32,13 +44,19 @@ PREFLIGHT_PATH = (
 RECONCILIATION_PATH = (
     ".project/reconciliations/correlation-identity-run1-terminal-20260727.json"
 )
+POST_CONTAINMENT_PATH = (
+    ".project/reconciliations/post-pr182-containment-20260727.json"
+)
+DESIGN_PATH = (
+    ".project/designs/durable-single-use-authorization-ledger-v1.md"
+)
 HISTORICAL_CONSUMED_PATH = (
     ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json"
 )
 REQUEST_PATH = ".project/deployment-requests/correlation-identity-run1.json"
 
 
-class CanonicalStateIndexV3Tests(unittest.TestCase):
+class CanonicalStateIndexV4Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.index = json.loads(INDEX.read_text(encoding="utf-8"))
@@ -47,9 +65,13 @@ class CanonicalStateIndexV3Tests(unittest.TestCase):
         cls.gate = json.loads(GATE.read_text(encoding="utf-8"))
         cls.handoff = HANDOFF.read_text(encoding="utf-8")
         cls.reconciliation = json.loads(RECONCILIATION.read_text(encoding="utf-8"))
+        cls.post_containment = json.loads(
+            POST_CONTAINMENT_RECONCILIATION.read_text(encoding="utf-8")
+        )
+        cls.design = DESIGN.read_text(encoding="utf-8")
         cls.request = json.loads(REQUEST.read_text(encoding="utf-8"))
 
-    def test_index_preserves_preflight_and_selects_terminal_reconciliation(self) -> None:
+    def test_index_preserves_terminal_evidence_and_selects_post_merge_state(self) -> None:
         self.assertEqual(
             self.index["canonical_current_reality"],
             ".project/current-reality-v2.json",
@@ -65,6 +87,13 @@ class CanonicalStateIndexV3Tests(unittest.TestCase):
             self.index["latest_authorization_resolution"], RECONCILIATION_PATH
         )
         self.assertEqual(self.index["latest_control_incident"], RECONCILIATION_PATH)
+        self.assertEqual(
+            self.index["latest_repository_reconciliation"], POST_CONTAINMENT_PATH
+        )
+        self.assertEqual(
+            self.index["current_containment_reconciliation"], POST_CONTAINMENT_PATH
+        )
+        self.assertEqual(self.index["replacement_authorization_design"], DESIGN_PATH)
         self.assertIsNone(self.index["active_deployment_authorization"])
         self.assertEqual(
             self.index["consumed_deployment_authorization"],
@@ -86,9 +115,10 @@ class CanonicalStateIndexV3Tests(unittest.TestCase):
     def test_current_repository_and_source_watermarks_are_explicit(self) -> None:
         repo = self.current["repository_state"]
         self.assertEqual(repo["observed_main"], MAIN)
-        self.assertEqual(repo["latest_merged_pull_request"], 180)
+        self.assertEqual(repo["latest_merged_pull_request"], 182)
+        self.assertEqual(repo["containment_pull_request_182"], "merged")
         self.assertEqual(repo["trigger_pull_request_181"], "closed_without_merge")
-        self.assertEqual(repo["open_pull_requests_after_trigger_closure"], [])
+        self.assertEqual(repo["open_pull_requests_after_containment_merge"], [])
         self.assertEqual(
             self.current["source_lineage"]["reviewed_source"], DEPLOYED_SOURCE
         )
@@ -124,6 +154,7 @@ class CanonicalStateIndexV3Tests(unittest.TestCase):
         self.assertEqual(runtime["transactions_verified"], 20)
         self.assertFalse(runtime["exact_root_cause_claimed"])
         self.assertFalse(runtime["browser_dom_refresh_verified"])
+        self.assertFalse(self.current["azure_state"]["fresh_live_query_during_reconciliation"])
 
         attempts = self.reconciliation["attempts"]
         self.assertEqual(attempts[0]["workflow_conclusion"], "failure")
@@ -140,13 +171,16 @@ class CanonicalStateIndexV3Tests(unittest.TestCase):
         self.assertFalse(criteria["p0-evidence-lock"]["complete"])
         self.assertIn("authorization replay incident", " ".join(self.gate["p2"]["required_story"]))
 
-    def test_containment_is_fail_closed_and_does_not_manufacture_cloud_authority(self) -> None:
+    def test_containment_is_merged_fail_closed_and_cloud_authority_is_absent(self) -> None:
         containment = self.current["control_incident"]["containment"]
         self.assertTrue(containment["collector_workflow_quarantined"])
+        self.assertEqual(containment["collector_workflow_state"], "quarantined_on_main")
         self.assertFalse(containment["collector_workflow_oidc_permission"])
         self.assertFalse(containment["collector_workflow_azure_commands"])
         self.assertTrue(containment["one_shot_dispatcher_retired"])
         self.assertTrue(containment["trigger_pr_closed_without_merge"])
+        self.assertEqual(containment["containment_pull_request_state"], "merged")
+        self.assertTrue(containment["static_replay_boundary_verified"])
 
         authority = self.current["authority"]
         for key in (
@@ -169,6 +203,32 @@ class CanonicalStateIndexV3Tests(unittest.TestCase):
             "Authorization Consumption Principle",
         )
         self.assertIn("workflow dispatch or rerun: unauthorized", self.handoff)
+
+    def test_post_containment_reconciliation_and_design_preserve_restoration_gate(self) -> None:
+        self.assertEqual(self.post_containment["github_state"]["observed_main"], MAIN)
+        self.assertEqual(
+            self.post_containment["github_state"]["latest_merged_pull_request"], 182
+        )
+        self.assertTrue(
+            self.post_containment["containment_static_proof"][
+                "workflow_quarantined_on_main"
+            ]
+        )
+        self.assertFalse(
+            self.post_containment["containment_static_proof"]["id_token_write_present"]
+        )
+        self.assertFalse(
+            self.post_containment["containment_static_proof"][
+                "azure_cli_commands_present"
+            ]
+        )
+        self.assertFalse(
+            self.post_containment["next_gate"]["workflow_restoration_allowed"]
+        )
+        self.assertIn("claim-authority job", self.design)
+        self.assertIn("refs/tags/authority-consumed/<request_id>", self.design)
+        self.assertIn("exactly one successful claimant", self.design)
+        self.assertIn("Proposed, not implemented", self.design)
 
 
 if __name__ == "__main__":
