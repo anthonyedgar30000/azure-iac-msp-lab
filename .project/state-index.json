@@ -5,12 +5,14 @@
   "canonical_current_reality": ".project/current-reality-v2.json",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
   "canonical_handoff": ".project/handoffs/current-state.md",
-  "latest_verified_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
+  "latest_verified_reconciliation": ".project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json",
+  "latest_terminal_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
   "latest_deployment_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
   "latest_authorization_resolution": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
   "latest_control_incident": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
   "active_deployment_authorization": null,
-  "consumed_deployment_authorization": ".project/deployment-requests/correlation-identity-run1.json",
+  "consumed_deployment_authorization": ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json",
+  "latest_consumed_deployment_authorization": ".project/deployment-requests/correlation-identity-run1.json",
   "historical_reconciliations": [
     {
       "path": ".project/reconciliations/collector-provenance-deployment-run19-20260726.json",
@@ -43,10 +45,11 @@
       ]
     }
   ],
-  "selection_rule": "Operational consumers must resolve canonical paths, the latest terminal reconciliation, current live GitHub state, and current authorization status before every write, merge, dispatch, authentication, or cloud action.",
+  "selection_rule": "Operational consumers must resolve canonical paths, the preserved preflight, the latest terminal reconciliation, current live GitHub state, and current authorization status before every write, merge, dispatch, authentication, or cloud action.",
   "claim_boundaries": [
     "legacy_filename != current_authority",
     "historical_snapshot != live_state",
+    "verified_preflight != latest_runtime_reconciliation",
     "workflow_conclusion != live_service_truth",
     "deployment_succeeded != authority_valid",
     "issue_comment_consumption_record != enforced_single_use",
