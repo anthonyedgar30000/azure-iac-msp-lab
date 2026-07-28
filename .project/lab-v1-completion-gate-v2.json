@@ -1,9 +1,9 @@
 {
-  "schema_version": "project.lab-v1-completion-gate.v2",
+  "schema_version": "project.lab-v1-completion-gate.v3",
   "project": "ServiceTracer — Governed Azure Operations Lab",
-  "recorded_at": "2026-07-27T09:22:25-04:00",
+  "recorded_at": "2026-07-27T22:34:00-04:00",
   "governing_objective": "Complete and evidence-lock one production-shaped ServiceTracer workload from infrastructure-as-code declaration through deployment, security, runtime validation, monitoring, cost observation, and portfolio demonstration.",
-  "decision_status": "run19_failed_closed_restart_repair_under_pr139_review",
+  "decision_status": "runtime_verified_deployment_automation_quarantined_after_authority_replay",
   "active_golden_path": "collector-hosted demo API in rg-servicetracer-dev-westus2",
   "scope_control": {
     "parallel_feature_expansion_allowed": false,
@@ -17,43 +17,43 @@
       {
         "criterion_id": "p0-exact-what-if-evidence",
         "requirement": "Verify exact-source CI, live preflight, ARM validation, bounded FullResourcePayloads What-If, and artifact integrity.",
-        "current_status": "verified_preflight_30206242759_artifact_8633143093",
+        "current_status": "attempts_30310439500_and_30315658677_preserve_accepted_isolated_scope_and_artifact_digests",
         "complete": true
       },
       {
         "criterion_id": "p0-source-and-cost-decision",
         "requirement": "Choose one exact deployment source and capture current billing evidence.",
-        "current_status": "source_1677606_selected_and_cost_4.03203831168191_CAD_observed_remaining_credit_not_observed",
-        "complete": true
+        "current_status": "source_0b6b5322_selected_and_deployed_fresh_actual_cost_not_observed",
+        "complete": false
       },
       {
         "criterion_id": "p0-collector-deployment",
         "requirement": "Deploy the provenance runtime through a one-shot governed attempt.",
-        "current_status": "run19_attempted_failed_closed_extension_lifecycle_defect",
-        "complete": false
+        "current_status": "authorized_attempt_30310439500_succeeded_second_attempt_30315658677_was_unauthorized_replay",
+        "complete": true
       },
       {
         "criterion_id": "p0-runtime-contract",
         "requirement": "Verify TLS, public health, exact Azure host identity, source ref, API contract, CORS, backend connectivity, and stable endpoint behaviour after deployment.",
-        "current_status": "blocked_on_restart_repair_merge_fresh_preflight_and_new_deployment_authority",
-        "complete": false
+        "current_status": "healthy_exact_source_and_identity_verified_cors_204_analysis_200",
+        "complete": true
       },
       {
         "criterion_id": "p0-servicetracer-scenario",
         "requirement": "Execute and preserve the bounded 20-transaction demonstration with supported fault localization and no unsupported root-cause claim.",
-        "current_status": "run18_sample_preserved_new_provenance_correlated_sample_not_performed",
-        "complete": false
+        "current_status": "20_transactions_verified_10_success_10_failure_exact_root_cause_false",
+        "complete": true
       },
       {
         "criterion_id": "p0-browser-demonstration",
         "requirement": "Verify the public operator console renders the exact governed API result.",
-        "current_status": "blocked_on_successful_provenance_deployment_and_new_browser_grant",
+        "current_status": "API_and_served_contract_verified_browser_DOM_refresh_pending_user_observation",
         "complete": false
       },
       {
         "criterion_id": "p0-evidence-lock",
         "requirement": "Capture source, CI, authorization, deployment, control-plane, endpoint, transaction, browser, and sanitized portfolio evidence.",
-        "current_status": "run19_failure_locked_restart_repair_under_review_runtime_browser_monitoring_pending",
+        "current_status": "source_CI_authority_two_attempts_and_runtime_locked_browser_monitoring_cost_and_control-restoration_pending",
         "complete": false
       }
     ]
@@ -62,11 +62,26 @@
     "name": "Make the workload credibly operable",
     "entry_condition": "All P0 criteria are complete or explicitly blocked by a human decision.",
     "criteria": [
-      "Enable the minimum useful supported diagnostic path.",
-      "Create one meaningful alert and independently verify delivery through an action group.",
-      "Verify effective least privilege for deployment and verification identities.",
-      "Capture a time-bounded actual-cost observation in CAD.",
-      "Document restart, redeployment, rollback, failure classification, and decommissioning."
+      {
+        "requirement": "Enable the minimum useful supported diagnostic path.",
+        "status": "partially_verified"
+      },
+      {
+        "requirement": "Create one meaningful alert and independently verify delivery through an action group.",
+        "status": "not_verified"
+      },
+      {
+        "requirement": "Verify effective least privilege for deployment and verification identities.",
+        "status": "not_verified"
+      },
+      {
+        "requirement": "Capture a time-bounded actual-cost observation in CAD.",
+        "status": "not_freshly_observed"
+      },
+      {
+        "requirement": "Document restart, redeployment, rollback, failure classification, and decommissioning.",
+        "status": "partial_control_incident_and_restart_evidence_present"
+      }
     ],
     "backup_and_recovery": "intentionally_out_of_scope_for_lab_v1"
   },
@@ -85,65 +100,62 @@
       "verified alert or operational evidence",
       "bounded technician handoff",
       "cost observation",
-      "cleanup or decommissioning procedure"
+      "cleanup or decommissioning procedure",
+      "authorization replay incident and containment"
     ]
   },
   "evidence_inputs": {
     "canonical_current_view": ".project/current-reality-v2.json",
     "current_handoff": ".project/handoffs/current-state.md",
     "canonical_state_index": ".project/state-index.json",
-    "preflight_run_id": 30206242759,
-    "preflight_artifact_id": 8633143093,
-    "deployment_run_id": 30224770178,
-    "deployment_artifact_id": 8638260753,
-    "attempted_source": "1677606ded960c951fa37f0fdbfae50ba4b3cc34",
-    "current_main": "bd1ef50451c85d9f0e9e77c9ac54882d44940933",
-    "latest_merged_pull_request": 138,
-    "latest_merged_source_head": "db2c95d279f06f379c13b4cd8664518eda417843",
-    "latest_exact_source_ci_run_id": 30267618707,
-    "latest_exact_source_ci_conclusion": "success",
-    "latest_merge_commit_ci": "not_observed",
-    "open_pull_requests_observed": [
-      139
-    ],
-    "active_reconciliation_pull_request": 139,
-    "consumed_authorization": ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json",
-    "prior_expiry_resolution": ".project/reconciliations/post-pr137-provenance-authority-expiry-20260727.json",
-    "run19_failure_record": ".project/reconciliations/collector-provenance-deployment-run19-20260726.json"
+    "terminal_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
+    "consumed_request": ".project/deployment-requests/correlation-identity-run1.json",
+    "reviewed_source": "0b6b5322f25b3d0289f6c0febdcfd800ea4b909a",
+    "source_ci_run": 30309238071,
+    "authorized_deployment_run": 30310439500,
+    "authorized_deployment_artifact": 8670172029,
+    "unauthorized_replay_run": 30315658677,
+    "unauthorized_replay_artifact": 8672070574,
+    "observed_main": "767a0482cdfff689e430ebe4a5a08fc339f1a291",
+    "trigger_pull_request_181": "closed_without_merge",
+    "containment_branch": "agent/quarantine-correlation-replay"
   },
   "completion_definition": {
     "rule": "Lab v1 is complete only when one exact source lineage connects reviewed IaC, authorized deployment, deployed Azure resources, validated runtime, bounded ServiceTracer evidence, effective security, verified monitoring delivery, current cost evidence, and a reproducible demonstration.",
     "boundaries": [
       "merged_into_main != deployed_to_Azure",
       "deployment_succeeded != service_validated",
+      "deployment_succeeded != authority_valid",
+      "workflow_conclusion != live_service_truth",
       "resource_exists != securely_configured",
       "RBAC_assignment != effective_least_privilege",
       "monitoring_enabled != alerts_verified",
       "estimated_cost != actual_cost",
       "fixture_demo != live_demo",
-      "WhatIf_accepted != deployment_authorized",
-      "files_replaced != running_process_restarted",
-      "failed_attempt != authorization_to_retry",
-      "PR_head_CI != merge_commit_CI"
+      "issue_comment_consumption_record != enforced_single_use",
+      "closed_trigger_PR != historical_run_unrerunnable",
+      "API_contract_verified != browser_DOM_render_verified"
     ]
   },
   "authority": {
     "repository_gate_reconciliation": true,
-    "restart_repair_repository_change": true,
+    "repository_replay_containment": true,
     "ordinary_pull_request_ci": true,
-    "pull_request_merge": false,
+    "trigger_pull_request_closure": true,
+    "containment_pull_request_merge": "not_separately_recorded",
     "workflow_dispatch_or_rerun": false,
     "azure_authentication": false,
     "azure_query": false,
     "azure_mutation": false,
     "deployment": false,
+    "rollback": false,
     "rbac_mutation": false,
     "transaction_replay": false,
     "cleanup": false
   },
   "next_gate": {
-    "operation": "review exact-head CI for PR #139 and obtain a separate merge decision",
-    "after_merge": "capture fresh Azure state and a fresh FullResourcePayloads What-If, then seek a new one-shot deployment and rollback decision",
-    "claim_boundary": "This repository repair creates no Azure retry, rollback, browser, RBAC, cleanup, or pull-request merge authority."
+    "operation": "review exact-head CI for the replay-containment pull request",
+    "after_merge": "prove the historical dispatcher cannot obtain OIDC or execute Azure commands, then design a durable external consumption ledger before any workflow restoration",
+    "claim_boundary": "The containment repair creates no Azure retry, rollback, verification, browser, RBAC, cleanup, or future deployment authority."
   }
 }

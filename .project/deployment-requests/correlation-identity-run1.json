@@ -1,9 +1,10 @@
 {
-  "schema_version": "project.correlation-identity-deployment-request.v1",
+  "schema_version": "project.correlation-identity-deployment-request.v2",
   "request_id": "correlation-identity-run1",
   "issued_at": "2026-07-27T18:15:00-04:00",
   "valid_until": "2026-07-28T18:15:00-04:00",
-  "status": "authorized_unconsumed",
+  "status": "consumed_with_unauthorized_replay_observed",
+  "active": false,
   "authorized_by": {
     "authority": "user",
     "instruction": "Stop being so perfect just fix the remaining issue",
@@ -17,7 +18,7 @@
     "ci_run_id": 30309238071,
     "ci_conclusion": "success"
   },
-  "execution": {
+  "execution_contract": {
     "workflow": ".github/workflows/collector-demo-api.yml",
     "dispatch_ref": "main",
     "operation": "deploy",
@@ -30,18 +31,11 @@
     "allowed_origin": "https://anthonyedgar30000.github.io",
     "confirmation": "COLLECTOR-DEMO-API:deploy:rg-servicetracer-dev-westus2:st-demo-api-aeg30000"
   },
-  "preconditions": {
-    "fresh_subscription_and_tenant_observation_required": true,
-    "fresh_resource_group_region_vm_lb_extension_lock_quota_observation_required": true,
-    "fresh_arm_validation_required": true,
-    "fresh_full_resource_payloads_what_if_required": true,
-    "what_if_must_remain_within_existing_collector_scope": true,
-    "current_live_source_expected": "ea34e8cb98ce703552cbccedb4c44d41d6185e86",
-    "target_live_source": "0b6b5322f25b3d0289f6c0febdcfd800ea4b909a"
-  },
   "authority": {
     "attempt_limit": 1,
     "consumed_when": "The governed deployment workflow dispatch is accepted, regardless of terminal outcome.",
+    "consumed_at": "2026-07-27T22:21:42Z",
+    "consumed_by_dispatcher_run": 30310432132,
     "renewable": false,
     "transferable": false,
     "automatic_retry_authorized": false,
@@ -62,32 +56,79 @@
       "/Microsoft.Network/loadBalancers/lb-st-demo-api-mst-dev/backendAddressPools/be-st-demo-api"
     ]
   },
-  "post_deployment_verification": {
-    "health_requests": 12,
-    "cors_preflight_required": true,
-    "correlated_post_required": true,
-    "transaction_attempts": 20,
-    "request_header_identity_required": true,
-    "request_body_identity_required": true,
-    "hosting_model_required": "collector_vm_systemd",
-    "verified_collector_identity_required": true,
-    "reviewed_source_identity_required": true,
-    "separate_frontend_diagnostics_required": true,
-    "browser_render_execution_claimed": false
+  "observed_attempts": [
+    {
+      "sequence": 1,
+      "authority_classification": "authorized_consuming_attempt",
+      "dispatcher_workflow_run": 30310432132,
+      "dispatcher_artifact_id": 8670176817,
+      "dispatcher_artifact_digest": "sha256:1618b7e6de73eb1923c4d445afe08e981d3e0692abc167e35f4dfd834d0cf044",
+      "child_deployment_run": 30310439500,
+      "child_artifact_id": 8670172029,
+      "child_artifact_digest": "sha256:8917c2adea01c881a7382020bad06dd94288c576141c0d80b865f382c3eecb7b",
+      "arm_deployment": "Succeeded",
+      "vm_extension": "Succeeded",
+      "live_api_health": "verified",
+      "request_identity": "verified",
+      "transactions": 20,
+      "workflow_conclusion": "failure",
+      "failure_boundary": "legacy CORS and GitHub Pages evidence observer",
+      "rollback_performed": false
+    },
+    {
+      "sequence": 2,
+      "authority_classification": "unauthorized_replay_after_consumption",
+      "dispatcher_workflow_run": 30310432132,
+      "dispatcher_artifact_id": 8672075850,
+      "dispatcher_artifact_digest": "sha256:76c6cd49f20220e3cd278a1daa0196a389be5ab9ed6380c856784aa29e6279be",
+      "child_deployment_run": 30315658677,
+      "child_artifact_id": 8672070574,
+      "child_artifact_digest": "sha256:8e551e4b770996db41befc6f95b4dd6af08f674ae098e6bcde0d22234a049c8e",
+      "arm_deployment": "Succeeded",
+      "vm_extension": "Succeeded",
+      "live_api_health": "verified",
+      "request_identity": "verified",
+      "transactions": 20,
+      "workflow_conclusion": "failure",
+      "failure_boundary": "presentation evidence observer after unauthorized replay",
+      "rollback_performed": false
+    }
+  ],
+  "terminal_live_service": {
+    "hosting_model": "collector_vm_systemd",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "vm_name": "vm-stcollector-mst-dev",
+    "location": "westus2",
+    "deployed_source": "0b6b5322f25b3d0289f6c0febdcfd800ea4b909a",
+    "azure_host_identity_verified": true,
+    "health_verified": true,
+    "cors_preflight_http_status": 204,
+    "analysis_http_status": 200,
+    "request_header_body_identity_verified": true,
+    "transactions_verified": 20,
+    "exact_root_cause_claimed": false,
+    "browser_dom_refresh_verified": false
+  },
+  "incident_response": {
+    "classification": "authorization_consumption_control_failure",
+    "root_cause": "The dispatcher recorded consumption in an issue comment but did not consult durable external consumption state before a GitHub Actions rerun. The original event payload and unconsumed request snapshot were reusable.",
+    "immediate_control": "Quarantine the shared collector deployment workflow without id-token permission or Azure commands, retire the one-shot dispatcher from main, and close the non-merge trigger pull request.",
+    "restoration_requirement": "A replacement Azure workflow requires a fresh reviewed design with durable replay protection and new explicit authority."
   },
   "cost_and_quota": {
-    "new_resources_expected": 0,
-    "quota_delta_expected": 0,
+    "new_resources_observed": 0,
+    "quota_delta_observed": 0,
+    "standard_public_ipv4_usage": "2/3",
+    "resource_locks_observed": 0,
     "recurring_cost_delta_CAD_expected": 0,
-    "actual_cost_observation": "not_available_through_current_github_connector",
-    "workflow_quota_evidence_required": true
+    "actual_cost_observation": "not_observed_in_terminal_artifacts"
   },
   "claim_boundaries": [
-    "authorization != deployment_success",
     "dispatch_accepted == grant_consumed",
+    "second_dispatch_observed != second_dispatch_authorized",
     "workflow_conclusion != live_service_truth",
-    "deployment_succeeded != transaction_correlation_verified",
-    "API_and_asset_verification != browser_DOM_render_verified",
+    "deployment_succeeded != authority_valid",
+    "API_contract_verified != browser_DOM_render_verified",
     "failed_attempt != renewed_authority"
   ]
 }

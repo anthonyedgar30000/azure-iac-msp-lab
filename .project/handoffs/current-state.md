@@ -2,103 +2,157 @@
 
 ## Interpretation boundary
 
-This handoff reflects GitHub state observed at **2026-07-27T09:22:25-04:00**, the PR #138 merge, and the independently verified artifact from collector provenance deployment run `30224770178`. It is not a continuously refreshed Azure dashboard.
+This handoff records evidence observed through **2026-07-27T22:34:00-04:00**. It is not a continuously refreshed GitHub or Azure dashboard. Query live GitHub state and obtain fresh Azure evidence before any write, merge, dispatch, authentication, or cloud action.
 
 ```text
 declared_in_code != deployed_in_azure
 deployment_succeeded != service_validated
-files_replaced != running_process_restarted
-network_reconciliation_succeeded != deployment_succeeded
-failed_attempt != authorization_to_retry
-PR_head_CI != merge_commit_CI
+workflow_conclusion != live_service_truth
+deployment_succeeded != authority_valid
+issue_comment_consumption_record != enforced_single_use
+closed_trigger_PR != historical_run_unrerunnable
 not_observed != false
 ```
 
-## Canonical state selection
+## Canonical files
 
 ```text
 state index: .project/state-index.json
 current reality: .project/current-reality-v2.json
 completion gate: .project/lab-v1-completion-gate-v2.json
-latest verified preflight: .project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json
-latest deployment reconciliation: .project/reconciliations/collector-provenance-deployment-run19-20260726.json
-consumed grant: .project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json
-prior expiry resolution: .project/reconciliations/post-pr137-provenance-authority-expiry-20260727.json
+latest terminal reconciliation: .project/reconciliations/correlation-identity-run1-terminal-20260727.json
+consumed request: .project/deployment-requests/correlation-identity-run1.json
 ```
 
 ## Repository watermark
 
 ```text
 repository: anthonyedgar30000/azure-iac-msp-lab
-observed main: bd1ef50451c85d9f0e9e77c9ac54882d44940933
-latest completed merge: PR #138
-PR #138 exact source: db2c95d279f06f379c13b4cd8664518eda417843
-PR #138 exact-head CI: 30267618707 / success
-PR #138 merge-commit CI: not observed
-open pull request: PR #139 / restart repair and run-19 reconciliation
-local working tree: not observed
+observed main: 767a0482cdfff689e430ebe4a5a08fc339f1a291
+latest merged PR: #180
+PR #180 source: 51286ff49b86e02d69a4169925880d0970a82e36
+PR #180 exact-head CI: 30310296654 / success
+trigger PR #181: closed without merge
+containment branch: agent/quarantine-correlation-replay
+containment PR: #182
+local working tree: not observed; connector-backed changes
 ```
 
-PR #138 merged the repository-only record that the earlier grant was temporally expired while its consumption was not observable through the available connector. The subsequently inspected run-19 artifact supplies stronger evidence: the grant was consumed by an actual deployment attempt. The earlier record remains historical evidence of the observation boundary at that time; it does not override the later artifact.
+The deployed application source is `0b6b5322f25b3d0289f6c0febdcfd800ea4b909a`. Main is newer because it includes governance workflow, request, and test changes. No newer application implementation was observed.
+
+## Correlation deployment authority
 
 ```text
-earlier_not_observed != later_false
-later_evidence_may_resolve_prior_uncertainty
+request: correlation-identity-run1
+attempt limit: 1
+consumed at: 2026-07-27T22:21:42Z
+renewable: false
+retry authorized: false
+rollback authorized: false
+attempts observed: 2
 ```
 
-## Run 19 deployment reality
+Attempt 1 was the authorized consuming attempt. Attempt 2 was an unauthorized replay after consumption.
+
+### Attempt 1
 
 ```text
-dispatcher: 30224765833 / failure
-deployment: 30224770178 / run 19 / attempt 1 / failure
-job: 89853061733
-exact source: 1677606ded960c951fa37f0fdbfae50ba4b3cc34
-artifact: 8638260753
-artifact digest: sha256:3cd4993461de1545bc52885bbf8118d74f861d651f5aac692e4e06e4b3f16fab
-manifest: 44 of 44 payloads verified
-grant: consumed / non-renewing / non-transferable
-retry: unauthorized
-rollback: unauthorized
+dispatcher run: 30310432132
+child deployment run: 30310439500
+child artifact: 8670172029
+artifact digest: sha256:8917c2adea01c881a7382020bad06dd94288c576141c0d80b865f382c3eecb7b
+authority: valid consuming attempt
+ARM parent: Succeeded
+ARM nested: Succeeded
+VM extension: Succeeded
+workflow conclusion: failure
 ```
 
-Azure login, readiness, ARM validation and the accepted `24 Ignore / 3 Modify / 3 NoChange / 0 Create/Delete/Replace` What-If passed. The dedicated load balancer and `collector / 10.20.40.10` backend pool reconciled successfully. The commit-bound VM extension reached terminal `Failed`, so public runtime verification and browser execution were skipped.
-
-## Deterministic failure classification
-
-The installer copied source `1677606ded960c951fa37f0fdbfae50ba4b3cc34`, rewrote the environment file and systemd unit, then called `systemctl enable --now`. On an already-running unit that enables the service but does not restart the existing Python process. The subsequent health request therefore reached the older process, which did not return the new `azure_host` object:
+### Attempt 2
 
 ```text
-Azure host identity was not verified: {}
+dispatcher run: 30310432132 / rerun
+child deployment run: 30315658677
+child artifact: 8672070574
+artifact digest: sha256:8e551e4b770996db41befc6f95b4dd6af08f674ae098e6bcde0d22234a049c8e
+authority: invalid unauthorized replay
+ARM parent: Succeeded
+ARM nested: Succeeded
+VM extension: Succeeded
+workflow conclusion: failure
 ```
 
-PR #139 carries the repository repair:
+The red child conclusions came from legacy or presentation evidence observers. They do not negate the successful ARM deployment, extension convergence, or live API verification.
 
-```bash
-systemctl daemon-reload
-systemctl enable servicetracer-demo-api.service
-systemctl restart servicetracer-demo-api.service
-systemctl is-active --quiet servicetracer-demo-api.service
-```
-
-The repair is repository-only until separately merged, reviewed through a fresh preflight and deployed under new authority.
-
-## Current Lab v1 gate
+## Latest Azure evidence
 
 ```text
-fresh provenance preflight: complete
-current cost observation: CAD 4.03203831168191 month-to-date
-remaining Azure for Students credit: not observed
-run 19 deployment attempt: failed closed
-run 19 evidence lock: complete
-systemd restart repair: under PR #139 review
-provenance runtime verified: false
-browser correlated transaction: false
-monitoring and alert delivery: unverified
+subscription: Azure for Students
+subscription and tenant IDs: observed but not promoted
+resource group: rg-servicetracer-dev-westus2
+region: westus2
+collector VM: vm-stcollector-mst-dev
+VM size: Standard_B2ats_v2
+private IP: 10.20.40.10
+power state: running
+extension state: Succeeded
+extension source: 0b6b5322f25b3d0289f6c0febdcfd800ea4b909a
+standard public IPv4 usage: 2 / 3
+resource locks: 0
+actual cost: not observed
+```
+
+## Live service verification
+
+```text
+health: healthy
+hosting model: collector_vm_systemd
+Azure host identity: verified
+deployed source: exact reviewed source
+12 health requests: passed
+CORS preflight: HTTP 204
+analysis POST: HTTP 200
+request header/body identity: verified
+transactions: 20
+successful / failed: 10 / 10
+exact root cause claimed: false
+browser DOM refresh: pending user observation
+```
+
+## Control incident and containment
+
+The root cause is an **authorization consumption control failure** under the canonical **Authorization Consumption Principle**. The dispatcher wrote a consumed marker to an issue comment but did not consult a durable external single-use ledger before every cloud dispatch. A GitHub Actions rerun reused the original opened-event request snapshot and dispatched a second child run.
+
+Repository-only containment on `agent/quarantine-correlation-replay`:
+
+```text
+shared collector workflow: quarantined fail-closed
+OIDC permission: absent
+Azure environment: absent
+Azure commands: absent
+consumed one-shot dispatcher: deleted from branch
+trigger PR #181: closed without merge
+new Azure authority created: false
+```
+
+The quarantine is intentionally broad. It blocks `what-if`, `deploy`, and `verify` through the shared collector workflow until a replacement workflow is reviewed with durable replay protection.
+
+## Lab v1 gate
+
+```text
+exact source deployed: true
+runtime contract verified: true
+20-transaction scenario verified: true
+browser rendering verified: false
+monitoring and alert delivery verified: false
+effective least privilege verified: false
+fresh actual cost observed: false
+deployment automation safely available: false / quarantined
 ```
 
 ## Historical compatibility anchors
 
-These markers remain durable for bounded historical validators. They do not supersede the current canonical v2 records.
+The following markers remain only so durable historical validators can reproduce their original observation boundaries. They do not override the current terminal reconciliation.
 
 ```text
 legacy canonical main: 665e051375594d11e58e434231bd06775dbdc560
@@ -119,22 +173,25 @@ independent SKU restriction: NotAvailableForSubscription
 independent VM family: standardBasv2Family
 typed readiness control: PR #73
 GitHub Pages publication authorized: false
+not_observed != false
+preserved verified preflight: .project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json
+prior run-19 reconciliation: .project/reconciliations/collector-provenance-deployment-run19-20260726.json
 ```
 
 ## Current authority
 
 ```text
-repository restart repair: authorized
-repository truth reconciliation: authorized
-ordinary PR CI: authorized
-PR #139 merge: unauthorized
-Azure query or mutation: unauthorized
-workflow retry or dispatch: unauthorized
+repository containment and reconciliation: authorized
+ordinary pull-request CI: authorized
+PR #181 closure without merge: completed
+containment PR merge: not separately recorded
+workflow dispatch or rerun: unauthorized
+Azure authentication, query, or mutation: unauthorized
 rollback: unauthorized
-browser transaction: unauthorized
-RBAC or cleanup: unauthorized
+cleanup: unauthorized
+RBAC mutation: unauthorized
 ```
 
 ## Next gate
 
-Review exact-head CI for the rebased PR #139 and make a separate merge decision. After a merge, capture fresh Azure state and a fresh `FullResourcePayloads` What-If for the repaired exact source. A new explicit, non-renewing deployment and rollback decision is required before another Azure attempt.
+Review exact-head CI for the containment pull request. After merge, prove that replaying the historical dispatcher cannot obtain OIDC or execute Azure commands. Do not restore the collector workflow until a durable external consumption ledger, unique immutable request IDs, replay tests, and fresh explicit authority exist.

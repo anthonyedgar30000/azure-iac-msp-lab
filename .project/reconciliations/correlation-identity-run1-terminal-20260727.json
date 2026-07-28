@@ -1,0 +1,148 @@
+{
+  "schema_version": "project.correlation-identity-terminal-reconciliation.v1",
+  "recorded_at": "2026-07-27T20:20:00-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "repository_main_observed": "767a0482cdfff689e430ebe4a5a08fc339f1a291",
+  "tracking_issue": 179,
+  "trigger_pull_request": 181,
+  "reviewed_source": "0b6b5322f25b3d0289f6c0febdcfd800ea4b909a",
+  "source_ci": {
+    "run_id": 30309238071,
+    "conclusion": "success"
+  },
+  "authority": {
+    "request": ".project/deployment-requests/correlation-identity-run1.json",
+    "attempt_limit": 1,
+    "consumed_at": "2026-07-27T22:21:42Z",
+    "renewable": false,
+    "retry_authorized": false,
+    "rollback_authorized": false,
+    "current_status": "consumed_with_unauthorized_replay_observed"
+  },
+  "attempts": [
+    {
+      "sequence": 1,
+      "classification": "authorized_consuming_attempt",
+      "dispatcher_run_id": 30310432132,
+      "dispatcher_artifact": {
+        "id": 8670176817,
+        "digest": "sha256:1618b7e6de73eb1923c4d445afe08e981d3e0692abc167e35f4dfd834d0cf044"
+      },
+      "deployment_run_id": 30310439500,
+      "deployment_artifact": {
+        "id": 8670172029,
+        "digest": "sha256:8917c2adea01c881a7382020bad06dd94288c576141c0d80b865f382c3eecb7b"
+      },
+      "azure_result": {
+        "arm_parent": "Succeeded",
+        "arm_nested": "Succeeded",
+        "vm_extension": "Succeeded",
+        "resource_group": "rg-servicetracer-dev-westus2",
+        "location": "westus2",
+        "vm": "vm-stcollector-mst-dev",
+        "creates": 0,
+        "deletes": 0,
+        "replaces": 0,
+        "rollback_performed": false
+      },
+      "service_result": {
+        "health": "healthy",
+        "hosting_model": "collector_vm_systemd",
+        "azure_identity_verified": true,
+        "deployed_source_verified": true,
+        "cors_preflight_http_status": 204,
+        "analysis_http_status": 200,
+        "request_identity_verified": true,
+        "transactions": 20,
+        "exact_root_cause_claimed": false
+      },
+      "workflow_conclusion": "failure",
+      "workflow_failure_boundary": "legacy CORS and GitHub Pages evidence observer"
+    },
+    {
+      "sequence": 2,
+      "classification": "unauthorized_replay_after_consumption",
+      "dispatcher_run_id": 30310432132,
+      "dispatcher_artifact": {
+        "id": 8672075850,
+        "digest": "sha256:76c6cd49f20220e3cd278a1daa0196a389be5ab9ed6380c856784aa29e6279be"
+      },
+      "deployment_run_id": 30315658677,
+      "deployment_artifact": {
+        "id": 8672070574,
+        "digest": "sha256:8e551e4b770996db41befc6f95b4dd6af08f674ae098e6bcde0d22234a049c8e"
+      },
+      "azure_result": {
+        "arm_parent": "Succeeded",
+        "arm_nested": "Succeeded",
+        "vm_extension": "Succeeded",
+        "resource_group": "rg-servicetracer-dev-westus2",
+        "location": "westus2",
+        "vm": "vm-stcollector-mst-dev",
+        "creates": 0,
+        "deletes": 0,
+        "replaces": 0,
+        "rollback_performed": false
+      },
+      "service_result": {
+        "health": "healthy",
+        "hosting_model": "collector_vm_systemd",
+        "azure_identity_verified": true,
+        "deployed_source_verified": true,
+        "cors_preflight_http_status": 204,
+        "analysis_http_status": 200,
+        "request_identity_verified": true,
+        "transactions": 20,
+        "exact_root_cause_claimed": false
+      },
+      "workflow_conclusion": "failure",
+      "workflow_failure_boundary": "presentation evidence observer",
+      "authority_valid": false
+    }
+  ],
+  "latest_azure_observation": {
+    "source": "verified_workflow_artifact",
+    "subscription_name": "Azure for Students",
+    "subscription_and_tenant_ids": "observed_but_not_promoted",
+    "resource_group": "rg-servicetracer-dev-westus2",
+    "location": "westus2",
+    "collector_vm": "vm-stcollector-mst-dev",
+    "collector_vm_size": "Standard_B2ats_v2",
+    "collector_private_ip": "10.20.40.10",
+    "vm_power_state": "running",
+    "standard_public_ipv4_usage": "2/3",
+    "resource_locks": 0,
+    "actual_cost_CAD": "not_observed"
+  },
+  "root_cause": {
+    "classification": "authorization_consumption_control_failure",
+    "mechanism": "The one-shot dispatcher persisted consumption only as an issue comment. GitHub Actions rerun reused the original opened-event authority snapshot and dispatched the current-main child workflow a second time.",
+    "canonical_rule_violated": "Authorization Consumption Principle"
+  },
+  "containment": {
+    "shared_deployment_workflow": "quarantined_fail_closed",
+    "oidc_permission_present": false,
+    "azure_commands_present": false,
+    "one_shot_dispatcher_retired_from_main": true,
+    "trigger_pull_request_disposition": "close_without_merge",
+    "new_azure_authority_created": false
+  },
+  "restoration_gate": {
+    "required": true,
+    "requirements": [
+      "design a durable external consumption ledger checked before every cloud dispatch",
+      "bind every attempt to a unique immutable request identifier",
+      "reject reruns and duplicate dispatches before OIDC token issuance",
+      "test the consumed, replayed, expired, and mismatched-source paths",
+      "obtain fresh explicit non-renewing deployment and rollback authority"
+    ]
+  },
+  "claim_boundaries": [
+    "workflow_failure != deployment_failure",
+    "deployment_success != valid_authority",
+    "issue_comment_consumption_record != enforced_single_use",
+    "closed_trigger_PR != historical_run_unrerunnable",
+    "quarantined_child_workflow == no_current_Azure_execution_path",
+    "browser_DOM_refresh_verified == false"
+  ]
+}
