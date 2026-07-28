@@ -6,120 +6,98 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-WORKFLOW = ROOT / ".github" / "workflows" / "correlation-identity-deploy-run1.yml"
+RETIRED_DISPATCHER = (
+    ROOT / ".github" / "workflows" / "correlation-identity-deploy-run1.yml"
+)
+COLLECTOR_WORKFLOW = ROOT / ".github" / "workflows" / "collector-demo-api.yml"
 REQUEST = (
     ROOT
     / ".project"
     / "deployment-requests"
     / "correlation-identity-run1.json"
 )
+RECONCILIATION = (
+    ROOT
+    / ".project"
+    / "reconciliations"
+    / "correlation-identity-run1-terminal-20260727.json"
+)
 
 
-class CorrelationIdentityDeployRun1Tests(unittest.TestCase):
+class CorrelationIdentityReplayQuarantineTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.workflow = WORKFLOW.read_text(encoding="utf-8")
+        cls.workflow = COLLECTOR_WORKFLOW.read_text(encoding="utf-8")
         cls.request = json.loads(REQUEST.read_text(encoding="utf-8"))
-
-    def test_trigger_is_exact_opened_pull_request_and_not_merge_driven(self) -> None:
-        for required in (
-            "pull_request:",
-            "types: [opened]",
-            ".project/triggers/correlation-identity-deploy-run1.json",
-            "github.event.action == 'opened'",
-            "github.base_ref == 'main'",
-            "github.head_ref == 'trigger/correlation-identity-deploy-run1'",
-            ".merge_authorized == false",
-            ".retry_authorized == false",
-        ):
-            self.assertIn(required, self.workflow)
-        self.assertNotIn("push:\n", self.workflow)
-        self.assertNotIn("workflow_dispatch:\n", self.workflow)
-
-    def test_request_binds_exact_ci_tested_fix(self) -> None:
-        self.assertEqual(self.request["tracking_issue"], 179)
-        self.assertEqual(self.request["source"]["repair_pull_request"], 178)
-        self.assertEqual(
-            self.request["source"]["exact_head"],
-            "0b6b5322f25b3d0289f6c0febdcfd800ea4b909a",
-        )
-        self.assertEqual(
-            self.request["source"]["merge_commit"],
-            "e2b0aee4c4f9e0042036042d7892b7d51ec17e2e",
-        )
-        self.assertEqual(self.request["source"]["ci_run_id"], 30309238071)
-        self.assertEqual(self.request["source"]["ci_conclusion"], "success")
-        self.assertEqual(
-            self.request["execution"]["reviewed_commit"],
-            self.request["source"]["exact_head"],
+        cls.reconciliation = json.loads(RECONCILIATION.read_text(encoding="utf-8"))
+        cls.executable_workflow = "\n".join(
+            line for line in cls.workflow.splitlines() if not line.lstrip().startswith("#")
         )
 
-    def test_authority_is_one_attempt_nonrenewing_and_zero_create(self) -> None:
+    def test_consumed_one_shot_dispatcher_is_retired(self) -> None:
+        self.assertFalse(RETIRED_DISPATCHER.exists())
+
+    def test_shared_child_workflow_is_fail_closed_without_cloud_identity(self) -> None:
+        self.assertIn("Collector-hosted demo API — quarantined", self.workflow)
+        self.assertIn("unauthorized replay of consumed one-shot authority", self.workflow)
+        self.assertNotIn("id-token: write", self.executable_workflow)
+        self.assertNotIn("environment: azure-lab", self.executable_workflow)
+        self.assertNotIn("azure/login", self.executable_workflow)
+        self.assertNotIn("az ", self.executable_workflow)
+        self.assertIn("exit 1", self.executable_workflow)
+
+    def test_request_is_consumed_and_cannot_authorize_another_attempt(self) -> None:
+        self.assertEqual(
+            self.request["status"],
+            "consumed_with_unauthorized_replay_observed",
+        )
+        self.assertFalse(self.request["active"])
         authority = self.request["authority"]
         self.assertEqual(authority["attempt_limit"], 1)
         self.assertFalse(authority["renewable"])
-        self.assertFalse(authority["transferable"])
         self.assertFalse(authority["automatic_retry_authorized"])
         self.assertFalse(authority["rollback_authorized"])
-        scope = self.request["authorized_mutation_scope"]
-        self.assertEqual(scope["creates"], 0)
-        self.assertEqual(scope["deletes"], 0)
-        self.assertEqual(scope["replaces"], 0)
-        self.assertEqual(len(scope["modifies"]), 3)
+        self.assertEqual(len(self.request["observed_attempts"]), 2)
 
-    def test_dispatch_uses_existing_governed_workflow_once(self) -> None:
-        for required in (
-            "gh workflow run collector-demo-api.yml",
-            "--ref main",
-            "-f operation=deploy",
-            '-f reviewed_commit="$REVIEWED_COMMIT"',
-            "The one-shot grant is now **consumed**",
-            "No second dispatch will be issued",
-            "No retry or rollback was performed",
-        ):
-            self.assertIn(required, self.workflow)
-        self.assertNotIn("gh run rerun", self.workflow)
-        self.assertNotIn("rerun-failed-jobs", self.workflow)
+    def test_attempt_one_was_authorized_and_attempt_two_was_not(self) -> None:
+        first, second = self.request["observed_attempts"]
+        self.assertEqual(first["authority_classification"], "authorized_consuming_attempt")
+        self.assertEqual(first["child_deployment_run"], 30310439500)
+        self.assertEqual(
+            second["authority_classification"],
+            "unauthorized_replay_after_consumption",
+        )
+        self.assertEqual(second["child_deployment_run"], 30315658677)
+        for attempt in (first, second):
+            self.assertEqual(attempt["arm_deployment"], "Succeeded")
+            self.assertEqual(attempt["vm_extension"], "Succeeded")
+            self.assertEqual(attempt["live_api_health"], "verified")
+            self.assertEqual(attempt["request_identity"], "verified")
+            self.assertEqual(attempt["transactions"], 20)
+            self.assertFalse(attempt["rollback_performed"])
 
-    def test_independent_verification_is_source_and_identity_bound(self) -> None:
-        for required in (
-            "gh run watch \"$run_id\" --interval 10",
-            "observed_source",
-            "for attempt in $(seq 1 12)",
-            "Access-Control-Request-Headers: Content-Type, X-ServiceTracer-Request-ID",
-            "X-ServiceTracer-Request-ID: $request_id",
-            "assert post_headers['x-servicetracer-request-id'] == request_id",
-            "assert payload['request_id'] == request_id",
-            "assert payload['hosting_model'] == 'collector_vm_systemd'",
-            "assert payload['azure_host']['source_ref'] == reviewed_commit",
-            "assert len(payload['transactions']) == 20",
-            "exact_root_cause_claimed'] is False",
-            "workflow_conclusion != live_service_truth",
-        ):
-            self.assertIn(required, self.workflow)
-        self.assertNotIn("gh run watch \"$run_id\" --exit-status", self.workflow)
-
-    def test_served_frontend_requires_separate_diagnostics(self) -> None:
-        for required in (
-            "Request header identity mismatch · evidence rejected",
-            "Request body identity mismatch · evidence rejected",
-            "Collector identity mismatch · evidence rejected",
-            "request and collector identity verified",
-            "! grep -F 'Request or collector identity mismatch'",
-            "browser_render_execution_not_claimed:true",
-            "correlation-identity-run1-evidence",
-        ):
-            self.assertIn(required, self.workflow)
-
-    def test_wrapper_contains_no_direct_azure_mutation(self) -> None:
-        for forbidden in (
-            "az deployment",
-            "az vm",
-            "az network",
-            "systemctl",
-            "nginx -t",
-        ):
-            self.assertNotIn(forbidden, self.workflow)
+    def test_reconciliation_preserves_authority_and_runtime_as_separate_truths(self) -> None:
+        self.assertEqual(
+            self.reconciliation["root_cause"]["classification"],
+            "authorization_consumption_control_failure",
+        )
+        attempts = self.reconciliation["attempts"]
+        self.assertEqual(attempts[0]["classification"], "authorized_consuming_attempt")
+        self.assertEqual(
+            attempts[1]["classification"],
+            "unauthorized_replay_after_consumption",
+        )
+        self.assertFalse(attempts[1]["authority_valid"])
+        self.assertEqual(
+            self.reconciliation["containment"]["shared_deployment_workflow"],
+            "quarantined_fail_closed",
+        )
+        self.assertFalse(
+            self.reconciliation["containment"]["oidc_permission_present"]
+        )
+        self.assertFalse(
+            self.reconciliation["containment"]["azure_commands_present"]
+        )
 
 
 if __name__ == "__main__":
