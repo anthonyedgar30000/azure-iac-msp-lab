@@ -2,7 +2,18 @@
 
 ## Status
 
-**Proposed, not implemented.** The collector Azure workflow remains quarantined. This document creates no deployment, verification, rollback, cleanup, RBAC, or cloud-authentication authority.
+**Canonical `main` at the branch boundary: Proposed, not implemented.**
+
+**Implementation candidate on `agent/durable-single-use-authorization-ledger-v1`; not merged or activated.** The branch implements the deterministic immutable-request verifier and a reusable no-OIDC claim workflow that uses GitHub's create-reference API. The collector Azure workflow remains quarantined.
+
+The following remain deliberately incomplete:
+
+- the protected `refs/tags/authority-consumed/**` repository ruleset is not configured or independently inspected;
+- no live claim, replay, or concurrent-claim test has been dispatched;
+- no collector deployment workflow calls this reusable workflow;
+- no Azure authentication, query, mutation, deployment, verification, rollback, cleanup, or RBAC authority exists.
+
+`implementation_candidate != activated_control`
 
 ## Problem statement
 
@@ -16,15 +27,44 @@ deployment_succeeded != authority_valid
 
 The replacement must make consumption atomic, durable, immutable, independently auditable, and effective before any job capable of requesting Azure OIDC starts.
 
+## Implemented branch components
+
+```text
+infra/scripts/authority_claim.py
+  -> strict immutable-request schema
+  -> deterministic SHA-256 content digest
+  -> UUIDv7 request identity
+  -> exact authorization commit binding
+  -> repository and caller-workflow binding
+  -> expiry, status, source, target, and finite-authority validation
+  -> normalized claim outputs and validation evidence
+
+.github/workflows/durable-authorization-claim-v1.yml
+  -> reusable workflow_call only
+  -> exact caller commit checkout
+  -> claim-authority job with contents: write and id-token: none
+  -> atomic POST create refs/tags/authority-consumed/<request_id>
+  -> replay/duplicate failure before any downstream job
+  -> durable-ref verification and sanitized evidence artifact
+
+infra/tests/test_durable_authorization_claim.py
+  -> deterministic positive and negative validation
+  -> workflow permission and mutation contract tests
+  -> static replay and activation-boundary tests
+```
+
+The verifier performs no GitHub mutation. The workflow performs only the first-writer-wins reference creation and read-back verification. It contains no Azure command and cannot be invoked manually because it exposes only `workflow_call`.
+
 ## Intended architecture
 
 ```text
 human authority
   -> immutable request record committed to main
-  -> claim-authority job (contents: write, id-token: none)
+  -> caller workflow at the exact authorization commit
+  -> reusable claim-authority workflow (contents: write, id-token: none)
   -> atomic create refs/tags/authority-consumed/<request_id>
-  -> Azure job admitted only when claim job succeeds
-  -> Azure job (id-token: write, contents: read)
+  -> downstream cloud job admitted only when the claim job succeeds
+  -> downstream cloud job uses only immutable claim outputs
   -> terminal evidence and reconciliation
 ```
 
@@ -32,32 +72,36 @@ human authority
 
 Each request is a committed JSON object containing:
 
-- globally unique immutable `request_id` using UUIDv7 or an equivalent collision-resistant identifier;
+- globally unique immutable UUIDv7 `request_id`;
 - exact authorization commit SHA;
 - exact reviewed implementation SHA;
-- workflow path and operation;
-- subscription, tenant, resource group, region, environment, and resource-scope hash;
-- authorized identity and capability;
+- repository, caller workflow path, operation, and environment;
+- subscription or governed alias, tenant or governed alias, resource group, region, and resource-scope hash;
+- authorized identity and capability path;
 - issue time and expiry;
-- attempt limit, fixed at one for this design;
-- retry, rollback, cleanup, and RBAC flags;
+- attempt limit fixed at one;
+- explicit non-renewing retry, rollback, cleanup, and RBAC flags;
 - canonical human instruction and interpretation;
 - schema version and deterministic content digest.
 
-A workflow must read the request from the exact authorization commit. It must not trust a mutable branch copy, issue comment, pull-request body, event payload snapshot, or workflow input as the authority source.
+The workflow reads the request from the exact caller commit. It does not trust a mutable branch copy, issue comment, pull-request body, event payload snapshot, or target parameters supplied separately by a caller.
 
 ### 2. Separate claim job with no OIDC permission
 
-The `claim-authority` job receives `contents: write` and explicitly receives no `id-token` permission. It validates:
+The `claim-authority` job receives `contents: write` and explicitly receives `id-token: none`. It validates:
 
-- request schema and digest;
-- request is active and unexpired;
-- exact workflow, source, operation, target, scope hash, and environment match;
-- request grants the current repository and actor path;
-- no retry, rollback, cleanup, or adjacent mutation is inferred;
-- the consumption reference does not already exist.
+- exact schema with unknown fields rejected;
+- canonical content digest;
+- active, unconsumed, and unexpired status;
+- UUIDv7 request identity;
+- exact caller commit;
+- exact repository and caller workflow path;
+- reviewed source exists as a commit and is an ancestor of the exact authorization commit;
+- target values originate only from the immutable request and are emitted as claim outputs;
+- attempt limit of one;
+- no automatic retry, rollback, cleanup, RBAC, transfer, or renewal authority.
 
-Only after validation does it attempt the atomic claim.
+Only after deterministic validation does it attempt the atomic claim.
 
 ### 3. Atomic first-writer-wins ledger
 
@@ -69,94 +113,114 @@ refs/tags/authority-consumed/<request_id>
 
 The tag points to the exact authorization request commit. Creation uses GitHub's create-reference API.
 
-GitHub returns success to exactly one first creator. An existing reference causes the claim to fail closed. The workflow must never update, force-move, reuse, or delete an existing consumption reference.
+Only one first creator can create a unique reference. An existing reference causes the workflow to fail closed as a replay or duplicate. The workflow contains no update, force-move, reuse, or deletion path.
 
-A repository ruleset must protect `refs/tags/authority-consumed/**` from update and deletion and must not grant GitHub Actions a bypass. Administrative emergency deletion is outside the workflow and requires separately recorded human authority and reconciliation.
+A repository ruleset must still protect `refs/tags/authority-consumed/**` from update and deletion and must not grant GitHub Actions a bypass. Administrative emergency deletion remains outside the workflow and requires separately recorded human authority and reconciliation.
 
-### 4. OIDC-capable Azure job
+### 4. Future OIDC-capable Azure job
 
-The Azure job is a distinct job with:
+No Azure job is implemented or restored by this branch.
+
+A future Azure job must be a distinct caller job with:
 
 - `id-token: write`;
 - `contents: read`;
-- a hard `needs: claim-authority`;
-- an admission condition requiring the claim job's success and exact request digest;
+- a hard dependency on the reusable claim job;
+- admission only after the claim workflow succeeds;
+- all source, operation, environment, and target values taken from immutable claim outputs;
 - no path that can run on skipped, failed, expired, consumed, or mismatched claims.
 
-The Azure job re-reads the protected consumption reference and verifies that it points to the exact authorization commit before calling `azure/login`.
+The Azure job must re-read the protected consumption reference and verify that it points to the exact authorization commit before calling `azure/login`.
 
-Consumption occurs when the reference is successfully created, regardless of whether Azure login or deployment later succeeds.
+Consumption occurs when the reference is successfully created, regardless of whether a later cloud login or operation succeeds.
 
 ### 5. Evidence model
 
-The claim job records:
+The claim workflow records:
 
-- request ID and request digest;
+- request ID and digest;
 - authorization commit and reviewed source;
+- caller repository and workflow;
 - consumption reference;
 - GitHub run ID and attempt number;
 - target scope hash;
 - claim timestamp;
-- validation result.
+- deterministic validation result;
+- atomic creation result;
+- durable-reference read-back result;
+- explicit `azure_oidc_requested: false`;
+- explicit `azure_action_performed: false`.
 
-The Azure job records control-plane, What-If, deployment, runtime, cost, quota, lock, and terminal evidence without exposing secrets. Terminal reconciliation keeps authority validity, deployment outcome, workflow conclusion, and service truth as separate fields.
+Terminal reconciliation must keep authority validity, claim outcome, cloud outcome, workflow conclusion, and service truth as separate fields.
 
 ## Required invariants
 
 1. A request can be claimed at most once.
-2. Claim creation is atomic under concurrent dispatch.
+2. Claim creation is an atomic create, never an update.
 3. The claim job cannot request Azure OIDC.
-4. No OIDC-capable job starts before successful claim creation.
-5. Existing, expired, inactive, altered, source-mismatched, target-mismatched, or scope-mismatched requests fail closed.
-6. Consumption records cannot be changed or deleted by the workflow.
-7. A failed Azure operation does not renew the request.
-8. Retry, rollback, cleanup, or materially changed scope requires a new request ID and fresh authority.
-9. The verifier is deterministic and narrower than the workflow it gates.
-10. Missing evidence remains `not_observed`, not false.
+4. No cloud-capable job starts before successful claim creation.
+5. Existing, expired, inactive, consumed, altered, authorization-commit-mismatched, repository-mismatched, or workflow-mismatched requests fail closed.
+6. The reviewed source must exist and be an ancestor of the exact authorization commit.
+7. Operation and target values are read only from the immutable request and emitted as outputs for future downstream jobs.
+8. Unknown request fields fail closed.
+9. Consumption records cannot be changed or deleted by the workflow.
+10. A failed cloud operation does not renew the request.
+11. Retry, rollback, cleanup, RBAC mutation, or materially changed scope requires a new request ID and fresh authority.
+12. The verifier is deterministic and narrower than the workflow it gates.
+13. Missing evidence remains `not_observed`, not false.
 
-## Validation matrix
+## Validation state
 
-The implementation is not eligible for restoration review until automated tests prove:
+Automated local and ordinary PR CI tests cover:
 
-- first valid claim succeeds;
-- workflow rerun fails before the OIDC-capable job;
-- duplicate manual dispatch fails before the OIDC-capable job;
-- two concurrent valid dispatches produce exactly one successful claimant;
-- expired request fails;
-- inactive request fails;
-- altered request digest fails;
-- reviewed-source mismatch fails;
-- workflow-path mismatch fails;
-- target and scope-hash mismatch fail;
-- pre-existing consumption reference fails;
-- claim job permissions contain no `id-token: write`;
-- Azure job has no execution path when claim fails;
-- Azure failure leaves the request consumed;
-- rollback and retry remain unauthorized unless separately granted.
+- valid deterministic request validation;
+- tampered digest rejection;
+- expired, inactive, and consumed request rejection;
+- authorization commit, repository, and caller-workflow boundary rejection;
+- reviewed-source existence and ancestor checks in the workflow contract;
+- immutable-request operation and target outputs for future downstream use;
+- finite non-renewing authority flags;
+- UUIDv7 enforcement;
+- unknown-field rejection;
+- workflow `contents: write` and `id-token: none`;
+- no manual dispatch trigger;
+- no Azure login, Azure CLI operation, workflow dispatch, rerun, ref update, ref deletion, or forced move;
+- replay failure before evidence completion or any future downstream cloud path;
+- activation state remains false.
+
+The following require separately authorized live repository testing and remain unverified:
+
+- first live claim creates the expected tag;
+- a workflow rerun fails before any OIDC-capable job;
+- a duplicate caller run fails before any OIDC-capable job;
+- two concurrent valid runs produce exactly one successful claimant;
+- the protected tag ruleset prevents update and deletion without workflow bypass.
 
 ## Failure and rollback behaviour
 
-- Claim validation failure: stop with no OIDC token and no Azure action.
-- Claim race loss: classify as replay or duplicate and stop.
-- Azure login or deployment failure after claim: preserve evidence and stop; the grant remains consumed.
+- Claim validation failure: stop with no GitHub mutation, OIDC token, or Azure action.
+- Claim race loss or existing reference: classify as replay or duplicate and stop.
+- Evidence upload failure after claim: the grant remains consumed; reconstruct from the durable tag and run logs.
+- Future Azure login or deployment failure after claim: preserve evidence and stop; the grant remains consumed.
 - Verification failure: preserve deployed reality and evidence; do not infer rollback authority.
 - Ledger or ruleset failure: keep the collector workflow quarantined.
-- No automatic retry or rollback is permitted by this design.
+- No automatic retry or rollback is permitted.
 
 ## Cost and quota implications
 
-The ledger itself uses GitHub repository references and has no expected Azure recurring-cost delta. Implementation testing must not authenticate to Azure unless separately authorized. Actual Azure cost, available credit, regional quota, and lock state remain live evidence to observe before any future cloud operation.
+The ledger uses GitHub repository references and has no expected Azure recurring-cost delta. This repository-only implementation has an expected Azure recurring-cost delta of CAD $0. Actual Azure cost, available credit, regional quota, and lock state remain live evidence to observe before any future cloud operation.
 
-## Deployment and restoration method
+## Activation and restoration gates
 
-1. Implement the claim verifier and workflow split on a review branch.
-2. Add deterministic unit and workflow-contract tests.
-3. Configure and independently inspect the tag ruleset.
-4. Run exact-head CI with no Azure authentication.
-5. Review the complete diff and evidence.
-6. Obtain fresh explicit authority for a bounded non-production claim test.
-7. Obtain separate fresh authority before restoring any Azure operation.
-8. Keep a rapid quarantine path that removes OIDC and Azure commands if an invariant fails.
+1. Complete exact-head ordinary PR CI with no Azure authentication.
+2. Review the complete diff and generated test evidence.
+3. Merge only under explicit merge authority.
+4. Configure and independently inspect the protected tag ruleset under separate repository-settings authority.
+5. Obtain fresh explicit authority for a bounded non-production live claim and replay test.
+6. Obtain fresh explicit authority for a concurrent duplicate-claim test.
+7. Reconcile observed results into canonical `.project/` state.
+8. Obtain separate fresh non-renewing authority before modifying or restoring any Azure-capable workflow.
+9. Keep a rapid quarantine path that removes OIDC and Azure commands if an invariant fails.
 
 ## Cleanup and decommissioning
 
@@ -164,7 +228,7 @@ Consumption references are durable audit records and are not routine cleanup tar
 
 - disabling all workflows that consume it;
 - preserving an export of request and consumption records;
-- documenting retention and legal/audit requirements;
+- documenting retention and audit requirements;
 - separately authorizing any ruleset or reference removal;
 - verifying no Azure workflow still depends on the ledger.
 
@@ -173,10 +237,11 @@ Consumption references are durable audit records and are not routine cleanup tar
 - exact request JSON and digest;
 - authorization commit;
 - exact-head CI;
-- ruleset configuration with secrets redacted;
-- concurrent-claim test result;
-- replay, expiry, source, target, and scope rejection results;
+- ruleset configuration with sensitive values redacted;
+- first-claim, replay, and concurrent-claim results;
+- expiry, authorization-commit, repository, and workflow rejection results;
+- reviewed-source ancestry and immutable target-output evidence;
 - job-level permission inspection;
-- proof that failed claims never start the OIDC-capable job;
+- proof that failed claims never start an OIDC-capable job;
 - terminal reconciliation;
 - future Azure What-If and runtime evidence only after fresh authority.
