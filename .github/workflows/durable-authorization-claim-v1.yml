@@ -1,0 +1,208 @@
+name: Durable single-use authorization claim v1
+
+on:
+  workflow_call:
+    inputs:
+      request_path:
+        description: Exact immutable request file under .project/deployment-requests/
+        required: true
+        type: string
+    outputs:
+      request_id:
+        description: UUIDv7 authorization request identifier
+        value: ${{ jobs.claim-authority.outputs.request_id }}
+      request_digest:
+        description: Canonical authorization request digest
+        value: ${{ jobs.claim-authority.outputs.request_digest }}
+      authorization_commit:
+        description: Exact commit containing the immutable request and caller workflow
+        value: ${{ jobs.claim-authority.outputs.authorization_commit }}
+      reviewed_source:
+        description: Exact reviewed implementation source authorized by the request
+        value: ${{ jobs.claim-authority.outputs.reviewed_source }}
+      claim_ref:
+        description: Durable first-writer-wins consumption reference
+        value: ${{ jobs.claim-authority.outputs.claim_ref }}
+      operation:
+        description: Exact authorized operation
+        value: ${{ jobs.claim-authority.outputs.operation }}
+      environment:
+        description: Exact authorized environment
+        value: ${{ jobs.claim-authority.outputs.environment }}
+      subscription:
+        description: Exact authorized subscription identifier or governed alias
+        value: ${{ jobs.claim-authority.outputs.subscription }}
+      tenant:
+        description: Exact authorized tenant identifier or governed alias
+        value: ${{ jobs.claim-authority.outputs.tenant }}
+      resource_group:
+        description: Exact authorized resource group
+        value: ${{ jobs.claim-authority.outputs.resource_group }}
+      location:
+        description: Exact authorized Azure region
+        value: ${{ jobs.claim-authority.outputs.location }}
+      scope_hash:
+        description: Exact authorized resource-scope digest
+        value: ${{ jobs.claim-authority.outputs.scope_hash }}
+
+permissions:
+  contents: read
+
+jobs:
+  claim-authority:
+    name: Validate and atomically consume authority
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+    permissions:
+      contents: write
+      id-token: none
+    outputs:
+      request_id: ${{ steps.validate.outputs.request_id }}
+      request_digest: ${{ steps.validate.outputs.request_digest }}
+      authorization_commit: ${{ steps.validate.outputs.authorization_commit }}
+      reviewed_source: ${{ steps.validate.outputs.reviewed_source }}
+      claim_ref: ${{ steps.validate.outputs.claim_ref }}
+      operation: ${{ steps.validate.outputs.operation }}
+      environment: ${{ steps.validate.outputs.environment }}
+      subscription: ${{ steps.validate.outputs.subscription }}
+      tenant: ${{ steps.validate.outputs.tenant }}
+      resource_group: ${{ steps.validate.outputs.resource_group }}
+      location: ${{ steps.validate.outputs.location }}
+      scope_hash: ${{ steps.validate.outputs.scope_hash }}
+    steps:
+      - name: Check out the exact caller commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Set up deterministic verifier
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate immutable request before mutation
+        id: validate
+        env:
+          REQUEST_PATH: ${{ inputs.request_path }}
+          CALLER_WORKFLOW_REF: ${{ github.workflow_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_SHA" = "$(git rev-parse HEAD)"
+          python infra/scripts/authority_claim.py \
+            --request "$REQUEST_PATH" \
+            --repository "$GITHUB_REPOSITORY" \
+            --authorization-commit "$GITHUB_SHA" \
+            --caller-workflow-ref "$CALLER_WORKFLOW_REF" \
+            --github-output "$GITHUB_OUTPUT" \
+            --evidence-output "$RUNNER_TEMP/authority-validation.json" \
+            > "$RUNNER_TEMP/authority-validation.stdout.json"
+
+          reviewed_source="$(jq -r '.reviewed_source' "$RUNNER_TEMP/authority-validation.json")"
+          git cat-file -e "${reviewed_source}^{commit}"
+          git merge-base --is-ancestor "$reviewed_source" "$GITHUB_SHA"
+
+      - name: Atomically create the consumption reference
+        id: claim
+        env:
+          CLAIM_REF: ${{ steps.validate.outputs.claim_ref }}
+          AUTHORIZATION_COMMIT: ${{ steps.validate.outputs.authorization_commit }}
+          REQUEST_ID: ${{ steps.validate.outputs.request_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          payload="$(jq -cn \
+            --arg ref "$CLAIM_REF" \
+            --arg sha "$AUTHORIZATION_COMMIT" \
+            '{ref:$ref,sha:$sha}')"
+
+          set +e
+          response="$(gh api \
+            --method POST \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2026-03-10' \
+            "repos/$GITHUB_REPOSITORY/git/refs" \
+            --input - <<< "$payload" 2>&1)"
+          claim_rc=$?
+          set -e
+
+          if (( claim_rc != 0 )); then
+            existing_ref="$(gh api \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2026-03-10' \
+              "repos/$GITHUB_REPOSITORY/git/ref/tags/authority-consumed/$REQUEST_ID" \
+              2>/dev/null || true)"
+            if [[ -n "$existing_ref" ]]; then
+              echo "::error::Authorization request is already consumed; replay or duplicate claim rejected."
+            else
+              echo "::error::Atomic claim creation failed closed."
+            fi
+            printf '%s\n' "$response" >&2
+            exit 1
+          fi
+
+          printf '%s\n' "$response" > "$RUNNER_TEMP/authority-claim-response.json"
+          test "$(jq -r '.ref' "$RUNNER_TEMP/authority-claim-response.json")" = "$CLAIM_REF"
+          test "$(jq -r '.object.sha' "$RUNNER_TEMP/authority-claim-response.json")" = "$AUTHORIZATION_COMMIT"
+
+      - name: Verify durable claim and assemble evidence
+        env:
+          CLAIM_REF: ${{ steps.validate.outputs.claim_ref }}
+          AUTHORIZATION_COMMIT: ${{ steps.validate.outputs.authorization_commit }}
+          REQUEST_ID: ${{ steps.validate.outputs.request_id }}
+          REQUEST_DIGEST: ${{ steps.validate.outputs.request_digest }}
+          REVIEWED_SOURCE: ${{ steps.validate.outputs.reviewed_source }}
+          SCOPE_HASH: ${{ steps.validate.outputs.scope_hash }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ref_path="${CLAIM_REF#refs/}"
+          observed="$(gh api \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2026-03-10' \
+            "repos/$GITHUB_REPOSITORY/git/ref/$ref_path")"
+          test "$(jq -r '.ref' <<< "$observed")" = "$CLAIM_REF"
+          test "$(jq -r '.object.sha' <<< "$observed")" = "$AUTHORIZATION_COMMIT"
+
+          jq -n \
+            --arg request_id "$REQUEST_ID" \
+            --arg request_digest "$REQUEST_DIGEST" \
+            --arg authorization_commit "$AUTHORIZATION_COMMIT" \
+            --arg reviewed_source "$REVIEWED_SOURCE" \
+            --arg claim_ref "$CLAIM_REF" \
+            --arg target_scope_hash "$SCOPE_HASH" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg claimed_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+              schema_version:"project.authorization-claim-evidence.v1",
+              request_id:$request_id,
+              request_digest:$request_digest,
+              authorization_commit:$authorization_commit,
+              reviewed_source:$reviewed_source,
+              claim_ref:$claim_ref,
+              target_scope_hash:$target_scope_hash,
+              repository:$repository,
+              github_run_id:($run_id|tonumber),
+              github_run_attempt:($run_attempt|tonumber),
+              claimed_at:$claimed_at,
+              validation:"passed",
+              atomic_create:"succeeded",
+              durable_ref_verification:"passed",
+              azure_oidc_requested:false,
+              azure_action_performed:false
+            }' > "$RUNNER_TEMP/authority-claim-evidence.json"
+
+      - name: Upload claim evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: authorization-claim-${{ steps.validate.outputs.request_id }}
+          path: |
+            ${{ runner.temp }}/authority-validation.json
+            ${{ runner.temp }}/authority-claim-response.json
+            ${{ runner.temp }}/authority-claim-evidence.json
+          if-no-files-found: error
