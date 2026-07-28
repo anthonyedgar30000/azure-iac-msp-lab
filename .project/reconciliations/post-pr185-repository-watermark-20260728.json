@@ -1,0 +1,108 @@
+{
+  "schema_version": "project.reconciliation.post-pr185-repository-watermark.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-28T15:04:23-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "observation_boundary": "Repository-only observation after PR #185 merged. No fresh Azure authentication, query, mutation, workflow dispatch, rerun, rollback, cleanup, RBAC change, GitHub Pages publication check, or browser verification was performed.",
+  "github_state": {
+    "default_branch": "main",
+    "observed_main": "ca994ce53642587bea370bee1c5a0633faaaece8",
+    "latest_merged_pull_request": 185,
+    "latest_merged_source_head": "36bbd5ab1ef3c579c43ad2df589f44362feced37",
+    "merge_commit": "ca994ce53642587bea370bee1c5a0633faaaece8",
+    "merged_at": "2026-07-28T12:58:44Z",
+    "open_pull_requests_observed": [
+      186
+    ],
+    "merge_commit_pr_triggered_ci": "not_observed"
+  },
+  "watermark_advance": {
+    "previous_canonical_main": "db74fc764f93a972344dae35ed906e8128f51eb8",
+    "previous_canonical_pull_request": 183,
+    "intermediate_repository_watermark_pull_request": 184,
+    "intermediate_repository_watermark_source_head": "0de5f202c609e58d9ff495ee851e644ee458a9f9",
+    "intermediate_repository_watermark_merge_commit": "b92e9e0d6c4c2bcb8d4b7628eb21fb342a19f686",
+    "current_frontend_architecture_pull_request": 185,
+    "current_frontend_architecture_source_head": "36bbd5ab1ef3c579c43ad2df589f44362feced37",
+    "current_frontend_architecture_merge_commit": "ca994ce53642587bea370bee1c5a0633faaaece8"
+  },
+  "exact_head_ci": {
+    "source_head": "36bbd5ab1ef3c579c43ad2df589f44362feced37",
+    "runs": {
+      "ci": {
+        "run_id": 30359529916,
+        "conclusion": "success"
+      }
+    }
+  },
+  "scope": {
+    "pull_request_184_purpose": "Advance canonical repository authority through PR #183 without changing Azure, runtime, deployment, or authorization outcomes.",
+    "pull_request_185_purpose": "Add the ServiceTracer frontend architecture explainer and deterministic regression tests.",
+    "frontend_application_implementation_changed": true,
+    "collector_backend_implementation_changed": false,
+    "azure_iac_changed": false,
+    "collector_workflow_restored": false,
+    "durable_authorization_ledger_implemented": false,
+    "collector_workflow_quarantined": true,
+    "new_cloud_authority_created": false
+  },
+  "frontend_boundary": {
+    "repository_implementation_present": true,
+    "exact_tested_source_head": "36bbd5ab1ef3c579c43ad2df589f44362feced37",
+    "github_pages_publication_freshly_observed": false,
+    "browser_render_freshly_verified": false,
+    "runtime_proof_manufactured": false
+  },
+  "azure_boundary": {
+    "fresh_live_query_performed": false,
+    "latest_runtime_evidence_source": "verified_workflow_artifacts_preserved_by_prior_reconciliation",
+    "runtime_truth_changed_by_this_reconciliation": false,
+    "actual_cost_freshly_observed": false,
+    "remaining_Azure_for_Students_credit_observed": false
+  },
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "ordinary_pull_request_ci_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_or_rerun_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false,
+    "rbac_mutation_authorized": false
+  },
+  "claim_boundaries": [
+    "PR_exact_head_CI_success != merge_commit_CI_observed",
+    "repository_watermark_reconciled != Azure_freshly_observed",
+    "main_contains_frontend_implementation != GitHub_Pages_publication_observed",
+    "architecture_explained != runtime_proof_manufactured",
+    "design_documented != control_implemented",
+    "containment_merged != collector_workflow_restored",
+    "deployment_succeeded != authority_valid",
+    "not_observed != false"
+  ],
+  "next_gate": {
+    "operation": "review this repository-only reconciliation and open draft PR 186 while all collector Azure operations remain quarantined",
+    "merge_allowed": false,
+    "workflow_restoration_allowed": false,
+    "fresh_authority_required_for_merge": true,
+    "fresh_authority_required_for_implementation": true,
+    "fresh_authority_required_for_any_Azure_operation": true
+  },
+  "concurrent_open_pull_requests": [
+    {
+      "pull_request": 186,
+      "title": "Implement durable single-use authorization claims",
+      "state": "open_draft",
+      "base_sha": "ca994ce53642587bea370bee1c5a0633faaaece8",
+      "head_sha": "138659609b15ef80f6cce12d916e26382ab71205",
+      "exact_head_ci_run": 30389249099,
+      "exact_head_ci_conclusion": "success",
+      "merged": false,
+      "scope_overlap_with_reconciliation_files": false,
+      "activation_claimed": false
+    }
+  ]
+}
