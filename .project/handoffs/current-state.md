@@ -2,7 +2,7 @@
 
 ## Interpretation boundary
 
-This handoff records repository state observed through **2026-07-28T00:55:38-04:00** and Azure evidence last captured by preserved workflow artifacts. It is not a continuously refreshed GitHub or Azure dashboard. Query live GitHub state and obtain fresh Azure evidence before any write, merge, dispatch, authentication, or cloud action.
+This handoff records repository state observed through **2026-07-28T14:48:16-04:00** and Azure evidence last captured by preserved workflow artifacts. It is not a continuously refreshed GitHub or Azure dashboard. Query live GitHub state and obtain fresh Azure evidence before any write, merge, dispatch, authentication, or cloud action.
 
 ```text
 declared_in_code != deployed_in_azure
@@ -12,6 +12,8 @@ deployment_succeeded != authority_valid
 issue_comment_consumption_record != enforced_single_use
 closed_trigger_PR != historical_run_unrerunnable
 repository_watermark_reconciled != Azure_freshly_observed
+main_contains_frontend_implementation != GitHub_Pages_publication_observed
+architecture_explained != runtime_proof_manufactured
 static_repository_proof != fresh_Azure_observation
 not_observed != false
 ```
@@ -25,7 +27,8 @@ completion gate: .project/lab-v1-completion-gate-v2.json
 current handoff: .project/handoffs/current-state.md
 latest terminal deployment reconciliation: .project/reconciliations/correlation-identity-run1-terminal-20260727.json
 containment reconciliation: .project/reconciliations/post-pr182-containment-20260727.json
-latest repository reconciliation: .project/reconciliations/post-pr183-repository-watermark-20260728.json
+previous repository reconciliation: .project/reconciliations/post-pr183-repository-watermark-20260728.json
+latest repository reconciliation: .project/reconciliations/post-pr185-repository-watermark-20260728.json
 consumed request: .project/deployment-requests/correlation-identity-run1.json
 replacement authorization design: .project/designs/durable-single-use-authorization-ledger-v1.md
 ```
@@ -34,20 +37,20 @@ replacement authorization design: .project/designs/durable-single-use-authorizat
 
 ```text
 repository: anthonyedgar30000/azure-iac-msp-lab
-observed main: db74fc764f93a972344dae35ed906e8128f51eb8
-latest merged PR: #183
-PR #183 exact tested head: 52ab387418e77aed0cd23a2d827b359a8ae0ac40
-PR #183 CI: 30326878347 / success
-current-reality lifecycle: 30326878314 / success
-shared-state reconciliation: 30326878316 / success
-Azure architecture plan: 30326878319 / success
+observed main: ca994ce53642587bea370bee1c5a0633faaaece8
+latest merged PR: #185
+PR #185 exact tested head: 36bbd5ab1ef3c579c43ad2df589f44362feced37
+PR #185 CI: 30359529916 / success
 merge-commit PR-triggered CI: not observed
+intermediate repository watermark PR #184: merged at b92e9e0d6c4c2bcb8d4b7628eb21fb342a19f686
 trigger PR #181: closed without merge
 open pull requests observed: none
 local working tree: not observed; connector-backed repository operations
 ```
 
-The deployed application source remains `0b6b5322f25b3d0289f6c0febdcfd800ea4b909a`. Main is newer because it contains governance containment, post-containment reconciliation, the authorization-ledger design, canonical state, and tests. No newer application implementation was observed.
+The deployed collector application source remains `0b6b5322f25b3d0289f6c0febdcfd800ea4b909a`. Main is newer because it contains governance containment, repository reconciliations, the authorization-ledger design, the frontend architecture explainer, and deterministic tests.
+
+The frontend architecture implementation is present in the repository and its exact PR head passed CI. GitHub Pages publication and browser rendering were not freshly observed, so the repository implementation is not promoted as deployed presentation truth.
 
 ## Correlation deployment authority
 
@@ -129,7 +132,19 @@ request header/body identity: verified
 transactions: 20
 successful / failed: 10 / 10
 exact root cause claimed: false
-browser DOM refresh: pending user observation
+browser DOM refresh: pending direct observation
+fresh runtime observation during this reconciliation: false
+```
+
+## Frontend architecture state
+
+```text
+repository implementation: merged in PR #185
+exact tested source: 36bbd5ab1ef3c579c43ad2df589f44362feced37
+exact-head CI: 30359529916 / success
+GitHub Pages publication freshly observed: false
+browser architecture rendering freshly verified: false
+Azure collector runtime change claimed: false
 ```
 
 ## Control incident and merged containment
@@ -152,7 +167,7 @@ new Azure authority created: false
 
 Static repository proof establishes that a replay can no longer obtain Azure OIDC or execute Azure commands through the current child workflow. This is not a fresh Azure runtime observation.
 
-PR #183 then reconciled that containment into canonical state and documented the proposed durable single-use authorization ledger. The design is proposed, not implemented; the collector workflow remains quarantined.
+PR #183 reconciled that containment into canonical state and documented the proposed durable single-use authorization ledger. PR #184 advanced the repository watermark through that reconciliation. PR #185 added the frontend architecture explainer without restoring Azure execution. The authorization-ledger design remains proposed, not implemented; the collector workflow remains quarantined.
 
 ## Lab v1 gate
 
@@ -160,7 +175,8 @@ PR #183 then reconciled that containment into canonical state and documented the
 exact source deployed: true
 runtime contract verified: true
 20-transaction scenario verified: true
-browser rendering verified: false
+frontend architecture source and CI verified: true
+GitHub Pages publication and browser rendering verified: false
 monitoring and alert delivery verified: false
 effective least privilege verified: false
 fresh actual cost observed: false
@@ -199,6 +215,7 @@ prior run-19 reconciliation: .project/reconciliations/collector-provenance-deplo
 
 ```text
 repository watermark reconciliation: authorized
+pull-request creation: authorized
 ordinary pull-request CI: authorized
 pull-request merge: unauthorized
 workflow dispatch or rerun: unauthorized
@@ -210,4 +227,4 @@ RBAC mutation: unauthorized
 
 ## Next gate
 
-Review `.project/designs/durable-single-use-authorization-ledger-v1.md`. The proposed design uses a separate no-OIDC claim job and an atomic, protected, first-writer-wins Git reference as the durable consumption ledger. The collector workflow remains quarantined. Implementation and any Azure restoration require fresh explicit non-renewing authority.
+Review this repository-only reconciliation through ordinary pull-request CI. Merge requires fresh explicit authority. Separately observe GitHub Pages and browser rendering before claiming that the architecture explainer is publicly deployed. Review `.project/designs/durable-single-use-authorization-ledger-v1.md`; implementation and any Azure restoration require fresh explicit non-renewing authority.
