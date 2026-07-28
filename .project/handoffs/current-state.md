@@ -152,10 +152,28 @@ deployment automation safely available: false / quarantined
 
 ## Historical compatibility anchors
 
-These values remain historical evidence only. They do not override the current terminal reconciliation.
+The following markers remain only so durable historical validators can reproduce their original observation boundaries. They do not override the current terminal reconciliation.
 
 ```text
+legacy canonical main: 665e051375594d11e58e434231bd06775dbdc560
+PR #92 source: 5b5af74d57fb5fd87ece2a34239cc6f29d04b12b
+PR #93 source: eecb5c872f76cb5e51df6f5451d5a61b79d87bba
+PR #93 merge: 99dc79c7093fa4cd5655c2d5a65095dd796f9f75
+independent demo deployed source: 8b3d55c616d8820edd523f77021a35fe24167bd0
+checks_green != protected_Azure_artifact_inspected
+human_operator_merge != prior_agent_merge_authority
+deployment grant status: consumed_blocked
+missing action: Microsoft.Compute/virtualMachines/extensions/write
+effective extension write: unverified
 authorization reconciliation merge: 92b0c3b1064158684a4b280348c77eeedba6dfc3
+independent planner run: 30064289707
+independent planner artifact: 8585693830
+independent planner digest: 7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22
+independent SKU restriction: NotAvailableForSubscription
+independent VM family: standardBasv2Family
+typed readiness control: PR #73
+GitHub Pages publication authorized: false
+not_observed != false
 preserved verified preflight: .project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json
 prior run-19 reconciliation: .project/reconciliations/collector-provenance-deployment-run19-20260726.json
 ```
