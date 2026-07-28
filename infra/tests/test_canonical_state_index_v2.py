@@ -26,8 +26,14 @@ REQUEST = (
 
 MAIN = "767a0482cdfff689e430ebe4a5a08fc339f1a291"
 DEPLOYED_SOURCE = "0b6b5322f25b3d0289f6c0febdcfd800ea4b909a"
+PREFLIGHT_PATH = (
+    ".project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json"
+)
 RECONCILIATION_PATH = (
     ".project/reconciliations/correlation-identity-run1-terminal-20260727.json"
+)
+HISTORICAL_CONSUMED_PATH = (
+    ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json"
 )
 REQUEST_PATH = ".project/deployment-requests/correlation-identity-run1.json"
 
@@ -43,13 +49,14 @@ class CanonicalStateIndexV3Tests(unittest.TestCase):
         cls.reconciliation = json.loads(RECONCILIATION.read_text(encoding="utf-8"))
         cls.request = json.loads(REQUEST.read_text(encoding="utf-8"))
 
-    def test_index_selects_terminal_reconciliation_and_no_active_grant(self) -> None:
+    def test_index_preserves_preflight_and_selects_terminal_reconciliation(self) -> None:
         self.assertEqual(
             self.index["canonical_current_reality"],
             ".project/current-reality-v2.json",
         )
+        self.assertEqual(self.index["latest_verified_reconciliation"], PREFLIGHT_PATH)
         self.assertEqual(
-            self.index["latest_verified_reconciliation"], RECONCILIATION_PATH
+            self.index["latest_terminal_reconciliation"], RECONCILIATION_PATH
         )
         self.assertEqual(
             self.index["latest_deployment_reconciliation"], RECONCILIATION_PATH
@@ -60,7 +67,11 @@ class CanonicalStateIndexV3Tests(unittest.TestCase):
         self.assertEqual(self.index["latest_control_incident"], RECONCILIATION_PATH)
         self.assertIsNone(self.index["active_deployment_authorization"])
         self.assertEqual(
-            self.index["consumed_deployment_authorization"], REQUEST_PATH
+            self.index["consumed_deployment_authorization"],
+            HISTORICAL_CONSUMED_PATH,
+        )
+        self.assertEqual(
+            self.index["latest_consumed_deployment_authorization"], REQUEST_PATH
         )
         self.assertFalse(
             self.index["legacy_compatibility_snapshots"][0][
