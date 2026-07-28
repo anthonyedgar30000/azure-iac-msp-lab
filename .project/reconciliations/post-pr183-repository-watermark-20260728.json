@@ -1,0 +1,79 @@
+{
+  "schema_version": "project.reconciliation.post-pr183-repository-watermark.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-28T00:55:38-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "observation_boundary": "Repository-only observation after PR #183 merged. No fresh Azure authentication, query, mutation, workflow dispatch, rerun, rollback, cleanup, RBAC change, or browser verification was performed.",
+  "github_state": {
+    "default_branch": "main",
+    "observed_main": "db74fc764f93a972344dae35ed906e8128f51eb8",
+    "latest_merged_pull_request": 183,
+    "latest_merged_source_head": "52ab387418e77aed0cd23a2d827b359a8ae0ac40",
+    "merge_commit": "db74fc764f93a972344dae35ed906e8128f51eb8",
+    "merged_at": "2026-07-28T04:37:04Z",
+    "open_pull_requests_observed": [],
+    "merge_commit_pr_triggered_ci": "not_observed"
+  },
+  "exact_head_ci": {
+    "source_head": "52ab387418e77aed0cd23a2d827b359a8ae0ac40",
+    "runs": {
+      "current_reality_lifecycle": {
+        "run_id": 30326878314,
+        "conclusion": "success"
+      },
+      "shared_state_reconciliation": {
+        "run_id": 30326878316,
+        "conclusion": "success"
+      },
+      "azure_architecture_plan": {
+        "run_id": 30326878319,
+        "conclusion": "success"
+      },
+      "ci": {
+        "run_id": 30326878347,
+        "conclusion": "success"
+      }
+    }
+  },
+  "scope": {
+    "pull_request_183_purpose": "Reconcile canonical authority after PR #182 containment and document the proposed durable single-use authorization ledger.",
+    "application_implementation_changed": false,
+    "collector_workflow_restored": false,
+    "durable_authorization_ledger_implemented": false,
+    "collector_workflow_quarantined": true,
+    "new_cloud_authority_created": false
+  },
+  "azure_boundary": {
+    "fresh_live_query_performed": false,
+    "latest_runtime_evidence_source": "verified_workflow_artifacts_preserved_by_prior_reconciliation",
+    "runtime_truth_changed_by_this_reconciliation": false,
+    "actual_cost_freshly_observed": false,
+    "remaining_Azure_for_Students_credit_observed": false
+  },
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "ordinary_pull_request_ci_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_or_rerun_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false,
+    "rbac_mutation_authorized": false
+  },
+  "claim_boundaries": [
+    "PR_exact_head_CI_success != merge_commit_CI_observed",
+    "repository_watermark_reconciled != Azure_freshly_observed",
+    "design_documented != control_implemented",
+    "containment_merged != collector_workflow_restored",
+    "deployment_succeeded != authority_valid",
+    "not_observed != false"
+  ],
+  "next_gate": {
+    "operation": "review the durable single-use authorization-ledger design while all collector Azure operations remain quarantined",
+    "workflow_restoration_allowed": false,
+    "fresh_authority_required_for_implementation": true,
+    "fresh_authority_required_for_any_Azure_operation": true
+  }
+}
