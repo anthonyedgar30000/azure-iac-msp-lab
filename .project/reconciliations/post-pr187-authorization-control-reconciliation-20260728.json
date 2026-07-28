@@ -1,0 +1,193 @@
+{
+  "schema_version": "project.reconciliation.post-pr187-authorization-control.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-28T19:30:04-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "observation_boundary": "Repository-only observation after pull requests 186 and 187 merged. No workflow dispatch, rerun, live authorization-tag claim, repository-ruleset inspection or mutation, Azure authentication, Azure query, Azure mutation, deployment, rollback, cleanup, RBAC change, GitHub Pages publication check, browser verification, or runtime verification was performed.",
+  "workstream": {
+    "branch": "agent/reconcile-post-pr187-authorization-control",
+    "base_commit": "07f32b59eda11b5a3627d398f1ffca00c8c88e69",
+    "objective": "Record pull requests 186 and 187 as merged, classify the durable single-use authorization control as implemented on main but inactive and not operationally verified, preserve collector quarantine, and expose stale lifecycle claims without rewriting historical snapshots.",
+    "permitted_paths": [
+      ".project/reconciliations/post-pr187-authorization-control-reconciliation-20260728.json",
+      ".project/state-index.json",
+      "infra/tests/test_post_pr187_authorization_control_reconciliation.py"
+    ],
+    "verification_criteria": [
+      "the branch remains based on exact live main 07f32b59eda11b5a3627d398f1ffca00c8c88e69",
+      "pull requests 186 and 187 are recorded with exact source heads, merge commits, and exact-head CI evidence",
+      "no open pull requests are recorded at the observation boundary",
+      "the durable authorization control is implemented_on_main but activation and operational proof remain not_observed",
+      "the collector workflow remains statically quarantined and fail-closed without OIDC or executable Azure commands",
+      "stale lifecycle claims in canonical snapshots remain visible and are not silently rewritten",
+      "the state index selects this reconciliation as the latest lifecycle and authorization-control reconciliation",
+      "the final diff remains exactly the three declared paths"
+    ],
+    "authority_expiry_condition": "Temporary repository-write authority expires when the pull request for this exact branch closes or merges."
+  },
+  "github_state": {
+    "default_branch": "main",
+    "observed_main": "07f32b59eda11b5a3627d398f1ffca00c8c88e69",
+    "latest_merged_pull_request": 187,
+    "latest_merged_source_head": "44bc3ab202c2e3d709aa2d9906ef9aba365acfb2",
+    "latest_merge_commit": "07f32b59eda11b5a3627d398f1ffca00c8c88e69",
+    "latest_merged_at": "2026-07-28T22:26:51Z",
+    "open_pull_requests_observed": [],
+    "merge_commit_pr_triggered_ci": "not_observed",
+    "pull_request_186": {
+      "title": "Implement durable single-use authorization claims",
+      "source_head": "138659609b15ef80f6cce12d916e26382ab71205",
+      "merge_commit": "30e312ef5122831a8233835db2f541437a97b125",
+      "merged_at": "2026-07-28T22:26:39Z",
+      "merged": true
+    },
+    "pull_request_187": {
+      "title": "Reconcile canonical repository state through PR 185",
+      "source_head": "44bc3ab202c2e3d709aa2d9906ef9aba365acfb2",
+      "merge_commit": "07f32b59eda11b5a3627d398f1ffca00c8c88e69",
+      "merged_at": "2026-07-28T22:26:51Z",
+      "merged": true
+    }
+  },
+  "exact_head_ci": {
+    "pull_request_186": {
+      "source_head": "138659609b15ef80f6cce12d916e26382ab71205",
+      "runs": {
+        "ci": {
+          "run_id": 30389249099,
+          "conclusion": "success"
+        }
+      }
+    },
+    "pull_request_187": {
+      "source_head": "44bc3ab202c2e3d709aa2d9906ef9aba365acfb2",
+      "runs": {
+        "ci": {
+          "run_id": 30390614963,
+          "conclusion": "success"
+        },
+        "current_reality_lifecycle": {
+          "run_id": 30390618165,
+          "conclusion": "success"
+        },
+        "shared_state_reconciliation": {
+          "run_id": 30390616682,
+          "conclusion": "success"
+        },
+        "azure_architecture_plan": {
+          "run_id": 30390616307,
+          "conclusion": "success"
+        }
+      }
+    }
+  },
+  "authorization_control_state": {
+    "classification": "implemented_on_main_inactive_not_operationally_verified",
+    "implementation_pull_request": 186,
+    "implementation_source_head": "138659609b15ef80f6cce12d916e26382ab71205",
+    "implementation_merge_commit": "30e312ef5122831a8233835db2f541437a97b125",
+    "implementation_exact_head_ci_run": 30389249099,
+    "implementation_exact_head_ci_conclusion": "success",
+    "workflow": ".github/workflows/durable-authorization-claim-v1.yml",
+    "deterministic_verifier": "infra/scripts/authority_claim.py",
+    "contract": ".project/contracts/durable-single-use-authorization-ledger-v1.json",
+    "claim_mechanism": "atomic_create_refs/tags/authority-consumed/<request_id>",
+    "workflow_call_only": true,
+    "claim_job_contents_write": true,
+    "claim_job_id_token_permission": "none",
+    "azure_login_or_cli_present": false,
+    "protected_consumption_ruleset": "not_observed",
+    "live_first_claim": "not_observed",
+    "live_replay_rejection": "not_observed",
+    "concurrent_duplicate_claim_proof": "not_observed",
+    "operationally_verified": false,
+    "collector_workflow_restored": false
+  },
+  "collector_containment_state": {
+    "workflow": ".github/workflows/collector-demo-api.yml",
+    "classification": "quarantined_fail_closed_on_main",
+    "workflow_name": "Collector-hosted demo API — quarantined",
+    "operation_admission": "reject_only",
+    "id_token_permission_present": false,
+    "azure_environment_present": false,
+    "azure_login_present": false,
+    "executable_azure_commands_present": false,
+    "terminal_behavior": "reject_and_exit_1",
+    "restored": false
+  },
+  "stale_lifecycle_conflicts": [
+    {
+      "path": ".project/current-reality-v2.json",
+      "recorded_at": "2026-07-28T15:04:23-04:00",
+      "stale_claim": "latest merged pull request 185 and pull request 186 open draft",
+      "live_resolution": "pull requests 186 and 187 merged; no open pull requests observed",
+      "treatment": "preserve as time-bounded snapshot; this reconciliation supersedes repository lifecycle only"
+    },
+    {
+      "path": ".project/lab-v1-completion-gate-v2.json",
+      "recorded_at": "2026-07-28T15:04:23-04:00",
+      "stale_claim": "pull request 186 is an open authorization-ledger candidate",
+      "live_resolution": "pull request 186 merged; implementation is on main but activation evidence remains absent",
+      "treatment": "preserve non-lifecycle Lab v1 evidence; this reconciliation supersedes repository lifecycle only"
+    },
+    {
+      "path": ".project/handoffs/current-state.md",
+      "recorded_at": "2026-07-28T15:04:23-04:00",
+      "stale_claim": "pull request 186 is open, unmerged, and only a branch candidate",
+      "live_resolution": "pull request 186 merged before pull request 187; control is implemented on main but inactive",
+      "treatment": "preserve historical handoff boundary; resolve current lifecycle through this reconciliation and live GitHub"
+    }
+  ],
+  "azure_boundary": {
+    "fresh_live_query_performed": false,
+    "runtime_truth_changed_by_this_reconciliation": false,
+    "actual_cost_freshly_observed": false,
+    "Azure_resource_change_claimed": false,
+    "Azure_quota_change_claimed": false,
+    "expected_recurring_cost_delta_CAD": 0
+  },
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "branch_creation_authorized": true,
+    "declared_file_writes_authorized": true,
+    "draft_pull_request_creation_authorized": true,
+    "ordinary_pull_request_ci_authorized": true,
+    "pull_request_merge_authorized": false,
+    "ready_for_review_transition_authorized": false,
+    "workflow_dispatch_or_rerun_authorized": false,
+    "live_authorization_claim_authorized": false,
+    "repository_ruleset_mutation_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "deployment_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false,
+    "rbac_mutation_authorized": false
+  },
+  "claim_boundaries": [
+    "control_implemented_on_main != control_activated",
+    "exact_head_CI_success != live_claim_verified",
+    "claim_workflow_id_token_none != protected_ruleset_configured",
+    "atomic_claim_code_present != concurrent_duplicate_claim_proven",
+    "repository_setting_not_observed != false",
+    "collector_quarantine_present != Azure_runtime_freshly_observed",
+    "repository_reconciliation != Azure_freshly_observed",
+    "stale_snapshot_lifecycle != live_repository_state",
+    "not_observed != false"
+  ],
+  "next_gate": {
+    "operation": "review this three-file repository-only reconciliation through ordinary exact-head pull-request CI",
+    "merge_allowed": false,
+    "control_activation_allowed": false,
+    "repository_ruleset_configuration_allowed": false,
+    "live_claim_test_allowed": false,
+    "collector_workflow_restoration_allowed": false,
+    "Azure_operation_allowed": false,
+    "fresh_authority_required_for_merge": true,
+    "fresh_authority_required_for_ruleset_configuration": true,
+    "fresh_authority_required_for_live_claim_testing": true,
+    "fresh_authority_required_for_collector_restoration": true,
+    "fresh_authority_required_for_any_Azure_operation": true
+  }
+}
