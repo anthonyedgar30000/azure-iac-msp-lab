@@ -1,20 +1,38 @@
 {
-  "schema_version": "project.current-reality.v3",
+  "schema_version": "project.current-reality.v4",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-27T22:34:00-04:00",
+  "recorded_at": "2026-07-27T23:33:20-04:00",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "interpretation_boundary": "This is a time-bounded evidence reconciliation, not a continuously refreshed GitHub or Azure dashboard. Live repository state must be queried before every write, merge, dispatch, or cloud action.",
   "repository_state": {
     "default_branch": "main",
-    "observed_main": "767a0482cdfff689e430ebe4a5a08fc339f1a291",
-    "latest_merged_pull_request": 180,
-    "latest_merged_source_head": "51286ff49b86e02d69a4169925880d0970a82e36",
-    "latest_exact_head_ci_run": 30310296654,
+    "observed_main": "516cc45972725f494815449f55f02f96727afbde",
+    "latest_merged_pull_request": 182,
+    "latest_merged_source_head": "5e544794243f814bca19210e65943995f4f6b2de",
+    "latest_exact_head_ci_run": 30324033493,
     "latest_exact_head_ci_conclusion": "success",
+    "containment_ci_runs": {
+      "ci": {
+        "run_id": 30324033493,
+        "conclusion": "success"
+      },
+      "current_reality_lifecycle": {
+        "run_id": 30324033482,
+        "conclusion": "success"
+      },
+      "shared_state_reconciliation": {
+        "run_id": 30324033498,
+        "conclusion": "success"
+      },
+      "azure_architecture_plan": {
+        "run_id": 30324033472,
+        "conclusion": "success"
+      }
+    },
     "trigger_pull_request_181": "closed_without_merge",
-    "open_pull_requests_after_trigger_closure": [],
-    "reconciliation_branch": "agent/quarantine-correlation-replay",
-    "reconciliation_pull_request": 182,
+    "containment_pull_request_182": "merged",
+    "containment_merge_commit": "516cc45972725f494815449f55f02f96727afbde",
+    "open_pull_requests_after_containment_merge": [],
     "local_working_tree": "not_observed_connector_backed"
   },
   "source_lineage": {
@@ -25,7 +43,7 @@
     "repair_ci_conclusion": "success",
     "current_main_contains_reviewed_source": true,
     "current_main_equals_deployed_source": false,
-    "main_delta_after_deployed_source": "governance workflow, request record, and tests; no newer application implementation observed"
+    "main_delta_after_deployed_source": "governance containment, canonical state reconciliation, and tests; no newer application implementation observed"
   },
   "authorization_state": {
     "request": ".project/deployment-requests/correlation-identity-run1.json",
@@ -69,6 +87,8 @@
   ],
   "azure_state": {
     "observation_source": "verified_workflow_artifacts",
+    "latest_observation_artifact_created_at": "2026-07-27T19:56:39-04:00",
+    "fresh_live_query_during_reconciliation": false,
     "subscription_name": "Azure for Students",
     "subscription_and_tenant_ids": "observed_but_not_promoted",
     "resource_group": "rg-servicetracer-dev-westus2",
@@ -135,19 +155,28 @@
     "classification": "authorization_consumption_control_failure",
     "canonical_principle": "Authorization Consumption Principle",
     "mechanism": "Issue-comment consumption was evidentiary but not an enforced external single-use ledger. A GitHub Actions rerun reused the original opened-event request snapshot.",
-    "reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
-    "containment_branch": "agent/quarantine-correlation-replay",
+    "terminal_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
+    "post_merge_reconciliation": ".project/reconciliations/post-pr182-containment-20260727.json",
     "containment": {
       "collector_workflow_quarantined": true,
+      "collector_workflow_state": "quarantined_on_main",
       "collector_workflow_oidc_permission": false,
       "collector_workflow_azure_commands": false,
       "one_shot_dispatcher_retired": true,
-      "trigger_pr_closed_without_merge": true
+      "trigger_pr_closed_without_merge": true,
+      "containment_pull_request": 182,
+      "containment_pull_request_state": "merged",
+      "containment_merge_commit": "516cc45972725f494815449f55f02f96727afbde",
+      "containment_exact_head": "5e544794243f814bca19210e65943995f4f6b2de",
+      "containment_exact_head_ci": "success",
+      "static_replay_boundary_verified": true
     }
   },
   "operational_controls": {
     "collector_deployment_workflow_available": false,
-    "collector_deployment_workflow_state": "quarantined_pending_review_and_merge",
+    "collector_deployment_workflow_state": "quarantined_on_main",
+    "replacement_authorization_design": ".project/designs/durable-single-use-authorization-ledger-v1.md",
+    "replacement_authorization_design_status": "proposed_not_implemented",
     "monitoring_enabled": "not_freshly_observed",
     "alert_delivery_verified": false,
     "effective_least_privilege_verified": false,
@@ -156,10 +185,8 @@
   },
   "authority": {
     "repository_reconciliation_authorized": true,
-    "repository_containment_authorized": true,
+    "repository_design_authorized": true,
     "ordinary_pull_request_ci_authorized": true,
-    "trigger_pull_request_closure_authorized": true,
-    "pull_request_merge_authorized": "not_separately_recorded",
     "workflow_dispatch_or_rerun_authorized": false,
     "azure_authentication_authorized": false,
     "azure_query_authorized": false,
@@ -175,17 +202,21 @@
     "deployment_succeeded != authority_valid",
     "issue_comment_consumption_record != enforced_single_use",
     "closed_trigger_PR != historical_run_unrerunnable",
+    "static_repository_proof != fresh_Azure_observation",
     "not_observed != false",
     "estimated_cost != actual_cost",
     "monitoring_enabled != alerts_verified",
     "API_contract_verified != browser_DOM_render_verified"
   ],
   "next_gate": {
-    "operation": "review and merge the repository-only replay containment after exact-head CI",
-    "after_merge": [
-      "prove a replay of the historical dispatcher can no longer obtain OIDC or execute Azure commands",
-      "design a replacement workflow with a durable external consumption ledger",
-      "obtain fresh explicit authority before restoring any Azure operation",
+    "operation": "review the durable single-use authorization-ledger design while keeping all collector Azure operations quarantined",
+    "requirements": [
+      "use a unique immutable request identifier and exact request commit",
+      "atomically claim each request in a durable ledger before any OIDC-capable job starts",
+      "reject consumed, replayed, expired, mismatched-source, and mismatched-scope requests",
+      "protect consumption records from update and deletion",
+      "prove concurrent duplicate dispatches admit exactly one claimant",
+      "obtain fresh explicit non-renewing authority before implementing or restoring Azure execution",
       "complete browser DOM refresh observation",
       "verify alert delivery, least privilege, and current actual cost"
     ]
