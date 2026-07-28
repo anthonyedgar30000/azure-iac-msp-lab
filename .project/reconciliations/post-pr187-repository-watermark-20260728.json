@@ -1,0 +1,138 @@
+{
+  "schema_version": "project.reconciliation.post-pr187-repository-watermark.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-28T19:32:58-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "observation_boundary": "Repository-only observation after PR #186 and PR #187 merged. No fresh Azure authentication, query, mutation, workflow dispatch, rerun, repository-ruleset change, authorization-tag claim, rollback, cleanup, RBAC change, GitHub Pages publication check, or browser verification was performed.",
+  "github_state": {
+    "default_branch": "main",
+    "observed_main": "07f32b59eda11b5a3627d398f1ffca00c8c88e69",
+    "latest_merged_pull_request": 187,
+    "latest_merged_source_head": "44bc3ab202c2e3d709aa2d9906ef9aba365acfb2",
+    "merge_commit": "07f32b59eda11b5a3627d398f1ffca00c8c88e69",
+    "merged_at": "2026-07-28T22:26:51Z",
+    "open_pull_requests_observed": [],
+    "integrated_main_ci": "not_observed"
+  },
+  "watermark_advance": {
+    "previous_canonical_main": "ca994ce53642587bea370bee1c5a0633faaaece8",
+    "previous_canonical_pull_request": 185,
+    "authorization_implementation_pull_request": 186,
+    "authorization_implementation_source_head": "138659609b15ef80f6cce12d916e26382ab71205",
+    "authorization_implementation_merge_commit": "30e312ef5122831a8233835db2f541437a97b125",
+    "repository_reconciliation_pull_request": 187,
+    "repository_reconciliation_source_head": "44bc3ab202c2e3d709aa2d9906ef9aba365acfb2",
+    "repository_reconciliation_merge_commit": "07f32b59eda11b5a3627d398f1ffca00c8c88e69"
+  },
+  "exact_head_ci": {
+    "pull_request_186": {
+      "source_head": "138659609b15ef80f6cce12d916e26382ab71205",
+      "runs": {
+        "ci": {
+          "run_id": 30389249099,
+          "conclusion": "success"
+        }
+      }
+    },
+    "pull_request_187": {
+      "source_head": "44bc3ab202c2e3d709aa2d9906ef9aba365acfb2",
+      "runs": {
+        "ci": {
+          "run_id": 30390614963,
+          "conclusion": "success"
+        },
+        "current_reality_lifecycle": {
+          "run_id": 30390618165,
+          "conclusion": "success"
+        },
+        "shared_state_reconciliation": {
+          "run_id": 30390616682,
+          "conclusion": "success"
+        },
+        "azure_architecture_plan": {
+          "run_id": 30390616307,
+          "conclusion": "success"
+        }
+      }
+    }
+  },
+  "scope": {
+    "pull_request_186_purpose": "Implement the deterministic immutable-request verifier and reusable no-OIDC atomic Git-reference authorization claim workflow.",
+    "pull_request_187_purpose": "Reconcile canonical repository state through PR #185 while observing PR #186 as an open candidate at that historical boundary.",
+    "durable_authorization_ledger_implementation_on_main": true,
+    "durable_authorization_ledger_activated": false,
+    "repository_ruleset_configured": false,
+    "live_claim_test_performed": false,
+    "concurrent_claim_test_performed": false,
+    "collector_backend_implementation_changed": false,
+    "azure_iac_changed": false,
+    "collector_workflow_restored": false,
+    "collector_workflow_quarantined": true,
+    "new_cloud_authority_created": false
+  },
+  "authorization_control_boundary": {
+    "implementation_merged_to_main": true,
+    "implementation_exact_head_ci_verified": true,
+    "atomic_create_reference_contract_present": true,
+    "claim_job_id_token_none": true,
+    "ruleset_configured": false,
+    "ruleset_independently_inspected": false,
+    "first_live_claim_verified": false,
+    "replay_rejection_verified_live": false,
+    "concurrent_exactly_one_claimant_verified": false,
+    "collector_workflow_restored": false,
+    "azure_execution_enabled": false,
+    "operationally_verified": false
+  },
+  "frontend_boundary": {
+    "repository_implementation_present": true,
+    "exact_tested_source_head": "36bbd5ab1ef3c579c43ad2df589f44362feced37",
+    "github_pages_publication_freshly_observed": false,
+    "browser_render_freshly_verified": false,
+    "runtime_proof_manufactured": false
+  },
+  "azure_boundary": {
+    "fresh_live_query_performed": false,
+    "latest_runtime_evidence_source": "verified_workflow_artifacts_preserved_by_prior_reconciliation",
+    "runtime_truth_changed_by_this_reconciliation": false,
+    "actual_cost_freshly_observed": false,
+    "remaining_Azure_for_Students_credit_observed": false
+  },
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "ordinary_pull_request_ci_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_or_rerun_authorized": false,
+    "repository_ruleset_mutation_authorized": false,
+    "authorization_tag_claim_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false,
+    "rbac_mutation_authorized": false
+  },
+  "claim_boundaries": [
+    "PR_exact_head_CI_success != integrated_main_CI_observed",
+    "implementation_merged != control_activated",
+    "atomic_claim_workflow_present != protected_ledger_verified",
+    "repository_watermark_reconciled != Azure_freshly_observed",
+    "main_contains_frontend_implementation != GitHub_Pages_publication_observed",
+    "architecture_explained != runtime_proof_manufactured",
+    "containment_merged != collector_workflow_restored",
+    "deployment_succeeded != authority_valid",
+    "not_observed != false"
+  ],
+  "next_gate": {
+    "operation": "review this repository-only reconciliation through ordinary pull-request CI while the authorization mechanism remains unactivated and all collector Azure operations remain quarantined",
+    "merge_allowed": false,
+    "workflow_restoration_allowed": false,
+    "ruleset_mutation_allowed": false,
+    "live_claim_allowed": false,
+    "fresh_authority_required_for_merge": true,
+    "fresh_authority_required_for_ruleset_configuration": true,
+    "fresh_authority_required_for_live_claim_testing": true,
+    "fresh_authority_required_for_any_Azure_operation": true
+  }
+}
