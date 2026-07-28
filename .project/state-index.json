@@ -1,7 +1,7 @@
 {
   "schema_version": "project.state-index.v5",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-28T14:48:16-04:00",
+  "recorded_at": "2026-07-28T15:04:23-04:00",
   "canonical_current_reality": ".project/current-reality-v2.json",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
   "canonical_handoff": ".project/handoffs/current-state.md",
