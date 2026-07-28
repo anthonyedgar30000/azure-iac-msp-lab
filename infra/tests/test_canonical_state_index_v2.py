@@ -159,8 +159,13 @@ class CanonicalStateIndexV6Tests(unittest.TestCase):
         self.assertEqual(repo["frontend_architecture_merge_commit"], MAIN)
         self.assertEqual(repo["trigger_pull_request_181"], "closed_without_merge")
         self.assertEqual(
-            repo["open_pull_requests_after_frontend_architecture_merge"], []
+            repo["open_pull_requests_after_frontend_architecture_merge"], [186]
         )
+        candidate = repo["open_pull_request_186"]
+        self.assertEqual(candidate["state"], "open_draft")
+        self.assertEqual(candidate["head_sha"], "138659609b15ef80f6cce12d916e26382ab71205")
+        self.assertEqual(candidate["exact_head_ci_run"], 30389249099)
+        self.assertFalse(candidate["merged"])
         self.assertEqual(repo["merge_commit_pr_triggered_ci"], "not_observed")
         self.assertEqual(
             self.current["source_lineage"]["reviewed_source"], DEPLOYED_SOURCE
@@ -243,6 +248,8 @@ class CanonicalStateIndexV6Tests(unittest.TestCase):
         self.assertEqual(evidence["latest_merged_pull_request"], 185)
         self.assertEqual(evidence["latest_merged_source_head"], PR185_SOURCE)
         self.assertEqual(evidence["post_pr185_repository_reconciliation"], POST_PR185_PATH)
+        self.assertEqual(evidence["open_authorization_ledger_candidate_pull_request"], 186)
+        self.assertEqual(evidence["open_authorization_ledger_candidate_ci_run"], 30389249099)
 
     def test_containment_is_merged_fail_closed_and_cloud_authority_is_absent(self) -> None:
         containment = self.current["control_incident"]["containment"]
@@ -313,7 +320,7 @@ class CanonicalStateIndexV6Tests(unittest.TestCase):
         self.assertEqual(github185["observed_main"], MAIN)
         self.assertEqual(github185["latest_merged_pull_request"], 185)
         self.assertEqual(github185["latest_merged_source_head"], PR185_SOURCE)
-        self.assertEqual(github185["open_pull_requests_observed"], [])
+        self.assertEqual(github185["open_pull_requests_observed"], [186])
         self.assertEqual(github185["merge_commit_pr_triggered_ci"], "not_observed")
         self.assertFalse(self.post_pr185["azure_boundary"]["fresh_live_query_performed"])
         self.assertFalse(
@@ -323,6 +330,11 @@ class CanonicalStateIndexV6Tests(unittest.TestCase):
         )
         self.assertFalse(self.post_pr185["next_gate"]["workflow_restoration_allowed"])
         self.assertFalse(self.post_pr185["next_gate"]["merge_allowed"])
+        concurrent = self.post_pr185["concurrent_open_pull_requests"][0]
+        self.assertEqual(concurrent["pull_request"], 186)
+        self.assertEqual(concurrent["state"], "open_draft")
+        self.assertFalse(concurrent["merged"])
+        self.assertFalse(concurrent["activation_claimed"])
 
     def test_design_remains_proposed_and_not_cloud_authority(self) -> None:
         self.assertIn("claim-authority job", self.design)
