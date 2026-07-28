@@ -27,8 +27,21 @@
     "frontend_architecture_pull_request_185": "merged",
     "frontend_architecture_merge_commit": "ca994ce53642587bea370bee1c5a0633faaaece8",
     "merge_commit_pr_triggered_ci": "not_observed",
-    "open_pull_requests_after_frontend_architecture_merge": [],
-    "local_working_tree": "not_observed_connector_backed"
+    "open_pull_requests_after_frontend_architecture_merge": [
+      186
+    ],
+    "local_working_tree": "not_observed_connector_backed",
+    "open_pull_request_186": {
+      "title": "Implement durable single-use authorization claims",
+      "state": "open_draft",
+      "base": "main",
+      "base_sha": "ca994ce53642587bea370bee1c5a0633faaaece8",
+      "head": "agent/durable-single-use-authorization-ledger-v1",
+      "head_sha": "138659609b15ef80f6cce12d916e26382ab71205",
+      "exact_head_ci_run": 30389249099,
+      "exact_head_ci_conclusion": "success",
+      "merged": false
+    }
   },
   "source_lineage": {
     "correlation_repair_pull_request": 178,
@@ -182,12 +195,24 @@
     "collector_deployment_workflow_available": false,
     "collector_deployment_workflow_state": "quarantined_on_main",
     "replacement_authorization_design": ".project/designs/durable-single-use-authorization-ledger-v1.md",
-    "replacement_authorization_design_status": "proposed_not_implemented",
+    "replacement_authorization_design_status": "proposed_on_main_implementation_candidate_open_in_pr186",
     "monitoring_enabled": "not_freshly_observed",
     "alert_delivery_verified": false,
     "effective_least_privilege_verified": false,
     "backup_configured": "not_in_lab_v1_scope",
-    "recovery_tested": false
+    "recovery_tested": false,
+    "authorization_ledger_candidate": {
+      "pull_request": 186,
+      "state": "open_draft",
+      "head_sha": "138659609b15ef80f6cce12d916e26382ab71205",
+      "exact_head_ci_run": 30389249099,
+      "exact_head_ci_conclusion": "success",
+      "merged_to_main": false,
+      "ruleset_configured": false,
+      "live_claim_performed": false,
+      "concurrent_claim_verified": false,
+      "collector_workflow_restored": false
+    }
   },
   "authority": {
     "repository_reconciliation_authorized": true,
@@ -225,7 +250,7 @@
     "requirements": [
       "preserve the exact PR 185 source and CI lineage",
       "do not promote GitHub Pages publication or browser rendering without direct observation",
-      "review the durable single-use authorization-ledger design",
+      "review open draft PR 186 as an implementation candidate, not as an activated control",
       "keep the collector workflow fail-closed until replay rejection is implemented and tested",
       "obtain fresh explicit non-renewing authority before merge, implementation, workflow restoration, Azure query, deployment, rollback, or cleanup",
       "complete browser DOM refresh observation",
