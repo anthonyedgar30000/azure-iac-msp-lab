@@ -1,0 +1,42 @@
+{
+  "active": true,
+  "authority": {
+    "attempt_limit": 1,
+    "automatic_retry_authorized": false,
+    "cleanup_authorized": false,
+    "rbac_mutation_authorized": false,
+    "renewable": false,
+    "rollback_authorized": false,
+    "transferable": false
+  },
+  "authorization_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "authorized_identity": {
+    "actor_path": "github-actions/reusable-workflow",
+    "repository": "anthonyedgar30000/azure-iac-msp-lab"
+  },
+  "human_authority": {
+    "authority": "user",
+    "instruction": "Synthetic fixture only",
+    "interpretation": "Validate the deterministic claim contract without GitHub or Azure mutation."
+  },
+  "issued_at": "2026-07-28T12:00:00Z",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "request_digest": "sha256:01a39ab318bc7ff7881ad108f83c9789c48d6b40c34a211dd3dea3d2d2506bc2",
+  "request_id": "018f22e2-79b0-7cc3-8c4d-9b7a12345678",
+  "reviewed_source": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "schema_version": "project.deployment-authorization-request.v1",
+  "status": "authorized_unconsumed",
+  "target": {
+    "location": "westus2",
+    "resource_group": "rg-synthetic-dev-westus2",
+    "scope_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "subscription": "synthetic-subscription",
+    "tenant": "synthetic-tenant"
+  },
+  "valid_until": "2026-07-29T12:00:00Z",
+  "workflow": {
+    "environment": "dev",
+    "operation": "deploy",
+    "path": ".github/workflows/example-authorized-caller.yml"
+  }
+}
