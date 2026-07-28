@@ -1,7 +1,7 @@
 {
   "schema_version": "project.reconciliation.post-pr185-repository-watermark.v1",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-28T14:48:16-04:00",
+  "recorded_at": "2026-07-28T15:04:23-04:00",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "observation_boundary": "Repository-only observation after PR #185 merged. No fresh Azure authentication, query, mutation, workflow dispatch, rerun, rollback, cleanup, RBAC change, GitHub Pages publication check, or browser verification was performed.",
   "github_state": {
