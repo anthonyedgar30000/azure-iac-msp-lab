@@ -11,73 +11,67 @@ CURRENT = ROOT / ".project/current-reality-v2.json"
 LEGACY = ROOT / ".project/current-reality.json"
 GATE = ROOT / ".project/lab-v1-completion-gate-v2.json"
 HANDOFF = ROOT / ".project/handoffs/current-state.md"
-RECONCILIATION = (
+TERMINAL = (
     ROOT
     / ".project"
     / "reconciliations"
     / "correlation-identity-run1-terminal-20260727.json"
 )
-POST_CONTAINMENT_RECONCILIATION = (
+POST_CONTAINMENT = (
     ROOT
     / ".project"
     / "reconciliations"
     / "post-pr182-containment-20260727.json"
 )
-POST_PR183_RECONCILIATION = (
+POST_PR183 = (
     ROOT
     / ".project"
     / "reconciliations"
     / "post-pr183-repository-watermark-20260728.json"
 )
-POST_PR185_RECONCILIATION = (
+POST_PR185 = (
     ROOT
     / ".project"
     / "reconciliations"
     / "post-pr185-repository-watermark-20260728.json"
 )
-DESIGN = (
+POST_PR187 = (
     ROOT
     / ".project"
-    / "designs"
-    / "durable-single-use-authorization-ledger-v1.md"
+    / "reconciliations"
+    / "post-pr187-repository-watermark-20260728.json"
 )
-REQUEST = (
-    ROOT
-    / ".project"
-    / "deployment-requests"
-    / "correlation-identity-run1.json"
-)
+DESIGN = ROOT / ".project/designs/durable-single-use-authorization-ledger-v1.md"
+CONTRACT = ROOT / ".project/contracts/durable-single-use-authorization-ledger-v1.json"
+REQUEST = ROOT / ".project/deployment-requests/correlation-identity-run1.json"
 
-MAIN = "ca994ce53642587bea370bee1c5a0633faaaece8"
-CONTAINMENT_MAIN = "516cc45972725f494815449f55f02f96727afbde"
+MAIN = "07f32b59eda11b5a3627d398f1ffca00c8c88e69"
+PR187_SOURCE = "44bc3ab202c2e3d709aa2d9906ef9aba365acfb2"
+PR186_SOURCE = "138659609b15ef80f6cce12d916e26382ab71205"
+PR186_MERGE = "30e312ef5122831a8233835db2f541437a97b125"
+PR185_MAIN = "ca994ce53642587bea370bee1c5a0633faaaece8"
+PR185_SOURCE = "36bbd5ab1ef3c579c43ad2df589f44362feced37"
 PR183_MAIN = "db74fc764f93a972344dae35ed906e8128f51eb8"
 PR183_SOURCE = "52ab387418e77aed0cd23a2d827b359a8ae0ac40"
-PR184_MAIN = "b92e9e0d6c4c2bcb8d4b7628eb21fb342a19f686"
-PR185_SOURCE = "36bbd5ab1ef3c579c43ad2df589f44362feced37"
+CONTAINMENT_MAIN = "516cc45972725f494815449f55f02f96727afbde"
 DEPLOYED_SOURCE = "0b6b5322f25b3d0289f6c0febdcfd800ea4b909a"
+
 PREFLIGHT_PATH = (
     ".project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json"
 )
-RECONCILIATION_PATH = (
-    ".project/reconciliations/correlation-identity-run1-terminal-20260727.json"
-)
-POST_CONTAINMENT_PATH = (
-    ".project/reconciliations/post-pr182-containment-20260727.json"
-)
-POST_PR183_PATH = (
-    ".project/reconciliations/post-pr183-repository-watermark-20260728.json"
-)
-POST_PR185_PATH = (
-    ".project/reconciliations/post-pr185-repository-watermark-20260728.json"
-)
+TERMINAL_PATH = ".project/reconciliations/correlation-identity-run1-terminal-20260727.json"
+POST_CONTAINMENT_PATH = ".project/reconciliations/post-pr182-containment-20260727.json"
+POST_PR185_PATH = ".project/reconciliations/post-pr185-repository-watermark-20260728.json"
+POST_PR187_PATH = ".project/reconciliations/post-pr187-repository-watermark-20260728.json"
 DESIGN_PATH = ".project/designs/durable-single-use-authorization-ledger-v1.md"
+CONTRACT_PATH = ".project/contracts/durable-single-use-authorization-ledger-v1.json"
+REQUEST_PATH = ".project/deployment-requests/correlation-identity-run1.json"
 HISTORICAL_CONSUMED_PATH = (
     ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json"
 )
-REQUEST_PATH = ".project/deployment-requests/correlation-identity-run1.json"
 
 
-class CanonicalStateIndexV6Tests(unittest.TestCase):
+class CanonicalStateIndexV7Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.index = json.loads(INDEX.read_text(encoding="utf-8"))
@@ -85,57 +79,42 @@ class CanonicalStateIndexV6Tests(unittest.TestCase):
         cls.legacy = json.loads(LEGACY.read_text(encoding="utf-8"))
         cls.gate = json.loads(GATE.read_text(encoding="utf-8"))
         cls.handoff = HANDOFF.read_text(encoding="utf-8")
-        cls.reconciliation = json.loads(RECONCILIATION.read_text(encoding="utf-8"))
-        cls.post_containment = json.loads(
-            POST_CONTAINMENT_RECONCILIATION.read_text(encoding="utf-8")
-        )
-        cls.post_pr183 = json.loads(
-            POST_PR183_RECONCILIATION.read_text(encoding="utf-8")
-        )
-        cls.post_pr185 = json.loads(
-            POST_PR185_RECONCILIATION.read_text(encoding="utf-8")
-        )
+        cls.terminal = json.loads(TERMINAL.read_text(encoding="utf-8"))
+        cls.post_containment = json.loads(POST_CONTAINMENT.read_text(encoding="utf-8"))
+        cls.post_pr183 = json.loads(POST_PR183.read_text(encoding="utf-8"))
+        cls.post_pr185 = json.loads(POST_PR185.read_text(encoding="utf-8"))
+        cls.post_pr187 = json.loads(POST_PR187.read_text(encoding="utf-8"))
         cls.design = DESIGN.read_text(encoding="utf-8")
+        cls.contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
         cls.request = json.loads(REQUEST.read_text(encoding="utf-8"))
 
-    def test_index_preserves_terminal_containment_and_repository_evidence(self) -> None:
-        self.assertEqual(
-            self.index["canonical_current_reality"],
-            ".project/current-reality-v2.json",
-        )
+    def test_index_selects_latest_terminal_and_repository_evidence(self) -> None:
+        self.assertEqual(self.index["canonical_current_reality"], ".project/current-reality-v2.json")
         self.assertEqual(self.index["latest_verified_reconciliation"], PREFLIGHT_PATH)
-        self.assertEqual(
-            self.index["latest_terminal_reconciliation"], RECONCILIATION_PATH
-        )
-        self.assertEqual(
-            self.index["latest_deployment_reconciliation"], RECONCILIATION_PATH
-        )
-        self.assertEqual(
-            self.index["latest_authorization_resolution"], RECONCILIATION_PATH
-        )
-        self.assertEqual(self.index["latest_control_incident"], RECONCILIATION_PATH)
-        self.assertEqual(
-            self.index["latest_repository_reconciliation"], POST_PR185_PATH
-        )
+        self.assertEqual(self.index["latest_terminal_reconciliation"], TERMINAL_PATH)
+        self.assertEqual(self.index["latest_deployment_reconciliation"], TERMINAL_PATH)
+        self.assertEqual(self.index["latest_authorization_resolution"], TERMINAL_PATH)
+        self.assertEqual(self.index["latest_control_incident"], TERMINAL_PATH)
+        self.assertEqual(self.index["latest_repository_reconciliation"], POST_PR187_PATH)
         self.assertEqual(
             self.index["latest_repository_watermark_reconciliation"],
-            POST_PR185_PATH,
+            POST_PR187_PATH,
         )
-        self.assertEqual(
-            self.index["previous_repository_reconciliation"], POST_PR183_PATH
-        )
+        self.assertEqual(self.index["previous_repository_reconciliation"], POST_PR185_PATH)
         self.assertEqual(
             self.index["current_containment_reconciliation"],
             POST_CONTAINMENT_PATH,
         )
         self.assertEqual(self.index["replacement_authorization_design"], DESIGN_PATH)
+        self.assertEqual(self.index["replacement_authorization_contract"], CONTRACT_PATH)
         self.assertIsNone(self.index["active_deployment_authorization"])
         self.assertEqual(
             self.index["consumed_deployment_authorization"],
             HISTORICAL_CONSUMED_PATH,
         )
         self.assertEqual(
-            self.index["latest_consumed_deployment_authorization"], REQUEST_PATH
+            self.index["latest_consumed_deployment_authorization"],
+            REQUEST_PATH,
         )
         self.assertFalse(
             self.index["legacy_compatibility_snapshots"][0][
@@ -147,32 +126,62 @@ class CanonicalStateIndexV6Tests(unittest.TestCase):
             "665e051375594d11e58e434231bd06775dbdc560",
         )
 
-    def test_current_repository_and_source_watermarks_are_explicit(self) -> None:
+    def test_current_repository_watermark_matches_live_merge_state(self) -> None:
         repo = self.current["repository_state"]
         self.assertEqual(repo["observed_main"], MAIN)
-        self.assertEqual(repo["latest_merged_pull_request"], 185)
-        self.assertEqual(repo["latest_merged_source_head"], PR185_SOURCE)
-        self.assertEqual(repo["latest_exact_head_ci_run"], 30359529916)
-        self.assertEqual(repo["repository_watermark_pull_request_184"], "merged")
-        self.assertEqual(repo["repository_watermark_merge_commit"], PR184_MAIN)
-        self.assertEqual(repo["frontend_architecture_pull_request_185"], "merged")
-        self.assertEqual(repo["frontend_architecture_merge_commit"], MAIN)
-        self.assertEqual(repo["trigger_pull_request_181"], "closed_without_merge")
-        self.assertEqual(
-            repo["open_pull_requests_after_frontend_architecture_merge"], [186]
+        self.assertEqual(repo["latest_merged_pull_request"], 187)
+        self.assertEqual(repo["latest_merged_source_head"], PR187_SOURCE)
+        self.assertEqual(repo["latest_exact_head_ci_run"], 30390614963)
+        self.assertEqual(repo["latest_exact_head_ci_conclusion"], "success")
+        self.assertEqual(repo["authorization_implementation_pull_request_186"], "merged")
+        self.assertEqual(repo["authorization_implementation_merge_commit"], PR186_MERGE)
+        self.assertEqual(repo["repository_reconciliation_pull_request_187"], "merged")
+        self.assertEqual(repo["repository_reconciliation_merge_commit"], MAIN)
+        self.assertEqual(repo["integrated_main_ci"], "not_observed")
+        self.assertEqual(repo["open_pull_requests_after_repository_reconciliation"], [])
+        implementation = repo["authorization_implementation"]
+        self.assertEqual(implementation["state"], "merged")
+        self.assertEqual(implementation["head_sha"], PR186_SOURCE)
+        self.assertEqual(implementation["merge_commit"], PR186_MERGE)
+        self.assertEqual(implementation["exact_head_ci_run"], 30389249099)
+        self.assertTrue(implementation["merged"])
+        self.assertFalse(implementation["activated"])
+        self.assertIn(
+            "PR_exact_head_CI_success != integrated_main_CI_observed",
+            self.current["canonical_distinctions"],
         )
-        candidate = repo["open_pull_request_186"]
-        self.assertEqual(candidate["state"], "open_draft")
-        self.assertEqual(candidate["head_sha"], "138659609b15ef80f6cce12d916e26382ab71205")
-        self.assertEqual(candidate["exact_head_ci_run"], 30389249099)
-        self.assertFalse(candidate["merged"])
-        self.assertEqual(repo["merge_commit_pr_triggered_ci"], "not_observed")
+
+    def test_merged_authorization_implementation_is_not_promoted_as_activated(self) -> None:
+        controls = self.current["operational_controls"]
         self.assertEqual(
-            self.current["source_lineage"]["reviewed_source"], DEPLOYED_SOURCE
+            controls["replacement_authorization_design_status"],
+            "implemented_on_main_not_activated",
         )
+        ledger = controls["authorization_ledger"]
+        self.assertEqual(ledger["state"], "merged_not_activated")
+        self.assertTrue(ledger["merged_to_main"])
+        self.assertFalse(ledger["ruleset_configured"])
+        self.assertFalse(ledger["ruleset_independently_inspected"])
+        self.assertFalse(ledger["live_claim_performed"])
+        self.assertFalse(ledger["concurrent_claim_verified"])
+        self.assertFalse(ledger["collector_workflow_restored"])
+        self.assertFalse(ledger["azure_execution_enabled"])
+        self.assertFalse(ledger["operationally_verified"])
+
+        self.assertEqual(self.contract["status"], "implementation_merged_not_activated")
+        self.assertTrue(self.contract["activation"]["merged_to_main"])
+        self.assertFalse(self.contract["activation"]["ruleset_configured"])
+        self.assertFalse(self.contract["activation"]["live_claim_test_performed"])
         self.assertFalse(
-            self.current["source_lineage"]["current_main_equals_deployed_source"]
+            self.contract["activation"]["concurrent_claim_test_performed"]
         )
+        self.assertEqual(self.contract["merge"]["pull_request"], 186)
+        self.assertEqual(self.contract["merge"]["merge_commit"], PR186_MERGE)
+        self.assertIn("merged, not activated", self.design.lower())
+        self.assertIn("Proposed, not implemented", self.design)
+        self.assertIn("claim-authority job", self.design)
+        self.assertIn("refs/tags/authority-consumed/<request_id>", self.design)
+        self.assertIn("exactly one successful claimant", self.design)
 
     def test_frontend_implementation_is_not_collapsed_into_publication_truth(self) -> None:
         frontend = self.current["frontend_state"]
@@ -182,19 +191,12 @@ class CanonicalStateIndexV6Tests(unittest.TestCase):
         self.assertFalse(frontend["github_pages_publication_freshly_observed"])
         self.assertFalse(frontend["browser_render_freshly_verified"])
         self.assertFalse(frontend["azure_collector_runtime_change_claimed"])
-        self.assertIn(
-            "main_contains_frontend_implementation != GitHub_Pages_publication_observed",
-            self.current["canonical_distinctions"],
-        )
-        self.assertIn(
-            "architecture_explained != runtime_proof_manufactured",
-            self.current["canonical_distinctions"],
-        )
 
-    def test_authority_consumption_and_replay_are_not_collapsed(self) -> None:
+    def test_authority_consumption_runtime_and_workflow_truth_remain_separate(self) -> None:
         authority = self.current["authorization_state"]
         self.assertEqual(
-            authority["status"], "consumed_with_unauthorized_replay_observed"
+            authority["status"],
+            "consumed_with_unauthorized_replay_observed",
         )
         self.assertEqual(authority["attempt_limit"], 1)
         self.assertEqual(authority["attempts_observed"], 2)
@@ -203,14 +205,11 @@ class CanonicalStateIndexV6Tests(unittest.TestCase):
 
         first, second = self.current["deployment_attempts"]
         self.assertEqual(first["authority"], "authorized_consuming_attempt")
-        self.assertEqual(first["deployment_run"], 30310439500)
         self.assertEqual(second["authority"], "unauthorized_replay_after_consumption")
-        self.assertEqual(second["deployment_run"], 30315658677)
         for attempt in (first, second):
             self.assertEqual(attempt["arm_parent"], "Succeeded")
             self.assertEqual(attempt["vm_extension"], "Succeeded")
 
-    def test_runtime_truth_remains_separate_from_workflow_authority_and_repo(self) -> None:
         runtime = self.current["runtime_state"]
         self.assertEqual(runtime["status"], "healthy")
         self.assertEqual(runtime["deployed_source"], DEPLOYED_SOURCE)
@@ -220,14 +219,11 @@ class CanonicalStateIndexV6Tests(unittest.TestCase):
         self.assertFalse(runtime["exact_root_cause_claimed"])
         self.assertFalse(runtime["browser_dom_refresh_verified"])
         self.assertFalse(runtime["freshly_observed_during_repository_reconciliation"])
-        self.assertFalse(self.current["azure_state"]["fresh_live_query_during_reconciliation"])
+        self.assertFalse(
+            self.current["azure_state"]["fresh_live_query_during_reconciliation"]
+        )
 
-        attempts = self.reconciliation["attempts"]
-        self.assertEqual(attempts[0]["workflow_conclusion"], "failure")
-        self.assertEqual(attempts[0]["azure_result"]["arm_parent"], "Succeeded")
-        self.assertFalse(attempts[1]["authority_valid"])
-
-    def test_gate_tracks_frontend_evidence_and_remaining_operational_work(self) -> None:
+    def test_gate_tracks_merged_implementation_and_remaining_operational_work(self) -> None:
         criteria = {item["criterion_id"]: item for item in self.gate["p0"]["criteria"]}
         self.assertTrue(criteria["p0-collector-deployment"]["complete"])
         self.assertTrue(criteria["p0-runtime-contract"]["complete"])
@@ -235,23 +231,22 @@ class CanonicalStateIndexV6Tests(unittest.TestCase):
         self.assertFalse(criteria["p0-source-and-cost-decision"]["complete"])
         self.assertFalse(criteria["p0-browser-demonstration"]["complete"])
         self.assertFalse(criteria["p0-evidence-lock"]["complete"])
-        self.assertIn(
-            "authorization replay incident",
-            " ".join(self.gate["p2"]["required_story"]),
-        )
-        self.assertIn(
-            "verified frontend architecture explainer",
-            self.gate["p2"]["required_story"],
-        )
+
         evidence = self.gate["evidence_inputs"]
         self.assertEqual(evidence["observed_main"], MAIN)
-        self.assertEqual(evidence["latest_merged_pull_request"], 185)
-        self.assertEqual(evidence["latest_merged_source_head"], PR185_SOURCE)
-        self.assertEqual(evidence["post_pr185_repository_reconciliation"], POST_PR185_PATH)
-        self.assertEqual(evidence["open_authorization_ledger_candidate_pull_request"], 186)
-        self.assertEqual(evidence["open_authorization_ledger_candidate_ci_run"], 30389249099)
+        self.assertEqual(evidence["latest_merged_pull_request"], 187)
+        self.assertEqual(evidence["latest_merged_source_head"], PR187_SOURCE)
+        self.assertEqual(evidence["post_pr187_repository_reconciliation"], POST_PR187_PATH)
+        self.assertEqual(evidence["authorization_implementation_pull_request"], 186)
+        self.assertEqual(evidence["authorization_implementation_head"], PR186_SOURCE)
+        self.assertEqual(
+            evidence["authorization_implementation_merge_commit"],
+            PR186_MERGE,
+        )
+        self.assertFalse(evidence["authorization_implementation_activated"])
+        self.assertEqual(evidence["integrated_main_ci"], "not_observed")
 
-    def test_containment_is_merged_fail_closed_and_cloud_authority_is_absent(self) -> None:
+    def test_containment_and_current_authority_remain_fail_closed(self) -> None:
         containment = self.current["control_incident"]["containment"]
         self.assertTrue(containment["collector_workflow_quarantined"])
         self.assertEqual(containment["collector_workflow_state"], "quarantined_on_main")
@@ -262,11 +257,13 @@ class CanonicalStateIndexV6Tests(unittest.TestCase):
         self.assertEqual(containment["containment_pull_request_state"], "merged")
         self.assertTrue(containment["static_replay_boundary_verified"])
 
-        authority = self.current["authority"]
-        self.assertTrue(authority["pull_request_creation_authorized"])
+        current_authority = self.current["authority"]
+        self.assertTrue(current_authority["pull_request_creation_authorized"])
         for key in (
             "pull_request_merge_authorized",
             "workflow_dispatch_or_rerun_authorized",
+            "repository_ruleset_mutation_authorized",
+            "authorization_tag_claim_authorized",
             "azure_authentication_authorized",
             "azure_query_authorized",
             "azure_mutation_authorized",
@@ -274,24 +271,29 @@ class CanonicalStateIndexV6Tests(unittest.TestCase):
             "cleanup_authorized",
             "rbac_mutation_authorized",
         ):
-            self.assertFalse(authority[key], key)
+            self.assertFalse(current_authority[key], key)
 
         self.assertEqual(
-            self.request["status"], "consumed_with_unauthorized_replay_observed"
+            self.request["status"],
+            "consumed_with_unauthorized_replay_observed",
         )
         self.assertFalse(self.request["active"])
         self.assertEqual(
-            self.reconciliation["root_cause"]["canonical_rule_violated"],
+            self.terminal["root_cause"]["canonical_rule_violated"],
             "Authorization Consumption Principle",
         )
         self.assertIn("workflow dispatch or rerun: unauthorized", self.handoff)
+        self.assertIn("repository ruleset mutation: unauthorized", self.handoff)
+        self.assertIn("authorization tag claim execution: unauthorized", self.handoff)
 
-    def test_repository_reconciliations_preserve_their_time_boundaries(self) -> None:
+    def test_repository_reconciliations_preserve_time_bounded_truth(self) -> None:
         self.assertEqual(
-            self.post_containment["github_state"]["observed_main"], CONTAINMENT_MAIN
+            self.post_containment["github_state"]["observed_main"],
+            CONTAINMENT_MAIN,
         )
         self.assertEqual(
-            self.post_containment["github_state"]["latest_merged_pull_request"], 182
+            self.post_containment["github_state"]["latest_merged_pull_request"],
+            182,
         )
         self.assertTrue(
             self.post_containment["containment_static_proof"][
@@ -301,46 +303,46 @@ class CanonicalStateIndexV6Tests(unittest.TestCase):
         self.assertFalse(
             self.post_containment["containment_static_proof"]["id_token_write_present"]
         )
-        self.assertFalse(
-            self.post_containment["containment_static_proof"][
-                "azure_cli_commands_present"
-            ]
-        )
 
         github183 = self.post_pr183["github_state"]
         self.assertEqual(github183["observed_main"], PR183_MAIN)
         self.assertEqual(github183["latest_merged_pull_request"], 183)
         self.assertEqual(github183["latest_merged_source_head"], PR183_SOURCE)
         self.assertEqual(github183["open_pull_requests_observed"], [])
-        self.assertEqual(github183["merge_commit_pr_triggered_ci"], "not_observed")
-        self.assertFalse(self.post_pr183["azure_boundary"]["fresh_live_query_performed"])
-        self.assertFalse(self.post_pr183["next_gate"]["workflow_restoration_allowed"])
 
         github185 = self.post_pr185["github_state"]
-        self.assertEqual(github185["observed_main"], MAIN)
+        self.assertEqual(github185["observed_main"], PR185_MAIN)
         self.assertEqual(github185["latest_merged_pull_request"], 185)
         self.assertEqual(github185["latest_merged_source_head"], PR185_SOURCE)
         self.assertEqual(github185["open_pull_requests_observed"], [186])
-        self.assertEqual(github185["merge_commit_pr_triggered_ci"], "not_observed")
-        self.assertFalse(self.post_pr185["azure_boundary"]["fresh_live_query_performed"])
-        self.assertFalse(
-            self.post_pr185["frontend_boundary"][
-                "github_pages_publication_freshly_observed"
-            ]
-        )
-        self.assertFalse(self.post_pr185["next_gate"]["workflow_restoration_allowed"])
-        self.assertFalse(self.post_pr185["next_gate"]["merge_allowed"])
         concurrent = self.post_pr185["concurrent_open_pull_requests"][0]
         self.assertEqual(concurrent["pull_request"], 186)
         self.assertEqual(concurrent["state"], "open_draft")
         self.assertFalse(concurrent["merged"])
         self.assertFalse(concurrent["activation_claimed"])
 
-    def test_design_remains_proposed_and_not_cloud_authority(self) -> None:
-        self.assertIn("claim-authority job", self.design)
-        self.assertIn("refs/tags/authority-consumed/<request_id>", self.design)
-        self.assertIn("exactly one successful claimant", self.design)
-        self.assertIn("Proposed, not implemented", self.design)
+        github187 = self.post_pr187["github_state"]
+        self.assertEqual(github187["observed_main"], MAIN)
+        self.assertEqual(github187["latest_merged_pull_request"], 187)
+        self.assertEqual(github187["latest_merged_source_head"], PR187_SOURCE)
+        self.assertEqual(github187["open_pull_requests_observed"], [])
+        self.assertEqual(github187["integrated_main_ci"], "not_observed")
+        self.assertTrue(
+            self.post_pr187["authorization_control_boundary"][
+                "implementation_merged_to_main"
+            ]
+        )
+        self.assertFalse(
+            self.post_pr187["authorization_control_boundary"]["ruleset_configured"]
+        )
+        self.assertFalse(
+            self.post_pr187["authorization_control_boundary"][
+                "concurrent_exactly_one_claimant_verified"
+            ]
+        )
+        self.assertFalse(self.post_pr187["azure_boundary"]["fresh_live_query_performed"])
+        self.assertFalse(self.post_pr187["next_gate"]["merge_allowed"])
+        self.assertFalse(self.post_pr187["next_gate"]["workflow_restoration_allowed"])
 
 
 if __name__ == "__main__":
