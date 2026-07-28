@@ -1,0 +1,387 @@
+.architecture-panel {
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.architecture-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.architecture-heading h2,
+.architecture-heading p {
+  margin-bottom: 0;
+}
+
+.architecture-intro {
+  max-width: 760px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.architecture-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(98, 169, 255, 0.32);
+  border-radius: 999px;
+  padding: 9px 12px;
+  background: rgba(98, 169, 255, 0.09);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.architecture-state::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(98, 169, 255, 0.12);
+}
+
+.architecture-zones {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1.15fr) 56px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 12px;
+}
+
+.architecture-zone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 18px;
+  background: rgba(7, 17, 31, 0.58);
+}
+
+.architecture-zone-controlled {
+  border-color: rgba(98, 169, 255, 0.44);
+  background:
+    linear-gradient(145deg, rgba(44, 132, 244, 0.11), rgba(7, 17, 31, 0.76));
+  box-shadow: inset 0 0 0 1px rgba(98, 169, 255, 0.06);
+}
+
+.architecture-zone-services {
+  border-color: rgba(247, 199, 107, 0.26);
+}
+
+.architecture-zone-heading {
+  margin-bottom: 16px;
+}
+
+.architecture-zone-heading span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.architecture-zone-heading strong {
+  display: block;
+  font-size: 1.05rem;
+}
+
+.security-boundary-label {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 7px;
+  margin: -2px 0 15px;
+  border: 1px solid rgba(63, 211, 155, 0.34);
+  border-radius: 999px;
+  padding: 6px 9px;
+  background: rgba(63, 211, 155, 0.08);
+  color: var(--healthy);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.security-boundary-label::before {
+  content: "◆";
+  font-size: 0.62rem;
+}
+
+.architecture-node {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.026);
+}
+
+.architecture-node + .architecture-node {
+  margin-top: 10px;
+}
+
+.architecture-node-kicker {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.architecture-node strong {
+  overflow-wrap: anywhere;
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+
+.architecture-node-detail {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.48;
+}
+
+.architecture-node-emphasis {
+  border-color: rgba(98, 169, 255, 0.34);
+  background: rgba(98, 169, 255, 0.07);
+}
+
+.architecture-node-healthy {
+  border-color: rgba(63, 211, 155, 0.3);
+}
+
+.architecture-node-failed {
+  border-color: rgba(255, 107, 124, 0.34);
+}
+
+.architecture-backends {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.architecture-backends .architecture-node {
+  margin-top: 0;
+}
+
+.architecture-node-result {
+  margin-top: auto;
+}
+
+.architecture-arrow {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 100%;
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.architecture-arrow::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  right: 10px;
+  top: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--border), rgba(98, 169, 255, 0.82));
+}
+
+.architecture-arrow::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  top: calc(50% - 5px);
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid rgba(98, 169, 255, 0.82);
+  border-right: 2px solid rgba(98, 169, 255, 0.82);
+  transform: rotate(45deg);
+}
+
+.architecture-arrow span {
+  position: relative;
+  z-index: 1;
+  border-radius: 999px;
+  padding: 5px 7px;
+  background: var(--panel-strong);
+}
+
+.architecture-return {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 18px 0 0;
+  border: 1px dashed rgba(98, 169, 255, 0.28);
+  border-radius: 15px;
+  padding: 12px 14px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.architecture-return strong {
+  color: var(--text);
+}
+
+.architecture-return-arrow {
+  color: var(--accent);
+  font-size: 1.05rem;
+}
+
+.architecture-explanation-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.architecture-subpanel {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.022);
+}
+
+.architecture-subpanel h3 {
+  margin: 0 0 15px;
+  font-size: 1rem;
+}
+
+.architecture-steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: architecture-step;
+}
+
+.architecture-steps li {
+  counter-increment: architecture-step;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.48;
+}
+
+.architecture-steps li::before {
+  content: counter(architecture-step);
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(98, 169, 255, 0.12);
+  color: var(--accent);
+  font-size: 0.74rem;
+  font-weight: 850;
+}
+
+.truth-boundaries {
+  display: grid;
+  gap: 9px;
+}
+
+.truth-boundary {
+  border-left: 3px solid var(--warning);
+  border-radius: 0 12px 12px 0;
+  padding: 10px 12px;
+  background: rgba(247, 199, 107, 0.065);
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.truth-boundary code {
+  color: #f7d99d;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.76rem;
+}
+
+.architecture-note {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 980px) {
+  .architecture-zones {
+    grid-template-columns: 1fr;
+  }
+
+  .architecture-arrow {
+    min-height: 46px;
+  }
+
+  .architecture-arrow::before {
+    top: 4px;
+    bottom: 10px;
+    left: 50%;
+    right: auto;
+    width: 2px;
+    height: auto;
+    background: linear-gradient(var(--border), rgba(98, 169, 255, 0.82));
+  }
+
+  .architecture-arrow::after {
+    left: calc(50% - 4px);
+    right: auto;
+    top: auto;
+    bottom: 4px;
+    transform: rotate(135deg);
+  }
+
+  .architecture-explanation-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .architecture-heading {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .architecture-state {
+    white-space: normal;
+  }
+
+  .architecture-zone {
+    padding: 15px;
+  }
+
+  .architecture-backends,
+  .architecture-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .architecture-return {
+    align-items: flex-start;
+    flex-direction: column;
+    text-align: left;
+  }
+
+  .architecture-return-arrow {
+    transform: rotate(90deg);
+  }
+}
