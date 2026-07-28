@@ -135,7 +135,7 @@ class PostPr187AuthorizationControlReconciliationTests(unittest.TestCase):
         self.assertIn("workflow_call:", self.durable_workflow)
         self.assertIn("id-token: none", self.durable_workflow)
         self.assertIn(
-            "refs/tags/authority-consumed/$REQUEST_ID",
+            "git/ref/tags/authority-consumed/$REQUEST_ID",
             self.durable_workflow,
         )
         self.assertNotIn("azure/login", self.durable_workflow)
