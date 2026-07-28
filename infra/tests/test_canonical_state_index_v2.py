@@ -153,7 +153,10 @@ class CanonicalStateIndexV3Tests(unittest.TestCase):
             self.request["status"], "consumed_with_unauthorized_replay_observed"
         )
         self.assertFalse(self.request["active"])
-        self.assertIn("Authorization Consumption Principle", self.handoff)
+        self.assertEqual(
+            self.reconciliation["root_cause"]["canonical_rule_violated"],
+            "Authorization Consumption Principle",
+        )
         self.assertIn("workflow dispatch or rerun: unauthorized", self.handoff)
 
 
