@@ -2,7 +2,7 @@
 
 ## Interpretation boundary
 
-This handoff records repository state observed through **2026-07-28T14:48:16-04:00** and Azure evidence last captured by preserved workflow artifacts. It is not a continuously refreshed GitHub or Azure dashboard. Query live GitHub state and obtain fresh Azure evidence before any write, merge, dispatch, authentication, or cloud action.
+This handoff records repository state observed through **2026-07-28T15:04:23-04:00** and Azure evidence last captured by preserved workflow artifacts. It is not a continuously refreshed GitHub or Azure dashboard. Query live GitHub state and obtain fresh Azure evidence before any write, merge, dispatch, authentication, or cloud action.
 
 ```text
 declared_in_code != deployed_in_azure
