@@ -11,7 +11,9 @@
     "latest_merged_source_head": "36bbd5ab1ef3c579c43ad2df589f44362feced37",
     "merge_commit": "ca994ce53642587bea370bee1c5a0633faaaece8",
     "merged_at": "2026-07-28T12:58:44Z",
-    "open_pull_requests_observed": [],
+    "open_pull_requests_observed": [
+      186
+    ],
     "merge_commit_pr_triggered_ci": "not_observed"
   },
   "watermark_advance": {
@@ -82,11 +84,25 @@
     "not_observed != false"
   ],
   "next_gate": {
-    "operation": "review this repository-only reconciliation through ordinary pull-request CI while all collector Azure operations remain quarantined",
+    "operation": "review this repository-only reconciliation and open draft PR 186 while all collector Azure operations remain quarantined",
     "merge_allowed": false,
     "workflow_restoration_allowed": false,
     "fresh_authority_required_for_merge": true,
     "fresh_authority_required_for_implementation": true,
     "fresh_authority_required_for_any_Azure_operation": true
-  }
+  },
+  "concurrent_open_pull_requests": [
+    {
+      "pull_request": 186,
+      "title": "Implement durable single-use authorization claims",
+      "state": "open_draft",
+      "base_sha": "ca994ce53642587bea370bee1c5a0633faaaece8",
+      "head_sha": "138659609b15ef80f6cce12d916e26382ab71205",
+      "exact_head_ci_run": 30389249099,
+      "exact_head_ci_conclusion": "success",
+      "merged": false,
+      "scope_overlap_with_reconciliation_files": false,
+      "activation_claimed": false
+    }
+  ]
 }
