@@ -3,7 +3,7 @@
   "project": "ServiceTracer — Governed Azure Operations Lab",
   "recorded_at": "2026-07-28T14:48:16-04:00",
   "governing_objective": "Complete and evidence-lock one production-shaped ServiceTracer workload from infrastructure-as-code declaration through deployment, security, runtime validation, monitoring, cost observation, and portfolio demonstration.",
-  "decision_status": "runtime_verified_post_pr185_repository_reconciled_deployment_automation_quarantined",
+  "decision_status": "runtime_verified_post_pr185_repository_reconciled_pr186_candidate_open_deployment_automation_quarantined",
   "active_golden_path": "collector-hosted demo API in rg-servicetracer-dev-westus2",
   "scope_control": {
     "parallel_feature_expansion_allowed": false,
@@ -129,7 +129,10 @@
     "trigger_pull_request_181": "closed_without_merge",
     "containment_pull_request_182": "merged",
     "containment_exact_head": "5e544794243f814bca19210e65943995f4f6b2de",
-    "containment_exact_head_ci_run": 30324033493
+    "containment_exact_head_ci_run": 30324033493,
+    "open_authorization_ledger_candidate_pull_request": 186,
+    "open_authorization_ledger_candidate_head": "138659609b15ef80f6cce12d916e26382ab71205",
+    "open_authorization_ledger_candidate_ci_run": 30389249099
   },
   "completion_definition": {
     "rule": "Lab v1 is complete only when one exact source lineage connects reviewed IaC, authorized deployment, deployed Azure resources, validated runtime, bounded ServiceTracer evidence, effective security, verified monitoring delivery, current cost evidence, and a reproducible demonstration.",
@@ -170,8 +173,8 @@
     "cleanup": false
   },
   "next_gate": {
-    "operation": "review this repository-only reconciliation through ordinary pull-request CI while the collector workflow remains quarantined",
-    "after_review": "merge only under fresh explicit authority; separately observe GitHub Pages and browser rendering before claiming the frontend is published; review and implement the authorization ledger only under fresh authority before restoring any Azure operation",
+    "operation": "review this reconciliation and draft PR 186 while the collector workflow remains quarantined",
+    "after_review": "merge either PR only under fresh explicit authority; PR 186 remains an implementation candidate until merged, ruleset-configured, and independently claim-tested; separately observe GitHub Pages and browser rendering before claiming the frontend is published; obtain separate fresh authority before restoring any Azure operation",
     "claim_boundary": "This reconciliation creates no Azure retry, rollback, verification, browser, RBAC, cleanup, merge, or future deployment authority."
   }
 }
