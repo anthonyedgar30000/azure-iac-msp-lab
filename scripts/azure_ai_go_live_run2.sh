@@ -21,8 +21,8 @@ jq -e --arg attempt "$ATTEMPT_ID" '
   .attempt_id == $attempt and
   .status == "active_one_attempt" and
   .attempt_limit == 1 and
-  .automatic_retry_authorized == false and
-  .manual_rerun_authorized == false
+  .authority.automatic_retry_authorized == false and
+  .authority.manual_rerun_authorized == false
 ' "$REQUEST_FILE" >/dev/null
 
 subscription_id="$(az account show --query id --output tsv)"

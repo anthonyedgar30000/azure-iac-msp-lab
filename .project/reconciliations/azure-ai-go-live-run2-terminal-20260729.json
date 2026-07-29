@@ -1,0 +1,75 @@
+{
+  "schema_version": "project.azure-ai-go-live-run2-terminal.v1",
+  "recorded_at": "2026-07-29T00:03:43-04:00",
+  "project": "Azure IaC MSP Lab",
+  "repository_state": {
+    "exact_merge_commit": "f667be775962d91f16e8c82744a5573a1a0875ca",
+    "pull_request": 198,
+    "reviewed_source_head": "18ce593f64919fbaf2a5aaf69c57a74e83d18a2c",
+    "exact_head_ci_run": 30421129208,
+    "exact_head_ci_conclusion": "success",
+    "azure_ai_static_validation_run": 30421129213,
+    "azure_ai_static_validation_conclusion": "success"
+  },
+  "workflow_run": {
+    "workflow": ".github/workflows/azure-ai-go-live-run2.yml",
+    "run_id": 30421206722,
+    "run_attempt": 1,
+    "conclusion": "failure",
+    "exact_merge_commit_checked_out": true,
+    "artifact_id": 8711974113,
+    "artifact_name": "azure-ai-go-live-run2-30421206722-1",
+    "artifact_digest": "sha256:bffb2053f3b4531896ae74fc60794fe8e738c09c0d7c24eac08a649bbae67f78",
+    "artifact_contents": [
+      "empty artifact-manifest.sha256"
+    ]
+  },
+  "attempt_sequence": {
+    "repository_validation": "passed",
+    "bicep_lint_and_build": "passed",
+    "azure_oidc_login": "passed",
+    "authorization_guard": "failed",
+    "subscription_context_query": "not_started",
+    "provider_query_or_registration": "not_started",
+    "model_inventory_query": "not_started",
+    "what_if": "not_started",
+    "deployment": "not_started",
+    "role_assignment": "not_started",
+    "model_request": "not_started"
+  },
+  "terminal_failure": {
+    "classification": "authorization_contract_json_path_defect",
+    "failed_expression": ".automatic_retry_authorized == false and .manual_rerun_authorized == false",
+    "correct_expression": ".authority.automatic_retry_authorized == false and .authority.manual_rerun_authorized == false",
+    "failure_timing": "after Azure OIDC login and before the first Azure CLI query in the executor"
+  },
+  "deployed_reality": {
+    "resource_group_created_by_run": false,
+    "azure_openai_account_created_by_run": false,
+    "model_deployment_created_by_run": false,
+    "inference_role_assignment_created_by_run": false,
+    "model_request_performed": false,
+    "endpoint_live": false,
+    "partial_resource_cleanup_required": false
+  },
+  "authorization": {
+    "source_instruction": "Get this live already",
+    "attempt_id": "azure-ai-go-live-run2",
+    "status": "consumed_failed_terminal",
+    "attempt_limit": 1,
+    "attempts_observed": 1,
+    "automatic_retry_authorized": false,
+    "manual_rerun_authorized": false,
+    "new_deployment_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "canonical_distinctions": [
+    "oidc_login_succeeded != authorization_guard_succeeded",
+    "authorization_guard_failed != Azure_query_performed",
+    "workflow_failed != resource_created",
+    "repair_identified != deployment_authorized",
+    "failed_run != authorization_to_retry",
+    "endpoint_live = false"
+  ]
+}

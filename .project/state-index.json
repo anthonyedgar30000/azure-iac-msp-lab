@@ -1,7 +1,7 @@
 {
   "schema_version": "project.state-index.v6",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-28T23:49:00-04:00",
+  "recorded_at": "2026-07-29T00:03:43-04:00",
   "canonical_current_reality": ".project/current-reality-v2.json",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
   "canonical_handoff": ".project/handoffs/current-state.md",
@@ -19,12 +19,13 @@
   "latest_azure_mcp_preflight_reconciliation": ".project/reconciliations/azure-mcp-read-only-preflight-run1-terminal-20260729.json",
   "latest_successful_azure_mcp_preflight_reconciliation": ".project/reconciliations/azure-mcp-read-only-preflight-run2-success-20260729.json",
   "azure_mcp_template_review_contract": ".project/contracts/azure-mcp-template-review-v1.json",
-  "latest_repository_and_azure_ai_reconciliation": ".project/reconciliations/azure-ai-go-live-run1-terminal-20260729.json",
-  "latest_azure_ai_activation_reconciliation": ".project/reconciliations/azure-ai-go-live-run1-terminal-20260729.json",
-  "previous_azure_ai_activation_reconciliation": ".project/reconciliations/post-pr193-azure-ai-live-activation-plan-20260729.json",
+  "latest_repository_and_azure_ai_reconciliation": ".project/reconciliations/azure-ai-go-live-run2-terminal-20260729.json",
+  "latest_azure_ai_activation_reconciliation": ".project/reconciliations/azure-ai-go-live-run2-terminal-20260729.json",
+  "previous_azure_ai_activation_reconciliation": ".project/reconciliations/azure-ai-go-live-run1-terminal-20260729.json",
+  "historical_azure_ai_activation_plan": ".project/reconciliations/post-pr193-azure-ai-live-activation-plan-20260729.json",
   "latest_azure_ai_activation_request": ".project/deployment-requests/azure-ai-go-live-run2.json",
-  "azure_ai_activation_handoff": ".project/handoffs/azure-ai-go-live-run1-terminal.md",
-  "azure_ai_run2_handoff": ".project/handoffs/azure-ai-go-live-run2.md",
+  "azure_ai_activation_handoff": ".project/handoffs/azure-ai-go-live-run2-terminal.md",
+  "previous_azure_ai_activation_handoff": ".project/handoffs/azure-ai-go-live-run1-terminal.md",
   "azure_ai_provider_contract": ".project/contracts/openai-azure-foundry-provider-v1.json",
   "azure_ai_live_activation_contract": ".project/contracts/azure-ai-live-activation-v1.json",
   "azure_ai_direct_activation_workflow": ".github/workflows/azure-ai-live-deploy.yml",
@@ -39,11 +40,11 @@
   "previous_azure_mcp_preflight_contract": ".project/contracts/azure-mcp-read-only-preflight-workflow-v1.json",
   "active_deployment_authorization": null,
   "active_azure_mcp_preflight_authorization": null,
-  "active_azure_ai_activation_authorization": ".project/deployment-requests/azure-ai-go-live-run2.json",
+  "active_azure_ai_activation_authorization": null,
   "consumed_deployment_authorization": ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json",
   "latest_consumed_deployment_authorization": ".project/deployment-requests/correlation-identity-run1.json",
   "latest_consumed_azure_mcp_preflight_authorization": ".project/reconciliations/azure-mcp-read-only-preflight-run1-terminal-20260729.json",
-  "latest_consumed_azure_ai_activation_authorization": ".project/reconciliations/azure-ai-go-live-run1-terminal-20260729.json",
+  "latest_consumed_azure_ai_activation_authorization": ".project/reconciliations/azure-ai-go-live-run2-terminal-20260729.json",
   "superseded_open_pull_request": 189,
   "historical_reconciliations": [
     {
@@ -64,6 +65,11 @@
     {
       "path": ".project/reconciliations/post-pr193-azure-ai-live-activation-plan-20260729.json",
       "classification": "historical_azure_ai_activation_plan_before_run1",
+      "authoritative_for_current_operations": false
+    },
+    {
+      "path": ".project/reconciliations/azure-ai-go-live-run1-terminal-20260729.json",
+      "classification": "historical_azure_ai_run1_terminal_before_run2",
       "authoritative_for_current_operations": false
     }
   ],
@@ -87,7 +93,7 @@
       ]
     }
   ],
-  "selection_rule": "Operational consumers must resolve the fresh Azure AI run-2 authorization, run-1 terminal reconciliation, direct run-2 workflow, latest successful Azure MCP evidence, live GitHub state, and current Azure evidence first; then resolve current reality, completion gate, deployment, authorization-control, and control-incident evidence before every write, merge, authentication, model call, role assignment, rollback, cleanup, or retry.",
+  "selection_rule": "Operational consumers must resolve the Azure AI run-2 terminal reconciliation, consumed run-2 authorization, repaired executor candidate, latest successful Azure MCP evidence, live GitHub state, and current Azure evidence first; then resolve current reality, completion gate, deployment, authorization-control, and control-incident evidence before every write, merge, authentication, model call, role assignment, rollback, cleanup, or new deployment attempt.",
   "claim_boundaries": [
     "legacy_filename != current_authority",
     "historical_snapshot != live_state",
@@ -111,6 +117,8 @@
     "endpoint_deployed != OpenAI_client_connected",
     "provider_on_main != endpoint_live",
     "oidc_login_succeeded != deployment_succeeded",
+    "oidc_login_succeeded != authorization_guard_succeeded",
+    "authorization_guard_failed != Azure_query_performed",
     "provider_state_registered != provider_registration_performed_during_run",
     "model_listed != quota_available",
     "model_candidate_listed != valid_deployment_scope",
@@ -123,6 +131,7 @@
     "model_request_verified != Azure_MCP_connected",
     "fresh_instruction != rerun_of_consumed_authority",
     "failed_run != authorization_to_rerun",
+    "repair_identified != deployment_authorized",
     "repair_candidate_prepared != repair_merged",
     "repair_merged != deployment_authorized",
     "workflow_conclusion != live_service_truth",
