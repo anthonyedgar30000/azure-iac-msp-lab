@@ -1,0 +1,76 @@
+name: Azure AI activation static validation
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/azure-ai-read-only-preflight.yml'
+      - '.github/workflows/azure-ai-plan.yml'
+      - 'scripts/azure_ai_read_only_preflight.sh'
+      - 'infra/azure-ai-live.bicep'
+      - 'infra/azure-ai-live.dev.bicepparam'
+      - 'infra/modules/azure_ai_openai.bicep'
+      - 'infra/tests/test_azure_ai_live_activation.py'
+      - 'docs/runbooks/azure-ai-read-only-preflight.md'
+      - '.project/contracts/azure-ai-live-activation-v1.json'
+      - '.project/reconciliations/post-pr193-azure-ai-live-activation-plan-20260729.json'
+      - '.project/handoffs/post-pr193-azure-ai-live-activation-plan.md'
+      - '.project/state-index.json'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/azure-ai-read-only-preflight.yml'
+      - '.github/workflows/azure-ai-plan.yml'
+      - 'scripts/azure_ai_read_only_preflight.sh'
+      - 'infra/azure-ai-live.bicep'
+      - 'infra/azure-ai-live.dev.bicepparam'
+      - 'infra/modules/azure_ai_openai.bicep'
+      - 'infra/tests/test_azure_ai_live_activation.py'
+      - 'docs/runbooks/azure-ai-read-only-preflight.md'
+      - '.project/contracts/azure-ai-live-activation-v1.json'
+      - '.project/reconciliations/post-pr193-azure-ai-live-activation-plan-20260729.json'
+      - '.project/handoffs/post-pr193-azure-ai-live-activation-plan.md'
+      - '.project/state-index.json'
+
+permissions:
+  contents: read
+  id-token: none
+
+jobs:
+  validate:
+    name: Validate Azure AI activation candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run deterministic boundary tests
+        run: python -m unittest infra.tests.test_azure_ai_live_activation -v
+
+      - name: Lint and build fail-closed Azure AI Bicep
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+            az bicep install
+            az bicep version
+            az bicep lint --file infra/azure-ai-live.bicep
+            az bicep build --file infra/azure-ai-live.bicep --outfile /tmp/azure-ai-live.json
+            az bicep lint --file infra/modules/azure_ai_openai.bicep
+            az bicep build --file infra/modules/azure_ai_openai.bicep --outfile /tmp/azure-ai-openai-module.json
+            az bicep build-params --file infra/azure-ai-live.dev.bicepparam --outfile /tmp/azure-ai-live.parameters.json
+            jq -e '.parameters.deployAzureAi.value == false' /tmp/azure-ai-live.parameters.json >/dev/null
+            jq -e '.parameters.assignInferenceRole.value == false' /tmp/azure-ai-live.parameters.json >/dev/null
+
+      - name: Upload static validation outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-ai-activation-static-validation
+          path: |
+            /tmp/azure-ai-live.json
+            /tmp/azure-ai-openai-module.json
+            /tmp/azure-ai-live.parameters.json
+          if-no-files-found: warn
+          retention-days: 14
