@@ -4,24 +4,35 @@ on:
   pull_request:
     paths:
       - '.github/workflows/azure-ai-live-deploy.yml'
+      - '.github/workflows/azure-ai-go-live-run2.yml'
       - '.github/workflows/azure-ai-plan.yml'
+      - 'scripts/azure_ai_go_live_run2.sh'
       - 'infra/azure-ai-live.bicep'
       - 'infra/azure-ai-live.dev.bicepparam'
       - 'infra/modules/azure_ai_openai.bicep'
       - 'infra/tests/test_azure_ai_live_activation.py'
+      - 'infra/tests/test_azure_ai_go_live_run2.py'
       - '.project/contracts/azure-ai-live-activation-v1.json'
+      - '.project/deployment-requests/azure-ai-go-live-run2.json'
       - '.project/reconciliations/post-pr193-azure-ai-live-activation-plan-20260729.json'
       - '.project/handoffs/post-pr193-azure-ai-live-activation-plan.md'
+      - '.project/handoffs/azure-ai-go-live-run2.md'
       - '.project/state-index.json'
   push:
     branches:
       - main
     paths:
       - '.github/workflows/azure-ai-plan.yml'
+      - '.github/workflows/azure-ai-go-live-run2.yml'
+      - 'scripts/azure_ai_go_live_run2.sh'
       - 'infra/azure-ai-live.bicep'
       - 'infra/azure-ai-live.dev.bicepparam'
       - 'infra/modules/azure_ai_openai.bicep'
       - 'infra/tests/test_azure_ai_live_activation.py'
+      - 'infra/tests/test_azure_ai_go_live_run2.py'
+      - '.project/deployment-requests/azure-ai-go-live-run2.json'
+      - '.project/handoffs/azure-ai-go-live-run2.md'
+      - '.project/state-index.json'
 
 permissions:
   contents: read
@@ -37,7 +48,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run deterministic boundary tests
-        run: python -m unittest infra.tests.test_azure_ai_live_activation -v
+        run: |
+          python -m unittest infra.tests.test_azure_ai_live_activation -v
+          python -m unittest infra.tests.test_azure_ai_go_live_run2 -v
+          bash -n scripts/azure_ai_go_live_run2.sh
 
       - name: Lint and build Azure AI Bicep
         uses: azure/CLI@v2
