@@ -42,7 +42,7 @@ param inferencePrincipalId string
 param inferencePrincipalType string = 'ServicePrincipal'
 
 var cognitiveServicesOpenAiUserRoleDefinitionId = subscriptionResourceId(
-  'Microsoft.Authorization/roleDefinitions'
+  'Microsoft.Authorization/roleDefinitions',
   '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 )
 
