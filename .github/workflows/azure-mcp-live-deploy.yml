@@ -1,0 +1,234 @@
+name: Azure MCP live deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_path:
+        description: Exact active authorization request path
+        required: true
+        default: .project/deployment-requests/azure-mcp-live-run1.json
+        type: string
+      confirmation:
+        description: Enter DEPLOY-AZURE-MCP-LIVE:<request-id>
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  claim:
+    uses: ./.github/workflows/durable-authorization-claim-v2.yml
+    with:
+      request_path: ${{ inputs.request_path }}
+
+  deploy:
+    name: Deploy and verify hardened read-only Azure MCP
+    needs: claim
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      EVIDENCE_DIR: ${{ runner.temp }}/azure-mcp-live-evidence
+      DEPLOYMENT_NAME: azure-mcp-live-run1
+      TARGET_RESOURCE_GROUP: rg-servicetracer-dev-westus2
+      PINNED_IMAGE: mcr.microsoft.com/azure-sdk/azure-mcp@sha256:80ea86cdbb30d6403ceea36766bdf8b736805bf1a0ef0a688be4bf4bb95c9b8d
+    steps:
+      - name: Check out exact authorization state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Enforce exact single-use authority outputs
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          REQUEST_ID: ${{ needs.claim.outputs.request_id }}
+          OPERATION: ${{ needs.claim.outputs.operation }}
+          ENVIRONMENT_NAME: ${{ needs.claim.outputs.environment }}
+          SUBSCRIPTION_NAME: ${{ needs.claim.outputs.subscription }}
+          TENANT_FINGERPRINT: ${{ needs.claim.outputs.tenant }}
+          RESOURCE_GROUP: ${{ needs.claim.outputs.resource_group }}
+          LOCATION: ${{ needs.claim.outputs.location }}
+          PROVIDER_AUTH: ${{ needs.claim.outputs.provider_registration_authorized }}
+          RG_AUTH: ${{ needs.claim.outputs.resource_group_mutation_authorized }}
+          RBAC_AUTH: ${{ needs.claim.outputs.rbac_mutation_authorized }}
+          ENTRA_AUTH: ${{ needs.claim.outputs.entra_application_mutation_authorized }}
+          DEPLOY_AUTH: ${{ needs.claim.outputs.deployment_authorized }}
+          VERIFY_AUTH: ${{ needs.claim.outputs.verification_authorized }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_RUN_ATTEMPT" == 1 ]]
+          [[ "$CONFIRMATION" == "DEPLOY-AZURE-MCP-LIVE:${REQUEST_ID}" ]]
+          [[ "$OPERATION" == deploy-azure-mcp-live ]]
+          [[ "$ENVIRONMENT_NAME" == dev ]]
+          [[ "$SUBSCRIPTION_NAME" == 'Azure for Students' ]]
+          [[ "$TENANT_FINGERPRINT" == sha256:* ]]
+          [[ "$RESOURCE_GROUP" == rg-azure-mcp-dev-westus2 ]]
+          [[ "$LOCATION" == westus2 ]]
+          [[ "$PROVIDER_AUTH" == true && "$RG_AUTH" == true && "$RBAC_AUTH" == true ]]
+          [[ "$ENTRA_AUTH" == true && "$DEPLOY_AUTH" == true && "$VERIFY_AUTH" == true ]]
+          mkdir -p "$EVIDENCE_DIR"
+
+      - name: Run exact static boundary tests before Azure login
+        run: python -m unittest infra.tests.test_azure_mcp_live_activation -v
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify live subscription, tenant, target scope, and deployment permissions
+        env:
+          EXPECTED_SUBSCRIPTION: ${{ needs.claim.outputs.subscription }}
+          EXPECTED_TENANT_FINGERPRINT: ${{ needs.claim.outputs.tenant }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          account="$(az account show -o json)"
+          [[ "$(jq -r '.name' <<< "$account")" == "$EXPECTED_SUBSCRIPTION" ]]
+          [[ "$(jq -r '.state' <<< "$account")" == Enabled ]]
+          tenant="$(jq -r '.tenantId' <<< "$account")"
+          observed_tenant="sha256:$(printf '%s' "$tenant" | sha256sum | awk '{print $1}')"
+          [[ "$observed_tenant" == "$EXPECTED_TENANT_FINGERPRINT" ]]
+          az group show --name "$TARGET_RESOURCE_GROUP" -o none
+
+          assignments="$(az role assignment list --assignee '${{ secrets.AZURE_CLIENT_ID }}' --all -o json)"
+          jq -e 'map(.roleDefinitionName) | any(. == "Owner" or . == "User Access Administrator" or . == "Role Based Access Control Administrator")' <<< "$assignments" >/dev/null
+
+          graph_token="$(az account get-access-token --resource-type ms-graph --query accessToken -o tsv)"
+          GRAPH_TOKEN="$graph_token" python - <<'PY'
+          import base64, json, os
+          token = os.environ['GRAPH_TOKEN'].split('.')[1]
+          token += '=' * (-len(token) % 4)
+          claims = json.loads(base64.urlsafe_b64decode(token))
+          roles = set(claims.get('roles', []))
+          required = {'Application.ReadWrite.All'}
+          if not required.issubset(roles):
+              raise SystemExit(f"missing Microsoft Graph application permission: {sorted(required - roles)}")
+          PY
+
+          jq -n --arg subscription "$(jq -r '.name' <<< "$account")" --arg tenant_fingerprint "$observed_tenant" \
+            '{subscription:$subscription,tenant_fingerprint:$tenant_fingerprint,rbac_write_prerequisite:true,graph_application_write_prerequisite:true}' \
+            > "$EVIDENCE_DIR/identity-permission-preflight.json"
+
+      - name: Register Microsoft.App only if required
+        shell: bash
+        run: |
+          set -euo pipefail
+          before="$(az provider show --namespace Microsoft.App --query registrationState -o tsv)"
+          if [[ "$before" != Registered ]]; then
+            az provider register --namespace Microsoft.App
+            for _ in $(seq 1 60); do
+              state="$(az provider show --namespace Microsoft.App --query registrationState -o tsv)"
+              [[ "$state" == Registered ]] && break
+              sleep 10
+            done
+          fi
+          after="$(az provider show --namespace Microsoft.App --query registrationState -o tsv)"
+          [[ "$after" == Registered ]]
+          jq -n --arg before "$before" --arg after "$after" '{namespace:"Microsoft.App",before:$before,after:$after}' \
+            > "$EVIDENCE_DIR/provider-registration.json"
+
+      - name: Validate pinned image and compile exact Bicep
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker buildx imagetools inspect "$PINNED_IMAGE" > "$EVIDENCE_DIR/pinned-image-inspect.txt"
+          grep -F 'sha256:80ea86cdbb30d6403ceea36766bdf8b736805bf1a0ef0a688be4bf4bb95c9b8d' "$EVIDENCE_DIR/pinned-image-inspect.txt"
+          az bicep install
+          az bicep lint --file infra/azure-mcp-live/main.bicep
+          az bicep build --file infra/azure-mcp-live/main.bicep --outfile "$EVIDENCE_DIR/azure-mcp-live.template.json"
+          az bicep build-params --file infra/azure-mcp-live/main.bicepparam --outfile "$EVIDENCE_DIR/azure-mcp-live.parameters.json"
+
+      - name: Run and validate subscription What-If
+        shell: bash
+        run: |
+          set -euo pipefail
+          az deployment sub what-if \
+            --name "$DEPLOYMENT_NAME" \
+            --location westus2 \
+            --template-file infra/azure-mcp-live/main.bicep \
+            --parameters infra/azure-mcp-live/main.bicepparam \
+            --result-format FullResourcePayloads \
+            --output json > "$EVIDENCE_DIR/what-if.json"
+
+          jq -e '[.changes[]? | select(.changeType == "Delete")] | length == 0' "$EVIDENCE_DIR/what-if.json" >/dev/null
+          jq -e '[.changes[]?.resourceId | select(
+            contains("/resourceGroups/rg-azure-mcp-dev-westus2") or
+            contains("/resourceGroups/rg-servicetracer-dev-westus2/providers/Microsoft.Authorization/roleAssignments/") or
+            startswith("/providers/Microsoft.Graph/applications/")
+          )] | length == ([.changes[]?] | length)' "$EVIDENCE_DIR/what-if.json" >/dev/null
+
+      - name: Deploy exact reviewed infrastructure
+        shell: bash
+        run: |
+          set -euo pipefail
+          az deployment sub create \
+            --name "$DEPLOYMENT_NAME" \
+            --location westus2 \
+            --template-file infra/azure-mcp-live/main.bicep \
+            --parameters infra/azure-mcp-live/main.bicepparam \
+            --output json > "$EVIDENCE_DIR/deployment.json"
+          [[ "$(jq -r '.properties.provisioningState' "$EVIDENCE_DIR/deployment.json")" == Succeeded ]]
+          jq '.properties.outputs' "$EVIDENCE_DIR/deployment.json" > "$EVIDENCE_DIR/deployment-outputs.json"
+
+      - name: Verify deployed resource, identity, RBAC, image, and protected endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          outputs="$EVIDENCE_DIR/deployment-outputs.json"
+          endpoint="$(jq -r '.endpoint.value' "$outputs")"
+          base_url="$(jq -r '.baseUrl.value' "$outputs")"
+          principal="$(jq -r '.managedIdentityPrincipalId.value' "$outputs")"
+          server_client_id="$(jq -r '.serverAppClientId.value' "$outputs")"
+
+          az containerapp show --resource-group rg-azure-mcp-dev-westus2 --name ca-azmcp-msp-dev -o json > "$EVIDENCE_DIR/container-app.json"
+          jq -e --arg image "$PINNED_IMAGE" '.properties.template.containers[0].image == $image' "$EVIDENCE_DIR/container-app.json" >/dev/null
+          jq -e '.properties.configuration.ingress.external == true and .properties.configuration.ingress.allowInsecure == false' "$EVIDENCE_DIR/container-app.json" >/dev/null
+          jq -e '.properties.template.scale.minReplicas == 0 and .properties.template.scale.maxReplicas == 1' "$EVIDENCE_DIR/container-app.json" >/dev/null
+          jq -e '.properties.template.containers[0].args | index("--read-only") != null' "$EVIDENCE_DIR/container-app.json" >/dev/null
+
+          az role assignment list --assignee-object-id "$principal" --scope "$(az group show -n "$TARGET_RESOURCE_GROUP" --query id -o tsv)" -o json \
+            > "$EVIDENCE_DIR/runtime-role-assignments.json"
+          jq -e 'any(.roleDefinitionName == "Reader")' "$EVIDENCE_DIR/runtime-role-assignments.json" >/dev/null
+          az ad app show --id "$server_client_id" -o json > "$EVIDENCE_DIR/server-app-registration.json"
+
+          status=000
+          for _ in $(seq 1 8); do
+            status="$(curl -sS -o "$EVIDENCE_DIR/mcp-unauthenticated-body.txt" -D "$EVIDENCE_DIR/mcp-unauthenticated-headers.txt" --max-time 30 -w '%{http_code}' "$endpoint" || true)"
+            [[ "$status" =~ ^(400|401|403|405)$ ]] && break
+            sleep 15
+          done
+          [[ "$status" =~ ^(400|401|403|405)$ ]]
+          curl -fsS --max-time 30 "$base_url/.well-known/oauth-protected-resource" \
+            > "$EVIDENCE_DIR/oauth-protected-resource.json" || true
+
+          jq -n --arg endpoint "$endpoint" --arg base_url "$base_url" --arg http_status "$status" \
+            --arg image "$PINNED_IMAGE" --arg server_client_id "$server_client_id" \
+            '{deployment_succeeded:true,endpoint:$endpoint,base_url:$base_url,unauthenticated_mcp_status:($http_status|tonumber),image:$image,server_app_client_id:$server_client_id,reader_scope:"rg-servicetracer-dev-westus2",read_only_flag:true,namespaces:["group","compute","monitor"],authenticated_tool_call_verified:false}' \
+            > "$EVIDENCE_DIR/live-verification.json"
+
+      - name: Write evidence manifest
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -d "$EVIDENCE_DIR" ]]; then
+            find "$EVIDENCE_DIR" -type f ! -name artifact-manifest.sha256 -print0 | sort -z | xargs -0 -r sha256sum > "$EVIDENCE_DIR/artifact-manifest.sha256"
+          fi
+
+      - name: Upload protected deployment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-mcp-live-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/azure-mcp-live-evidence
+          if-no-files-found: error
+          retention-days: 30
