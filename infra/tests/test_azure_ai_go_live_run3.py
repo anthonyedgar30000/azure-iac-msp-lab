@@ -10,6 +10,12 @@ WORKFLOW = ROOT / ".github/workflows/azure-ai-go-live-run3.yml"
 ADAPTER = ROOT / "scripts/azure_ai_go_live_run3.sh"
 SOURCE = ROOT / "scripts/azure_ai_go_live_run2.sh"
 REQUEST = ROOT / ".project/deployment-requests/azure-ai-go-live-run3.json"
+TERMINAL = (
+    ROOT
+    / ".project"
+    / "reconciliations"
+    / "azure-ai-go-live-run3-terminal-20260729.json"
+)
 BICEP = ROOT / "infra/azure-ai-live.bicep"
 
 
@@ -20,9 +26,10 @@ class AzureAiGoLiveRun3Tests(unittest.TestCase):
         cls.adapter = ADAPTER.read_text(encoding="utf-8")
         cls.source = SOURCE.read_text(encoding="utf-8")
         cls.request = json.loads(REQUEST.read_text(encoding="utf-8"))
+        cls.terminal = json.loads(TERMINAL.read_text(encoding="utf-8"))
         cls.bicep = BICEP.read_text(encoding="utf-8")
 
-    def test_workflow_is_one_merge_trigger_without_manual_dispatch(self) -> None:
+    def test_workflow_remains_historical_one_merge_trigger(self) -> None:
         self.assertIn("name: Azure AI go live run 3", self.workflow)
         self.assertIn("branches:\n      - main", self.workflow)
         self.assertIn("'.github/workflows/azure-ai-go-live-run3.yml'", self.workflow)
@@ -50,15 +57,16 @@ class AzureAiGoLiveRun3Tests(unittest.TestCase):
         self.assertIn(".authority.automatic_retry_authorized == false", self.source)
         self.assertIn(".authority.manual_rerun_authorized == false", self.source)
 
-    def test_authorization_is_fresh_bounded_and_single_use(self) -> None:
+    def test_authorization_is_consumed_and_not_rerunnable(self) -> None:
         self.assertEqual(self.request["attempt_id"], "azure-ai-go-live-run3")
-        self.assertEqual(self.request["status"], "active_one_attempt")
+        self.assertEqual(self.request["status"], "consumed_terminal_failure")
+        self.assertFalse(self.request["active"])
         self.assertEqual(self.request["source_instruction"], "Proceed")
         self.assertEqual(self.request["attempt_limit"], 1)
-        self.assertEqual(self.request["attempts_observed"], 0)
+        self.assertEqual(self.request["attempts_observed"], 1)
         self.assertEqual(
-            self.request["repository_boundary"]["base_main"],
-            "5c34b17eb7ccd3098d3c723261fa0f8a4d6e0c95",
+            self.request["repository_boundary"]["exact_merge_commit"],
+            "0749e1e1f99e57576726c1aaa9f25b1a6092e0d9",
         )
         self.assertEqual(
             self.request["scope"]["candidate_locations"],
@@ -71,20 +79,39 @@ class AzureAiGoLiveRun3Tests(unittest.TestCase):
         self.assertEqual(self.request["scope"]["max_output_tokens"], 32)
 
         authority = self.request["authority"]
-        self.assertTrue(authority["pull_request_merge_authorized"])
-        self.assertTrue(authority["merge_triggered_workflow_authorized"])
-        self.assertTrue(authority["azure_authentication_authorized"])
-        self.assertTrue(authority["what_if_authorized"])
-        self.assertTrue(authority["azure_openai_account_creation_authorized"])
-        self.assertTrue(authority["model_deployment_authorized"])
-        self.assertTrue(authority["rbac_mutation_authorized"])
-        self.assertTrue(authority["one_bounded_model_request_authorized"])
         self.assertFalse(authority["automatic_retry_authorized"])
         self.assertFalse(authority["manual_rerun_authorized"])
         self.assertFalse(authority["rollback_authorized"])
         self.assertFalse(authority["cleanup_authorized"])
 
-    def test_destination_and_security_boundary_are_explicit(self) -> None:
+    def test_terminal_evidence_preserves_policy_failure_and_no_resources(self) -> None:
+        self.assertEqual(self.terminal["attempt_id"], "azure-ai-go-live-run3")
+        self.assertEqual(self.terminal["status"], "consumed_terminal_failure")
+        self.assertEqual(self.terminal["workflow"]["run_id"], 30422253001)
+        self.assertEqual(self.terminal["artifact"]["artifact_id"], 8712343242)
+        self.assertEqual(
+            self.terminal["root_cause"]["classification"],
+            "candidate_regions_disallowed_by_subscription_policy",
+        )
+        self.assertTrue(
+            all(
+                item["model_listed"]
+                and not item["what_if_succeeded"]
+                and item["error_code"] == "RequestDisallowedByAzure"
+                for item in self.terminal["regional_observations"]
+            )
+        )
+        deployment = self.terminal["deployment_state"]
+        self.assertFalse(deployment["resource_group_created"])
+        self.assertFalse(deployment["azure_openai_account_created"])
+        self.assertFalse(deployment["model_deployment_created"])
+        self.assertFalse(deployment["inference_role_assignment_created"])
+        self.assertFalse(deployment["model_request_performed"])
+        self.assertFalse(deployment["endpoint_live"])
+        self.assertFalse(deployment["cleanup_required"])
+        self.assertTrue(self.terminal["authorization"]["consumed"])
+
+    def test_destination_and_security_boundary_remain_historical(self) -> None:
         self.assertEqual(
             self.request["scope"]["resource_group_pattern"],
             "rg-ai-msp-dev-<location>",
