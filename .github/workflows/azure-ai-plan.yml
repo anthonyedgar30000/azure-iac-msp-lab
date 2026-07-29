@@ -15,19 +15,26 @@ on:
       - 'scripts/azure_ai_go_live_run4.sh'
       - 'scripts/azure_ai_go_live_run5.sh'
       - 'scripts/azure_ai_go_live_run6.sh'
+      - 'config/azure-openai-runtime.dev.sh'
+      - 'openai_azure_provider/**'
+      - 'docs/architecture/openai-azure-foundry-provider.md'
       - 'infra/azure-ai-live.bicep'
       - 'infra/azure-ai-live.dev.bicepparam'
       - 'infra/azure-ai-existing-account-adopt.bicep'
       - 'infra/modules/azure_ai_openai.bicep'
+      - 'infra/tests/test_openai_azure_foundry_provider.py'
       - 'infra/tests/test_azure_ai_live_activation.py'
       - 'infra/tests/test_azure_ai_go_live_run2.py'
       - 'infra/tests/test_azure_ai_go_live_run3.py'
       - 'infra/tests/test_azure_ai_go_live_run4.py'
       - 'infra/tests/test_azure_ai_go_live_run5.py'
       - 'infra/tests/test_azure_ai_go_live_run6.py'
+      - 'infra/tests/test_azure_ai_verified_runtime_wire.py'
       - '.project/contracts/azure-ai-live-activation-v1.json'
       - '.project/contracts/azure-ai-go-live-run5-selector-v1.json'
       - '.project/contracts/azure-ai-manual-account-adoption-v1.json'
+      - '.project/contracts/openai-azure-foundry-provider-v1.json'
+      - '.project/contracts/openai-azure-foundry-provider-v2.json'
       - '.project/deployment-requests/azure-ai-go-live-run2.json'
       - '.project/deployment-requests/azure-ai-go-live-run3.json'
       - '.project/deployment-requests/azure-ai-go-live-run4.json'
@@ -38,6 +45,7 @@ on:
       - '.project/reconciliations/azure-ai-go-live-run3-terminal-20260729.json'
       - '.project/reconciliations/azure-ai-go-live-run4-terminal-20260729.json'
       - '.project/reconciliations/azure-ai-go-live-run5-terminal-20260729.json'
+      - '.project/reconciliations/azure-ai-go-live-run6-terminal-and-runtime-wire-20260729.json'
       - '.project/handoffs/post-pr193-azure-ai-live-activation-plan.md'
       - '.project/handoffs/azure-ai-go-live-run2.md'
       - '.project/handoffs/azure-ai-go-live-run2-terminal.md'
@@ -48,6 +56,7 @@ on:
       - '.project/handoffs/azure-ai-go-live-run5.md'
       - '.project/handoffs/azure-ai-go-live-run5-terminal.md'
       - '.project/handoffs/azure-ai-go-live-run6.md'
+      - '.project/handoffs/azure-ai-verified-runtime-wire-20260729.md'
       - '.project/state-index.json'
   push:
     branches:
@@ -59,18 +68,25 @@ on:
       - 'scripts/azure_ai_go_live_run4.sh'
       - 'scripts/azure_ai_go_live_run5.sh'
       - 'scripts/azure_ai_go_live_run6.sh'
+      - 'config/azure-openai-runtime.dev.sh'
+      - 'openai_azure_provider/**'
+      - 'docs/architecture/openai-azure-foundry-provider.md'
       - 'infra/azure-ai-live.bicep'
       - 'infra/azure-ai-live.dev.bicepparam'
       - 'infra/azure-ai-existing-account-adopt.bicep'
       - 'infra/modules/azure_ai_openai.bicep'
+      - 'infra/tests/test_openai_azure_foundry_provider.py'
       - 'infra/tests/test_azure_ai_live_activation.py'
       - 'infra/tests/test_azure_ai_go_live_run2.py'
       - 'infra/tests/test_azure_ai_go_live_run3.py'
       - 'infra/tests/test_azure_ai_go_live_run4.py'
       - 'infra/tests/test_azure_ai_go_live_run5.py'
       - 'infra/tests/test_azure_ai_go_live_run6.py'
+      - 'infra/tests/test_azure_ai_verified_runtime_wire.py'
       - '.project/contracts/azure-ai-go-live-run5-selector-v1.json'
       - '.project/contracts/azure-ai-manual-account-adoption-v1.json'
+      - '.project/contracts/openai-azure-foundry-provider-v1.json'
+      - '.project/contracts/openai-azure-foundry-provider-v2.json'
       - '.project/deployment-requests/azure-ai-go-live-run2.json'
       - '.project/deployment-requests/azure-ai-go-live-run3.json'
       - '.project/deployment-requests/azure-ai-go-live-run4.json'
@@ -80,6 +96,7 @@ on:
       - '.project/reconciliations/azure-ai-go-live-run3-terminal-20260729.json'
       - '.project/reconciliations/azure-ai-go-live-run4-terminal-20260729.json'
       - '.project/reconciliations/azure-ai-go-live-run5-terminal-20260729.json'
+      - '.project/reconciliations/azure-ai-go-live-run6-terminal-and-runtime-wire-20260729.json'
       - '.project/handoffs/azure-ai-go-live-run2-terminal.md'
       - '.project/handoffs/azure-ai-go-live-run3.md'
       - '.project/handoffs/azure-ai-go-live-run3-terminal.md'
@@ -88,6 +105,7 @@ on:
       - '.project/handoffs/azure-ai-go-live-run5.md'
       - '.project/handoffs/azure-ai-go-live-run5-terminal.md'
       - '.project/handoffs/azure-ai-go-live-run6.md'
+      - '.project/handoffs/azure-ai-verified-runtime-wire-20260729.md'
       - '.project/state-index.json'
 
 permissions:
@@ -105,12 +123,16 @@ jobs:
 
       - name: Run deterministic boundary tests
         run: |
+          python -m unittest infra.tests.test_openai_azure_foundry_provider -v
           python -m unittest infra.tests.test_azure_ai_live_activation -v
           python -m unittest infra.tests.test_azure_ai_go_live_run2 -v
           python -m unittest infra.tests.test_azure_ai_go_live_run3 -v
           python -m unittest infra.tests.test_azure_ai_go_live_run4 -v
           python -m unittest infra.tests.test_azure_ai_go_live_run5 -v
           python -m unittest infra.tests.test_azure_ai_go_live_run6 -v
+          python -m unittest infra.tests.test_azure_ai_verified_runtime_wire -v
+          python -m py_compile openai_azure_provider/client.py openai_azure_provider/invoke.py
+          bash -n config/azure-openai-runtime.dev.sh
           bash -n scripts/azure_ai_go_live_run2.sh
           bash -n scripts/azure_ai_go_live_run3.sh
           bash -n scripts/azure_ai_go_live_run4.sh
