@@ -18,7 +18,7 @@
   "latest_repository_and_mcp_reconciliation": ".project/reconciliations/azure-mcp-read-only-preflight-run1-terminal-20260729.json",
   "latest_azure_mcp_preflight_reconciliation": ".project/reconciliations/azure-mcp-read-only-preflight-run1-terminal-20260729.json",
   "previous_repository_and_mcp_reconciliation": ".project/reconciliations/post-pr190-repository-and-mcp-reconciliation-20260728.json",
-  "previous_repository_reconciliation": ".project/reconciliations/post-pr185-repository-watermark-20260728.json",
+  "previous_repository_reconciliation": ".project/reconciliations/post-pr183-repository-watermark-20260728.json",
   "current_containment_reconciliation": ".project/reconciliations/post-pr182-containment-20260727.json",
   "replacement_authorization_design": ".project/designs/durable-single-use-authorization-ledger-v1.md",
   "replacement_authorization_contract": ".project/contracts/durable-single-use-authorization-ledger-v1.json",
