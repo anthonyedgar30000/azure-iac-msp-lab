@@ -1,0 +1,89 @@
+{
+  "schema_version": "project.azure-ai-go-live-terminal.v1",
+  "attempt_id": "azure-ai-go-live-run4",
+  "status": "consumed_terminal_failure",
+  "recorded_at": "2026-07-29T00:48:00-04:00",
+  "source_instruction": "Proceed with Azure AI go-live run 4 in westus2 only.",
+  "repository": {
+    "pull_request": 203,
+    "reviewed_source_head": "223523e41e89853dc7bde27d685c1121da43dda8",
+    "exact_merge_commit": "697ef172c47e401865a4946a3acbe0df59e24c99"
+  },
+  "workflow": {
+    "name": "Azure AI go live run 4",
+    "run_id": 30423217542,
+    "run_attempt": 1,
+    "job_id": 90484064200,
+    "conclusion": "failure",
+    "exact_commit_checkout_verified": true,
+    "repository_validation_succeeded": true,
+    "azure_oidc_login_succeeded": true,
+    "executor_conclusion": "failure"
+  },
+  "artifact": {
+    "artifact_id": 8712644748,
+    "name": "azure-ai-go-live-run4-30423217542-1",
+    "digest": "sha256:ced38cda175aa7172564566982de95199461dd038faaa4f87e260b2c2b86d328",
+    "retention_days": 30,
+    "manifest_present": true
+  },
+  "azure_context": {
+    "subscription_name": "Azure for Students",
+    "subscription_state": "Enabled",
+    "provider_registration_state": "Registered",
+    "principal_fingerprint": "sha256:6f1db3ea4e8c9f6e",
+    "raw_subscription_id_persisted": false,
+    "raw_principal_id_persisted": false
+  },
+  "regional_observation": {
+    "location": "westus2",
+    "model": "gpt-4.1-mini",
+    "model_version": "2025-04-14",
+    "model_listed": false,
+    "model_listing_query_succeeded": true,
+    "what_if_started": false,
+    "deployment_started": false
+  },
+  "deployment_state": {
+    "resource_group_created": false,
+    "azure_openai_account_created": false,
+    "model_deployment_created": false,
+    "inference_role_assignment_created": false,
+    "model_request_performed": false,
+    "endpoint_live": false,
+    "partial_resources_established": false,
+    "cleanup_required": false
+  },
+  "root_cause": {
+    "classification": "requested_model_version_not_listed_in_westus2",
+    "subscription_policy_block_established": false,
+    "bicep_compilation_failure": false,
+    "azure_authentication_failure": false,
+    "quota_exhaustion_established": false,
+    "model_listing_result": "gpt-4.1-mini version 2025-04-14 was not present in the West US 2 regional model listing"
+  },
+  "authorization": {
+    "attempt_limit": 1,
+    "attempts_observed": 1,
+    "consumed": true,
+    "automatic_retry_authorized": false,
+    "manual_rerun_authorized": false,
+    "regional_fallback_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false,
+    "new_attempt_requires_fresh_instruction": true
+  },
+  "cost": {
+    "Azure_resource_cost_delta_established": 0,
+    "billable_model_request_performed": false,
+    "actual_cost_freshly_observed": false
+  },
+  "canonical_distinctions": [
+    "westus2_selected != requested_model_version_available",
+    "model_not_listed != quota_exhausted",
+    "azure_oidc_login_succeeded != deployment_succeeded",
+    "deployment_not_started != resource_created",
+    "artifact_uploaded != endpoint_live",
+    "failed_run != authorization_to_rerun"
+  ]
+}

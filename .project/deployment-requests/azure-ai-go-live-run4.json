@@ -1,21 +1,23 @@
 {
   "schema_version": "project.azure-ai-go-live-authorization.v1",
   "attempt_id": "azure-ai-go-live-run4",
-  "status": "active_one_attempt",
-  "active": true,
+  "status": "consumed_terminal_failure",
+  "active": false,
   "project": "Azure IaC MSP Lab",
   "recorded_at": "2026-07-29T00:36:00-04:00",
+  "consumed_at": "2026-07-29T00:47:58-04:00",
   "source_instruction": "Proceed with Azure AI go-live run 4 in westus2 only.",
   "repository_boundary": {
     "base_main": "0749e1e1f99e57576726c1aaa9f25b1a6092e0d9",
     "latest_merged_pull_request": 202,
     "candidate_branch": "agent/azure-ai-go-live-run4-westus2-only",
     "activation_trigger": "the first merge commit to main that introduces .github/workflows/azure-ai-go-live-run4.yml",
-    "exact_merge_commit": "resolved_by_github_push_event",
+    "exact_merge_commit": "697ef172c47e401865a4946a3acbe0df59e24c99",
+    "pull_request": 203,
     "open_pull_requests_before_branch": []
   },
   "attempt_limit": 1,
-  "attempts_observed": 0,
+  "attempts_observed": 1,
   "scope": {
     "subscription": "configured AZURE_SUBSCRIPTION_ID only",
     "candidate_locations": [
@@ -58,10 +60,25 @@
     "rollback_authorized": false,
     "cleanup_authorized": false
   },
+  "terminal_execution": {
+    "workflow_run": 30423217542,
+    "workflow_attempt": 1,
+    "artifact_id": 8712644748,
+    "artifact_digest": "sha256:ced38cda175aa7172564566982de95199461dd038faaa4f87e260b2c2b86d328",
+    "reconciliation": ".project/reconciliations/azure-ai-go-live-run4-terminal-20260729.json",
+    "conclusion": "failure",
+    "root_cause": "requested_model_version_not_listed_in_westus2",
+    "model_listing_query_succeeded": true,
+    "what_if_started": false,
+    "deployment_started": false,
+    "endpoint_live": false,
+    "partial_resources_established": false,
+    "cleanup_required": false
+  },
   "failure_behavior": {
-    "regional_fallback": "None. Stop if West US 2 is unavailable, policy-blocked, quota-blocked, or deployment validation fails.",
-    "terminal_failure": "Stop, preserve protected evidence, and consume this authorization.",
-    "partial_resources": "Leave partial resources for exact-state inspection; do not delete automatically.",
+    "regional_fallback": "None. The West US 2-only attempt stopped when the requested model version was not listed.",
+    "terminal_failure": "Stopped, preserved protected evidence, and consumed this authorization.",
+    "partial_resources": "No partial resources were established.",
     "retry": "A fifth attempt requires a fresh explicit instruction. GitHub Re-run is unauthorized."
   },
   "cost_boundary": {
@@ -72,12 +89,14 @@
     "model_request_count": 1,
     "max_output_tokens": 32,
     "actual_cost_known_before_execution": false,
-    "budget_creation_authorized": false
+    "budget_creation_authorized": false,
+    "billable_model_request_performed": false,
+    "azure_resource_deployment_performed": false
   },
   "canonical_distinctions": [
-    "user_selected_westus2 != westus2_allowed_by_subscription_policy",
-    "model_listed != quota_available",
-    "what_if_succeeded != deployment_succeeded",
+    "user_selected_westus2 != requested_model_version_available",
+    "model_not_listed != quota_exhausted",
+    "what_if_not_started != what_if_failed",
     "merge_triggered != deployment_succeeded",
     "deployment_succeeded != model_request_verified",
     "role_assignment_created != role_propagated",
