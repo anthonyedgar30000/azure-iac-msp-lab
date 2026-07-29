@@ -1,0 +1,97 @@
+{
+  "schema_version": "project.reconciliation.post-pr212-canonical-handoff.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T23:55:40Z",
+  "source_instruction": "Fix",
+  "classification": "repository_only_canonical_handoff_reconciliation",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "f8f29d8601666646d354ffc450a85348e891483f",
+    "latest_merged_pull_request": 212,
+    "latest_merge_commit": "f8f29d8601666646d354ffc450a85348e891483f",
+    "implementation_branch": "agent/reconcile-current-handoff-post-pr212"
+  },
+  "objective": "Replace the stale PR-185-era canonical handoff with a bounded post-PR212 repository and evidence reconciliation while preserving uncertainty, current authorization boundaries, and branch freshness.",
+  "permitted_paths": [
+    ".project/handoffs/current-state.md",
+    ".project/reconciliations/post-pr212-canonical-handoff-20260729.json",
+    "infra/tests/test_post_pr212_current_handoff.py"
+  ],
+  "protected_paths": [
+    ".project/state-index.json",
+    ".project/evidence/**",
+    ".project/deployment-requests/**",
+    ".project/observation-requests/**",
+    ".project/contracts/azure-lab-factory-lite-v1.json",
+    ".project/handoffs/azure-lab-factory-lite-v1.md",
+    ".github/workflows/**",
+    "azure_mcp_reality/**",
+    "openai_azure_provider/**",
+    "lab_factory/**",
+    "infra/tests/test_lab_factory_lite.py",
+    "workloads/**",
+    "**/*credential*",
+    "**/*secret*"
+  ],
+  "superseded_attempt": {
+    "pull_request": 213,
+    "branch": "agent/reconcile-current-handoff-post-pr211",
+    "state": "closed_unmerged",
+    "reason": "main advanced when PR 212 merged",
+    "authority_transferred": false,
+    "branch_reused": false
+  },
+  "verified_repository_evidence": {
+    "pr212_source_head": "e22b1fdc45c4a9d9298416c84d179f596b38060e",
+    "pr212_merge_commit": "f8f29d8601666646d354ffc450a85348e891483f",
+    "pr212_exact_head_ci": {
+      "name": "CI",
+      "run_id": 30500788666,
+      "conclusion": "success"
+    },
+    "pr211_source_head": "c426ef5759b9a7ad7a3ef18083c9c740218d2225",
+    "pr211_merge_commit": "ca0712569f0b4bc18ceba2610c988a01f91750f2"
+  },
+  "preserved_operational_boundaries": {
+    "lab_factory_repository_implementation_merged": true,
+    "lab_factory_azure_deployment_verified": false,
+    "lab_factory_cleanup_verified": false,
+    "azure_mcp_run1_observed": true,
+    "azure_mcp_run1_authority_consumed": true,
+    "azure_mcp_run1_rerun_authorized": false,
+    "remote_mcp_endpoint_deployed": false,
+    "azure_openai_mcp_invocation_verified": false,
+    "azure_ai_verified_model_response": true,
+    "azure_ai_verified_runtime_arm_scope_reconciled": false,
+    "azure_mutation_performed_by_this_increment": false
+  },
+  "authority": {
+    "repository_writes": "three declared paths on agent/reconcile-current-handoff-post-pr212",
+    "branch_creation": true,
+    "pull_request_creation": true,
+    "ordinary_pull_request_ci": true,
+    "pull_request_merge": false,
+    "workflow_dispatch_or_rerun": false,
+    "azure_authentication_or_query": false,
+    "arm_what_if": false,
+    "azure_mutation": false,
+    "rbac_mutation": false,
+    "model_call": false,
+    "remote_mcp_deployment": false,
+    "cleanup": false,
+    "rollback": false
+  },
+  "verification_criteria": [
+    "the final comparison contains exactly the three permitted paths",
+    "the canonical handoff records main f8f29d8 and PR 212 as the latest merge",
+    "the stale PR 185 and PR 186 current-state claims are removed",
+    "PR 213 is preserved as closed unmerged and does not transfer authority",
+    "Lab Factory Lite is classified as merged repository implementation without Azure deployment claims",
+    "MCP run-1 terminal evidence and consumed authority are preserved",
+    "the separately verified gpt-5-mini runtime remains distinct from its unreconciled ARM identity",
+    "no Azure, workflow, model, MCP network, RBAC, cleanup, rollback, What-If, or deployment action occurs",
+    "exact-head pull-request CI passes"
+  ],
+  "next_gate": "Review exact-head CI and the three-file diff. Merge requires a separate explicit decision."
+}
