@@ -44,7 +44,7 @@ Region order for each model:
 4. `northcentralus`;
 5. `southcentralus`.
 
-The workflow may perform read-only model-list, capacity, and What-If checks for at most ten combinations. It stops selecting after the first candidate passes all three gates.
+The workflow may perform read-only model-list, capacity, and What-If checks for at most ten combinations. After the first candidate passes What-If, selection stops and no later candidate may be evaluated for deployment.
 
 ## Mutation and verification limits
 
