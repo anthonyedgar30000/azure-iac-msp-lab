@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from typing import Any, Callable
 
+from .azure_cli_compat import active_subscription_runner
 from .config import RealitySettings
 from .observer import observe_current_reality
 
@@ -12,7 +13,10 @@ ToolHandler = Callable[[], dict[str, Any]]
 
 def _default_tool_handler() -> dict[str, Any]:
     settings = RealitySettings.from_env()
-    return observe_current_reality(settings)
+    return observe_current_reality(
+        settings,
+        runner=active_subscription_runner,
+    )
 
 
 def build_server(
