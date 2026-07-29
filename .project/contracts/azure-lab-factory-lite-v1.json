@@ -1,0 +1,75 @@
+{
+  "schema_version": "project.contract.azure-lab-factory-lite.v1",
+  "project": "Azure IaC MSP Lab",
+  "workstream": "Azure Lab Factory Lite",
+  "recorded_at": "2026-07-29T19:37:00-04:00",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "5509a982ea118b2c1108af8ee5c6a44d60df9884",
+    "previous_substantive_main": "ca0712569f0b4bc18ceba2610c988a01f91750f2",
+    "base_vs_previous_substantive_file_differences": 0,
+    "implementation_branch": "agent/azure-lab-factory-lite-v1"
+  },
+  "objective": "Provide a small deterministic catalog and preparation path for rapid, repeatable Azure labs without turning the portfolio project into a general cloud platform or computer-science research system.",
+  "implemented_scope": {
+    "catalog_path": "lab_factory/catalog.json",
+    "planner_package": "lab_factory",
+    "architecture_document": "docs/architecture/azure-lab-factory-lite-v1.md",
+    "ci_test": "infra/tests/test_lab_factory_lite.py",
+    "initial_profile": "servicetracer-demo-api@1.0.0",
+    "initial_profile_release_state": "candidate",
+    "initial_profile_template": "workloads/servicetracer-demo-api/infra/main.bicep"
+  },
+  "tooling_boundary": {
+    "list_profiles": true,
+    "prepare_request": true,
+    "parameter_values_echoed": false,
+    "template_digest_emitted": true,
+    "plan_digest_emitted": true,
+    "azure_login": false,
+    "azure_query": false,
+    "arm_what_if": false,
+    "azure_mutation": false,
+    "workflow_dispatch": false,
+    "remote_mcp_endpoint": false,
+    "model_call": false,
+    "cleanup_execution": false
+  },
+  "authority": {
+    "repository_files": "authorized by user instruction to proceed",
+    "branch_creation": "authorized",
+    "pull_request_creation": "authorized",
+    "ordinary_pull_request_ci": "authorized",
+    "merge": "not assumed by this contract",
+    "azure_authentication": "not authorized",
+    "azure_query": "not authorized",
+    "azure_mutation": "not authorized",
+    "workflow_dispatch_or_rerun": "not authorized",
+    "remote_mcp_deployment": "not authorized",
+    "chatgpt_plugin_registration": "not authorized",
+    "cleanup": "not authorized"
+  },
+  "cost_and_quota": {
+    "expected_recurring_azure_cost_delta_cad": 0,
+    "actual_cost_freshly_observed": false,
+    "quota_freshly_observed": false,
+    "claim_boundary": "repository-only implementation does not establish current Azure affordability or deployability"
+  },
+  "failure_and_rollback": {
+    "catalog_failure": "fail validation before plan creation",
+    "request_failure": "return a structured error and perform no cloud action",
+    "repository_rollback": "revert the implementation commits or close the pull request",
+    "azure_rollback": "not applicable because no Azure action is available in this increment"
+  },
+  "next_gate": "Run exact-head pull-request CI, review the catalog and planner output, and separately authorize any merge or future Azure preflight operation.",
+  "claim_boundaries": [
+    "catalog_entry != released_lab",
+    "repository_candidate != Azure_deployable_now",
+    "allowed_location != live_capacity_available",
+    "prepare_plan != ARM_WhatIf",
+    "preflight_passed != deployment_authorized",
+    "deployment_succeeded != service_validated",
+    "cleanup_requested != cleanup_verified"
+  ]
+}
