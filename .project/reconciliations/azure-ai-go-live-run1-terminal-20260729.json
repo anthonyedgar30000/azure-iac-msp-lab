@@ -1,0 +1,89 @@
+{
+  "schema_version": "project.azure-ai-go-live-run1-terminal.v1",
+  "recorded_at": "2026-07-28T23:38:42-04:00",
+  "project": "Azure IaC MSP Lab",
+  "repository_state": {
+    "exact_merge_commit": "9298fbcc75801d2ae9b077c62dcf43ca3a4bdad2",
+    "pull_request": 196,
+    "reviewed_source_head": "5e21c82f635c03037f8773df303e58da274576fc",
+    "exact_head_ci": {
+      "ci_run": 30419916124,
+      "ci_conclusion": "success",
+      "azure_ai_static_validation_run": 30419916116,
+      "azure_ai_static_validation_conclusion": "success"
+    }
+  },
+  "workflow_run": {
+    "workflow": ".github/workflows/azure-ai-live-deploy.yml",
+    "run_id": 30419992872,
+    "run_attempt": 1,
+    "conclusion": "failure",
+    "started_from_exact_merge_commit": true,
+    "duration_seconds": 177,
+    "artifact_id": 8711582707,
+    "artifact_digest": "sha256:54ff1c8abcd34c0bb27a8f116da94b0421a33365899dc293beee001cff3311f9"
+  },
+  "observed_azure_context": {
+    "subscription_name": "Azure for Students",
+    "subscription_state": "Enabled",
+    "oidc_login_succeeded": true,
+    "provider_final_registration_state": "Registered",
+    "provider_registration_performed_during_run": "not_observed",
+    "raw_subscription_id_promoted": false,
+    "raw_principal_id_promoted": false
+  },
+  "attempt_sequence": {
+    "repository_validation": "passed",
+    "azure_oidc_authentication": "passed",
+    "bounded_identity_and_provider_resolution": "passed",
+    "canadaeast_model_candidate_listed": true,
+    "canadaeast_what_if": "failed_invalid_scope",
+    "eastus2_model_candidate_listed": true,
+    "eastus2_what_if": "failed_invalid_scope",
+    "subscription_deployment": "not_started",
+    "inference_role_assignment": "skipped",
+    "model_request": "skipped"
+  },
+  "terminal_failure": {
+    "classification": "subscription_to_resource_group_module_scope_compilation_defect",
+    "azure_error_code": "InvalidScope",
+    "sanitized_message": "Microsoft.CognitiveServices/accounts was emitted at subscription scope; Azure required resource-group scope.",
+    "affected_candidate_locations": [
+      "canadaeast",
+      "eastus2"
+    ],
+    "root_cause": "The subscription-scope root used the conditional resource-group symbolic value with a null-forgiving operator as module scope. The generated nested deployment placed the Azure OpenAI account at subscription scope.",
+    "repair": "Use resourceGroup(resourceGroupName) as the module scope, rename the resource-group symbolic resource to avoid function shadowing, and add an explicit dependency on the resource-group resource."
+  },
+  "deployed_reality": {
+    "resource_group_created_by_run": false,
+    "azure_openai_account_created_by_run": false,
+    "model_deployment_created_by_run": false,
+    "inference_role_assignment_created_by_run": false,
+    "model_request_performed": false,
+    "endpoint_live": false,
+    "actual_model_cost_observed": false,
+    "partial_resource_cleanup_required": false
+  },
+  "authorization": {
+    "source_instruction": "Go live already",
+    "status": "consumed_failed_terminal",
+    "attempt_limit": 1,
+    "attempts_observed": 1,
+    "automatic_retry_authorized": false,
+    "manual_rerun_authorized": false,
+    "new_deployment_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "canonical_distinctions": [
+    "oidc_login_succeeded != deployment_succeeded",
+    "provider_state_registered != provider_registration_performed_during_run",
+    "model_candidate_listed != valid_deployment_scope",
+    "what_if_failed != resource_created",
+    "workflow_failed != authorization_to_retry",
+    "repair_candidate_prepared != repair_merged",
+    "repair_merged != deployment_authorized",
+    "endpoint_live = false"
+  ]
+}
