@@ -139,18 +139,15 @@ class AzureAiGoLiveRun5Tests(unittest.TestCase):
         self.assertEqual(self.contract["mutation"]["deployment_attempt_limit"], 1)
         self.assertEqual(self.contract["verification"]["model_request_count"], 1)
 
-    def test_state_index_consumes_run5_while_run6_is_active(self) -> None:
-        self.assertEqual(
-            self.state_index["active_azure_ai_activation_authorization"],
-            ".project/deployment-requests/azure-ai-go-live-run6.json",
-        )
+    def test_state_index_preserves_run5_history_after_run6_consumption(self) -> None:
+        self.assertIsNone(self.state_index["active_azure_ai_activation_authorization"])
         self.assertEqual(
             self.state_index["latest_consumed_azure_ai_activation_authorization"],
-            ".project/reconciliations/azure-ai-go-live-run5-terminal-20260729.json",
+            ".project/reconciliations/azure-ai-go-live-run6-terminal-and-runtime-wire-20260729.json",
         )
         self.assertEqual(
             self.state_index["latest_azure_ai_activation_reconciliation"],
-            ".project/reconciliations/azure-ai-go-live-run5-terminal-20260729.json",
+            ".project/reconciliations/azure-ai-go-live-run6-terminal-and-runtime-wire-20260729.json",
         )
         self.assertEqual(
             self.state_index["azure_ai_run5_location_allowlist_repair"],
