@@ -1,0 +1,3 @@
+# Reviewed 2026-07-29. Update only through a dependency-review increment.
+openai==2.46.0
+azure-identity==1.25.3
