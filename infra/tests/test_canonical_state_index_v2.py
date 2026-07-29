@@ -61,6 +61,9 @@ PREFLIGHT_PATH = (
 RECONCILIATION_PATH = (
     ".project/reconciliations/correlation-identity-run1-terminal-20260727.json"
 )
+AZURE_MCP_RUN1_TERMINAL_PATH = (
+    ".project/reconciliations/azure-mcp-read-only-preflight-run1-terminal-20260729.json"
+)
 POST_CONTAINMENT_PATH = (
     ".project/reconciliations/post-pr182-containment-20260727.json"
 )
@@ -105,24 +108,31 @@ class CanonicalStateIndexV6Tests(unittest.TestCase):
         )
         self.assertEqual(self.index["latest_verified_reconciliation"], PREFLIGHT_PATH)
         self.assertEqual(
-            self.index["latest_terminal_reconciliation"], RECONCILIATION_PATH
+            self.index["latest_terminal_reconciliation"],
+            AZURE_MCP_RUN1_TERMINAL_PATH,
         )
         self.assertEqual(
             self.index["latest_deployment_reconciliation"], RECONCILIATION_PATH
         )
         self.assertEqual(
-            self.index["latest_authorization_resolution"], RECONCILIATION_PATH
+            self.index["latest_authorization_resolution"],
+            AZURE_MCP_RUN1_TERMINAL_PATH,
         )
         self.assertEqual(self.index["latest_control_incident"], RECONCILIATION_PATH)
         self.assertEqual(
-            self.index["latest_repository_reconciliation"], POST_PR185_PATH
+            self.index["latest_repository_reconciliation"],
+            AZURE_MCP_RUN1_TERMINAL_PATH,
         )
         self.assertEqual(
             self.index["latest_repository_watermark_reconciliation"],
-            POST_PR185_PATH,
+            AZURE_MCP_RUN1_TERMINAL_PATH,
         )
         self.assertEqual(
-            self.index["previous_repository_reconciliation"], POST_PR183_PATH
+            self.index["latest_lifecycle_reconciliation"],
+            AZURE_MCP_RUN1_TERMINAL_PATH,
+        )
+        self.assertEqual(
+            self.index["previous_repository_reconciliation"], POST_PR185_PATH
         )
         self.assertEqual(
             self.index["current_containment_reconciliation"],
