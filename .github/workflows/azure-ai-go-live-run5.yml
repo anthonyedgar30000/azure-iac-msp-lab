@@ -1,0 +1,79 @@
+name: Azure AI go live run 5
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/azure-ai-go-live-run5.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: azure-ai-go-live-run5
+  cancel-in-progress: false
+
+jobs:
+  deploy-and-verify:
+    name: Select, deploy, and verify Azure AI run 5
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 60
+    steps:
+      - name: Check out exact merge commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Validate exact repository candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python -m unittest infra.tests.test_azure_ai_live_activation infra.tests.test_azure_ai_go_live_run2 infra.tests.test_azure_ai_go_live_run3 infra.tests.test_azure_ai_go_live_run4 infra.tests.test_azure_ai_go_live_run5 -v
+          bash -n scripts/azure_ai_go_live_run5.sh
+          az bicep install
+          az bicep lint --file infra/azure-ai-live.bicep
+          az bicep build --file infra/azure-ai-live.bicep --outfile "$RUNNER_TEMP/azure-ai-live.json"
+          az bicep lint --file infra/modules/azure_ai_openai.bicep
+          az bicep build --file infra/modules/azure_ai_openai.bicep --outfile "$RUNNER_TEMP/azure-ai-openai-module.json"
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Execute bounded run 5 selector
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+        shell: bash
+        run: bash scripts/azure_ai_go_live_run5.sh
+
+      - name: Write evidence manifest
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/azure-ai-live-evidence"
+          if [[ -d "$evidence" ]]; then
+            find "$evidence" -type f ! -name artifact-manifest.sha256 -print0 \
+              | sort -z \
+              | xargs -0 -r sha256sum \
+              > "$evidence/artifact-manifest.sha256"
+          fi
+
+      - name: Upload protected run 5 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-ai-go-live-run5-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/azure-ai-live-evidence
+          if-no-files-found: error
+          retention-days: 30
