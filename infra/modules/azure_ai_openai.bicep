@@ -8,13 +8,6 @@ param accountName string
 @description('Azure region selected from protected preflight evidence.')
 param location string
 
-@description('Deployment environment tag.')
-@allowed([
-  'dev'
-  'test'
-])
-param environment string = 'dev'
-
 @description('Create the model deployment inside the Azure OpenAI account.')
 param deployModel bool = true
 
@@ -57,7 +50,7 @@ param inferencePrincipalType string = 'ServicePrincipal'
 param tags object
 
 var cognitiveServicesOpenAiUserRoleDefinitionId = subscriptionResourceId(
-  'Microsoft.Authorization/roleDefinitions'
+  'Microsoft.Authorization/roleDefinitions',
   '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 )
 
@@ -109,7 +102,7 @@ resource inferenceRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if
 output accountId string = account.id
 output accountName string = account.name
 output baseUrl string = 'https://${account.name}.openai.azure.com/openai/v1/'
-output deploymentName string = deployModel ? modelDeployment.name : ''
+output deploymentName string = deployModel ? modelDeployment!.name : ''
 output localAuthenticationDisabled bool = account.properties.disableLocalAuth
 output publicNetworkAccess string = account.properties.publicNetworkAccess
-output inferenceRoleAssignmentId string = assignInferenceRole ? inferenceRole.id : ''
+output inferenceRoleAssignmentId string = assignInferenceRole ? inferenceRole!.id : ''
