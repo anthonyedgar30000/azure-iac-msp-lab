@@ -1,0 +1,81 @@
+{
+  "schema_version": "lab-factory.catalog.v1",
+  "catalog_version": "1.0.0",
+  "profiles": [
+    {
+      "id": "servicetracer-demo-api",
+      "version": "1.0.0",
+      "display_name": "ServiceTracer demo API lab",
+      "description": "A bounded Azure VM lab that hosts the ServiceTracer demo API and validates its public health and transaction endpoints.",
+      "release_state": "candidate",
+      "template": {
+        "path": "workloads/servicetracer-demo-api/infra/main.bicep",
+        "scope": "subscription"
+      },
+      "environments": [
+        "dev",
+        "test"
+      ],
+      "allowed_locations": [
+        "westus2"
+      ],
+      "default_location": "westus2",
+      "ttl": {
+        "default_hours": 8,
+        "minimum_hours": 1,
+        "maximum_hours": 24
+      },
+      "resource_group_pattern": "rg-st-demo-api-{environment}-{location}",
+      "parameters": {
+        "required": [
+          "dnsLabel",
+          "allowedOrigin",
+          "backendTransactionUrl",
+          "adminSshPublicKey",
+          "sourceRepository",
+          "sourceRef",
+          "installerUri"
+        ],
+        "fixed": {
+          "prefix": "mst",
+          "adminUsername": "azureadmin"
+        },
+        "defaults": {
+          "vmSize": "Standard_F1als_v7"
+        }
+      },
+      "preflight_checks": [
+        "exact_subscription_selected",
+        "subscription_enabled",
+        "resource_providers_registered",
+        "location_and_sku_available",
+        "regional_and_family_quota_sufficient",
+        "resource_group_state_observed",
+        "template_validation_passed",
+        "what_if_has_no_unexpected_changes",
+        "cost_ceiling_accepted"
+      ],
+      "validation_checks": [
+        "arm_deployment_succeeded",
+        "expected_resource_inventory_present",
+        "vm_provisioning_succeeded",
+        "health_endpoint_returns_200",
+        "transaction_endpoint_returns_bounded_result",
+        "cors_origin_verified",
+        "evidence_receipt_written"
+      ],
+      "cleanup": {
+        "strategy": "resource_group_delete",
+        "verification": "resource_group_absent",
+        "automatic_execution_enabled": false
+      },
+      "claim_boundaries": [
+        "catalog_entry != Azure_deployable_now",
+        "allowed_location != live_capacity_available",
+        "template_valid != deployment_authorized",
+        "deployment_succeeded != service_validated",
+        "cleanup_requested != cleanup_verified"
+      ]
+    }
+  ]
+}
