@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import importlib.util
 import json
 import re
 from pathlib import Path
 from typing import Any
+
 
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / ".project"
@@ -33,9 +35,13 @@ def fact_map(environment: dict[str, Any]) -> dict[str, dict[str, Any]]:
     }
 
 
-def require_false_fields(container: dict[str, Any], fields: tuple[str, ...], prefix: str) -> None:
-    for field in fields:
-        require(container.get(field) is False, f"{prefix} {field} must remain false")
+def load_current_contract_validator():
+    path = ROOT / "scripts" / "validate_azure_mcp_reality_bridge.py"
+    spec = importlib.util.spec_from_file_location("azure_mcp_reality_contract", path)
+    require(spec is not None and spec.loader is not None, "cannot load current MCP validator")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def main() -> int:
@@ -56,7 +62,8 @@ def main() -> int:
     require(independent.get("requested_vm_size") == "Standard_B2ats_v2", "historical protected VM size mismatch")
     require(independent.get("deployed") is False, "deployment was incorrectly promoted")
     require(
-        active.get("safe_next_gate", {}).get("operation") == "select_candidate_and_authorize_fresh_read_only_planner",
+        active.get("safe_next_gate", {}).get("operation")
+        == "select_candidate_and_authorize_fresh_read_only_planner",
         "ServiceTracer planner gate was overwritten",
     )
 
@@ -69,32 +76,14 @@ def main() -> int:
 
     resolution = post_merge.get("resolution", {})
     require(resolution.get("verification_status") == "conflicting", "PR #78 conflict status was lost")
-    require(
-        post_merge.get("current_repository_declaration", {}).get("location") == "westus2",
-        "current repository location declaration mismatch",
-    )
-    require(
-        post_merge.get("current_repository_declaration", {}).get("vm_size") == "Standard_F1als_v7",
-        "current repository VM declaration mismatch",
-    )
-    require(
-        post_merge.get("azure_evidence_boundary", {}).get("protected_westus2_f1alsv7_evidence") is False,
-        "unprotected candidate was incorrectly promoted",
-    )
+    require(post_merge.get("current_repository_declaration", {}).get("location") == "westus2", "current repository location declaration mismatch")
+    require(post_merge.get("current_repository_declaration", {}).get("vm_size") == "Standard_F1als_v7", "current repository VM declaration mismatch")
+    require(post_merge.get("azure_evidence_boundary", {}).get("protected_westus2_f1alsv7_evidence") is False, "unprotected candidate was incorrectly promoted")
 
-    require(
-        historical.get("schema_version") == "project.azure-mcp-post-merge-reconciliation.v2",
-        "historical reconciliation schema mismatch",
-    )
-    require(
-        historical.get("runtime_claims", {}).get("client_path_selected") is False,
-        "historical PR #74 observation must remain historical",
-    )
+    require(historical.get("schema_version") == "project.azure-mcp-post-merge-reconciliation.v2", "historical reconciliation schema mismatch")
+    require(historical.get("runtime_claims", {}).get("client_path_selected") is False, "historical PR #74 observation must remain historical")
 
-    require(
-        plan.get("schema_version") == "project.openai-api-azure-mcp-cloud-shell-plan.v1",
-        "Cloud Shell plan schema mismatch",
-    )
+    require(plan.get("schema_version") == "project.openai-api-azure-mcp-cloud-shell-plan.v1", "Cloud Shell plan schema mismatch")
     reality = plan.get("repository_reality", {})
     require(reality.get("main_commit") == "df0458a4d0a9075787726a3205c6c7b454cfa15e", "plan baseline mismatch")
     require(reality.get("merged_pull_request") == 78, "plan merge anchor mismatch")
@@ -106,75 +95,70 @@ def main() -> int:
     require(selected.get("hosting_service") == "azure_container_apps", "Container Apps was not selected")
     require(selected.get("deployment_interface") == "azure_cloud_shell", "Cloud Shell was not selected")
     require(selected.get("client_to_server_authentication") == "entra_oauth", "client OAuth model mismatch")
-    require(
-        selected.get("server_to_azure_authentication") == "managed_identity_shared_service_identity",
-        "server managed-identity model mismatch",
-    )
+    require(selected.get("server_to_azure_authentication") == "managed_identity_shared_service_identity", "server managed-identity model mismatch")
 
     preflight_record = plan.get("cloud_shell_preflight", {})
     require(preflight_record.get("azure_mutations_present") is False, "plan contains Azure mutation")
     require(preflight_record.get("deployment_command_present") is False, "plan contains deployment command")
     require(preflight_record.get("preflight_execution_authorized") is False, "preflight execution was pre-authorized")
 
-    require(contract.get("schema_version") == "servicetracer.azure-mcp-reality-bridge.v2", "contract schema mismatch")
-    require(contract.get("status") == "repository_contract_only", "contract status changed")
-    selection = contract.get("client_paths", {}).get("selection", {})
-    require(selection.get("selected_client_path") == "openai_responses_api", "contract client selection mismatch")
-    require(selection.get("configured") is False, "OpenAI client was incorrectly configured")
-    require(selection.get("connection_observed") is False, "OpenAI connection was incorrectly observed")
-    require(contract.get("client_paths", {}).get("openai_responses_api", {}).get("selected") is True, "OpenAI path not selected")
-    require(
-        contract.get("client_paths", {}).get("openai_responses_api", {}).get("api_execution_authorized") is False,
-        "OpenAI execution was authorized",
-    )
+    current_validator = load_current_contract_validator()
+    current_validator.validate_contract(contract)
+    require(contract.get("schema_version") == "servicetracer.azure-mcp-reality-bridge.v3", "contract schema mismatch")
+    require(contract.get("status") == "local_read_only_tool_implemented_not_connected", "contract status mismatch")
 
     hosting = contract.get("hosting", {})
     require(hosting.get("selected_service") == "azure_container_apps", "hosting selection mismatch")
-    require(hosting.get("architecture_selected") is True, "hosting architecture not selected")
     require(hosting.get("deployment_interface") == "azure_cloud_shell", "deployment interface mismatch")
-    require_false_fields(
-        hosting,
-        ("region_selected", "resource_group_selected", "cost_estimate_observed", "quota_observed", "deployed"),
-        "hosting field",
-    )
+    require(hosting.get("deployed") is False, "hosting was incorrectly deployed")
 
-    client_auth = contract.get("authentication", {}).get("client_to_server", {})
-    server_auth = contract.get("authentication", {}).get("server_to_azure", {})
-    require(client_auth.get("selected_model") == "entra_oauth", "client auth selection mismatch")
-    require(client_auth.get("implemented") is False, "client auth was incorrectly implemented")
-    require(
-        server_auth.get("selected_model") == "managed_identity_shared_service_identity",
-        "server auth selection mismatch",
-    )
-    require(server_auth.get("implemented") is False, "managed identity was incorrectly implemented")
-    require(server_auth.get("effective_rbac_observed") is False, "effective RBAC was incorrectly observed")
+    clients = contract.get("client_paths", {}).get("azure_openai_responses_api", {})
+    require(clients.get("selected_for_model_inference") is True, "Azure OpenAI inference selection lost")
+    require(clients.get("entra_inference_verified") is True, "verified inference evidence lost")
+    require(clients.get("mcp_server_configured") is False, "MCP server was incorrectly configured")
+    require(clients.get("mcp_tool_call_verified") is False, "MCP tool call was incorrectly promoted")
 
-    require(contract.get("transport", {}).get("remote_endpoint_deployed") is False, "endpoint was incorrectly deployed")
-    require(contract.get("transport", {}).get("endpoint_url") is None, "endpoint URL must remain unset")
-    require(contract.get("azure_scope", {}).get("subscription_ids") == [], "subscription scope was preselected")
-    require(contract.get("azure_scope", {}).get("resource_group_allowlist") == [], "resource-group scope was preselected")
-    require(contract.get("tool_admission", {}).get("allowed_tool_names") == [], "tools were pre-admitted")
-    require(contract.get("tool_admission", {}).get("namespace_allowlist") == [], "namespaces were pre-admitted")
-    require(contract.get("tool_admission", {}).get("tool_inventory_digest") is None, "tool inventory was fabricated")
-    require(contract.get("tool_admission", {}).get("server_version") is None, "server version was fabricated")
+    local_auth = contract.get("authentication", {}).get("local_tool_to_azure", {})
+    require(local_auth.get("implemented_in_code") is True, "local tool identity path is not implemented")
+    require(local_auth.get("live_execution_observed") is False, "local live execution was manufactured")
+    remote_client = contract.get("authentication", {}).get("remote_client_to_server", {})
+    remote_server = contract.get("authentication", {}).get("remote_server_to_azure", {})
+    require(remote_client.get("selected_model") == "entra_oauth", "remote client auth selection mismatch")
+    require(remote_client.get("implemented") is False, "remote client auth was incorrectly implemented")
+    require(remote_server.get("selected_model") == "managed_identity_shared_service_identity", "remote managed identity selection mismatch")
+    require(remote_server.get("implemented") is False, "remote managed identity was incorrectly implemented")
 
-    require_false_fields(
-        contract.get("authority", {}),
-        (
-            "pull_request_merge_authorized",
-            "cloud_shell_preflight_execution_authorized",
-            "azure_authentication_authorized",
-            "azure_resource_creation_authorized",
-            "entra_application_mutation_authorized",
-            "managed_identity_mutation_authorized",
-            "azure_rbac_mutation_authorized",
-            "api_management_mutation_authorized",
-            "container_apps_mutation_authorized",
-            "openai_api_execution_authorized",
-            "cleanup_authorized",
-        ),
-        "authority field",
-    )
+    transport = contract.get("transport", {})
+    require(transport.get("local_http_bind") == "127.0.0.1:8000", "local MCP bind widened")
+    require(transport.get("remote_endpoint_deployed") is False, "endpoint was incorrectly deployed")
+    require(transport.get("remote_endpoint_url") is None, "remote endpoint URL must remain unset")
+
+    scope = contract.get("azure_scope", {})
+    require(scope.get("default_subscription_inference_allowed") is False, "default subscription inference enabled")
+    require(scope.get("cross_subscription_discovery_allowed") is False, "cross-subscription discovery enabled")
+    require(scope.get("model_supplied_scope_parameters_allowed") is False, "model-supplied scope enabled")
+
+    admission = contract.get("tool_admission", {})
+    require(admission.get("allowed_tool_names") == ["get_current_reality"], "unexpected tool admission")
+    require(admission.get("tool", {}).get("model_inputs") == [], "tool must remain zero-input")
+    require(admission.get("tool", {}).get("performs_azure_mutation") is False, "tool mutation was enabled")
+
+    authority = contract.get("authority", {})
+    for field in (
+        "local_read_only_tool_execution_authorized",
+        "azure_authentication_or_query_performed_by_this_increment",
+        "remote_mcp_endpoint_deployment_authorized",
+        "chatgpt_app_registration_authorized",
+        "azure_openai_mcp_model_call_authorized",
+        "azure_resource_creation_authorized",
+        "entra_application_mutation_authorized",
+        "managed_identity_mutation_authorized",
+        "azure_rbac_mutation_authorized",
+        "api_management_mutation_authorized",
+        "container_apps_mutation_authorized",
+        "cleanup_authorized",
+    ):
+        require(authority.get(field) is False, f"authority field {field} must remain false")
 
     for marker in (
         "df0458a4d0a9075787726a3205c6c7b454cfa15e",
