@@ -29,7 +29,10 @@ REVIEWED_COMMIT = "bae07d24c59f7bc02001a168c7c6aac188ff2747"
 RECONCILIATION_PATH = (
     ".project/reconciliations/azure-mcp-read-only-preflight-run1-terminal-20260729.json"
 )
-HANDOFF_PATH = ".project/handoffs/post-pr191-mcp-preflight-run1-current-state.md"
+CURRENT_TOOL_RECONCILIATION_PATH = (
+    ".project/reconciliations/azure-mcp-current-reality-tool-20260729.json"
+)
+CURRENT_TOOL_HANDOFF_PATH = ".project/handoffs/azure-mcp-current-reality-tool.md"
 CONTRACT_PATH = ".project/contracts/azure-mcp-read-only-preflight-workflow-v2.json"
 DEPLOYMENT_TERMINAL_PATH = (
     ".project/reconciliations/correlation-identity-run1-terminal-20260727.json"
@@ -51,16 +54,23 @@ class AzureMcpPreflightRun1TerminalReconciliationTests(unittest.TestCase):
         cls.contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
         cls.script = SCRIPT.read_text(encoding="utf-8")
 
-    def test_state_index_selects_the_mcp_boundary_without_repurposing_legacy_pointers(self) -> None:
+    def test_state_index_preserves_run1_as_consumed_preflight_history(self) -> None:
         self.assertEqual(
             self.index["latest_repository_and_mcp_reconciliation"],
-            RECONCILIATION_PATH,
+            CURRENT_TOOL_RECONCILIATION_PATH,
+        )
+        self.assertEqual(
+            self.index["latest_azure_mcp_tool_reconciliation"],
+            CURRENT_TOOL_RECONCILIATION_PATH,
         )
         self.assertEqual(
             self.index["latest_azure_mcp_preflight_reconciliation"],
             RECONCILIATION_PATH,
         )
-        self.assertEqual(self.index["latest_repository_handoff"], HANDOFF_PATH)
+        self.assertEqual(
+            self.index["latest_repository_handoff"],
+            CURRENT_TOOL_HANDOFF_PATH,
+        )
         self.assertEqual(self.index["azure_mcp_preflight_contract"], CONTRACT_PATH)
         self.assertIsNone(self.index["active_azure_mcp_preflight_authorization"])
         self.assertEqual(
