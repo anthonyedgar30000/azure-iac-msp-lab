@@ -1,0 +1,112 @@
+{
+  "schema_version": "project.post-pr193-azure-ai-live-activation-plan.v1",
+  "recorded_at": "2026-07-28T23:05:32-04:00",
+  "project": "Azure IaC MSP Lab",
+  "github_state": {
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "default_branch": "main",
+    "observed_main": "2099b6c60268976f95d8b9ebcc20601aa1fce7f1",
+    "latest_merged_pull_request": 193,
+    "latest_merged_source_head": "643f6f81fdb39d50a6476a3dc9a99bdfff026dc6",
+    "latest_exact_head_ci_run": 30417651771,
+    "latest_exact_head_ci_conclusion": "success",
+    "merge_commit_pr_triggered_ci": "not_observed",
+    "open_pull_requests_observed": [],
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "merged_provider_state": {
+    "provider_scaffold_on_main": true,
+    "provider_contract": ".project/contracts/openai-azure-foundry-provider-v1.json",
+    "openai_sdk_client_factory_present": true,
+    "entra_token_provider_present": true,
+    "azure_v1_endpoint_validation_present": true,
+    "automatic_sdk_retries_default": 0,
+    "runtime_dependencies_installed": false,
+    "runtime_configuration_present": false
+  },
+  "azure_state": {
+    "fresh_query_performed": false,
+    "latest_preserved_subscription_name": "Azure for Students",
+    "subscription_and_tenant_ids_promoted": false,
+    "existing_servicetracer_resource_group": "rg-servicetracer-dev-westus2",
+    "existing_servicetracer_location": "westus2",
+    "azure_ai_resource_group": "not_observed",
+    "azure_ai_account": "not_observed",
+    "azure_ai_model_deployment": "not_observed",
+    "azure_ai_quota": "not_observed",
+    "azure_ai_capacity": "not_observed",
+    "azure_ai_effective_rbac": "not_observed",
+    "azure_ai_network_path": "not_observed",
+    "actual_cost_cad": "not_observed"
+  },
+  "activation_state": {
+    "candidate_branch": "agent/azure-ai-live-activation-v1",
+    "read_only_preflight_implemented": true,
+    "read_only_preflight_dispatched": false,
+    "subscription_bicep_candidate_present": true,
+    "deployment_switch_default": false,
+    "role_assignment_switch_default": false,
+    "endpoint_live": false,
+    "model_request_verified": false,
+    "azure_mcp_connected": false
+  },
+  "candidate_scope": {
+    "resource_group": "rg-ai-msp-dev-canadaeast",
+    "locations": [
+      "canadaeast",
+      "eastus2"
+    ],
+    "models": [
+      {
+        "name": "gpt-4.1-mini",
+        "version": "2025-04-14"
+      },
+      {
+        "name": "gpt-5-mini",
+        "version": "2025-08-07"
+      }
+    ],
+    "deployment_type_preference": "Standard",
+    "capacity_candidate": 1,
+    "account_name_candidate": "oai-msp-aeg30000-dev",
+    "deployment_name_candidate": "gpt-41-mini-msp-dev"
+  },
+  "authority": {
+    "repository_planning_authorized": true,
+    "ordinary_exact_head_ci_authorized": true,
+    "draft_pull_request_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "rbac_mutation_authorized": false,
+    "model_deployment_authorized": false,
+    "model_request_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "canonical_distinctions": [
+    "provider_on_main != endpoint_live",
+    "repository_candidate != Azure_deployed",
+    "preflight_implemented != preflight_dispatched",
+    "preflight_passed != deployment_authorized",
+    "model_listed != quota_available",
+    "quota_available != capacity_available",
+    "resource_exists != inference_access_effective",
+    "role_assignment_created != propagation_verified",
+    "deployment_succeeded != model_request_verified",
+    "model_request_verified != Azure_MCP_connected"
+  ],
+  "next_gate": {
+    "operation": "Review the exact Azure AI activation candidate through ordinary pull-request CI without Azure authentication or mutation.",
+    "requirements": [
+      "merge only under fresh explicit authority",
+      "dispatch the read-only preflight only against the exact merged commit",
+      "capture model inventory, quota, capacity, existing account, provider state, resource-group state, and OIDC principal RBAC",
+      "select the deployable region, model, deployment type, capacity, inference principal, cost ceiling, and network path from protected evidence",
+      "prepare a separate exact-scope deployment authorization",
+      "do not perform a model request until deployment and inference RBAC are independently verified"
+    ]
+  }
+}
