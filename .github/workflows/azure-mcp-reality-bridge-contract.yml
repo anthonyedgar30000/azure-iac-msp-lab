@@ -5,9 +5,13 @@ on:
     paths:
       - ".project/contracts/azure-mcp-reality-bridge.json"
       - ".project/reconciliations/azure-mcp-current-reality-tool-20260729.json"
+      - ".project/reconciliations/azure-mcp-current-reality-run1-terminal-20260729.json"
+      - ".project/evidence/azure-mcp-current-reality-run1.json"
+      - ".project/evidence/azure-mcp-current-reality-run1.sha256"
       - ".project/observation-requests/azure-mcp-current-reality-run1.json"
       - ".project/handoffs/azure-mcp-current-reality-tool.md"
       - ".project/handoffs/azure-mcp-current-reality-run1.md"
+      - ".project/handoffs/azure-mcp-current-reality-run1-terminal.md"
       - ".project/state-index.json"
       - "azure_mcp_reality/**"
       - "requirements/azure-mcp-reality-tool.txt"
@@ -19,6 +23,7 @@ on:
       - "infra/tests/test_azure_mcp_current_reality_tool.py"
       - "infra/tests/test_azure_mcp_active_subscription_compat.py"
       - "infra/tests/test_azure_mcp_current_reality_run1_authorization.py"
+      - "infra/tests/test_azure_mcp_current_reality_run1_terminal.py"
       - ".github/workflows/azure-mcp-reality-bridge-contract.yml"
   push:
     branches:
@@ -26,9 +31,13 @@ on:
     paths:
       - ".project/contracts/azure-mcp-reality-bridge.json"
       - ".project/reconciliations/azure-mcp-current-reality-tool-20260729.json"
+      - ".project/reconciliations/azure-mcp-current-reality-run1-terminal-20260729.json"
+      - ".project/evidence/azure-mcp-current-reality-run1.json"
+      - ".project/evidence/azure-mcp-current-reality-run1.sha256"
       - ".project/observation-requests/azure-mcp-current-reality-run1.json"
       - ".project/handoffs/azure-mcp-current-reality-tool.md"
       - ".project/handoffs/azure-mcp-current-reality-run1.md"
+      - ".project/handoffs/azure-mcp-current-reality-run1-terminal.md"
       - ".project/state-index.json"
       - "azure_mcp_reality/**"
       - "requirements/azure-mcp-reality-tool.txt"
@@ -40,6 +49,7 @@ on:
       - "infra/tests/test_azure_mcp_current_reality_tool.py"
       - "infra/tests/test_azure_mcp_active_subscription_compat.py"
       - "infra/tests/test_azure_mcp_current_reality_run1_authorization.py"
+      - "infra/tests/test_azure_mcp_current_reality_run1_terminal.py"
       - ".github/workflows/azure-mcp-reality-bridge-contract.yml"
 
 permissions:
@@ -65,12 +75,13 @@ jobs:
       - name: Validate governed contract
         run: python scripts/validate_azure_mcp_reality_bridge.py
 
-      - name: Run contract, observer, compatibility, and authority tests
+      - name: Run contract, observer, compatibility, authority, and terminal tests
         run: |
           python -m unittest tests.test_azure_mcp_reality_bridge -v
           python -m unittest infra.tests.test_azure_mcp_current_reality_tool -v
           python -m unittest infra.tests.test_azure_mcp_active_subscription_compat -v
           python -m unittest infra.tests.test_azure_mcp_current_reality_run1_authorization -v
+          python -m unittest infra.tests.test_azure_mcp_current_reality_run1_terminal -v
           python -m py_compile azure_mcp_reality/*.py
           bash -n scripts/azure_mcp_current_reality_run1.sh
 
