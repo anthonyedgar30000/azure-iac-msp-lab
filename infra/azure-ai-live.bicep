@@ -6,7 +6,7 @@ param deployAzureAi bool = false
 @description('Dedicated Azure AI resource group.')
 param resourceGroupName string = 'rg-ai-msp-dev-canadaeast'
 
-@description('Azure region selected from protected preflight evidence.')
+@description('Azure region selected from protected execution evidence.')
 @allowed([
   'canadaeast'
   'eastus2'
@@ -29,13 +29,13 @@ param deployModel bool = true
 @description('Model deployment name used by the OpenAI SDK.')
 param deploymentName string = 'gpt-41-mini-msp-dev'
 
-@description('Exact model name selected from protected preflight evidence.')
+@description('Exact model name selected for the bounded deployment.')
 param modelName string = 'gpt-4.1-mini'
 
-@description('Exact model version selected from protected preflight evidence.')
+@description('Exact model version selected for the bounded deployment.')
 param modelVersion string = '2025-04-14'
 
-@description('Deployment SKU selected from model inventory and quota evidence.')
+@description('Azure OpenAI deployment SKU.')
 @allowed([
   'Standard'
   'GlobalStandard'
@@ -43,7 +43,7 @@ param modelVersion string = '2025-04-14'
 ])
 param deploymentSkuName string = 'Standard'
 
-@description('Deployment capacity units proven against protected quota and capacity evidence.')
+@description('Model deployment capacity units.')
 @minValue(1)
 param deploymentCapacity int = 1
 
@@ -69,7 +69,7 @@ var commonTags = {
   dataClassification: 'demo-nonproduction'
 }
 
-resource resourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = if (deployAzureAi) {
+resource azureAiResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = if (deployAzureAi) {
   name: resourceGroupName
   location: location
   tags: commonTags
@@ -77,7 +77,7 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = if (dep
 
 module azureAi './modules/azure_ai_openai.bicep' = if (deployAzureAi) {
   name: 'azure-ai-live-${environment}'
-  scope: resourceGroup!
+  scope: resourceGroup(resourceGroupName)
   params: {
     accountName: accountName
     location: location
@@ -92,10 +92,13 @@ module azureAi './modules/azure_ai_openai.bicep' = if (deployAzureAi) {
     inferencePrincipalType: inferencePrincipalType
     tags: commonTags
   }
+  dependsOn: [
+    azureAiResourceGroup
+  ]
 }
 
 output deploymentEnabled bool = deployAzureAi
-output deployedResourceGroupName string = deployAzureAi ? resourceGroup!.name : resourceGroupName
+output deployedResourceGroupName string = deployAzureAi ? azureAiResourceGroup!.name : resourceGroupName
 output deployedAccountId string = deployAzureAi ? azureAi!.outputs.accountId : ''
 output deployedAccountName string = deployAzureAi ? azureAi!.outputs.accountName : accountName
 output deployedBaseUrl string = deployAzureAi ? azureAi!.outputs.baseUrl : ''
