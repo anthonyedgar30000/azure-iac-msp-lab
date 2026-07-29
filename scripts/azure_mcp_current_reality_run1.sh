@@ -106,17 +106,22 @@ export AZURE_MCP_REPOSITORY_ROOT="$repo_root"
 
 "$VENV_DIR/bin/python" -m azure_mcp_reality.cli > "$RECEIPT_PATH"
 
-RECEIPT_PATH="$RECEIPT_PATH" \
-EXPECTED_COMMIT="$AZURE_MCP_RUN1_REVIEWED_COMMIT" \
-EXPECTED_SUBSCRIPTION_NAME="$EXPECTED_SUBSCRIPTION_NAME" \
-EXPECTED_RESOURCE_GROUP="$EXPECTED_RESOURCE_GROUP" \
-EXPECTED_LOCATION="$EXPECTED_RESOURCE_GROUP_LOCATION" \
+# Use validation-only environment names that cannot collide with readonly shell
+# variables. Run 1 originally wrote the receipt successfully and then failed here
+# because an environment-prefix assignment reused RECEIPT_PATH.
+RUN1_RECEIPT_PATH="$RECEIPT_PATH" \
+RUN1_EXPECTED_COMMIT="$AZURE_MCP_RUN1_REVIEWED_COMMIT" \
+RUN1_EXPECTED_SUBSCRIPTION_NAME="$EXPECTED_SUBSCRIPTION_NAME" \
+RUN1_EXPECTED_RESOURCE_GROUP="$EXPECTED_RESOURCE_GROUP" \
+RUN1_EXPECTED_LOCATION="$EXPECTED_RESOURCE_GROUP_LOCATION" \
 python3 - <<'PY'
 import json
 import os
 from pathlib import Path
 
-receipt = json.loads(Path(os.environ["RECEIPT_PATH"]).read_text(encoding="utf-8"))
+receipt = json.loads(
+    Path(os.environ["RUN1_RECEIPT_PATH"]).read_text(encoding="utf-8")
+)
 status = receipt.get("observation_status")
 if status not in {"observed", "not_present"}:
     raise SystemExit(f"unexpected observation status: {status}")
@@ -124,19 +129,19 @@ if receipt.get("mutations_performed") is not False:
     raise SystemExit("receipt does not prove zero Azure mutations")
 if receipt.get("secrets_returned") is not False:
     raise SystemExit("receipt does not prove zero secret values")
-if receipt.get("repository", {}).get("head") != os.environ["EXPECTED_COMMIT"]:
+if receipt.get("repository", {}).get("head") != os.environ["RUN1_EXPECTED_COMMIT"]:
     raise SystemExit("receipt repository head differs from the reviewed commit")
-if receipt.get("scope", {}).get("subscription_name") != os.environ["EXPECTED_SUBSCRIPTION_NAME"]:
+if receipt.get("scope", {}).get("subscription_name") != os.environ["RUN1_EXPECTED_SUBSCRIPTION_NAME"]:
     raise SystemExit("receipt subscription name differs from the authorized scope")
-if receipt.get("scope", {}).get("resource_group") != os.environ["EXPECTED_RESOURCE_GROUP"]:
+if receipt.get("scope", {}).get("resource_group") != os.environ["RUN1_EXPECTED_RESOURCE_GROUP"]:
     raise SystemExit("receipt resource group differs from the authorized scope")
 if not str(receipt.get("raw_evidence_digest", "")).startswith("sha256:"):
     raise SystemExit("receipt evidence digest is missing")
 if status == "observed":
     group = receipt.get("azure", {}).get("resource_group") or {}
-    if group.get("name") != os.environ["EXPECTED_RESOURCE_GROUP"]:
+    if group.get("name") != os.environ["RUN1_EXPECTED_RESOURCE_GROUP"]:
         raise SystemExit("observed resource-group name widened unexpectedly")
-    if str(group.get("location", "")).lower() != os.environ["EXPECTED_LOCATION"]:
+    if str(group.get("location", "")).lower() != os.environ["RUN1_EXPECTED_LOCATION"]:
         raise SystemExit("observed resource-group location differs from eastus")
 PY
 
