@@ -20,7 +20,7 @@ var baseArgs = [
 var namespaceArgs = [for item in namespaces: ['--namespace', item]]
 var serverArgs = flatten(concat([baseArgs], namespaceArgs))
 
-resource environment 'Microsoft.App/managedEnvironments@2024-03-01' = {
+resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: environmentName
   location: location
   tags: tags
@@ -38,7 +38,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
     }
   }
   properties: {
-    managedEnvironmentId: environment.id
+    managedEnvironmentId: containerAppsEnvironment.id
     configuration: {
       activeRevisionsMode: 'Single'
       ingress: {
@@ -100,5 +100,5 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
 
 output url string = 'https://${app.properties.configuration.ingress.fqdn}'
 output id string = app.id
-output environmentId string = environment.id
+output environmentId string = containerAppsEnvironment.id
 output args array = serverArgs
