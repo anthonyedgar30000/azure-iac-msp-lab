@@ -1,6 +1,7 @@
-"""Governed Azure OpenAI / Microsoft Foundry provider scaffold.
+"""Governed Azure OpenAI / Microsoft Foundry provider.
 
-Importing this package performs no authentication and no network calls.
+Importing this package performs no authentication and no network calls. Runtime
+execution remains explicit through ``create_response`` or the invocation CLI.
 """
 
 from .config import AzureOpenAISettings, ConfigurationError
