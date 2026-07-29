@@ -1,11 +1,14 @@
 {
-  "schema_version": "servicetracer.azure-mcp-reality-bridge.v2",
-  "status": "repository_contract_only",
-  "objective": "Provide a governed remote Azure MCP evidence channel for reconciling GitHub-declared infrastructure with time-bounded Azure observations through an OpenAI Responses API client without granting implicit Azure mutation authority.",
+  "schema_version": "servicetracer.azure-mcp-reality-bridge.v3",
+  "status": "local_read_only_tool_implemented_not_connected",
+  "recorded_at": "2026-07-29T06:41:00-04:00",
+  "source_instruction": "Proceed",
+  "objective": "Implement the first governed read-only get_current_reality MCP tool for exact Azure subscription/resource-group and repository observation, without deploying a remote endpoint, connecting a model client, widening RBAC, or mutating Azure.",
   "canonical_distinctions": [
-    "mcp_endpoint_deployed != openai_client_connected",
-    "client_path_selected != client_configured",
-    "hosting_path_selected != hosting_deployed",
+    "tool_implemented != tool_called",
+    "tool_called_locally != remote_mcp_endpoint_deployed",
+    "mcp_endpoint_deployed != azure_openai_client_connected",
+    "model_inference_verified != mcp_tool_call_verified",
     "tool_advertised != tool_authorized",
     "read_only_annotation != effective_least_privilege",
     "azure_observed != repository_declared",
@@ -14,12 +17,26 @@
     "not_observed != absent",
     "evidence_collected != action_authorized"
   ],
+  "repository_baseline": {
+    "base_branch": "main",
+    "base_commit": "b2fdf35a1e11803209e7764e047f5112596005b9",
+    "latest_merged_pull_request": 208,
+    "open_pull_requests_observed_before_branch": [],
+    "candidate_branch": "agent/azure-mcp-current-reality-tool",
+    "local_working_tree_observed": false,
+    "repository_operations": "connector_backed"
+  },
   "transport": {
-    "required": "streamable_http",
-    "endpoint_path": "/mcp",
-    "tls_required": true,
+    "local_stdio_implemented": true,
+    "local_streamable_http_implemented": true,
+    "local_http_bind": "127.0.0.1:8000",
+    "local_http_path": "/mcp",
+    "remote_required": "streamable_http",
+    "remote_endpoint_path": "/mcp",
+    "remote_tls_required": true,
     "remote_endpoint_deployed": false,
-    "endpoint_url": null
+    "remote_endpoint_url": null,
+    "anonymous_remote_access_allowed": false
   },
   "hosting": {
     "selected_service": "azure_container_apps",
@@ -38,90 +55,87 @@
     "deployed": false
   },
   "client_paths": {
-    "selection": {
-      "selected_client_path": "openai_responses_api",
-      "selected_on": "2026-07-24",
-      "selection_basis": "explicit_human_decision",
-      "configured": false,
-      "connection_observed": false
-    },
-    "openai_responses_api": {
-      "selected": true,
-      "platform_support_observed": true,
-      "configured": false,
-      "requires_separate_api_project_and_billing": true,
-      "api_project_observed": false,
-      "api_key_observed": false,
-      "api_execution_authorized": false
+    "azure_openai_responses_api": {
+      "selected_for_model_inference": true,
+      "base_url": "https://anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/",
+      "deployment": "gpt-5-mini",
+      "entra_inference_verified": true,
+      "mcp_remote_tool_support_observed_in_official_documentation": true,
+      "mcp_server_configured": false,
+      "mcp_tool_call_verified": false
     },
     "chatgpt_custom_app": {
       "selected": false,
-      "availability": "not_required_for_selected_path",
       "configured": false,
       "current_connection_observed": false
     },
     "ide_mcp_clients": {
       "selected": false,
-      "examples": [
-        "github_copilot",
-        "visual_studio_code",
-        "cursor"
-      ],
       "configured": false
     }
   },
   "authentication": {
-    "client_to_server": {
+    "local_tool_to_azure": {
+      "mode": "existing_azure_cli_session",
+      "implemented_in_code": true,
+      "live_execution_observed": false,
+      "raw_tenant_or_subscription_ids_persisted": false
+    },
+    "remote_client_to_server": {
       "selected_model": "entra_oauth",
       "implemented": false,
       "client_identity_observed": false,
       "server_application_observed": false,
       "admin_consent_observed": false
     },
-    "server_to_azure": {
+    "remote_server_to_azure": {
       "selected_model": "managed_identity_shared_service_identity",
       "implemented": false,
       "managed_identity_observed": false,
       "effective_rbac_observed": false
     },
-    "anonymous_access_allowed": false,
     "static_long_lived_secret_allowed": false
   },
   "azure_scope": {
-    "tenant_id": null,
-    "subscription_ids": [],
-    "resource_group_allowlist": [],
+    "runtime_subscription_environment_variable": "AZURE_MCP_ALLOWED_SUBSCRIPTION_ID",
+    "runtime_resource_group_environment_variable": "AZURE_MCP_ALLOWED_RESOURCE_GROUP",
+    "subscription_id_persisted": false,
+    "tenant_id_persisted": false,
+    "resource_group_persisted": false,
     "cross_subscription_discovery_allowed": false,
-    "default_subscription_inference_allowed": false
+    "default_subscription_inference_allowed": false,
+    "model_supplied_scope_parameters_allowed": false
   },
   "tool_admission": {
     "default_policy": "deny",
-    "server_read_only_required": true,
-    "disable_user_confirmation_allowed": false,
-    "server_mode_selected": false,
-    "namespace_allowlist": [],
-    "required_annotations": {
-      "read_only": true,
-      "destructive": false,
-      "secret": false,
-      "local_required": false
-    },
-    "requested_observation_domains": [
-      "subscription_inventory",
-      "resource_group_inventory",
-      "resource_inventory",
-      "activity_logs",
-      "metrics_and_logs",
-      "resource_health",
-      "quota_and_usage",
-      "retail_pricing_and_cost_observation",
-      "policy_assignment_inventory",
-      "rbac_assignment_inventory",
-      "advisor_recommendations"
+    "server_mode": "local_observer_only",
+    "allowed_tool_names": [
+      "get_current_reality"
     ],
-    "allowed_tool_names": [],
-    "tool_inventory_digest": null,
-    "server_version": null,
+    "server_version": "azure-mcp-reality/0.1.0",
+    "tool_inventory_digest": "sha256:4f2dc29e7f88fb2f8c3f82ed217608bee83bd28f56ceb878b6c43cbdef2dee82",
+    "tool": {
+      "name": "get_current_reality",
+      "version": "0.1.0",
+      "model_inputs": [],
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "fixed_read_only_commands": [
+        "git rev-parse HEAD",
+        "git status --porcelain=v1",
+        "az account show",
+        "az group show",
+        "az resource list",
+        "az cognitiveservices account deployment list"
+      ],
+      "returns_secret_values": false,
+      "writes_files": false,
+      "performs_azure_mutation": false
+    },
     "denied_capabilities": [
       "create_resource",
       "update_resource",
@@ -135,51 +149,39 @@
       "execute_guest_command",
       "open_network_access",
       "change_policy",
-      "change_quota"
+      "change_quota",
+      "arbitrary_azure_cli_command",
+      "model_selected_subscription",
+      "model_selected_resource_group"
     ],
-    "admission_rule": "A tool becomes callable only after exact-version discovery, annotation review, effective-RBAC review, bounded-scope review, and explicit human approval of its exact name."
+    "admission_basis": "Anthony Edgar explicitly authorized the next read-only operational increment with Proceed; admission applies only to this exact tool descriptor and repository implementation, not to live execution, remote deployment, or client connection."
   },
-  "cloud_shell_package": {
-    "preflight_script": "scripts/azure_mcp_cloud_shell_preflight.sh",
-    "runbook": "docs/runbooks/openai-api-azure-mcp-cloud-shell.md",
-    "preflight_package_present": true,
-    "preflight_execution_authorized": false,
-    "deployment_command_committed": false,
-    "azure_deployment_authorized": false
-  },
-  "authority": {
-    "repository_design_authorized": true,
-    "pull_request_creation_authorized": true,
-    "pull_request_merge_authorized": false,
-    "cloud_shell_preflight_execution_authorized": false,
-    "azure_authentication_authorized": false,
-    "azure_resource_creation_authorized": false,
-    "entra_application_mutation_authorized": false,
-    "managed_identity_mutation_authorized": false,
-    "azure_rbac_mutation_authorized": false,
-    "api_management_mutation_authorized": false,
-    "container_apps_mutation_authorized": false,
-    "openai_api_execution_authorized": false,
-    "cleanup_authorized": false
+  "implementation": {
+    "package": "azure_mcp_reality",
+    "config": "azure_mcp_reality/config.py",
+    "observer": "azure_mcp_reality/observer.py",
+    "server": "azure_mcp_reality/server.py",
+    "cli": "azure_mcp_reality/cli.py",
+    "requirements": "requirements/azure-mcp-reality-tool.txt",
+    "runbook": "docs/runbooks/azure-mcp-get-current-reality.md",
+    "test": "infra/tests/test_azure_mcp_current_reality_tool.py",
+    "mcp_sdk": "mcp[cli]==1.24.0",
+    "streamable_http_remote_production_recommended": true
   },
   "evidence_contract": {
-    "required_request_context": [
-      "observed_at_utc",
-      "tenant_id",
-      "subscription_id",
-      "resource_scope",
-      "server_version",
-      "tool_name",
-      "tool_inventory_digest",
-      "caller_identity_mode",
-      "correlation_id"
-    ],
     "required_result_fields": [
+      "observed_at_utc",
+      "correlation_id",
       "observation_status",
       "source_system",
-      "resource_id_or_scope",
+      "caller_identity_mode",
+      "scope",
+      "repository",
+      "azure",
       "freshness_boundary",
       "limitations",
+      "mutations_performed",
+      "secrets_returned",
       "raw_evidence_digest"
     ],
     "observation_status_values": [
@@ -189,35 +191,57 @@
       "observation_failed",
       "conflicting"
     ],
+    "subscription_and_tenant_fingerprinted": true,
+    "arm_subscription_segment_redacted": true,
+    "tag_values_returned": false,
     "secret_redaction_required": true,
     "raw_protected_payload_commit_allowed": false
   },
-  "success_criteria": [
-    "The remote endpoint is reachable over TLS and exposes Streamable HTTP at /mcp.",
-    "The OpenAI Responses API client authenticates to the exact intended Entra resource.",
-    "The managed identity resolves to the intended tenant and bounded Azure scope.",
-    "The exact Azure MCP Server version, container image, and tool inventory are captured and hashed.",
-    "Only explicitly admitted read-only, non-secret tools are callable.",
-    "Subscription and resource scopes cannot silently widen.",
-    "A known Azure observation is reconciled against an exact Git commit.",
-    "Every result records provenance, freshness, limitations, and a digest.",
-    "No Azure, Entra, GitHub, or OpenAI mutation occurs during read-only verification."
-  ],
+  "authority": {
+    "repository_branch_and_files_authorized": true,
+    "pull_request_creation_authorized": true,
+    "ordinary_exact_head_ci_authorized": true,
+    "pull_request_merge_authorized": true,
+    "local_read_only_tool_execution_authorized": false,
+    "azure_authentication_or_query_performed_by_this_increment": false,
+    "remote_mcp_endpoint_deployment_authorized": false,
+    "chatgpt_app_registration_authorized": false,
+    "azure_openai_mcp_model_call_authorized": false,
+    "azure_resource_creation_authorized": false,
+    "entra_application_mutation_authorized": false,
+    "managed_identity_mutation_authorized": false,
+    "azure_rbac_mutation_authorized": false,
+    "api_management_mutation_authorized": false,
+    "container_apps_mutation_authorized": false,
+    "cleanup_authorized": false
+  },
+  "cost_and_quota": {
+    "expected_recurring_azure_resource_cost_delta_cad": 0,
+    "actual_azure_cost_freshly_observed": false,
+    "azure_quota_freshly_observed": false,
+    "github_actions_and_package_download_usage_may_apply": true
+  },
   "failure_and_rollback": {
     "fail_closed_conditions": [
-      "template_source_unpinned",
-      "template_digest_changed",
-      "container_image_unpinned",
+      "missing_explicit_subscription",
+      "missing_explicit_resource_group",
+      "default_subscription_inference_attempted",
+      "cross_subscription_scope_detected",
+      "subscription_context_mismatch",
+      "subscription_disabled",
+      "resource_inventory_exceeds_bound",
+      "cognitive_account_inventory_exceeds_bound",
+      "azure_cli_command_failure",
+      "invalid_json_response",
       "tool_inventory_changed",
-      "tool_annotation_missing_or_changed",
-      "tenant_or_subscription_mismatch",
-      "scope_allowlist_mismatch",
-      "authentication_identity_unverified",
+      "tool_annotation_changed",
       "write_or_secret_capability_detected",
-      "evidence_digest_missing",
-      "prompt_injection_or_untrusted_tool_output_detected"
+      "evidence_digest_missing"
     ],
-    "rollback_action": "Before deployment, discard the Cloud Shell working directory. After a separately authorized deployment, disable ingress and the OpenAI client, remove Azure resources and Entra objects through a separately reviewed cleanup plan, and preserve redacted evidence.",
+    "repository_rollback": "Revert the exact pull request.",
+    "runtime_rollback": "Stop the local process and unset AZURE_MCP_ALLOWED_SUBSCRIPTION_ID and AZURE_MCP_ALLOWED_RESOURCE_GROUP.",
+    "azure_cleanup": "Not applicable because this increment creates no Azure resources and performs no Azure mutation.",
     "cleanup_authorized": false
-  }
+  },
+  "next_gate": "After merge, separately authorize one local Cloud Shell execution against an exact subscription and resource group, inspect the structured receipt, then decide whether to implement authenticated remote hosting and an Azure OpenAI Responses API MCP call."
 }

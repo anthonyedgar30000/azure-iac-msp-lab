@@ -6,22 +6,23 @@ import re
 from pathlib import Path
 import unittest
 
+
 ROOT = Path(__file__).resolve().parents[1]
 MODULE_PATH = ROOT / "scripts" / "validate_azure_mcp_post_merge_sync.py"
 
 
 class AzureMcpCloudShellPlanTests(unittest.TestCase):
-    def test_current_contract_selects_openai_without_claiming_connection(self) -> None:
+    def test_current_contract_preserves_verified_inference_without_claiming_mcp(self) -> None:
         contract = json.loads(
             (ROOT / ".project" / "contracts" / "azure-mcp-reality-bridge.json").read_text(encoding="utf-8")
         )
-        selection = contract["client_paths"]["selection"]
-        self.assertEqual(selection["selected_client_path"], "openai_responses_api")
-        self.assertFalse(selection["configured"])
-        self.assertFalse(selection["connection_observed"])
-        self.assertFalse(contract["client_paths"]["openai_responses_api"]["api_execution_authorized"])
+        client = contract["client_paths"]["azure_openai_responses_api"]
+        self.assertTrue(client["selected_for_model_inference"])
+        self.assertTrue(client["entra_inference_verified"])
+        self.assertFalse(client["mcp_server_configured"])
+        self.assertFalse(client["mcp_tool_call_verified"])
 
-    def test_cloud_shell_and_managed_identity_are_design_choices_not_runtime(self) -> None:
+    def test_remote_cloud_shell_and_managed_identity_choices_remain_undeployed(self) -> None:
         contract = json.loads(
             (ROOT / ".project" / "contracts" / "azure-mcp-reality-bridge.json").read_text(encoding="utf-8")
         )
@@ -29,24 +30,26 @@ class AzureMcpCloudShellPlanTests(unittest.TestCase):
         self.assertEqual(contract["hosting"]["deployment_interface"], "azure_cloud_shell")
         self.assertFalse(contract["hosting"]["deployed"])
         self.assertEqual(
-            contract["authentication"]["server_to_azure"]["selected_model"],
+            contract["authentication"]["remote_server_to_azure"]["selected_model"],
             "managed_identity_shared_service_identity",
         )
-        self.assertFalse(contract["authentication"]["server_to_azure"]["implemented"])
+        self.assertFalse(contract["authentication"]["remote_server_to_azure"]["implemented"])
         self.assertFalse(contract["transport"]["remote_endpoint_deployed"])
-        self.assertIsNone(contract["transport"]["endpoint_url"])
+        self.assertIsNone(contract["transport"]["remote_endpoint_url"])
 
-    def test_tools_scopes_and_cost_remain_fail_closed(self) -> None:
+    def test_one_local_tool_is_implemented_without_widening_scope_or_cost(self) -> None:
         contract = json.loads(
             (ROOT / ".project" / "contracts" / "azure-mcp-reality-bridge.json").read_text(encoding="utf-8")
         )
-        self.assertEqual(contract["azure_scope"]["subscription_ids"], [])
-        self.assertEqual(contract["azure_scope"]["resource_group_allowlist"], [])
-        self.assertEqual(contract["tool_admission"]["namespace_allowlist"], [])
-        self.assertEqual(contract["tool_admission"]["allowed_tool_names"], [])
-        self.assertIsNone(contract["tool_admission"]["tool_inventory_digest"])
+        self.assertFalse(contract["azure_scope"]["default_subscription_inference_allowed"])
+        self.assertFalse(contract["azure_scope"]["cross_subscription_discovery_allowed"])
+        self.assertFalse(contract["azure_scope"]["model_supplied_scope_parameters_allowed"])
+        self.assertEqual(contract["tool_admission"]["allowed_tool_names"], ["get_current_reality"])
+        self.assertEqual(contract["tool_admission"]["tool"]["model_inputs"], [])
+        self.assertFalse(contract["tool_admission"]["tool"]["performs_azure_mutation"])
         self.assertFalse(contract["hosting"]["cost_estimate_observed"])
         self.assertFalse(contract["hosting"]["quota_observed"])
+        self.assertEqual(contract["cost_and_quota"]["expected_recurring_azure_resource_cost_delta_cad"], 0)
 
     def test_preflight_contains_observation_but_no_mutation_entry_point(self) -> None:
         script = (ROOT / "scripts" / "azure_mcp_cloud_shell_preflight.sh").read_text(encoding="utf-8")

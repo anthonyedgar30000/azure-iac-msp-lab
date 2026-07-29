@@ -1,11 +1,11 @@
 {
-  "schema_version": "project.state-index.v7",
+  "schema_version": "project.state-index.v8",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-29T06:07:00-04:00",
+  "recorded_at": "2026-07-29T06:41:00-04:00",
   "canonical_current_reality": ".project/current-reality-v2.json",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
   "canonical_handoff": ".project/handoffs/current-state.md",
-  "latest_repository_handoff": ".project/handoffs/post-pr191-mcp-preflight-run1-current-state.md",
+  "latest_repository_handoff": ".project/handoffs/azure-mcp-current-reality-tool.md",
   "latest_verified_reconciliation": ".project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json",
   "latest_terminal_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
   "latest_deployment_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
@@ -15,10 +15,19 @@
   "latest_repository_watermark_reconciliation": ".project/reconciliations/post-pr185-repository-watermark-20260728.json",
   "latest_lifecycle_reconciliation": ".project/reconciliations/post-pr187-authorization-control-reconciliation-20260728.json",
   "latest_authorization_control_reconciliation": ".project/reconciliations/post-pr187-authorization-control-reconciliation-20260728.json",
-  "latest_repository_and_mcp_reconciliation": ".project/reconciliations/azure-mcp-read-only-preflight-run1-terminal-20260729.json",
+  "latest_repository_and_mcp_reconciliation": ".project/reconciliations/azure-mcp-current-reality-tool-20260729.json",
+  "latest_azure_mcp_tool_reconciliation": ".project/reconciliations/azure-mcp-current-reality-tool-20260729.json",
   "latest_azure_mcp_preflight_reconciliation": ".project/reconciliations/azure-mcp-read-only-preflight-run1-terminal-20260729.json",
   "latest_successful_azure_mcp_preflight_reconciliation": ".project/reconciliations/azure-mcp-read-only-preflight-run2-success-20260729.json",
   "azure_mcp_template_review_contract": ".project/contracts/azure-mcp-template-review-v1.json",
+  "azure_mcp_reality_bridge_contract": ".project/contracts/azure-mcp-reality-bridge.json",
+  "azure_mcp_current_reality_handoff": ".project/handoffs/azure-mcp-current-reality-tool.md",
+  "azure_mcp_current_reality_package": "azure_mcp_reality",
+  "azure_mcp_current_reality_tool": "get_current_reality",
+  "azure_mcp_current_reality_server_version": "azure-mcp-reality/0.1.0",
+  "azure_mcp_current_reality_tool_inventory_digest": "sha256:4f2dc29e7f88fb2f8c3f82ed217608bee83bd28f56ceb878b6c43cbdef2dee82",
+  "azure_mcp_current_reality_local_execution_observed": false,
+  "azure_mcp_current_reality_remote_endpoint_deployed": false,
   "latest_repository_and_azure_ai_reconciliation": ".project/reconciliations/azure-ai-go-live-run6-terminal-and-runtime-wire-20260729.json",
   "latest_azure_ai_activation_reconciliation": ".project/reconciliations/azure-ai-go-live-run6-terminal-and-runtime-wire-20260729.json",
   "previous_azure_ai_activation_reconciliation": ".project/reconciliations/azure-ai-go-live-run5-terminal-20260729.json",
@@ -92,6 +101,11 @@
       "path": ".project/reconciliations/azure-ai-go-live-run5-terminal-20260729.json",
       "classification": "historical_azure_ai_run5_terminal_before_run6",
       "authoritative_for_current_operations": false
+    },
+    {
+      "path": ".project/reconciliations/azure-mcp-read-only-preflight-run1-terminal-20260729.json",
+      "classification": "historical_first_mcp_preflight_terminal_before_local_tool_implementation",
+      "authoritative_for_current_operations": false
     }
   ],
   "legacy_compatibility_snapshots": [
@@ -114,7 +128,7 @@
       ]
     }
   ],
-  "selection_rule": "Operational consumers must resolve the consumed run-6 terminal evidence, the separately verified gpt-5-mini Entra runtime, the v2 provider contract, the non-secret runtime profile, live GitHub state, and fresh Azure ARM evidence before every operation. No Azure AI activation authority is currently active. The verified model path may be invoked only by an identity that already has effective data-plane permission; this repository increment does not grant RBAC, rerun run 6, mutate Azure, or connect MCP.",
+  "selection_rule": "Operational consumers must resolve the local get_current_reality implementation contract, its exact tool-inventory digest, the consumed run-6 terminal evidence, the separately verified gpt-5-mini Entra runtime, live GitHub state, and fresh time-bounded Azure evidence before every operation. The tool has not yet been executed live, no remote MCP endpoint is deployed, Azure OpenAI has not called an MCP tool, and no Azure or MCP activation authority is currently active.",
   "claim_boundaries": [
     "legacy_filename != current_authority",
     "historical_snapshot != live_state",
@@ -147,6 +161,10 @@
     "Cloud_Shell_identity_access != GitHub_OIDC_identity_access",
     "model_response_succeeded != Azure_MCP_connected",
     "endpoint_verified != ARM_resource_identity_fully_reconciled",
-    "repository_wired != merged_and_reexecuted"
+    "repository_wired != merged_and_reexecuted",
+    "tool_implemented != tool_called",
+    "tool_called_locally != remote_MCP_endpoint_deployed",
+    "read_only_annotation != effective_least_privilege",
+    "MCP_server_implemented != Azure_OpenAI_MCP_call_verified"
   ]
 }

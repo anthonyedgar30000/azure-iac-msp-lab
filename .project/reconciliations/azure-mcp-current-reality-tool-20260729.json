@@ -1,0 +1,143 @@
+{
+  "schema_version": "project.reconciliation.azure-mcp-current-reality-tool.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T06:41:00-04:00",
+  "source_instruction": "Proceed",
+  "observation_boundary": "Repository and connected-GitHub state were inspected before implementation. No Azure authentication, Azure query, Azure mutation, workflow dispatch, workflow rerun, MCP endpoint deployment, MCP client connection, ChatGPT app registration, or Azure OpenAI model call was performed by this increment.",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "b2fdf35a1e11803209e7764e047f5112596005b9",
+    "latest_merged_pull_request": 208,
+    "open_pull_requests_observed_before_branch": [],
+    "candidate_branch": "agent/azure-mcp-current-reality-tool",
+    "local_working_tree_observed": false,
+    "repository_operations": "connector_backed"
+  },
+  "objective": "Implement one governed local read-only MCP tool named get_current_reality that observes an exact Azure subscription and resource group plus the exact local repository state and returns sanitized digest-bearing evidence.",
+  "architecture": {
+    "tool_name": "get_current_reality",
+    "server_version": "azure-mcp-reality/0.1.0",
+    "tool_inventory_digest": "sha256:4f2dc29e7f88fb2f8c3f82ed217608bee83bd28f56ceb878b6c43cbdef2dee82",
+    "local_transports": [
+      "stdio",
+      "streamable_http_on_127.0.0.1:8000/mcp"
+    ],
+    "remote_transport_selected": "streamable_http_over_tls_at_/mcp",
+    "remote_endpoint_deployed": false,
+    "azure_openai_mcp_client_configured": false,
+    "chatgpt_custom_app_configured": false
+  },
+  "scope_and_identity": {
+    "subscription_source": "AZURE_MCP_ALLOWED_SUBSCRIPTION_ID",
+    "resource_group_source": "AZURE_MCP_ALLOWED_RESOURCE_GROUP",
+    "repository_root_source": "AZURE_MCP_REPOSITORY_ROOT",
+    "default_subscription_inference_allowed": false,
+    "cross_subscription_discovery_allowed": false,
+    "model_supplied_scope_allowed": false,
+    "local_identity_mode": "existing Azure CLI session",
+    "local_live_execution_observed": false,
+    "remote_managed_identity_implemented": false,
+    "effective_least_privilege_observed": false
+  },
+  "fixed_operations": [
+    "git rev-parse HEAD",
+    "git status --porcelain=v1 --untracked-files=normal",
+    "az account show --subscription <exact-id>",
+    "az group show --subscription <exact-id> --name <exact-rg>",
+    "az resource list --subscription <exact-id> --resource-group <exact-rg>",
+    "az cognitiveservices account deployment list --subscription <exact-id> --resource-group <exact-rg> --name <observed-account>"
+  ],
+  "security_controls": {
+    "shell_execution": false,
+    "arbitrary_command_input": false,
+    "tool_parameters_from_model": false,
+    "raw_subscription_or_tenant_ids_persisted": false,
+    "arm_subscription_segment_redacted": true,
+    "tag_values_returned": false,
+    "metadata_sanitized_and_bounded": true,
+    "resource_inventory_bounded": true,
+    "sdk_retries_applicable": false,
+    "secret_values_returned": false,
+    "Azure_mutation_entry_point_present": false
+  },
+  "evidence": {
+    "schema": "azure-mcp-reality.observation.v1",
+    "observation_status_values": [
+      "observed",
+      "not_present",
+      "not_observed",
+      "observation_failed",
+      "conflicting"
+    ],
+    "digest": "SHA-256 over canonical structured result",
+    "freshness_recorded": true,
+    "limitations_recorded": true,
+    "mutations_performed_field_required": true,
+    "secrets_returned_field_required": true
+  },
+  "implementation": {
+    "package": "azure_mcp_reality",
+    "files": [
+      "azure_mcp_reality/__init__.py",
+      "azure_mcp_reality/config.py",
+      "azure_mcp_reality/observer.py",
+      "azure_mcp_reality/cli.py",
+      "azure_mcp_reality/server.py",
+      "requirements/azure-mcp-reality-tool.txt",
+      "infra/tests/test_azure_mcp_current_reality_tool.py",
+      "docs/runbooks/azure-mcp-get-current-reality.md",
+      ".project/contracts/azure-mcp-reality-bridge.json",
+      ".project/reconciliations/azure-mcp-current-reality-tool-20260729.json",
+      ".project/handoffs/azure-mcp-current-reality-tool.md",
+      ".project/state-index.json",
+      "scripts/validate_azure_mcp_reality_bridge.py",
+      "tests/test_azure_mcp_reality_bridge.py",
+      ".github/workflows/azure-mcp-reality-bridge-contract.yml"
+    ],
+    "mcp_sdk": "mcp[cli]==1.24.0",
+    "tool_annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true
+    }
+  },
+  "validation_plan": {
+    "ordinary_exact_head_pull_request_CI_authorized": true,
+    "deterministic_observer_tests": true,
+    "contract_tamper_tests": true,
+    "Python_compilation": true,
+    "pinned_MCP_SDK_install": true,
+    "exact_tool_descriptor_inspection": true,
+    "Azure_login_in_CI": false,
+    "Azure_query_in_CI": false
+  },
+  "cost_and_quota": {
+    "expected_recurring_Azure_resource_cost_delta_CAD": 0,
+    "actual_Azure_cost_freshly_observed": false,
+    "Azure_quota_freshly_observed": false,
+    "GitHub_Actions_and_package_download_usage_may_apply": true
+  },
+  "authority": {
+    "repository_branch_and_files_authorized": true,
+    "pull_request_creation_authorized": true,
+    "ordinary_exact_head_CI_authorized": true,
+    "pull_request_merge_authorized": true,
+    "local_live_tool_execution_authorized": false,
+    "workflow_dispatch_or_rerun_authorized": false,
+    "Azure_authentication_or_query_authorized": false,
+    "Azure_mutation_authorized": false,
+    "RBAC_mutation_authorized": false,
+    "remote_MCP_deployment_authorized": false,
+    "Azure_OpenAI_MCP_call_authorized": false,
+    "ChatGPT_app_registration_authorized": false,
+    "rollback_or_cleanup_authorized": false
+  },
+  "rollback_and_cleanup": {
+    "repository_rollback": "Revert the exact implementing pull request.",
+    "runtime_rollback": "Stop the local process and unset the three AZURE_MCP scope variables.",
+    "Azure_cleanup_required": false
+  },
+  "next_gate": "After exact-head CI and merge, separately authorize one local Cloud Shell execution against an exact subscription and resource group, inspect the evidence receipt, and only then consider authenticated remote hosting and a model-driven MCP call."
+}
