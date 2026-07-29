@@ -17,6 +17,11 @@ RECONCILIATION = (
     ROOT
     / ".project/reconciliations/post-pr193-azure-ai-live-activation-plan-20260729.json"
 )
+TERMINAL = (
+    ROOT
+    / ".project/reconciliations/azure-ai-go-live-run1-terminal-20260729.json"
+)
+TERMINAL_HANDOFF = ROOT / ".project/handoffs/azure-ai-go-live-run1-terminal.md"
 
 
 class AzureAiLiveActivationTests(unittest.TestCase):
@@ -30,6 +35,8 @@ class AzureAiLiveActivationTests(unittest.TestCase):
         cls.contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
         cls.handoff = HANDOFF.read_text(encoding="utf-8")
         cls.reconciliation = json.loads(RECONCILIATION.read_text(encoding="utf-8"))
+        cls.terminal = json.loads(TERMINAL.read_text(encoding="utf-8"))
+        cls.terminal_handoff = TERMINAL_HANDOFF.read_text(encoding="utf-8")
 
     def test_separate_read_only_preflight_is_removed(self) -> None:
         self.assertFalse(
@@ -84,9 +91,12 @@ class AzureAiLiveActivationTests(unittest.TestCase):
     def test_static_ci_cannot_authenticate_to_azure(self) -> None:
         self.assertIn("id-token: none", self.static_workflow)
         self.assertNotIn("uses: azure/login", self.static_workflow)
-        self.assertIn("python -m unittest infra.tests.test_azure_ai_live_activation -v", self.static_workflow)
+        self.assertIn(
+            "python -m unittest infra.tests.test_azure_ai_live_activation -v",
+            self.static_workflow,
+        )
 
-    def test_iac_is_entra_only_and_still_fail_closed_outside_live_workflow(self) -> None:
+    def test_iac_is_entra_only_and_fail_closed_outside_live_workflow(self) -> None:
         self.assertIn("param deployAzureAi bool = false", self.root_bicep)
         self.assertIn("param assignInferenceRole bool = false", self.root_bicep)
         self.assertIn("param deployAzureAi = false", self.parameters)
@@ -97,28 +107,72 @@ class AzureAiLiveActivationTests(unittest.TestCase):
         self.assertIn("versionUpgradeOption: 'NoAutoUpgrade'", self.module_bicep)
         self.assertIn("raiPolicyName: 'Microsoft.Default'", self.module_bicep)
 
-    def test_contract_records_direct_activation_authority_without_claiming_success(self) -> None:
+    def test_subscription_root_targets_the_new_resource_group_explicitly(self) -> None:
+        self.assertIn(
+            "resource azureAiResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01'",
+            self.root_bicep,
+        )
+        self.assertIn("scope: resourceGroup(resourceGroupName)", self.root_bicep)
+        self.assertIn("dependsOn:", self.root_bicep)
+        self.assertIn("azureAiResourceGroup", self.root_bicep)
+        self.assertNotIn("scope: resourceGroup!", self.root_bicep)
+
+    def test_contract_records_consumed_run1_without_claiming_live_service(self) -> None:
         self.assertEqual(
             self.contract["status"],
-            "direct_go_live_candidate_merge_trigger_not_executed",
+            "go_live_run1_consumed_failed_before_resource_creation",
         )
         execution = self.contract["execution"]
-        self.assertFalse(execution["azure_authentication_performed"])
-        self.assertFalse(execution["azure_mutation_performed"])
+        self.assertTrue(execution["azure_authentication_performed"])
+        self.assertTrue(execution["azure_query_performed"])
+        self.assertEqual(execution["provider_final_registration_state"], "Registered")
+        self.assertFalse(execution["resource_mutation_performed"])
+        self.assertFalse(execution["resource_group_created"])
+        self.assertFalse(execution["openai_account_created"])
+        self.assertFalse(execution["model_deployment_created"])
+        self.assertFalse(execution["role_assignment_created"])
         self.assertFalse(execution["model_request_performed"])
+        self.assertFalse(execution["service_verified_live"])
+
         authority = self.contract["authority"]
-        self.assertTrue(authority["pull_request_merge_authorized"])
-        self.assertTrue(authority["merge_triggered_workflow_authorized"])
-        self.assertTrue(authority["azure_authentication_authorized"])
-        self.assertTrue(authority["azure_query_authorized"])
-        self.assertTrue(authority["azure_mutation_authorized"])
-        self.assertTrue(authority["rbac_mutation_authorized"])
-        self.assertTrue(authority["model_deployment_authorized"])
-        self.assertTrue(authority["one_bounded_model_request_authorized"])
+        self.assertEqual(
+            authority["original_live_attempt_status"],
+            "consumed_failed_terminal",
+        )
+        self.assertTrue(authority["repair_repository_changes_authorized"])
+        self.assertTrue(authority["repair_exact_head_ci_authorized"])
+        self.assertFalse(authority["repair_pull_request_merge_authorized"])
+        self.assertFalse(authority["new_workflow_run_authorized"])
         self.assertFalse(authority["manual_rerun_authorized"])
         self.assertFalse(authority["cleanup_authorized"])
 
-    def test_reconciliation_preserves_post_pr194_boundary(self) -> None:
+    def test_terminal_reconciliation_preserves_exact_failure_boundary(self) -> None:
+        self.assertEqual(self.terminal["workflow_run"]["run_id"], 30419992872)
+        self.assertEqual(self.terminal["workflow_run"]["conclusion"], "failure")
+        self.assertEqual(
+            self.terminal["terminal_failure"]["azure_error_code"],
+            "InvalidScope",
+        )
+        sequence = self.terminal["attempt_sequence"]
+        self.assertEqual(sequence["canadaeast_what_if"], "failed_invalid_scope")
+        self.assertEqual(sequence["eastus2_what_if"], "failed_invalid_scope")
+        self.assertEqual(sequence["subscription_deployment"], "not_started")
+        deployed = self.terminal["deployed_reality"]
+        self.assertFalse(deployed["resource_group_created_by_run"])
+        self.assertFalse(deployed["azure_openai_account_created_by_run"])
+        self.assertFalse(deployed["model_deployment_created_by_run"])
+        self.assertFalse(deployed["model_request_performed"])
+        self.assertFalse(deployed["endpoint_live"])
+        self.assertEqual(
+            self.terminal["authorization"]["status"],
+            "consumed_failed_terminal",
+        )
+        self.assertFalse(
+            self.terminal["authorization"]["manual_rerun_authorized"]
+        )
+        self.assertIn("failed_run != authorization_to_rerun", self.terminal_handoff)
+
+    def test_historical_plan_reconciliation_remains_time_bounded(self) -> None:
         github = self.reconciliation["github_state"]
         self.assertEqual(
             github["observed_main"],
