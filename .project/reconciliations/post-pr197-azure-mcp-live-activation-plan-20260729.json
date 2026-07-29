@@ -1,0 +1,76 @@
+{
+  "schema_version": "project.reconciliation.azure-mcp-live-activation-plan.v2",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-28T23:49:25-04:00",
+  "repository_baseline": {
+    "observed_main": "e00d3af08d179f8af945ade689a44e9adfa00da9",
+    "latest_merged_pull_request": 197,
+    "latest_merged_change": "Repair Azure AI resource-group deployment scope",
+    "azure_ai_run1_status": "consumed_failed_terminal_before_resource_creation",
+    "candidate_branch": "agent/azure-mcp-live-fix-v2",
+    "superseded_candidate_branch": "agent/azure-mcp-live-fix",
+    "unintended_probe_commit": "85464ce1233bd00aaa52bbb82d45e0494fd7cbb0",
+    "corrective_commit": "d4060ba69ba55db414cf7eb0d8b29b65d0244fd0",
+    "unintended_probe_file_present_after_correction": false,
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "preserved_azure_evidence": {
+    "subscription": "Azure for Students",
+    "tenant_fingerprint": "sha256:26ba6e04f1a9cde8b97b64734498f4cbe81d5dcbf7b0f451d81570817c2967bc",
+    "location": "westus2",
+    "mcp_resource_group": "not_present_at_preflight",
+    "target_resource_group": "rg-servicetracer-dev-westus2",
+    "Microsoft.App": "NotRegistered_at_preflight",
+    "actual_cost_cad": "not_observed"
+  },
+  "candidate": {
+    "contract": ".project/contracts/azure-mcp-live-activation-v1.json",
+    "scope_contract": ".project/contracts/azure-mcp-live-scope-v1.json",
+    "workflow": ".github/workflows/azure-mcp-live-deploy.yml",
+    "azure_bicep": "infra/azure-mcp-live/main.bicep",
+    "entra_bicep": "infra/azure-mcp-live/entra.bicep",
+    "parameters": "infra/azure-mcp-live/main.bicepparam",
+    "authorization_control": ".github/workflows/durable-authorization-claim-v2.yml",
+    "authorization_request": ".project/deployment-requests/azure-mcp-live-run1.json"
+  },
+  "control_repairs": {
+    "authorization_v1_commit_self_reference": "replaced_by_reviewed_source_plus_exact_request_only_tree_delta",
+    "gallery_alias": "not_used_for_deployment",
+    "moving_container_tag": "replaced_by_sha256_digest",
+    "subscription_reader": "replaced_by_Reader_at_rg-servicetracer-dev-westus2",
+    "readwrite_scope_name": "replaced_by_Mcp.Tools.Read",
+    "application_without_service_principal": "application_and_home_tenant_service_principal_declared",
+    "graph_what_if_unsupported": "Azure_resources_previewed_separately_before_Graph_deployment",
+    "namespaces": "compute_and_monitor_only_to_match_resource_group_scoped_Reader",
+    "sample_client_registration": "not_created",
+    "telemetry_export": false,
+    "runtime_scale": "0_to_1"
+  },
+  "execution_state": {
+    "exact_head_ci": "pending",
+    "merged": false,
+    "authorization_request_status": "draft_not_authorized",
+    "workflow_dispatched": false,
+    "provider_registered": false,
+    "resource_group_created": false,
+    "rbac_assigned": false,
+    "entra_application_created": false,
+    "entra_service_principal_created": false,
+    "container_app_deployed": false,
+    "endpoint_verified": false,
+    "authenticated_tool_call_verified": false
+  },
+  "authority": {
+    "human_instruction": "Fix",
+    "repository_candidate_authorized": true,
+    "ordinary_exact_head_ci_authorized": true,
+    "pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": true,
+    "single_workflow_dispatch_authorized_after_exact_green_merge": true,
+    "attempt_limit": 1,
+    "automatic_retry_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "next_gate": "Pass exact-head CI for the rebased implementation, activate the request as the only tree delta from that exact green source, pass CI again, merge, then dispatch exactly once with the typed request confirmation."
+}
