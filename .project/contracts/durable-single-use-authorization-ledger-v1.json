@@ -4,7 +4,7 @@
     "collector_workflow_restored": false,
     "concurrent_claim_test_performed": false,
     "live_claim_test_performed": false,
-    "merged_to_main": false,
+    "merged_to_main": true,
     "ruleset_configured": false,
     "ruleset_independently_inspected": false
   },
@@ -17,13 +17,18 @@
     "pull_request_merge": false,
     "rbac_mutation": false,
     "repository_branch_changes": true,
+    "repository_ruleset_mutation": false,
     "rollback": false,
-    "ruleset_mutation": false,
     "tag_claim_execution": false,
     "workflow_dispatch": false,
     "workflow_rerun": false
   },
   "base_main": "ca994ce53642587bea370bee1c5a0633faaaece8",
+  "exact_head_ci": {
+    "conclusion": "success",
+    "run_id": 30389249099,
+    "source_head": "138659609b15ef80f6cce12d916e26382ab71205"
+  },
   "file_scope": [
     ".github/workflows/durable-authorization-claim-v1.yml",
     "infra/scripts/authority_claim.py",
@@ -46,18 +51,24 @@
     "reference_update_delete_or_force_path": false,
     "uuidv7_request_identifier": true
   },
+  "merge": {
+    "merge_commit": "30e312ef5122831a8233835db2f541437a97b125",
+    "merged_at": "2026-07-28T22:26:39Z",
+    "pull_request": 186
+  },
   "name": "Durable single-use deployment authorization ledger v1",
-  "next_gate": "Review exact-head CI and the complete diff, then obtain separate authority to configure the protected tag ruleset and run one bounded non-production concurrent-claim test. Azure workflow restoration remains a later independent gate.",
-  "objective": "Implement the deterministic immutable-request verifier and no-OIDC atomic Git-reference claim workflow without restoring or invoking any Azure-capable workflow.",
+  "next_gate": "Review the merged implementation and canonical reconciliation, then obtain separate authority to configure and independently inspect the protected tag ruleset and run bounded non-production first-claim, replay, and concurrent-claim tests. Azure workflow restoration remains a later independent gate.",
+  "objective": "Provide a deterministic immutable-request verifier and no-OIDC atomic Git-reference claim workflow without restoring or invoking any Azure-capable workflow.",
   "owned_branch": "agent/durable-single-use-authorization-ledger-v1",
-  "schema_version": "project.durable-single-use-authorization-ledger-contract.v1",
-  "status": "implementation_candidate_not_activated",
+  "schema_version": "project.durable-single-use-authorization-ledger-contract.v2",
+  "status": "implementation_merged_not_activated",
   "verification_criteria": [
     "valid request yields one deterministic claim reference",
     "tampered, expired, inactive, consumed, authorization-commit-mismatched, repository-mismatched, workflow-mismatched, or authority-broadened requests fail closed",
     "reviewed source must exist as a commit and be an ancestor of the exact authorization commit",
     "workflow contains no OIDC-write permission, Azure login, Azure CLI operation, workflow dispatch, rerun, reference update, or reference deletion",
     "target and operation values originate only from the immutable request and are exposed as claim outputs for any future downstream job",
-    "exact-head ordinary CI passes"
+    "exact-head ordinary CI passes",
+    "protected tag ruleset and live race behaviour remain independently unverified until separately authorized tests are performed"
   ]
 }

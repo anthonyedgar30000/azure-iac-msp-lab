@@ -1,0 +1,177 @@
+{
+  "schema_version": "project.reconciliation.post-pr190-repository-and-mcp.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-28T20:07:06-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "observation_boundary": "Repository-only observation after pull requests 188 and 190 merged. No workflow dispatch, rerun, live authorization claim, repository-ruleset inspection or mutation, Azure authentication, Azure query, Azure mutation, deployment, rollback, cleanup, RBAC change, OpenAI API execution, GitHub Pages publication check, browser verification, or runtime verification was performed.",
+  "github_state": {
+    "default_branch": "main",
+    "observed_main": "bae07d24c59f7bc02001a168c7c6aac188ff2747",
+    "latest_merged_pull_request": 190,
+    "latest_merged_source_head": "e7e4fc3e169a054789250062bcee8b3293561aa7",
+    "latest_merge_commit": "bae07d24c59f7bc02001a168c7c6aac188ff2747",
+    "latest_merged_at": "2026-07-28T23:59:01Z",
+    "open_pull_requests_observed": [189],
+    "merge_commit_pr_triggered_ci": "not_observed",
+    "local_working_tree": "not_observed_connector_backed",
+    "pull_request_188": {
+      "title": "Reconcile PR 186 and 187 authorization-control state",
+      "source_head": "8e0ff4a311feef03f440fbb11fa8fcd01695adae",
+      "merge_commit": "df2cb95c2309d22220ab33f15768558dfc294e15",
+      "merged_at": "2026-07-28T23:58:38Z",
+      "exact_head_ci_run": 30408759750,
+      "exact_head_ci_conclusion": "success",
+      "merged": true
+    },
+    "pull_request_190": {
+      "title": "Add governed Azure MCP read-only preflight",
+      "source_head": "e7e4fc3e169a054789250062bcee8b3293561aa7",
+      "merge_commit": "bae07d24c59f7bc02001a168c7c6aac188ff2747",
+      "merged_at": "2026-07-28T23:59:01Z",
+      "exact_head_ci_runs": {
+        "ci": {
+          "run_id": 30409464240,
+          "conclusion": "success"
+        },
+        "azure_mcp_architecture_and_cloud_shell_plan": {
+          "run_id": 30409464252,
+          "conclusion": "success"
+        }
+      },
+      "merged": true
+    },
+    "pull_request_189": {
+      "title": "Reconcile canonical repository state through PR 187",
+      "state": "open_stale_nonmergeable",
+      "head_sha": "0393efbec8ed087032a2810ec473bbbc301834c7",
+      "merge_base": "07f32b59eda11b5a3627d398f1ffca00c8c88e69",
+      "ahead_of_current_main_by_commits": 9,
+      "behind_current_main_by_commits": 13,
+      "superseded_by_workstream": "agent/reconcile-post-pr190-watermark-v2"
+    }
+  },
+  "authorization_control_state": {
+    "classification": "implemented_on_main_inactive_not_operationally_verified",
+    "implementation_pull_request": 186,
+    "implementation_source_head": "138659609b15ef80f6cce12d916e26382ab71205",
+    "implementation_merge_commit": "30e312ef5122831a8233835db2f541437a97b125",
+    "implementation_exact_head_ci_run": 30389249099,
+    "implementation_exact_head_ci_conclusion": "success",
+    "post_merge_reconciliation_pull_request": 188,
+    "protected_consumption_ruleset": "not_observed",
+    "live_first_claim": "not_observed",
+    "live_replay_rejection": "not_observed",
+    "concurrent_duplicate_claim_proof": "not_observed",
+    "collector_workflow_restored": false,
+    "azure_execution_enabled": false,
+    "operationally_verified": false
+  },
+  "azure_mcp_preflight_state": {
+    "classification": "implemented_on_main_not_dispatched",
+    "implementation_pull_request": 190,
+    "implementation_source_head": "e7e4fc3e169a054789250062bcee8b3293561aa7",
+    "implementation_merge_commit": "bae07d24c59f7bc02001a168c7c6aac188ff2747",
+    "workflow": ".github/workflows/azure-mcp-read-only-preflight.yml",
+    "contract": ".project/contracts/azure-mcp-read-only-preflight-workflow-v1.json",
+    "script": "scripts/azure_mcp_cloud_shell_preflight.sh",
+    "runbook": "docs/runbooks/azure-mcp-read-only-github-preflight.md",
+    "manual_dispatch_only": true,
+    "exact_reviewed_commit_required": true,
+    "explicit_confirmation_required": true,
+    "oidc_environment": "azure-lab",
+    "azure_mutation_entry_point_present": false,
+    "openai_api_entry_point_present": false,
+    "workflow_dispatch_observed": false,
+    "azure_authentication_observed": false,
+    "fresh_azure_query_observed": false,
+    "template_source_pinned": false,
+    "endpoint_deployed": false,
+    "openai_client_connected": false
+  },
+  "collector_containment_state": {
+    "workflow": ".github/workflows/collector-demo-api.yml",
+    "classification": "quarantined_fail_closed_on_main",
+    "id_token_permission_present": false,
+    "azure_environment_present": false,
+    "azure_login_present": false,
+    "executable_azure_commands_present": false,
+    "restored": false
+  },
+  "stale_snapshot_resolution": {
+    "current_reality": {
+      "path": ".project/current-reality-v2.json",
+      "recorded_at": "2026-07-28T15:04:23-04:00",
+      "treatment": "preserve as a time-bounded Azure and runtime evidence snapshot; this reconciliation supersedes repository lifecycle and MCP implementation claims"
+    },
+    "completion_gate": {
+      "path": ".project/lab-v1-completion-gate-v2.json",
+      "recorded_at": "2026-07-28T15:04:23-04:00",
+      "treatment": "preserve Lab v1 criteria and historical evidence; resolve current repository and control lifecycle through this reconciliation"
+    },
+    "current_handoff": {
+      "path": ".project/handoffs/current-state.md",
+      "recorded_at": "2026-07-28T15:04:23-04:00",
+      "treatment": "preserve as historical handoff; use .project/handoffs/post-pr190-current-state.md for the current repository boundary"
+    },
+    "durable_authorization_contract": {
+      "path": ".project/contracts/durable-single-use-authorization-ledger-v1.json",
+      "prior_stale_claim": "merged_to_main=false",
+      "resolution": "updated to implementation_merged_not_activated"
+    }
+  },
+  "azure_boundary": {
+    "fresh_live_query_performed": false,
+    "runtime_truth_changed_by_this_reconciliation": false,
+    "actual_cost_freshly_observed": false,
+    "Azure_resource_change_claimed": false,
+    "Azure_quota_change_claimed": false,
+    "expected_recurring_cost_delta_CAD": 0
+  },
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "branch_creation_authorized": true,
+    "declared_file_writes_authorized": true,
+    "draft_pull_request_creation_authorized": true,
+    "ordinary_pull_request_ci_authorized": true,
+    "supersede_stale_pull_request_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_or_rerun_authorized": false,
+    "live_authorization_claim_authorized": false,
+    "repository_ruleset_mutation_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "deployment_authorized": false,
+    "openai_api_execution_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false,
+    "rbac_mutation_authorized": false
+  },
+  "claim_boundaries": [
+    "repository_implementation_merged != operational_execution_observed",
+    "workflow_on_main != workflow_dispatched",
+    "azure_authentication_configured != azure_authentication_performed",
+    "template_hashed != template_source_pinned",
+    "preflight_passed != endpoint_deployed",
+    "endpoint_deployed != openai_client_connected",
+    "control_implemented_on_main != control_activated",
+    "exact_head_CI_success != integrated_main_CI_observed",
+    "repository_reconciliation != Azure_freshly_observed",
+    "stale_snapshot_lifecycle != live_repository_state",
+    "not_observed != false"
+  ],
+  "next_gate": {
+    "operation": "review this repository-only reconciliation through ordinary exact-head pull-request CI",
+    "merge_allowed": false,
+    "workflow_dispatch_allowed": false,
+    "ruleset_mutation_allowed": false,
+    "live_claim_allowed": false,
+    "Azure_operation_allowed": false,
+    "OpenAI_API_execution_allowed": false,
+    "fresh_authority_required_for_merge": true,
+    "fresh_authority_required_for_read_only_mcp_preflight_dispatch": true,
+    "fresh_authority_required_for_ruleset_configuration": true,
+    "fresh_authority_required_for_live_claim_testing": true,
+    "fresh_authority_required_for_any_Azure_operation": true
+  }
+}

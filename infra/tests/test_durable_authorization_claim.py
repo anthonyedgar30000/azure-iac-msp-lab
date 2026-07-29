@@ -172,19 +172,29 @@ class DurableAuthorizationClaimTests(unittest.TestCase):
         self.assertLess(replay_error, evidence)
         self.assertIn("exit 1", workflow[atomic_create:evidence])
 
-    def test_contract_keeps_activation_and_azure_restoration_blocked(self) -> None:
+    def test_contract_records_merge_while_activation_and_azure_remain_blocked(self) -> None:
         contract = self.contract
         self.assertEqual(
             contract["status"],
-            "implementation_candidate_not_activated",
+            "implementation_merged_not_activated",
         )
+        self.assertTrue(contract["activation"]["merged_to_main"])
         self.assertFalse(contract["activation"]["ruleset_configured"])
+        self.assertFalse(contract["activation"]["ruleset_independently_inspected"])
         self.assertFalse(contract["activation"]["live_claim_test_performed"])
         self.assertFalse(contract["activation"]["concurrent_claim_test_performed"])
         self.assertFalse(contract["activation"]["collector_workflow_restored"])
+        self.assertFalse(contract["activation"]["azure_execution_enabled"])
+        self.assertFalse(contract["authority"]["repository_ruleset_mutation"])
+        self.assertFalse(contract["authority"]["tag_claim_execution"])
         self.assertFalse(contract["authority"]["azure_authentication"])
         self.assertFalse(contract["authority"]["workflow_dispatch"])
-        self.assertIn("not merged or activated", self.design.lower())
+        self.assertEqual(contract["merge"]["pull_request"], 186)
+        self.assertEqual(
+            contract["merge"]["merge_commit"],
+            "30e312ef5122831a8233835db2f541437a97b125",
+        )
+        self.assertIn("merged, not activated", self.design.lower())
 
 
 if __name__ == "__main__":

@@ -1,10 +1,11 @@
 {
   "schema_version": "project.state-index.v5",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-28T19:30:04-04:00",
+  "recorded_at": "2026-07-28T20:07:06-04:00",
   "canonical_current_reality": ".project/current-reality-v2.json",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
   "canonical_handoff": ".project/handoffs/current-state.md",
+  "latest_repository_handoff": ".project/handoffs/post-pr190-current-state.md",
   "latest_verified_reconciliation": ".project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json",
   "latest_terminal_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
   "latest_deployment_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
@@ -14,12 +15,16 @@
   "latest_repository_watermark_reconciliation": ".project/reconciliations/post-pr185-repository-watermark-20260728.json",
   "latest_lifecycle_reconciliation": ".project/reconciliations/post-pr187-authorization-control-reconciliation-20260728.json",
   "latest_authorization_control_reconciliation": ".project/reconciliations/post-pr187-authorization-control-reconciliation-20260728.json",
+  "latest_repository_and_mcp_reconciliation": ".project/reconciliations/post-pr190-repository-and-mcp-reconciliation-20260728.json",
   "previous_repository_reconciliation": ".project/reconciliations/post-pr183-repository-watermark-20260728.json",
   "current_containment_reconciliation": ".project/reconciliations/post-pr182-containment-20260727.json",
   "replacement_authorization_design": ".project/designs/durable-single-use-authorization-ledger-v1.md",
+  "replacement_authorization_contract": ".project/contracts/durable-single-use-authorization-ledger-v1.json",
+  "azure_mcp_preflight_contract": ".project/contracts/azure-mcp-read-only-preflight-workflow-v1.json",
   "active_deployment_authorization": null,
   "consumed_deployment_authorization": ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json",
   "latest_consumed_deployment_authorization": ".project/deployment-requests/correlation-identity-run1.json",
+  "superseded_open_pull_request": 189,
   "historical_reconciliations": [
     {
       "path": ".project/reconciliations/collector-provenance-deployment-run19-20260726.json",
@@ -52,7 +57,7 @@
       ]
     }
   ],
-  "selection_rule": "Operational consumers must resolve canonical paths, the preserved preflight, the latest terminal reconciliation, the historical repository watermark reconciliation, the latest lifecycle reconciliation, the latest authorization-control reconciliation, current live GitHub state, and current authorization status before every write, merge, dispatch, authentication, ruleset change, live claim, or cloud action.",
+  "selection_rule": "Operational consumers must resolve the latest repository-and-MCP reconciliation and latest repository handoff first, then the preserved canonical current reality and completion gate, the latest terminal reconciliation, the latest authorization-control reconciliation, current live GitHub state, and current authorization status before every write, merge, dispatch, authentication, ruleset change, live claim, OpenAI API call, or cloud action.",
   "claim_boundaries": [
     "legacy_filename != current_authority",
     "historical_snapshot != live_state",
@@ -67,6 +72,11 @@
     "repository_setting_not_observed != false",
     "main_contains_frontend_implementation != GitHub_Pages_publication_observed",
     "architecture_explained != runtime_proof_manufactured",
+    "workflow_on_main != workflow_dispatched",
+    "azure_authentication_configured != azure_authentication_performed",
+    "template_hashed != template_source_pinned",
+    "preflight_passed != endpoint_deployed",
+    "endpoint_deployed != OpenAI_client_connected",
     "workflow_conclusion != live_service_truth",
     "deployment_succeeded != authority_valid",
     "issue_comment_consumption_record != enforced_single_use",
