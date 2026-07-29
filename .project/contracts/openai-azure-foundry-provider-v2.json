@@ -1,0 +1,118 @@
+{
+  "schema_version": "project.openai-azure-foundry-provider.v2",
+  "status": "verified_runtime_wired_repository_candidate",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T06:07:00-04:00",
+  "source_instruction": "reconcile and wire it.",
+  "repository_baseline": {
+    "base_branch": "main",
+    "base_commit": "017c1145200cb252aef7f0233418bbe25d8cacee",
+    "latest_merged_pull_request": 207,
+    "open_pull_requests_observed_before_branch": [],
+    "candidate_branch": "agent/reconcile-wire-azure-ai-runtime",
+    "local_working_tree_observed": false,
+    "repository_operations": "connector_backed"
+  },
+  "objective": "Reconcile consumed Azure AI run 6 with the separately verified gpt-5-mini runtime and provide a repeatable Entra-authenticated OpenAI SDK invocation path without creating or modifying Azure resources.",
+  "verified_runtime": {
+    "evidence_source": "user-provided Azure portal and Cloud Shell screenshots in the active conversation",
+    "base_url": "https://anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/",
+    "deployment_name": "gpt-5-mini",
+    "api": "Responses API",
+    "authentication": "Microsoft Entra bearer token obtained by Azure CLI",
+    "response_status": "completed",
+    "expected_output": "AZURE ENTRA CONNECTED",
+    "expected_output_observed": true,
+    "usage": {
+      "input_tokens": 16,
+      "output_tokens": 24,
+      "total_tokens": 40
+    },
+    "api_key_required_for_verified_path": false,
+    "openai_public_api_called": false,
+    "azure_mcp_connected": false
+  },
+  "unknown_or_not_established": {
+    "tenant_id": "not_persisted",
+    "subscription_id": "not_persisted",
+    "azure_resource_arm_id": "not_freshly_observed",
+    "resource_group": "not_freshly_observed_for_verified_endpoint",
+    "region": "not_freshly_observed_for_verified_endpoint",
+    "model_version": "not_freshly_observed",
+    "deployment_sku": "not_freshly_observed",
+    "deployment_capacity": "not_freshly_observed",
+    "effective_runtime_role_assignment": "successful_data_plane_call_proves_access_for_the_Cloud_Shell_identity_but_exact_role_assignment_not_captured",
+    "actual_cost_cad": "unknown"
+  },
+  "repository_wiring": {
+    "runtime_profile": "config/azure-openai-runtime.dev.sh",
+    "provider_config": "openai_azure_provider/config.py",
+    "provider_client": "openai_azure_provider/client.py",
+    "explicit_invocation_cli": "openai_azure_provider/invoke.py",
+    "default_reasoning_effort_for_smoke_test": "minimal",
+    "default_max_output_tokens_for_smoke_test": 128,
+    "sdk_retries_default": 0,
+    "api_key_configuration_rejected": true
+  },
+  "identity_and_permissions": {
+    "verified_identity_class": "interactive Azure Cloud Shell identity",
+    "application_runtime_identity": "not_selected",
+    "github_oidc_data_plane_access": "not_established",
+    "new_role_assignment_authorized": false,
+    "rbac_mutation_performed": false
+  },
+  "network_path": {
+    "source": "Azure Cloud Shell for verified call",
+    "destination": "anthonyedgar30000-5982-resource.openai.azure.com",
+    "transport": "HTTPS",
+    "path": "/openai/v1/responses",
+    "private_endpoint": "not_established",
+    "public_network_access": "inferred_reachable_but_ARM_setting_not_freshly_observed"
+  },
+  "security": {
+    "secrets_in_repository": false,
+    "api_key_in_runtime_profile": false,
+    "access_token_persisted": false,
+    "interactive_browser_authentication_in_provider": false,
+    "bounded_non_sensitive_smoke_prompt": true,
+    "automatic_retry": false,
+    "previous_api_key_exposure": "observed_in_conversation_screenshot",
+    "api_key_rotation_completion": "not_established",
+    "recommended_follow_up": "verify exposed key rotation and evaluate disabling local authentication after confirming all required clients use Entra ID"
+  },
+  "cost_and_quota": {
+    "successful_verified_call_count": 1,
+    "successful_verified_call_total_tokens": 40,
+    "actual_cost_cad": "unknown",
+    "quota_for_verified_deployment": "not_freshly_observed",
+    "recurring_cost_delta_from_repository_wiring_cad": 0
+  },
+  "authority": {
+    "repository_branch_and_files_authorized": true,
+    "pull_request_creation_authorized": true,
+    "ordinary_exact_head_ci_authorized": true,
+    "azure_authentication_authorized_by_this_increment": false,
+    "azure_query_authorized_by_this_increment": false,
+    "azure_mutation_authorized": false,
+    "model_call_authorized_by_this_increment": false,
+    "workflow_rerun_authorized": false,
+    "rbac_mutation_authorized": false,
+    "mcp_connection_authorized": false,
+    "cleanup_authorized": false
+  },
+  "canonical_distinctions": [
+    "run6_failed != verified_runtime_failed",
+    "run6_target_account != verified_runtime_endpoint",
+    "Cloud_Shell_identity_access != GitHub_OIDC_identity_access",
+    "endpoint_verified != ARM_resource_identity_fully_reconciled",
+    "model_response_succeeded != Azure_MCP_connected",
+    "runtime_profile_committed != secret_committed",
+    "repository_wired != merged_and_reexecuted",
+    "one_successful_call != ongoing_service_validation"
+  ],
+  "rollback_and_cleanup": {
+    "repository_rollback": "revert the runtime profile, invocation CLI, documentation, tests, and state reconciliation",
+    "access_rollback": "revoke the selected runtime identity's inference permission in a separately authorized change",
+    "azure_resource_cleanup": "not authorized and not required by this repository-only increment"
+  }
+}

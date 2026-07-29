@@ -1,21 +1,29 @@
-# OpenAI SDK to Microsoft Foundry provider scaffold
+# OpenAI SDK to Microsoft Foundry provider
 
 ## Status
 
-This increment adds a **repository-only provider scaffold**.
+The provider has moved beyond a repository-only scaffold. A separate Azure Cloud
+Shell call verified a live Azure OpenAI Responses path using Microsoft Entra ID:
 
 ```text
-Azure AI resource deployed = not established
-model deployment created = not established
-OpenAI SDK client configured at runtime = false
-Microsoft Entra authentication performed = false
-model request performed = false
-Azure MCP endpoint deployed = false
-Azure MCP client connected = false
+base URL = https://anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/
+deployment = gpt-5-mini
+Responses status = completed
+output = AZURE ENTRA CONNECTED
+usage = 16 input + 24 output = 40 total tokens
+API key used = false
+Azure MCP connected = false
 ```
 
-No Azure resource, identity, role assignment, secret, budget, network path, model
-deployment, or API request is created by this increment.
+The repository now contains a non-secret runtime profile and an explicit invocation
+CLI. This wiring is a repository candidate until merged and revalidated from the
+intended application runtime.
+
+Run 6 remains a separate consumed terminal failure. It targeted
+`oai-msp-anthony-dev-eastus/gpt-41-mini-msp-dev` and stopped during pre-mutation
+What-If because the GitHub OIDC principal lacked role-assignment write permission.
+No deployment or model call occurred in run 6. The successful gpt-5-mini call does
+not retroactively make run 6 successful.
 
 ## Purpose
 
@@ -26,7 +34,8 @@ operations authority, and MCP connectivity as separate gates.
 ```text
 application
 → OpenAI Python SDK
-→ Azure OpenAI / Foundry /openai/v1 endpoint
+→ Microsoft Entra token provider
+→ Azure OpenAI /openai/v1 endpoint
 → named Azure model deployment
 ```
 
@@ -46,7 +55,32 @@ model_response_succeeded != Azure_MCP_connected
 Azure_model_provider != Azure_operations_authority
 read_only_intent != effective_least_privilege
 no_API_key != no_identity_or_RBAC_requirement
+run6_failed != verified_runtime_failed
+run6_target_account != verified_runtime_endpoint
+Cloud_Shell_identity_access != GitHub_OIDC_identity_access
+repository_wired != merged_and_reexecuted
 ```
+
+## Verified non-secret runtime profile
+
+The checked-in profile contains only public configuration:
+
+```text
+config/azure-openai-runtime.dev.sh
+```
+
+It sets:
+
+```text
+AZURE_OPENAI_BASE_URL=https://anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/
+AZURE_OPENAI_MODEL_DEPLOYMENT=gpt-5-mini
+AZURE_OPENAI_TOKEN_SCOPE=https://ai.azure.com/.default
+AZURE_OPENAI_TIMEOUT_SECONDS=30
+AZURE_OPENAI_MAX_RETRIES=0
+```
+
+No API key, access token, tenant ID, subscription ID, or principal identifier is
+stored in the profile.
 
 ## Configuration contract
 
@@ -74,7 +108,9 @@ The provider:
 - rejects `AZURE_OPENAI_API_KEY`;
 - pins the Microsoft Entra token scope;
 - disables SDK retries by default so an execution attempt is not silently
-  multiplied.
+  multiplied;
+- validates optional reasoning effort as `minimal`, `low`, `medium`, or `high`;
+- performs model execution only through an explicit function or CLI invocation.
 
 ## Identity and permissions
 
@@ -83,74 +119,143 @@ authentication excluded and supplies a bearer-token provider to the OpenAI SDK.
 The runtime identity must separately receive only the Azure role required to
 invoke the selected model deployment.
 
+The verified call establishes that the Cloud Shell identity had effective
+permission at that moment. It does not establish the exact role assignment or
+prove that the GitHub OIDC identity, a managed identity, or a future application
+identity has the same access.
+
 Constructing the client does not prove that any credential in the chain can
 authenticate, that the principal has access, or that the deployment exists.
 
+## Explicit invocation
+
+Install the pinned dependencies and load the non-secret profile:
+
+```bash
+python -m pip install -r requirements/openai-azure-provider.txt
+source config/azure-openai-runtime.dev.sh
+```
+
+Then make one bounded call:
+
+```bash
+python -m openai_azure_provider.invoke \
+  --input 'Reply with exactly: AZURE ENTRA CONNECTED' \
+  --expect-exact 'AZURE ENTRA CONNECTED'
+```
+
+The CLI defaults to:
+
+```text
+reasoning.effort = minimal
+max_output_tokens = 128
+SDK retries = 0
+prompt classification = bounded_non_sensitive_demo
+```
+
+It emits a JSON receipt containing endpoint host/path, deployment, response status,
+output text, usage, latency, and the explicit statements that no API key or MCP
+connection was used. It does not print access tokens.
+
+Each CLI invocation performs exactly one model request. A failed exact-output check
+returns exit code 2 and does not trigger a retry.
+
 ## Network path
 
-A future runtime invocation requires outbound HTTPS from the application to the
-selected Azure AI endpoint. Private endpoint, public-network access, DNS,
-firewall, egress, and certificate behavior remain unselected and unverified.
+The verified network path was Azure Cloud Shell outbound HTTPS to:
+
+```text
+anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/responses
+```
+
+The ARM-level public-network setting, private endpoint state, DNS design, firewall
+configuration, and intended application egress path have not yet been freshly
+observed for this endpoint.
 
 ## Security controls
 
-- Microsoft Entra authentication only in this scaffold;
-- no API key accepted by configuration;
-- no secret values in plans, tests, documentation, or `.project/`;
+- Microsoft Entra authentication for the verified and wired path;
+- no API key accepted by provider configuration;
+- no secret values in plans, tests, documentation, runtime profile, or `.project/`;
 - strict endpoint validation;
 - zero SDK retries by default;
 - no network call during module import, configuration loading, plan generation,
   or client construction;
-- model execution occurs only through the explicit `create_response` function.
+- model execution only through the explicit `create_response` function or
+  `openai_azure_provider.invoke` CLI;
+- bounded reasoning and output-token settings for the smoke test;
+- Azure MCP and Azure mutation authority remain absent.
 
-Prompt content and model output remain data-governance concerns. This scaffold
-does not authorize protected Azure evidence or customer information to be sent
-to a model.
+An API key was exposed in an earlier screenshot. Rotation was requested, but its
+completion is not established by current evidence. The successful keyless Entra
+path avoids relying on that key. Verify rotation and consider disabling local
+authentication after confirming every required client uses Entra ID.
+
+Prompt content and model output remain data-governance concerns. This wiring does
+not authorize protected Azure evidence, secrets, customer data, or regulated
+information to be sent to a model.
 
 ## Cost and quota
 
-Repository-only recurring Azure cost delta: **CAD $0**.
+The verified successful call used 40 total tokens. Actual Azure cost in CAD was not
+observed. Repository wiring adds **CAD $0** in recurring Azure resource cost.
 
-Actual Azure AI pricing, model availability, token quota, regional capacity,
-subscription eligibility, and current spend were not freshly observed. They
-must be captured before model deployment or execution.
+The verified deployment's current quota, model version, SKU, capacity, rate limits,
+and billing meters have not been freshly captured from Azure Resource Manager.
 
 ## Validation
 
+Repository validation:
+
 ```bash
 python -m unittest infra.tests.test_openai_azure_foundry_provider -v
+python -m unittest infra.tests.test_azure_ai_verified_runtime_wire -v
+python -m unittest infra.tests.test_azure_ai_go_live_run6 -v
+python -m py_compile openai_azure_provider/client.py openai_azure_provider/invoke.py
+```
 
-AZURE_OPENAI_BASE_URL='https://example-resource.openai.azure.com/openai/v1/' \
-AZURE_OPENAI_MODEL_DEPLOYMENT='gpt-demo' \
+Non-executing plan:
+
+```bash
+source config/azure-openai-runtime.dev.sh
 python -m openai_azure_provider.plan
 ```
 
-The plan command validates configuration and emits non-secret intent. It does
-not construct a client, obtain a token, or call a model.
+Explicit runtime smoke test:
 
-## Future deployment and execution gates
+```bash
+source config/azure-openai-runtime.dev.sh
+python -m openai_azure_provider.invoke \
+  --input 'Reply with exactly: AZURE ENTRA CONNECTED' \
+  --expect-exact 'AZURE ENTRA CONNECTED'
+```
 
-Before the first model call:
+The plan command validates configuration and emits non-secret intent. It does not
+construct a client, obtain a token, or call a model. The invoke command does all
+three explicitly and requires an already permitted Entra identity.
 
-1. observe the active tenant and subscription;
-2. select and record the Azure AI resource, region, model, deployment name,
-   version, capacity, quota, and cost ceiling;
-3. codify or inspect the Azure resource deployment;
-4. run validation and What-If;
-5. assign the minimum inference role at the narrowest supported scope;
-6. verify DNS and network reachability;
-7. bind execution to a fresh, exact-commit authorization;
-8. make one bounded call;
-9. capture request metadata, response status, deployment identity, token usage,
-   latency, cost estimate, limitations, and redacted evidence;
-10. separately verify that no Azure MCP connection or operational permission was
-    implied by model inference success.
+## Remaining reconciliation gates
+
+Before declaring the verified deployment fully managed by IaC, observe and record:
+
+1. tenant and subscription context without persisting raw identifiers;
+2. Azure resource ARM ID and resource group;
+3. region;
+4. model version;
+5. deployment SKU, capacity, quota, and current cost;
+6. exact effective role assignment for the intended application identity;
+7. local-authentication and public-network settings;
+8. DNS, firewall, private endpoint, and egress behavior;
+9. monitoring, diagnostics, token usage, and alerting;
+10. rollback by access revocation and separately authorized cleanup behavior.
 
 ## Failure, rollback, and cleanup
 
-Repository rollback is to close or revert this scaffold change.
+Credential, RBAC, endpoint, deployment, or response failures must be preserved
+without automatic retry. Repository rollback is an exact revert of the runtime
+profile, invocation CLI, tests, documentation, contract, and reconciliation.
 
-For a future runtime, disable the calling workload or revoke its role assignment
-before considering resource deletion. Access revocation is rollback; deleting
-Azure AI resources, model deployments, private endpoints, DNS records, or
-monitoring data is cleanup and requires separate authority.
+For a runtime, revoke or disable the selected application identity before
+considering resource deletion. Access revocation is rollback; deleting Azure AI
+resources, model deployments, private endpoints, DNS records, or monitoring data
+is cleanup and requires separate authority.
