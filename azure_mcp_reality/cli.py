@@ -4,6 +4,7 @@ import argparse
 import json
 import sys
 
+from .azure_cli_compat import active_subscription_runner
 from .config import ConfigurationError, RealitySettings
 from .observer import ObservationError, observe_current_reality
 
@@ -21,8 +22,11 @@ def main() -> int:
 
     try:
         settings = RealitySettings.from_env()
-        result = observe_current_reality(settings)
-    except (ConfigurationError, ObservationError, OSError) as exc:
+        result = observe_current_reality(
+            settings,
+            runner=active_subscription_runner,
+        )
+    except (ConfigurationError, ObservationError, OSError, ValueError) as exc:
         print(
             json.dumps(
                 {

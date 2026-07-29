@@ -33,6 +33,7 @@ CURRENT_TOOL_RECONCILIATION_PATH = (
     ".project/reconciliations/azure-mcp-current-reality-tool-20260729.json"
 )
 CURRENT_TOOL_HANDOFF_PATH = ".project/handoffs/azure-mcp-current-reality-tool.md"
+CURRENT_RUN1_HANDOFF_PATH = ".project/handoffs/azure-mcp-current-reality-run1.md"
 CONTRACT_PATH = ".project/contracts/azure-mcp-read-only-preflight-workflow-v2.json"
 DEPLOYMENT_TERMINAL_PATH = (
     ".project/reconciliations/correlation-identity-run1-terminal-20260727.json"
@@ -69,6 +70,10 @@ class AzureMcpPreflightRun1TerminalReconciliationTests(unittest.TestCase):
         )
         self.assertEqual(
             self.index["latest_repository_handoff"],
+            CURRENT_RUN1_HANDOFF_PATH,
+        )
+        self.assertEqual(
+            self.index["azure_mcp_current_reality_handoff"],
             CURRENT_TOOL_HANDOFF_PATH,
         )
         self.assertEqual(self.index["azure_mcp_preflight_contract"], CONTRACT_PATH)

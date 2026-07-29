@@ -2,7 +2,7 @@
 
 ## Status
 
-This increment implements one **local, read-only MCP tool** and a direct observation CLI.
+This package implements one **local, read-only MCP tool** and a direct observation CLI.
 It does not deploy a remote MCP endpoint, configure Azure OpenAI to call the tool,
 create an identity, assign RBAC, or mutate Azure.
 
@@ -13,6 +13,9 @@ remote MCP endpoint deployed  = false
 Azure OpenAI MCP connected     = false
 Azure mutation authorized      = false
 ```
+
+A separate one-attempt authorization may permit one local Cloud Shell execution.
+Authorization recorded in `.project/` does not mean that execution has occurred.
 
 ## Purpose
 
@@ -34,20 +37,38 @@ subscriptions.
 
 ## Fixed observation path
 
-The implementation can execute only these read operations:
+The observer permits only these read operations:
 
 ```text
 git rev-parse HEAD
 git status --porcelain=v1 --untracked-files=normal
-az account show --subscription <exact-id>
+az account show
 az group show --subscription <exact-id> --name <exact-rg>
 az resource list --subscription <exact-id> --resource-group <exact-rg>
 az cognitiveservices account deployment list --subscription <exact-id> --resource-group <exact-rg> --name <observed-account>
 ```
 
+Azure CLI `2.88.0` rejects `az account show --subscription`. The CLI and MCP
+server therefore use a compatibility runner that removes only that unsupported
+argument. Before execution, the one-shot wrapper explicitly selects the
+operator-supplied subscription UUID with:
+
+```text
+az account set --subscription <exact-id>
+```
+
+The observer then compares the active account ID returned by `az account show`
+with the exact runtime allowlist. All resource-scoped operations retain explicit
+`--subscription` arguments.
+
+```text
+local Azure CLI context selected != Azure resource mutated
+active account returned != explicit scope accepted
+```
+
 Commands are constructed as argument arrays with `shell=False`. There is no
 arbitrary command input, template deployment, role assignment, provider
-registration, resource mutation, secret read, or cleanup command.
+registration, resource mutation, secret read, or Azure cleanup command.
 
 ## Identity and permissions
 
@@ -69,17 +90,28 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements/azure-mcp-reality-tool.txt
 python -m unittest infra.tests.test_azure_mcp_current_reality_tool -v
+python -m unittest infra.tests.test_azure_mcp_active_subscription_compat -v
 python -m py_compile azure_mcp_reality/*.py
 ```
 
+These tests use fakes and do not authenticate to Azure or execute a live query.
+
 ## One direct read-only observation
 
-A later, separately authorized local execution can use:
+A separately authorized local execution must use an exact reviewed commit,
+subscription UUID, resource group, and confirmation string. For run 1, use the
+dedicated wrapper and handoff:
+
+```text
+script: scripts/azure_mcp_current_reality_run1.sh
+authorization: .project/observation-requests/azure-mcp-current-reality-run1.json
+handoff: .project/handoffs/azure-mcp-current-reality-run1.md
+```
+
+Generic direct CLI execution remains:
 
 ```bash
 cd ~/azure-iac-msp-lab
-git checkout main
-git pull --ff-only
 source .venv/bin/activate
 
 export AZURE_MCP_ALLOWED_SUBSCRIPTION_ID='<exact-subscription-uuid>'
@@ -89,8 +121,9 @@ export AZURE_MCP_REPOSITORY_ROOT="$PWD"
 python -m azure_mcp_reality.cli | tee /tmp/azure-mcp-current-reality.json
 ```
 
-Do not substitute `$(az account show --query id ...)` for the explicit
-subscription selection. The operator must deliberately choose the scope.
+Do not derive the subscription UUID from an unreviewed default context. The
+operator must deliberately select the exact subscription, and the returned active
+account ID must match it.
 
 Expected top-level fields include:
 
@@ -113,6 +146,19 @@ raw_evidence_digest
 A missing resource group is reported as `not_present`. Authentication failures,
 scope mismatches, disabled subscriptions, invalid JSON, command failures, and
 inventory-bound violations fail closed as `observation_failed` through the CLI.
+
+## One-attempt consumption
+
+The run-1 wrapper creates this non-secret marker immediately before Azure resource
+observation:
+
+```text
+~/.azure-mcp-current-reality-run1.consumed
+```
+
+A failure after marker creation consumes the attempt. Do not remove the marker to
+manufacture a retry. A new attempt requires new human authority and a new
+reconciliation.
 
 ## Local MCP transports
 
@@ -162,8 +208,8 @@ Current Azure cost, MCP hosting cost, and quota remain unobserved.
 
 ## Failure, rollback, and cleanup
 
-Repository rollback is an exact revert of the implementing pull request.
-Runtime rollback is:
+Repository rollback is an exact revert of the implementing or repair pull request.
+Runtime environment cleanup is:
 
 ```bash
 unset AZURE_MCP_ALLOWED_SUBSCRIPTION_ID
@@ -171,12 +217,13 @@ unset AZURE_MCP_ALLOWED_RESOURCE_GROUP
 unset AZURE_MCP_REPOSITORY_ROOT
 ```
 
-Then stop the local process. No Azure cleanup is required because this increment
-creates and mutates no Azure resources.
+Then stop the local process. No Azure cleanup is required because this package
+creates and mutates no Azure resources. Deleting a one-attempt consumption marker
+to bypass authorization is not cleanup and is not permitted.
 
 ## Next gate
 
-After merge, separately authorize one local Cloud Shell observation against an
-exact subscription and resource group. Inspect the structured receipt and its
-digest before considering authenticated remote hosting or an Azure OpenAI
-Responses API MCP call.
+After one authorized Cloud Shell observation, inspect the structured receipt and
+its digest, reconcile the result into `.project/`, and consume the active
+authorization. Authenticated remote hosting and an Azure OpenAI Responses API MCP
+call remain later independent gates.
