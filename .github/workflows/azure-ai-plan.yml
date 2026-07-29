@@ -49,7 +49,8 @@ jobs:
 
       - name: Run deterministic boundary tests
         run: |
-          python -m unittest infra.tests.test_azure_ai_live_activation infra.tests.test_azure_ai_go_live_run2 -v
+          python -m unittest infra.tests.test_azure_ai_live_activation -v
+          python -m unittest infra.tests.test_azure_ai_go_live_run2 -v
           bash -n scripts/azure_ai_go_live_run2.sh
 
       - name: Lint and build Azure AI Bicep
