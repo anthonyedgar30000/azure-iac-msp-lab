@@ -23,6 +23,7 @@ previous substantive main: ca0712569f0b4bc18ceba2610c988a01f91750f2
 current base main: 5509a982ea118b2c1108af8ee5c6a44d60df9884
 open pull requests before implementation: none
 implementation branch: agent/azure-lab-factory-lite-v1
+pull request: #212 / draft
 ```
 
 Two administrative commits temporarily created and then removed `tmp-placeholder` on `main`. GitHub comparison reports two commits and zero file differences between `ca071256...` and `5509a982...`. They are not Azure evidence and do not alter repository content.
@@ -95,7 +96,7 @@ It cannot:
 - host a remote MCP endpoint;
 - register a ChatGPT plugin.
 
-## Validation path
+## Exact-head validation
 
 The new tests are discovered by the existing `Bicep lint and build` CI job through:
 
@@ -105,7 +106,15 @@ python -m unittest discover -s infra/tests -v
 
 The tests cover catalog structure, Bicep source binding, missing-parameter gating, complete request preparation, value redaction, deterministic output, location rejection, fixed-parameter protection, TTL boundaries, static CLI listing, and duplicate-parameter rejection.
 
-Exact-head CI has not yet run for this implementation branch at the time this handoff is authored.
+PR #212 head before this handoff refresh was `62d0c4d9671202b4f9cc63b20d1629ff698340af`. Exact-head CI run `30500683486` succeeded:
+
+```text
+ServiceTracer tests: success
+Validate infrastructure and workload contracts: success
+Bicep lint and build: success
+```
+
+This handoff refresh creates a newer repository-only head. Its content change does not alter executable code, but the newest exact head still requires ordinary CI before merge.
 
 ## Authority and cost
 
@@ -130,4 +139,4 @@ Catalog or request errors fail before a plan is emitted and perform no cloud act
 
 ## Next gate
 
-Open the pull request, inspect exact-head CI, and repair repository-only failures if present. After review, merge requires a separate decision. The next implementation increment should expose `list_lab_profiles` and `prepare_lab_request` through the existing local MCP server without adding Azure authority.
+Wait for ordinary CI on the refreshed exact head, then review PR #212. Merge requires a separate decision. The next implementation increment should expose `list_lab_profiles` and `prepare_lab_request` through the existing local MCP server without adding Azure authority.
