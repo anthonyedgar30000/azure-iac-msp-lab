@@ -30,6 +30,16 @@ public ingress: HTTPS only
 - Application Insights export is disabled for this first bounded deployment.
 - Azure OIDC cannot start until the v2 immutable request is atomically claimed.
 
+## Activation lifecycle
+
+The implementation merges with the deployment request still inactive. After that merge, a fresh activation branch is created from the exact live `main` commit. That branch changes only `.project/deployment-requests/azure-mcp-live-run1.json`, binds `reviewed_source` to the implementation merge, and activates the one-use grant. The workflow must be dispatched from that exact activation branch—not from a later moving `main`.
+
+```text
+implementation merge != deployment dispatch
+activation branch tree delta = exact request file only
+unrelated main advancement != authorized execution source
+```
+
 ## Cost behavior
 
 The Container App uses the consumption plan and scales to zero. There is no minimum running replica. Actual subscription cost remains unobserved and usage above the platform free grant can still create charges.
