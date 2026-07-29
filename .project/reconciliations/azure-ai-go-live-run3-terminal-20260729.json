@@ -1,0 +1,94 @@
+{
+  "schema_version": "project.azure-ai-go-live-terminal.v1",
+  "attempt_id": "azure-ai-go-live-run3",
+  "status": "consumed_terminal_failure",
+  "recorded_at": "2026-07-29T00:36:00-04:00",
+  "source_instruction": "Proceed",
+  "repository": {
+    "pull_request": 202,
+    "reviewed_source_head": "06cb5686392afbf631e44d458c92c885f3d3681c",
+    "exact_merge_commit": "0749e1e1f99e57576726c1aaa9f25b1a6092e0d9"
+  },
+  "workflow": {
+    "name": "Azure AI go live run 3",
+    "run_id": 30422253001,
+    "run_attempt": 1,
+    "job_id": 90481285402,
+    "conclusion": "failure",
+    "exact_commit_checkout_verified": true,
+    "repository_validation_succeeded": true,
+    "azure_oidc_login_succeeded": true,
+    "executor_conclusion": "failure"
+  },
+  "artifact": {
+    "artifact_id": 8712343242,
+    "name": "azure-ai-go-live-run3-30422253001-1",
+    "digest": "sha256:f1f8e9b6a0ee0f363def055395e79c48d3e8957245fe31af8ecb2aa34b66129a",
+    "retention_days": 30,
+    "manifest_present": true
+  },
+  "azure_context": {
+    "subscription_name": "Azure for Students",
+    "subscription_state": "Enabled",
+    "provider_registration_state": "Registered",
+    "principal_fingerprint": "sha256:6f1db3ea4e8c9f6e",
+    "raw_subscription_id_persisted": false,
+    "raw_principal_id_persisted": false
+  },
+  "regional_observations": [
+    {
+      "location": "canadaeast",
+      "model": "gpt-4.1-mini",
+      "model_version": "2025-04-14",
+      "model_listed": true,
+      "what_if_succeeded": false,
+      "error_code": "RequestDisallowedByAzure",
+      "classification": "subscription_best_available_regions_policy_block"
+    },
+    {
+      "location": "eastus2",
+      "model": "gpt-4.1-mini",
+      "model_version": "2025-04-14",
+      "model_listed": true,
+      "what_if_succeeded": false,
+      "error_code": "RequestDisallowedByAzure",
+      "classification": "subscription_best_available_regions_policy_block"
+    }
+  ],
+  "deployment_state": {
+    "first_successful_what_if": null,
+    "resource_group_created": false,
+    "azure_openai_account_created": false,
+    "model_deployment_created": false,
+    "inference_role_assignment_created": false,
+    "model_request_performed": false,
+    "endpoint_live": false,
+    "partial_resources_established": false,
+    "cleanup_required": false
+  },
+  "root_cause": {
+    "classification": "candidate_regions_disallowed_by_subscription_policy",
+    "model_availability_failure": false,
+    "bicep_compilation_failure": false,
+    "azure_authentication_failure": false,
+    "quota_exhaustion_established": false,
+    "policy_text": "This policy maintains a set of best available regions where your subscription can deploy resources."
+  },
+  "authorization": {
+    "attempt_limit": 1,
+    "attempts_observed": 1,
+    "consumed": true,
+    "automatic_retry_authorized": false,
+    "manual_rerun_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false,
+    "new_attempt_requires_fresh_instruction": true
+  },
+  "canonical_distinctions": [
+    "model_listed != region_allowed_by_subscription_policy",
+    "azure_oidc_login_succeeded != deployment_succeeded",
+    "what_if_failed != resource_created",
+    "artifact_uploaded != endpoint_live",
+    "failed_run != authorization_to_rerun"
+  ]
+}
