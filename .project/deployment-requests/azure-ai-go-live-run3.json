@@ -1,0 +1,78 @@
+{
+  "schema_version": "project.azure-ai-go-live-authorization.v1",
+  "attempt_id": "azure-ai-go-live-run3",
+  "status": "active_one_attempt",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T00:18:00-04:00",
+  "source_instruction": "Proceed",
+  "repository_boundary": {
+    "base_main": "5c34b17eb7ccd3098d3c723261fa0f8a4d6e0c95",
+    "latest_merged_pull_request": 199,
+    "candidate_branch": "agent/azure-ai-go-live-run3",
+    "activation_trigger": "the first merge commit to main that introduces .github/workflows/azure-ai-go-live-run3.yml",
+    "exact_merge_commit": "resolved_by_github_push_event",
+    "open_pull_requests_before_branch": []
+  },
+  "attempt_limit": 1,
+  "attempts_observed": 0,
+  "scope": {
+    "subscription": "configured AZURE_SUBSCRIPTION_ID only",
+    "candidate_locations": [
+      "canadaeast",
+      "eastus2"
+    ],
+    "resource_group_pattern": "rg-ai-msp-dev-<location>",
+    "account_pattern": "oai-msp-<subscription-hash>-<location>",
+    "model_name": "gpt-4.1-mini",
+    "model_version": "2025-04-14",
+    "deployment_name": "gpt-41-mini-msp-dev",
+    "deployment_sku": "Standard",
+    "deployment_capacity": 1,
+    "local_authentication_disabled": true,
+    "public_network_access": "Enabled",
+    "inference_role": "Cognitive Services OpenAI User",
+    "model_request_count": 1,
+    "max_output_tokens": 32,
+    "prompt": "Reply with exactly: AZURE AI LIVE"
+  },
+  "authority": {
+    "pull_request_creation_authorized": true,
+    "ordinary_exact_head_ci_authorized": true,
+    "pull_request_merge_authorized": true,
+    "merge_triggered_workflow_authorized": true,
+    "azure_authentication_authorized": true,
+    "azure_query_authorized": true,
+    "provider_registration_if_required_authorized": true,
+    "what_if_authorized": true,
+    "resource_group_creation_authorized": true,
+    "azure_openai_account_creation_authorized": true,
+    "model_deployment_authorized": true,
+    "rbac_mutation_authorized": true,
+    "one_bounded_model_request_authorized": true,
+    "automatic_retry_authorized": false,
+    "manual_rerun_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "failure_behavior": {
+    "regional_fallback": "Canada East may continue to East US 2 inside the same workflow run.",
+    "terminal_failure": "Stop, preserve protected evidence, and consume this authorization.",
+    "partial_resources": "Leave partial resources for exact-state inspection; do not delete automatically.",
+    "retry": "A fourth attempt requires a fresh explicit instruction."
+  },
+  "cost_boundary": {
+    "deployment_type": "Standard pay-as-you-go",
+    "provisioned_throughput_authorized": false,
+    "bounded_initial_request": true,
+    "actual_cost_known_before_execution": false,
+    "budget_creation_authorized": false
+  },
+  "canonical_distinctions": [
+    "fresh_instruction != rerun_of_consumed_authority",
+    "merge_triggered != deployment_succeeded",
+    "deployment_succeeded != model_request_verified",
+    "role_assignment_created != role_propagated",
+    "endpoint_exists != endpoint_live",
+    "failed_run != authorization_to_retry"
+  ]
+}
