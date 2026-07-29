@@ -1,19 +1,19 @@
 {
-  "schema_version": "project.azure-ai-live-activation.v2",
-  "status": "direct_go_live_candidate_merge_trigger_not_executed",
+  "schema_version": "project.azure-ai-live-activation.v3",
+  "status": "go_live_run1_consumed_failed_before_resource_creation",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-28T23:30:00-04:00",
-  "objective": "Deploy and verify one Azure OpenAI regional Standard model through a single merge-triggered workflow, without a separate read-only preflight run.",
+  "recorded_at": "2026-07-28T23:38:42-04:00",
+  "objective": "Deploy and verify one Azure OpenAI regional Standard model through a bounded workflow without a separate read-only preflight run.",
   "repository_baseline": {
-    "observed_main": "375255c6bca57f672a326915e5a18708de3eaaad",
-    "latest_merged_pull_request": 194,
-    "branch": "agent/azure-ai-go-live-v1",
+    "observed_main": "9298fbcc75801d2ae9b077c62dcf43ca3a4bdad2",
+    "latest_merged_pull_request": 196,
+    "reviewed_source_head": "5e21c82f635c03037f8773df303e58da274576fc",
+    "repair_branch": "agent/repair-azure-ai-resource-group-scope",
     "local_working_tree_observed": false,
     "repository_operations": "connector_backed"
   },
   "bounded_live_scope": {
     "workflow": ".github/workflows/azure-ai-live-deploy.yml",
-    "trigger": "first push to main that introduces the workflow",
     "candidate_locations": [
       "canadaeast",
       "eastus2"
@@ -31,15 +31,23 @@
       "count": 1,
       "max_output_tokens": 32,
       "prompt_classification": "bounded_non_sensitive_demo"
-    },
-    "planned_fallbacks": 2,
-    "manual_rerun_authorized": false
+    }
+  },
+  "run1": {
+    "workflow_run_id": 30419992872,
+    "workflow_run_attempt": 1,
+    "artifact_id": 8711582707,
+    "artifact_digest": "sha256:54ff1c8abcd34c0bb27a8f116da94b0421a33365899dc293beee001cff3311f9",
+    "conclusion": "failure",
+    "authorization_status": "consumed_failed_terminal",
+    "terminal_reconciliation": ".project/reconciliations/azure-ai-go-live-run1-terminal-20260729.json"
   },
   "execution": {
-    "azure_authentication_performed": false,
-    "azure_query_performed": false,
-    "azure_mutation_performed": false,
-    "provider_registration_performed": false,
+    "azure_authentication_performed": true,
+    "azure_query_performed": true,
+    "provider_final_registration_state": "Registered",
+    "provider_registration_performed_during_run": "not_observed",
+    "resource_mutation_performed": false,
     "resource_group_created": false,
     "openai_account_created": false,
     "model_deployment_created": false,
@@ -47,50 +55,53 @@
     "model_request_performed": false,
     "service_verified_live": false
   },
+  "terminal_failure": {
+    "classification": "subscription_to_resource_group_module_scope_compilation_defect",
+    "azure_error_code": "InvalidScope",
+    "repair_candidate": "Use resourceGroup(resourceGroupName), a non-shadowing resource-group symbol, and an explicit dependency."
+  },
   "authority": {
-    "human_instruction": "Go live already",
-    "interpretation": "Authorize the exact reviewed merge-triggered workflow to authenticate, perform bounded live checks, register Microsoft.CognitiveServices if required, run What-If, deploy the first viable candidate, assign the exact inference role, make one bounded model request, and capture evidence.",
-    "repository_changes_authorized": true,
-    "draft_pull_request_creation_authorized": true,
-    "ordinary_exact_head_ci_authorized": true,
-    "pull_request_merge_authorized": true,
-    "merge_triggered_workflow_authorized": true,
-    "azure_authentication_authorized": true,
-    "azure_query_authorized": true,
-    "azure_mutation_authorized": true,
-    "provider_registration_authorized": true,
-    "resource_group_creation_authorized": true,
-    "rbac_mutation_authorized": true,
-    "model_deployment_authorized": true,
-    "one_bounded_model_request_authorized": true,
+    "original_human_instruction": "Go live already",
+    "original_live_attempt_status": "consumed_failed_terminal",
+    "repair_repository_changes_authorized": true,
+    "repair_branch_creation_authorized": true,
+    "repair_draft_pull_request_authorized": true,
+    "repair_exact_head_ci_authorized": true,
+    "repair_pull_request_merge_authorized": false,
+    "new_workflow_run_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "provider_registration_authorized": false,
+    "resource_mutation_authorized": false,
+    "rbac_mutation_authorized": false,
+    "model_deployment_authorized": false,
+    "model_request_authorized": false,
     "manual_rerun_authorized": false,
     "rollback_authorized": false,
     "cleanup_authorized": false
   },
   "cost_and_quota": {
     "deployment_type": "Standard pay-as-you-go",
-    "standing_model_capacity_charge_claimed": false,
-    "first_request_max_output_tokens": 32,
-    "actual_cost_freshly_observed": false,
+    "resource_cost_delta_from_run1": "no_resource_created",
+    "model_request_cost_delta_from_run1": "no_model_request_performed",
+    "actual_provider_registration_cost": "none_expected_but_not_measured",
+    "actual_azure_cost_freshly_observed": false,
     "quota_freshly_observed": false,
-    "capacity_freshly_observed": false,
-    "failure_behavior": "The workflow stops if neither bounded regional candidate can deploy. It does not rerun or delete resources automatically."
+    "capacity_freshly_observed": false
   },
   "canonical_distinctions": [
-    "merge_triggered != deployment_succeeded",
-    "model_listed != quota_available",
-    "what_if_succeeded != deployment_succeeded",
-    "account_created != model_deployed",
-    "role_assignment_created != role_propagated",
-    "deployment_succeeded != model_request_verified",
-    "model_request_verified != Azure_MCP_connected",
+    "oidc_login_succeeded != deployment_succeeded",
+    "provider_state_registered != provider_registration_performed_during_run",
+    "model_candidate_listed != valid_deployment_scope",
+    "what_if_failed != resource_created",
     "workflow_failure != authorization_to_rerun",
-    "estimated_cost != actual_cost"
+    "repair_candidate_prepared != repair_merged",
+    "repair_merged != deployment_authorized",
+    "endpoint_live = false"
   ],
   "failure_rollback_cleanup": {
-    "candidate_failure": "Continue only to the second predeclared region inside the same run.",
-    "terminal_failure": "Stop, preserve protected evidence, and do not rerun automatically.",
-    "rollback": "Not automatically authorized. A failed resource may remain for inspection.",
-    "cleanup": "Requires a separate explicit instruction after exact deployed resources are observed."
+    "terminal_failure": "Preserve the protected artifact and terminal reconciliation. Do not rerun the consumed workflow authorization.",
+    "rollback": "Not applicable because no resource group, account, model, or role assignment was created.",
+    "cleanup": "No deployment cleanup is required from run 1. A new live attempt requires a fresh explicit instruction."
   }
 }
