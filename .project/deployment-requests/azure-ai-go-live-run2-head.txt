@@ -1,3 +1,0 @@
-candidate_branch=agent/azure-ai-go-live-run2
-candidate_head_before_this_record=16fa6ce5e256c88ad24d90d9402947fe306b2acb
-merge_must_use_expected_head_from_live_pr_state=true
