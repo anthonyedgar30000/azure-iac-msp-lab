@@ -96,11 +96,11 @@ module azureAi './modules/azure_ai_openai.bicep' = if (deployAzureAi) {
 }
 
 output deploymentEnabled bool = deployAzureAi
-output resourceGroupName string = deployAzureAi ? resourceGroup.name : resourceGroupName
-output accountId string = deployAzureAi ? azureAi.outputs.accountId : ''
-output accountName string = deployAzureAi ? azureAi.outputs.accountName : accountName
-output baseUrl string = deployAzureAi ? azureAi.outputs.baseUrl : ''
-output deploymentName string = deployAzureAi ? azureAi.outputs.deploymentName : ''
+output deployedResourceGroupName string = deployAzureAi ? resourceGroup.name : resourceGroupName
+output deployedAccountId string = deployAzureAi ? azureAi.outputs.accountId : ''
+output deployedAccountName string = deployAzureAi ? azureAi.outputs.accountName : accountName
+output deployedBaseUrl string = deployAzureAi ? azureAi.outputs.baseUrl : ''
+output deployedModelDeploymentName string = deployAzureAi ? azureAi.outputs.deploymentName : ''
 output localAuthenticationDisabled bool = deployAzureAi ? azureAi.outputs.localAuthenticationDisabled : true
-output publicNetworkAccess string = deployAzureAi ? azureAi.outputs.publicNetworkAccess : 'not-deployed'
-output inferenceRoleAssignmentId string = deployAzureAi ? azureAi.outputs.inferenceRoleAssignmentId : ''
+output deployedPublicNetworkAccess string = deployAzureAi ? azureAi.outputs.publicNetworkAccess : 'not-deployed'
+output deployedInferenceRoleAssignmentId string = deployAzureAi ? azureAi.outputs.inferenceRoleAssignmentId : ''
