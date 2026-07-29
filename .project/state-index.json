@@ -91,6 +91,7 @@
     "repository_setting_not_observed != false",
     "main_contains_frontend_implementation != GitHub_Pages_publication_observed",
     "architecture_explained != runtime_proof_manufactured",
+    "workflow_on_main != workflow_dispatched",
     "workflow_on_main != workflow_executed",
     "azure_authentication_configured != azure_authentication_performed",
     "azure_authentication_succeeded != Azure_resource_observation_completed",
