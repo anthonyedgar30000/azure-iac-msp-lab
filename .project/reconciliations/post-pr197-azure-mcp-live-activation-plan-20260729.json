@@ -1,14 +1,14 @@
 {
-  "schema_version": "project.reconciliation.azure-mcp-live-activation-plan.v2",
+  "schema_version": "project.reconciliation.azure-mcp-live-activation-plan.v3",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-28T23:49:25-04:00",
+  "recorded_at": "2026-07-28T23:55:00-04:00",
   "repository_baseline": {
-    "observed_main": "e00d3af08d179f8af945ade689a44e9adfa00da9",
-    "latest_merged_pull_request": 197,
-    "latest_merged_change": "Repair Azure AI resource-group deployment scope",
-    "azure_ai_run1_status": "consumed_failed_terminal_before_resource_creation",
+    "branch_base_main": "e00d3af08d179f8af945ade689a44e9adfa00da9",
+    "latest_live_main_observed": "f667be775962d91f16e8c82744a5573a1a0875ca",
+    "latest_live_change": "Execute Azure AI go-live run 2",
     "candidate_branch": "agent/azure-mcp-live-fix-v2",
     "superseded_candidate_branch": "agent/azure-mcp-live-fix",
+    "state_index_modified_by_candidate": false,
     "unintended_probe_commit": "85464ce1233bd00aaa52bbb82d45e0494fd7cbb0",
     "corrective_commit": "d4060ba69ba55db414cf7eb0d8b29b65d0244fd0",
     "unintended_probe_file_present_after_correction": false,
@@ -35,6 +35,7 @@
   },
   "control_repairs": {
     "authorization_v1_commit_self_reference": "replaced_by_reviewed_source_plus_exact_request_only_tree_delta",
+    "activation_race": "merge_inactive_implementation_then_activate_only_request_on_fresh_branch_from_exact_live_main",
     "gallery_alias": "not_used_for_deployment",
     "moving_container_tag": "replaced_by_sha256_digest",
     "subscription_reader": "replaced_by_Reader_at_rg-servicetracer-dev-westus2",
@@ -48,8 +49,9 @@
   },
   "execution_state": {
     "exact_head_ci": "pending",
-    "merged": false,
+    "implementation_merged": false,
     "authorization_request_status": "draft_not_authorized",
+    "activation_branch_created": false,
     "workflow_dispatched": false,
     "provider_registered": false,
     "resource_group_created": false,
@@ -65,12 +67,13 @@
     "repository_candidate_authorized": true,
     "ordinary_exact_head_ci_authorized": true,
     "pull_request_creation_authorized": true,
-    "pull_request_merge_authorized": true,
-    "single_workflow_dispatch_authorized_after_exact_green_merge": true,
+    "implementation_pull_request_merge_authorized": true,
+    "activation_request_branch_authorized_after_green_merge": true,
+    "single_workflow_dispatch_authorized_from_exact_activation_branch": true,
     "attempt_limit": 1,
     "automatic_retry_authorized": false,
     "rollback_authorized": false,
     "cleanup_authorized": false
   },
-  "next_gate": "Pass exact-head CI for the rebased implementation, activate the request as the only tree delta from that exact green source, pass CI again, merge, then dispatch exactly once with the typed request confirmation."
+  "next_gate": "Pass exact-head CI and merge the implementation with the request inactive. From that exact merged main, create an activation branch that changes only the request to active and binds reviewed_source to the implementation merge, pass CI, then dispatch exactly once from that activation branch with the typed confirmation."
 }
