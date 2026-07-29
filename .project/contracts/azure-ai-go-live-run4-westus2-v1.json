@@ -1,0 +1,46 @@
+{
+  "schema_version": "project.azure-ai-go-live-run4-westus2.v1",
+  "status": "active_one_attempt_candidate",
+  "recorded_at": "2026-07-29T00:36:00-04:00",
+  "exact_base_main": "0749e1e1f99e57576726c1aaa9f25b1a6092e0d9",
+  "attempt_id": "azure-ai-go-live-run4",
+  "location": "westus2",
+  "resource_group": "rg-ai-msp-dev-westus2",
+  "model": {
+    "name": "gpt-4.1-mini",
+    "version": "2025-04-14",
+    "deployment_name": "gpt-41-mini-msp-dev",
+    "sku": "Standard",
+    "capacity": 1
+  },
+  "security": {
+    "authentication": "Microsoft Entra workload identity federation",
+    "local_api_key_authentication_disabled": true,
+    "inference_role": "Cognitive Services OpenAI User",
+    "role_scope": "selected Azure OpenAI account only",
+    "public_network_access": "Enabled"
+  },
+  "execution_ceiling": {
+    "candidate_regions": 1,
+    "regional_fallback": false,
+    "model_requests": 1,
+    "max_output_tokens": 32,
+    "automatic_retry": false,
+    "manual_rerun": false,
+    "rollback": false,
+    "cleanup": false
+  },
+  "validation": {
+    "model_listing_query_required": true,
+    "what_if_required": true,
+    "deployment_verification_required": true,
+    "rbac_verification_required": true,
+    "bounded_response_verification_required": true
+  },
+  "cost": {
+    "pricing_model": "Standard pay-as-you-go",
+    "provisioned_throughput": false,
+    "actual_cost_before_execution": "unknown",
+    "budget_creation_authorized": false
+  }
+}
