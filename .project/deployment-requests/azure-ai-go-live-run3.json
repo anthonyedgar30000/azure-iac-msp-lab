@@ -1,20 +1,23 @@
 {
   "schema_version": "project.azure-ai-go-live-authorization.v1",
   "attempt_id": "azure-ai-go-live-run3",
-  "status": "active_one_attempt",
+  "status": "consumed_terminal_failure",
+  "active": false,
   "project": "Azure IaC MSP Lab",
   "recorded_at": "2026-07-29T00:18:00-04:00",
+  "consumed_at": "2026-07-29T00:27:13-04:00",
   "source_instruction": "Proceed",
   "repository_boundary": {
     "base_main": "5c34b17eb7ccd3098d3c723261fa0f8a4d6e0c95",
     "latest_merged_pull_request": 199,
     "candidate_branch": "agent/azure-ai-go-live-run3",
     "activation_trigger": "the first merge commit to main that introduces .github/workflows/azure-ai-go-live-run3.yml",
-    "exact_merge_commit": "resolved_by_github_push_event",
+    "exact_merge_commit": "0749e1e1f99e57576726c1aaa9f25b1a6092e0d9",
+    "pull_request": 202,
     "open_pull_requests_before_branch": []
   },
   "attempt_limit": 1,
-  "attempts_observed": 0,
+  "attempts_observed": 1,
   "scope": {
     "subscription": "configured AZURE_SUBSCRIPTION_ID only",
     "candidate_locations": [
@@ -54,22 +57,36 @@
     "rollback_authorized": false,
     "cleanup_authorized": false
   },
+  "terminal_execution": {
+    "workflow_run": 30422253001,
+    "workflow_attempt": 1,
+    "artifact_id": 8712343242,
+    "artifact_digest": "sha256:f1f8e9b6a0ee0f363def055395e79c48d3e8957245fe31af8ecb2aa34b66129a",
+    "reconciliation": ".project/reconciliations/azure-ai-go-live-run3-terminal-20260729.json",
+    "conclusion": "failure",
+    "root_cause": "candidate_regions_disallowed_by_subscription_policy",
+    "endpoint_live": false,
+    "partial_resources_established": false,
+    "cleanup_required": false
+  },
   "failure_behavior": {
-    "regional_fallback": "Canada East may continue to East US 2 inside the same workflow run.",
-    "terminal_failure": "Stop, preserve protected evidence, and consume this authorization.",
-    "partial_resources": "Leave partial resources for exact-state inspection; do not delete automatically.",
-    "retry": "A fourth attempt requires a fresh explicit instruction."
+    "regional_fallback": "Canada East continued to East US 2 inside the same consumed workflow run.",
+    "terminal_failure": "Stopped, preserved protected evidence, and consumed this authorization.",
+    "partial_resources": "No partial resources were established.",
+    "retry": "A fourth attempt requires a fresh explicit instruction. GitHub Re-run is unauthorized."
   },
   "cost_boundary": {
     "deployment_type": "Standard pay-as-you-go",
     "provisioned_throughput_authorized": false,
     "bounded_initial_request": true,
     "actual_cost_known_before_execution": false,
-    "budget_creation_authorized": false
+    "budget_creation_authorized": false,
+    "billable_model_request_performed": false
   },
   "canonical_distinctions": [
     "fresh_instruction != rerun_of_consumed_authority",
     "merge_triggered != deployment_succeeded",
+    "model_listed != region_allowed_by_subscription_policy",
     "deployment_succeeded != model_request_verified",
     "role_assignment_created != role_propagated",
     "endpoint_exists != endpoint_live",
