@@ -36,12 +36,16 @@ class PostPr190RepositoryAndMcpReconciliationTests(unittest.TestCase):
         cls.mcp_workflow = MCP_WORKFLOW.read_text(encoding="utf-8")
         cls.collector_workflow = COLLECTOR_WORKFLOW.read_text(encoding="utf-8")
 
-    def test_state_index_selects_the_new_repository_and_mcp_boundary(self) -> None:
+    def test_state_index_preserves_post_pr190_as_the_previous_boundary(self) -> None:
         self.assertEqual(
+            self.index["previous_repository_and_mcp_reconciliation"],
+            RECONCILIATION_PATH,
+        )
+        self.assertNotEqual(
             self.index["latest_repository_and_mcp_reconciliation"],
             RECONCILIATION_PATH,
         )
-        self.assertEqual(self.index["latest_repository_handoff"], HANDOFF_PATH)
+        self.assertNotEqual(self.index["latest_repository_handoff"], HANDOFF_PATH)
         self.assertEqual(self.index["superseded_open_pull_request"], 189)
         self.assertIn(
             "workflow_on_main != workflow_dispatched",
@@ -101,7 +105,7 @@ class PostPr190RepositoryAndMcpReconciliationTests(unittest.TestCase):
         self.assertFalse(self.contract["activation"]["ruleset_configured"])
         self.assertFalse(self.contract["activation"]["live_claim_test_performed"])
 
-    def test_mcp_preflight_is_on_main_but_not_executed(self) -> None:
+    def test_mcp_preflight_is_on_main_but_not_executed_at_this_boundary(self) -> None:
         mcp = self.reconciliation["azure_mcp_preflight_state"]
         self.assertEqual(mcp["classification"], "implemented_on_main_not_dispatched")
         self.assertTrue(mcp["manual_dispatch_only"])
