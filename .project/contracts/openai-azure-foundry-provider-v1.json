@@ -1,0 +1,96 @@
+{
+  "schema_version": "project.openai-azure-foundry-provider.v1",
+  "status": "repository_only_provider_scaffold_candidate",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T00:00:00-04:00",
+  "repository_baseline": {
+    "base_branch": "main",
+    "base_commit": "4ce785c2043cb70f096311a17844707ae2cbbf20",
+    "latest_merged_pull_request": 192,
+    "open_pull_requests_observed_before_branch": [],
+    "local_working_tree_observed": false,
+    "repository_operations": "connector_backed"
+  },
+  "objective": "Add a fail-closed OpenAI Python SDK provider scaffold for a Microsoft Foundry or Azure OpenAI v1 endpoint without deploying Azure resources, authenticating, calling a model, or connecting Azure MCP.",
+  "architecture": {
+    "model_inference_path": "application -> OpenAI Python SDK -> Azure /openai/v1 endpoint -> named model deployment",
+    "authentication": "Microsoft Entra bearer-token provider",
+    "default_token_scope": "https://ai.azure.com/.default",
+    "api_key_authentication_accepted": false,
+    "sdk_retries_default": 0,
+    "azure_operations_path": "separate Azure MCP lifecycle; not configured by this provider"
+  },
+  "canonical_distinctions": [
+    "OpenAI_SDK_used != public_OpenAI_service_used",
+    "client_constructed != Microsoft_Entra_authenticated",
+    "endpoint_configured != Azure_AI_resource_deployed",
+    "deployment_name_configured != model_deployment_exists",
+    "model_response_succeeded != Azure_MCP_connected",
+    "Azure_model_provider != Azure_operations_authority",
+    "no_API_key != no_identity_or_RBAC_requirement",
+    "repository_scaffold != deployed_in_Azure"
+  ],
+  "dependencies": {
+    "openai": "2.46.0",
+    "azure_identity": "1.25.3",
+    "dependency_installation_performed": false
+  },
+  "target_state": {
+    "azure_tenant": "not_freshly_observed",
+    "azure_subscription": "not_freshly_observed",
+    "azure_ai_resource": "not_selected",
+    "region": "not_selected",
+    "model": "not_selected",
+    "model_deployment": "not_created_or_verified",
+    "capacity": "not_selected",
+    "quota": "not_freshly_observed",
+    "network_path": "not_selected",
+    "effective_rbac": "not_observed"
+  },
+  "execution": {
+    "azure_authentication_performed": false,
+    "azure_query_performed": false,
+    "azure_mutation_performed": false,
+    "model_request_performed": false,
+    "mcp_connection_configured": false,
+    "openai_public_api_called": false
+  },
+  "authority": {
+    "branch_creation_authorized": true,
+    "declared_repository_file_writes_authorized": true,
+    "draft_pull_request_creation_authorized": true,
+    "ordinary_exact_head_ci_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_or_rerun_authorized": false,
+    "azure_authentication_authorized": false,
+    "azure_query_authorized": false,
+    "azure_mutation_authorized": false,
+    "model_deployment_authorized": false,
+    "openai_or_azure_model_call_authorized": false,
+    "mcp_connection_authorized": false,
+    "rbac_mutation_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "cost_and_quota": {
+    "expected_recurring_azure_cost_delta_cad": 0,
+    "actual_azure_cost_freshly_observed": false,
+    "azure_ai_quota_freshly_observed": false,
+    "github_actions_usage_may_apply": true
+  },
+  "failure_rollback_cleanup": {
+    "configuration_failure": "fail before client construction",
+    "credential_or_authorization_failure": "preserve the error; do not retry automatically",
+    "repository_rollback": "close the draft pull request or revert its exact commits after merge",
+    "azure_rollback": "not applicable because no Azure operation is performed",
+    "cleanup": "not applicable because no Azure resource or secret is created"
+  },
+  "evidence_to_capture_later": [
+    "azure-ai-resource-and-deployment-observation.json",
+    "azure-ai-effective-rbac.json",
+    "azure-ai-network-observation.json",
+    "azure-ai-model-call-receipt.json",
+    "azure-ai-token-usage-and-cost-observation.json",
+    "azure-ai-access-revocation-verification.json"
+  ]
+}
