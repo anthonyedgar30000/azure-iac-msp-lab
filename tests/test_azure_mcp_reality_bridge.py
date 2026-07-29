@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import unittest
 
+
 ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR_PATH = ROOT / "scripts" / "validate_azure_mcp_reality_bridge.py"
 CONTRACT_PATH = ROOT / ".project" / "contracts" / "azure-mcp-reality-bridge.json"
@@ -23,48 +24,37 @@ class AzureMcpRealityBridgeContractTests(unittest.TestCase):
     def test_repository_contract_is_valid(self) -> None:
         validator.validate_contract(copy.deepcopy(self.contract))
 
-    def test_selected_architecture_remains_unimplemented(self) -> None:
+    def test_exactly_one_local_read_only_tool_is_admitted(self) -> None:
+        admission = self.contract["tool_admission"]
+        self.assertEqual(admission["allowed_tool_names"], ["get_current_reality"])
+        self.assertEqual(admission["server_mode"], "local_observer_only")
         self.assertEqual(
-            self.contract["client_paths"]["selection"]["selected_client_path"],
-            "openai_responses_api",
+            admission["tool"]["annotations"],
+            {
+                "readOnlyHint": True,
+                "destructiveHint": False,
+                "idempotentHint": True,
+                "openWorldHint": True,
+            },
         )
-        self.assertFalse(self.contract["client_paths"]["selection"]["configured"])
-        self.assertEqual(self.contract["hosting"]["selected_service"], "azure_container_apps")
-        self.assertFalse(self.contract["hosting"]["deployed"])
-        self.assertEqual(
-            self.contract["authentication"]["server_to_azure"]["selected_model"],
-            "managed_identity_shared_service_identity",
-        )
-        self.assertFalse(self.contract["authentication"]["server_to_azure"]["implemented"])
+        self.assertEqual(admission["tool"]["model_inputs"], [])
+        self.assertFalse(admission["tool"]["performs_azure_mutation"])
 
-    def test_azure_authentication_cannot_be_pre_authorized(self) -> None:
+    def test_second_tool_cannot_be_admitted(self) -> None:
         changed = copy.deepcopy(self.contract)
-        changed["authority"]["azure_authentication_authorized"] = True
+        changed["tool_admission"]["allowed_tool_names"].append("resource_create")
         with self.assertRaises(validator.ContractError):
             validator.validate_contract(changed)
 
-    def test_openai_execution_cannot_be_pre_authorized(self) -> None:
+    def test_tool_annotations_cannot_be_weakened(self) -> None:
         changed = copy.deepcopy(self.contract)
-        changed["client_paths"]["openai_responses_api"]["api_execution_authorized"] = True
+        changed["tool_admission"]["tool"]["annotations"]["destructiveHint"] = True
         with self.assertRaises(validator.ContractError):
             validator.validate_contract(changed)
 
-    def test_tool_cannot_be_pre_admitted_without_inventory_evidence(self) -> None:
+    def test_model_cannot_select_azure_scope(self) -> None:
         changed = copy.deepcopy(self.contract)
-        changed["tool_admission"]["allowed_tool_names"] = ["subscription_list"]
-        with self.assertRaises(validator.ContractError):
-            validator.validate_contract(changed)
-
-    def test_namespace_cannot_be_pre_admitted(self) -> None:
-        changed = copy.deepcopy(self.contract)
-        changed["tool_admission"]["namespace_allowlist"] = ["subscription"]
-        with self.assertRaises(validator.ContractError):
-            validator.validate_contract(changed)
-
-    def test_endpoint_cannot_be_promoted_without_deployment_evidence(self) -> None:
-        changed = copy.deepcopy(self.contract)
-        changed["transport"]["remote_endpoint_deployed"] = True
-        changed["transport"]["endpoint_url"] = "https://example.invalid/mcp"
+        changed["azure_scope"]["model_supplied_scope_parameters_allowed"] = True
         with self.assertRaises(validator.ContractError):
             validator.validate_contract(changed)
 
@@ -74,9 +64,29 @@ class AzureMcpRealityBridgeContractTests(unittest.TestCase):
         with self.assertRaises(validator.ContractError):
             validator.validate_contract(changed)
 
-    def test_cloud_shell_preflight_is_not_execution_authority(self) -> None:
+    def test_remote_endpoint_cannot_be_promoted(self) -> None:
         changed = copy.deepcopy(self.contract)
-        changed["cloud_shell_package"]["preflight_execution_authorized"] = True
+        changed["transport"]["remote_endpoint_deployed"] = True
+        changed["transport"]["remote_endpoint_url"] = "https://example.invalid/mcp"
+        with self.assertRaises(validator.ContractError):
+            validator.validate_contract(changed)
+
+    def test_live_tool_execution_cannot_be_manufactured(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["authentication"]["local_tool_to_azure"]["live_execution_observed"] = True
+        with self.assertRaises(validator.ContractError):
+            validator.validate_contract(changed)
+
+    def test_azure_openai_mcp_call_cannot_be_manufactured(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["client_paths"]["azure_openai_responses_api"]["mcp_server_configured"] = True
+        changed["client_paths"]["azure_openai_responses_api"]["mcp_tool_call_verified"] = True
+        with self.assertRaises(validator.ContractError):
+            validator.validate_contract(changed)
+
+    def test_azure_mutation_authority_remains_false(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["authority"]["azure_resource_creation_authorized"] = True
         with self.assertRaises(validator.ContractError):
             validator.validate_contract(changed)
 
