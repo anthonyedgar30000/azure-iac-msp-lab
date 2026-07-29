@@ -1,0 +1,109 @@
+{
+  "schema_version": "project.azure-ai-runtime-reconciliation.v1",
+  "status": "run6_consumed_runtime_separately_verified",
+  "recorded_at": "2026-07-29T06:07:00-04:00",
+  "project": "Azure IaC MSP Lab",
+  "repository": {
+    "base_branch": "main",
+    "base_commit": "017c1145200cb252aef7f0233418bbe25d8cacee",
+    "merged_pull_request": 207,
+    "open_pull_requests_observed": [],
+    "candidate_branch": "agent/reconcile-wire-azure-ai-runtime"
+  },
+  "run6_terminal": {
+    "attempt_id": "azure-ai-go-live-run6",
+    "workflow_run_id": 30429010899,
+    "job_id": 90501685520,
+    "exact_commit": "017c1145200cb252aef7f0233418bbe25d8cacee",
+    "conclusion": "failure",
+    "failure_stage": "pre_mutation_what_if",
+    "failure_classification": "workflow_principal_lacked_role_assignments_write",
+    "target_resource_group": "rg-ai-msp-dev-eastus",
+    "target_account": "oai-msp-anthony-dev-eastus",
+    "target_model": "gpt-4.1-mini",
+    "target_model_version": "2025-04-14",
+    "target_deployment": "gpt-41-mini-msp-dev",
+    "deployment_started": false,
+    "model_request_performed": false,
+    "target_endpoint_live_established": false,
+    "resource_group_query_succeeded": true,
+    "account_query_succeeded": true,
+    "target_deployment_absent": true,
+    "model_listing_succeeded": true,
+    "model_lifecycle_status": "Deprecating",
+    "reported_global_standard_available_capacity": 200,
+    "what_if_succeeded": false,
+    "automatic_retry_authorized": false,
+    "manual_rerun_authorized": false,
+    "authorization_consumed": true,
+    "artifact": {
+      "artifact_id": 8714726445,
+      "name": "azure-ai-go-live-run6-30429010899-1",
+      "digest": "sha256:58c98e1acadca5dc042a4537bb2b35946dc83ff4f2b99d3827d94d905597a386",
+      "expires_at": "2026-08-28T06:42:45Z"
+    }
+  },
+  "verified_runtime": {
+    "evidence_source": "user-provided Azure portal and Cloud Shell screenshots in the active conversation",
+    "endpoint": "https://anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/",
+    "deployment": "gpt-5-mini",
+    "authentication": "Microsoft Entra bearer token from Azure CLI",
+    "request_path": "/openai/v1/responses",
+    "request_status": "completed",
+    "output_text": "AZURE ENTRA CONNECTED",
+    "usage": {
+      "input_tokens": 16,
+      "output_tokens": 24,
+      "total_tokens": 40,
+      "reasoning_tokens": 0,
+      "cached_tokens": 0
+    },
+    "reasoning_effort": "minimal",
+    "max_output_tokens": 128,
+    "api_key_used": false,
+    "azure_mcp_connected": false
+  },
+  "reconciliation": {
+    "run6_target_matches_verified_runtime": false,
+    "run6_failure_invalidates_verified_runtime": false,
+    "verified_runtime_retroactively_makes_run6_successful": false,
+    "declared_in_run6": {
+      "account": "oai-msp-anthony-dev-eastus",
+      "deployment": "gpt-41-mini-msp-dev"
+    },
+    "verified_in_runtime": {
+      "endpoint_host": "anthonyedgar30000-5982-resource.openai.azure.com",
+      "deployment": "gpt-5-mini"
+    },
+    "provider_wiring_target": "verified_runtime",
+    "run6_authority_state": "consumed_terminal_failure",
+    "new_azure_mutation_required_for_repository_wiring": false
+  },
+  "unknowns": [
+    "verified endpoint ARM resource ID",
+    "verified endpoint resource group",
+    "verified endpoint region",
+    "gpt-5-mini model version",
+    "deployment SKU and capacity",
+    "exact effective role assignment for the Cloud Shell identity",
+    "GitHub OIDC data-plane access",
+    "actual Azure cost",
+    "completion of API-key rotation after exposure"
+  ],
+  "next_safe_state": {
+    "active_azure_ai_activation_authorization": null,
+    "runtime_contract": ".project/contracts/openai-azure-foundry-provider-v2.json",
+    "runtime_profile": "config/azure-openai-runtime.dev.sh",
+    "runtime_cli": "openai_azure_provider/invoke.py",
+    "azure_mcp_connected": false,
+    "azure_write_tools_admitted": false
+  },
+  "canonical_distinctions": [
+    "workflow_login_succeeded != workflow_operation_succeeded",
+    "what_if_failed != deployment_started",
+    "run6_target_account_exists != run6_model_deployment_exists",
+    "run6_target != verified_runtime",
+    "Cloud_Shell_call_verified != GitHub_workflow_call_verified",
+    "model_inference_verified != Azure_operations_authority"
+  ]
+}
