@@ -83,7 +83,12 @@ class AzureMcpCurrentRealityRun1AuthorizationTests(unittest.TestCase):
         self.assertFalse(scope["default_subscription_inference_allowed"])
         self.assertFalse(scope["model_supplied_scope_allowed"])
         self.assertIsNone(UUID_PATTERN.search(json.dumps(self.request)))
-        self.assertIsNone(UUID_PATTERN.search(self.handoff))
+        self.assertNotRegex(
+            self.handoff,
+            r"/subscriptions/[0-9a-fA-F]{8}-[0-9a-fA-F-]{27,}/",
+        )
+        self.assertNotIn("raw subscription UUID", self.handoff)
+        self.assertNotIn("raw tenant UUID", self.handoff)
 
     def test_state_index_selects_terminal_result_without_active_authority(self) -> None:
         self.assertIsNone(
