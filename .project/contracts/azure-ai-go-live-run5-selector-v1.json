@@ -1,0 +1,77 @@
+{
+  "schema_version": "project.azure-ai-go-live-selector.v1",
+  "status": "active_repository_candidate",
+  "attempt_id": "azure-ai-go-live-run5",
+  "objective": "Select the first candidate in a bounded approved matrix that passes live model listing, capacity, and subscription-scope What-If gates; then perform exactly one deployment and one verification request.",
+  "subscription_boundary": {
+    "required_name": "Azure for Students",
+    "required_state": "Enabled",
+    "configured_subscription_id_must_match_azure_login": true,
+    "other_subscriptions_authorized": false
+  },
+  "selection": {
+    "candidate_limit": 10,
+    "region_order": ["westus3", "westus", "eastus", "northcentralus", "southcentralus"],
+    "model_priority": [
+      {"name":"gpt-4o-mini","version":"2024-07-18","sku":"GlobalStandard"},
+      {"name":"gpt-4.1-mini","version":"2025-04-14","sku":"GlobalStandard"}
+    ],
+    "live_gates": [
+      "subscription-scoped regional model listing",
+      "location-based model capacity for exact SKU",
+      "subscription-scope Azure Resource Manager What-If including account-scoped inference RBAC"
+    ],
+    "read_only_candidate_iteration": true,
+    "continue_after_what_if_success": false
+  },
+  "mutation": {
+    "deployment_attempt_limit": 1,
+    "resource_group_limit": 1,
+    "azure_openai_account_limit": 1,
+    "model_deployment_limit": 1,
+    "role_assignment_limit": 1,
+    "continue_to_another_candidate_after_deployment_failure": false,
+    "automatic_cleanup": false
+  },
+  "verification": {
+    "local_api_key_authentication_disabled": true,
+    "microsoft_entra_authentication_required": true,
+    "model_request_count": 1,
+    "max_output_tokens": 32,
+    "expected_output_contains": "AZURE AI LIVE",
+    "role_propagation_wait_seconds": 90,
+    "endpoint_live_requires_successful_model_response": true
+  },
+  "cost_boundary": {
+    "deployment_sku": "GlobalStandard",
+    "capacity": 1,
+    "provisioned_throughput_authorized": false,
+    "budget_resource_authorized": false,
+    "actual_cost_freshly_observed": false
+  },
+  "evidence": {
+    "raw_subscription_id_persisted": false,
+    "raw_principal_id_persisted": false,
+    "candidate_matrix_recorded": true,
+    "candidate_observations_recorded": true,
+    "what_if_recorded": true,
+    "deployment_result_recorded": true,
+    "account_model_rbac_verification_recorded": true,
+    "model_call_receipt_recorded": true,
+    "sha256_manifest_required": true
+  },
+  "failure_behavior": {
+    "no_candidate": "Stop before mutation and consume the authorization.",
+    "deployment_failure": "Stop after the one mutation attempt, preserve partial resources and evidence, and consume the authorization.",
+    "verification_failure": "Preserve deployed resources and evidence; no automatic retry, rollback, or cleanup.",
+    "manual_rerun": "Unauthorized."
+  },
+  "canonical_distinctions": [
+    "approved_candidate_matrix != live_subscription_availability",
+    "read_only_candidate_iteration != repeated_deployment_attempts",
+    "what_if_succeeded != deployment_succeeded",
+    "role_assignment_created != effective_data_plane_access",
+    "one_workflow != unbounded_mutation",
+    "endpoint_exists != endpoint_live"
+  ]
+}
