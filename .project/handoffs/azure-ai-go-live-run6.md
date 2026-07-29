@@ -39,16 +39,16 @@ The workflow must freshly query these facts before What-If. Screenshots are evid
 ## Intended adoption path
 
 ```text
-existing rg-ai-msp-dev-eastus
-→ existing oai-msp-anthony-dev-eastus
-→ incremental ARM What-If using the same names
-→ incremental deployment updates the existing account configuration
-→ gpt-41-mini-msp-dev model deployment
-→ account-scoped Cognitive Services OpenAI User assignment
+freshly verify existing rg-ai-msp-dev-eastus
+→ freshly verify existing oai-msp-anthony-dev-eastus
+→ resource-group-scoped What-If with the account declared existing
+→ create or reconcile gpt-41-mini-msp-dev only
+→ create or reconcile account-scoped Cognitive Services OpenAI User only
+→ harden the verified existing account by disabling local authentication
 → one Entra-authenticated 32-token Responses API call
 ```
 
-No duplicate resource group or Azure OpenAI account is authorized.
+The adoption Bicep contains no resource-group resource and declares the Azure OpenAI account as `existing`. No duplicate resource group or Azure OpenAI account is authorized or structurally available from that template.
 
 ## Exact model target
 
@@ -72,7 +72,7 @@ The application runtime identity remains unselected. Successful GitHub-runner in
 ## Security controls
 
 ```text
-local API-key authentication: disabled by IaC
+local API-key authentication: disabled on the verified existing account
 API key use: prohibited
 public network access: enabled for this demo increment
 private endpoint: not configured
@@ -96,8 +96,9 @@ The workflow must capture:
 - exact account name, kind, location, provisioning state, network setting, and local-auth state;
 - exact model listing and capacity observation;
 - existing-deployment conflict check;
-- subscription-scope What-If;
+- resource-group-scoped What-If;
 - deployment result;
+- account-hardening result;
 - post-deployment account, model, and RBAC verification;
 - one bounded response receipt;
 - redacted SHA-256 manifest and terminal summary.
@@ -108,7 +109,7 @@ The workflow must capture:
 - Conflicting existing deployment: stop before mutation.
 - Model, capacity, or What-If failure: stop before mutation.
 - Deployment failure: stop after the one deployment attempt and preserve partial state.
-- Verification failure: preserve the account, model deployment, role assignment, and evidence.
+- Account-hardening or model-verification failure: preserve the model deployment, role assignment, and evidence.
 - Rollback and cleanup are not authorized.
 
 ## Canonical distinctions
@@ -116,7 +117,8 @@ The workflow must capture:
 ```text
 manual_account_exists != model_deployed
 portal_deployment_succeeded != service_validated
-same_name_incremental_deployment != duplicate_resource
+existing_resource_reference != account_creation
+same_name_resource_group_deployment != duplicate_resource
 account_adopted_by_IaC != originally_created_by_IaC
 role_assignment_created != role_propagated
 model_request_verified != demo_API_integrated
