@@ -2,11 +2,13 @@
 
 ## Before dispatch
 
-Confirm the implementation pull request and its exact-head CI are green, the authorization request is active, and no other branch has changed the deployment workflow or Bicep after the request's `reviewed_source`.
+Confirm the implementation pull request is merged, the activation branch was created from that exact merge, its exact-head CI is green, and its only tree delta is `.project/deployment-requests/azure-mcp-live-run1.json`.
+
+The request must be active, its `reviewed_source` must equal the implementation merge commit, and no deployment workflow or Bicep file may differ on the activation branch.
 
 ## Dispatch inputs
 
-Use **Actions → Azure MCP live deployment → Run workflow** on `main`.
+Use **Actions → Azure MCP live deployment → Run workflow** and select the exact activation branch recorded in the active request handoff—not a later moving `main`.
 
 ```text
 request_path: .project/deployment-requests/azure-mcp-live-run1.json
