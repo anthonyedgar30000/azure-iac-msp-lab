@@ -1,8 +1,8 @@
 {
   "schema_version": "project.azure-ai-go-live-authorization.v1",
   "attempt_id": "azure-ai-go-live-run5",
-  "status": "active_one_attempt",
-  "active": true,
+  "status": "consumed_terminal_failure",
+  "active": false,
   "project": "Azure IaC MSP Lab",
   "recorded_at": "2026-07-29T01:25:00-04:00",
   "source_instruction": "Proceed with Azure AI go-live run 5 in Azure for Students, selecting the first deployable approved region and model combination in one bounded workflow.",
@@ -11,14 +11,26 @@
     "latest_merged_pull_request": 204,
     "candidate_branch": "agent/azure-ai-go-live-run5-selector",
     "activation_trigger": "the first merge commit to main that introduces .github/workflows/azure-ai-go-live-run5.yml",
-    "exact_merge_commit": "resolved_by_github_push_event",
+    "exact_merge_commit": "697930d2ebec0d14bed3e1796d440c719f651401",
     "open_pull_requests_before_branch": []
   },
   "attempt_limit": 1,
-  "attempts_observed": 0,
+  "attempts_observed": 1,
+  "terminal_execution": {
+    "workflow_run": 30425884534,
+    "workflow_attempt": 1,
+    "job_id": 90492164065,
+    "conclusion": "failure",
+    "artifact_id": 8713618498,
+    "artifact_digest": "sha256:39491be1c1292ffb9f31064645dd289ed718cebb4c862b4d5c57d712acb7162a",
+    "failure_stage": "candidate_what_if_validation",
+    "deployment_started": false,
+    "model_request_performed": false,
+    "endpoint_live": false
+  },
   "scope": {
     "subscription_name": "Azure for Students",
-    "subscription": "configured AZURE_SUBSCRIPTION_ID only, which must resolve to Azure for Students and Enabled",
+    "subscription": "configured AZURE_SUBSCRIPTION_ID only, which resolved to Azure for Students and Enabled",
     "candidate_order": [
       {"location":"westus3","model":"gpt-4o-mini","version":"2024-07-18","sku":"GlobalStandard","deployment":"gpt-4o-mini-msp-dev"},
       {"location":"westus","model":"gpt-4o-mini","version":"2024-07-18","sku":"GlobalStandard","deployment":"gpt-4o-mini-msp-dev"},
@@ -67,10 +79,10 @@
     "cleanup_authorized": false
   },
   "failure_behavior": {
-    "candidate_selection": "Read-only model, capacity, and What-If checks may continue through the declared matrix until the first candidate passes all gates.",
-    "deployment": "After the first candidate passes What-If, perform exactly one deployment attempt and do not continue to another candidate after mutation begins.",
-    "terminal_failure": "Stop, preserve protected evidence, and consume this authorization.",
-    "partial_resources": "Leave partial resources for exact-state inspection; do not delete automatically.",
+    "candidate_selection": "The declared matrix was evaluated once.",
+    "deployment": "No candidate reached deployment because the Bicep location allowlist rejected every capacity-sufficient region.",
+    "terminal_failure": "Protected evidence preserved and authorization consumed.",
+    "partial_resources": "No partial Azure AI resources were established.",
     "retry": "A sixth attempt requires a fresh explicit instruction. GitHub Re-run is unauthorized."
   },
   "cost_boundary": {
@@ -81,16 +93,16 @@
     "model_request_count": 1,
     "max_output_tokens": 32,
     "actual_cost_known_before_execution": false,
+    "Azure_resource_cost_delta_established": 0,
+    "billable_model_request_performed": false,
     "budget_creation_authorized": false
   },
   "canonical_distinctions": [
     "model_listed != capacity_available",
-    "capacity_available != subscription_policy_allowed",
-    "what_if_succeeded != deployment_succeeded",
-    "first_what_if_candidate != permission_to_attempt_multiple_deployments",
-    "deployment_succeeded != model_request_verified",
-    "role_assignment_created != role_propagated",
-    "endpoint_exists != endpoint_live",
+    "capacity_available != Bicep_location_allowed",
+    "Bicep_location_rejected != subscription_policy_rejected",
+    "what_if_command_invoked != Azure_What_If_started",
+    "deployment_not_started != resource_created",
     "failed_run != authorization_to_retry"
   ]
 }
