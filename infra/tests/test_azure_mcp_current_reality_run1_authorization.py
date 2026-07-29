@@ -98,7 +98,10 @@ class AzureMcpCurrentRealityRun1AuthorizationTests(unittest.TestCase):
         self.assertIn("az account set --subscription", self.script)
         self.assertIn("az account show --output json --only-show-errors", self.script)
         self.assertNotIn("az account show --subscription", self.script)
-        self.assertIn(".azure-mcp-current-reality-run1.consumed", self.script)
+        self.assertIn(
+            'CONSUMPTION_MARKER="${HOME}/.${ATTEMPT_ID}.consumed"',
+            self.script,
+        )
         marker = self.script.index("set -o noclobber")
         tool_call = self.script.index("-m azure_mcp_reality.cli")
         self.assertLess(marker, tool_call)
