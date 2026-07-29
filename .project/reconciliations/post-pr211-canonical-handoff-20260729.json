@@ -1,0 +1,102 @@
+{
+  "schema_version": "project.reconciliation.post-pr211-canonical-handoff.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T19:50:00-04:00",
+  "source_instruction": "Fix",
+  "classification": "repository_only_canonical_handoff_reconciliation",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "5509a982ea118b2c1108af8ee5c6a44d60df9884",
+    "latest_substantive_merge_commit": "ca0712569f0b4bc18ceba2610c988a01f91750f2",
+    "latest_substantive_merged_pull_request": 211,
+    "implementation_branch": "agent/reconcile-current-handoff-post-pr211"
+  },
+  "objective": "Replace the stale PR-185-era canonical handoff with a bounded post-PR211 repository and evidence reconciliation while preserving uncertainty, current authorization boundaries, and concurrent PR 212 ownership.",
+  "permitted_paths": [
+    ".project/handoffs/current-state.md",
+    ".project/reconciliations/post-pr211-canonical-handoff-20260729.json",
+    "infra/tests/test_post_pr211_current_handoff.py"
+  ],
+  "protected_paths": [
+    ".project/state-index.json",
+    ".project/evidence/**",
+    ".project/deployment-requests/**",
+    ".project/observation-requests/**",
+    ".github/workflows/**",
+    "azure_mcp_reality/**",
+    "openai_azure_provider/**",
+    "lab_factory/**",
+    "infra/azure-ai-live.bicep",
+    "workloads/**",
+    "**/*credential*",
+    "**/*secret*"
+  ],
+  "concurrent_workstream": {
+    "pull_request": 212,
+    "branch": "agent/azure-lab-factory-lite-v1",
+    "head": "e22b1fdc45c4a9d9298416c84d179f596b38060e",
+    "exact_head_ci_run": 30500788666,
+    "exact_head_ci_conclusion": "success",
+    "scope_overlap": false,
+    "ownership_transfer": false
+  },
+  "verified_repository_evidence": {
+    "pr211_source_head": "c426ef5759b9a7ad7a3ef18083c9c740218d2225",
+    "pr211_merge_commit": "ca0712569f0b4bc18ceba2610c988a01f91750f2",
+    "pr211_ci_runs": [
+      {
+        "name": "CI",
+        "run_id": 30452108536,
+        "conclusion": "success"
+      },
+      {
+        "name": "Azure MCP reality bridge contract",
+        "run_id": 30452111122,
+        "conclusion": "success"
+      },
+      {
+        "name": "Azure AI activation static validation",
+        "run_id": 30452114873,
+        "conclusion": "success"
+      }
+    ],
+    "main_after_no_content_administrative_commits": "5509a982ea118b2c1108af8ee5c6a44d60df9884"
+  },
+  "preserved_operational_boundaries": {
+    "azure_mcp_run1_observed": true,
+    "azure_mcp_run1_authority_consumed": true,
+    "azure_mcp_run1_rerun_authorized": false,
+    "remote_mcp_endpoint_deployed": false,
+    "azure_openai_mcp_invocation_verified": false,
+    "azure_ai_verified_model_response": true,
+    "azure_ai_verified_runtime_arm_scope_reconciled": false,
+    "azure_mutation_performed_by_this_increment": false
+  },
+  "authority": {
+    "repository_writes": "three declared paths on agent/reconcile-current-handoff-post-pr211",
+    "branch_creation": true,
+    "pull_request_creation": true,
+    "ordinary_pull_request_ci": true,
+    "pull_request_merge": false,
+    "workflow_dispatch_or_rerun": false,
+    "azure_authentication_or_query": false,
+    "azure_mutation": false,
+    "rbac_mutation": false,
+    "model_call": false,
+    "remote_mcp_deployment": false,
+    "cleanup": false,
+    "rollback": false
+  },
+  "verification_criteria": [
+    "the final comparison contains exactly the three permitted paths",
+    "the canonical handoff records main 5509a982 and PR 211 as the latest substantive merge",
+    "the canonical handoff records PR 212 as a separate non-overlapping concurrent workstream",
+    "the stale PR 185 and PR 186 current-state claims are removed",
+    "MCP run-1 terminal evidence and consumed authority are preserved",
+    "the separately verified gpt-5-mini runtime remains distinct from its unreconciled ARM identity",
+    "no Azure, workflow, model, MCP network, RBAC, cleanup, rollback, or deployment action occurs",
+    "exact-head pull-request CI passes"
+  ],
+  "next_gate": "Review exact-head CI and the three-file diff. Merge requires a separate explicit decision."
+}
