@@ -1,0 +1,84 @@
+{
+  "schema_version": "project.azure-mcp-live-activation.v1",
+  "status": "repository_candidate_waiting_for_exact_head_ci_and_single_use_dispatch",
+  "project": "Azure IaC MSP Lab",
+  "objective": "Deploy one hardened, read-only Azure MCP endpoint in westus2, scoped to observe the ServiceTracer lab resource group, then verify the deployed image, identity, role, configuration, TLS endpoint, and protected unauthenticated behavior.",
+  "source": {
+    "repository_source": "version-controlled Bicep in this repository",
+    "upstream_reference": "Azure-Samples/azmcp-copilot-studio-aca-mi",
+    "upstream_reference_commit": "f156038315b196e880f3d2352032c01a691b30d9",
+    "gallery_alias_used_for_deployment": false,
+    "container_image": "mcr.microsoft.com/azure-sdk/azure-mcp@sha256:80ea86cdbb30d6403ceea36766bdf8b736805bf1a0ef0a688be4bf4bb95c9b8d"
+  },
+  "architecture": {
+    "hosting": "Azure Container Apps consumption",
+    "location": "westus2",
+    "resource_group": "rg-azure-mcp-dev-westus2",
+    "target_observation_scope": "rg-servicetracer-dev-westus2",
+    "runtime_identity": "user-assigned managed identity",
+    "runtime_role": "Reader",
+    "runtime_role_scope": "rg-servicetracer-dev-westus2",
+    "server_authentication": "single-tenant Microsoft Entra delegated scope",
+    "delegated_scope": "Mcp.Tools.Read",
+    "preauthorized_clients": [
+      "Visual Studio Code"
+    ],
+    "namespaces": [
+      "group",
+      "compute",
+      "monitor"
+    ],
+    "read_only": true,
+    "public_ingress": true,
+    "https_only": true,
+    "min_replicas": 0,
+    "max_replicas": 1,
+    "telemetry_export": false
+  },
+  "cost": {
+    "plan": "Container Apps consumption",
+    "scale_to_zero": true,
+    "fixed_minimum_replica_cost": false,
+    "expected_idle_compute_charge": "none while scaled to zero",
+    "actual_cost_cad": "not_observed",
+    "budget_resource_configured": false
+  },
+  "authority": {
+    "human_instruction": "Fix",
+    "interpretation": "Make the Azure MCP endpoint live using one exact, single-use governed deployment with the minimum useful read-only scope.",
+    "attempt_limit": 1,
+    "automatic_retry_authorized": false,
+    "provider_registration_authorized": true,
+    "resource_group_mutation_authorized": true,
+    "rbac_mutation_authorized": true,
+    "entra_application_mutation_authorized": true,
+    "deployment_authorized": true,
+    "verification_authorized": true,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "validation": {
+    "exact_head_ci_required": true,
+    "durable_claim_v2_required_before_oidc": true,
+    "what_if_required": true,
+    "delete_changes_allowed": false,
+    "image_digest_verification_required": true,
+    "role_scope_verification_required": true,
+    "endpoint_tls_verification_required": true,
+    "authenticated_tool_call_in_this_increment": false
+  },
+  "failure": {
+    "missing_graph_permission": "fail before provider registration or deployment",
+    "missing_rbac_write_permission": "fail before provider registration or deployment",
+    "what_if_scope_escape": "fail before deployment",
+    "deployment_failure": "preserve evidence and stop; no retry or automatic rollback",
+    "cleanup": "requires separate authority because Entra application deletion is outside resource-group deletion"
+  },
+  "canonical_boundaries": [
+    "repository_candidate != live_endpoint",
+    "deployment_succeeded != authenticated_tool_call_verified",
+    "read_only_flag != complete_least_privilege_without_RBAC_scope",
+    "resource_group_deletion != Entra_application_cleanup",
+    "scale_to_zero != guaranteed_zero_total_cost"
+  ]
+}
