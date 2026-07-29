@@ -2,7 +2,7 @@
   "schema_version": "project.azure-ai-manual-account-adoption.v1",
   "status": "active_repository_candidate",
   "attempt_id": "azure-ai-go-live-run6",
-  "objective": "Adopt the portal-created East US Azure OpenAI account into the governed IaC path, deploy one bounded model, assign account-scoped Entra inference access, and verify one response without creating a duplicate account or resource group.",
+  "objective": "Adopt the portal-created East US Azure OpenAI account into the governed IaC path, deploy one bounded model, assign account-scoped Entra inference access, harden local authentication, and verify one response without creating a duplicate account or resource group.",
   "manual_baseline": {
     "subscription_name": "Azure for Students",
     "resource_group": "rg-ai-msp-dev-eastus",
@@ -30,14 +30,20 @@
     "azure_mcp_connection": false
   },
   "adoption_method": {
-    "template": "infra/azure-ai-live.bicep",
+    "template": "infra/azure-ai-existing-account-adopt.bicep",
+    "target_scope": "resourceGroup",
     "resource_manager_mode": "incremental",
+    "account_declaration": "existing",
     "same_resource_group_name_required": true,
     "same_account_name_required": true,
     "existing_resource_validation_before_what_if": true,
-    "subscription_scope_what_if_required": true,
+    "resource_group_scope_what_if_required": true,
+    "subscription_scope_what_if_required": false,
     "duplicate_account_creation_prohibited": true,
     "duplicate_resource_group_creation_prohibited": true,
+    "account_creation_available_from_adoption_template": false,
+    "resource_group_creation_available_from_adoption_template": false,
+    "account_hardening_method": "az resource update against the freshly verified existing account ID",
     "deployment_attempt_limit": 1
   },
   "identity_and_permissions": {
@@ -89,11 +95,13 @@
     "one_responses_api_call": true
   },
   "expected_outputs": [
+    "manual-resource-group-baseline.json",
     "manual-account-baseline.json",
     "model-listing.json",
     "model-capacity.json",
     "what-if.json",
     "deployment.json",
+    "account-hardening.json",
     "account-verification.json",
     "model-verification.json",
     "rbac-verification.json",
@@ -111,7 +119,8 @@
   "canonical_distinctions": [
     "portal_success != service_validated",
     "resource_exists != securely_configured",
-    "same_name_incremental_deployment != duplicate_resource",
+    "existing_resource_reference != account_creation",
+    "same_name_resource_group_deployment != duplicate_resource",
     "IaC_adoption != historical_creation_proven_by_IaC",
     "model_deployed != Entra_inference_verified",
     "endpoint_live != application_integrated"
