@@ -1,0 +1,332 @@
+name: Azure AI go live
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/azure-ai-live-deploy.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: azure-ai-go-live-v1
+  cancel-in-progress: false
+
+env:
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+  MODEL_NAME: gpt-4.1-mini
+  MODEL_VERSION: '2025-04-14'
+  DEPLOYMENT_NAME: gpt-41-mini-msp-dev
+  DEPLOYMENT_SKU: Standard
+  DEPLOYMENT_CAPACITY: '1'
+
+jobs:
+  deploy-and-verify:
+    name: Deploy and verify Azure AI
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 60
+    steps:
+      - name: Check out exact merge commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Validate exact repository candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python -m unittest infra.tests.test_azure_ai_live_activation -v
+          az bicep install
+          az bicep lint --file infra/azure-ai-live.bicep
+          az bicep build --file infra/azure-ai-live.bicep --outfile "$RUNNER_TEMP/azure-ai-live.json"
+          az bicep lint --file infra/modules/azure_ai_openai.bicep
+          az bicep build --file infra/modules/azure_ai_openai.bicep --outfile "$RUNNER_TEMP/azure-ai-openai-module.json"
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Resolve bounded deployment identity and provider
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/azure-ai-live-evidence"
+          mkdir -p "$evidence"
+
+          subscription_id="$(az account show --query id --output tsv)"
+          subscription_name="$(az account show --query name --output tsv)"
+          subscription_state="$(az account show --query state --output tsv)"
+          test "$subscription_id" = "$AZURE_SUBSCRIPTION_ID"
+          test "$subscription_state" = "Enabled"
+
+          principal_id="$(az role assignment list --assignee "$AZURE_CLIENT_ID" --all --query '[0].principalId' --output tsv 2>/dev/null || true)"
+          if [[ -z "$principal_id" ]]; then
+            principal_id="$(az ad sp show --id "$AZURE_CLIENT_ID" --query id --output tsv)"
+          fi
+          test -n "$principal_id"
+
+          provider_state="$(az provider show --namespace Microsoft.CognitiveServices --query registrationState --output tsv)"
+          if [[ "$provider_state" != "Registered" ]]; then
+            az provider register --namespace Microsoft.CognitiveServices --wait
+            provider_state="$(az provider show --namespace Microsoft.CognitiveServices --query registrationState --output tsv)"
+          fi
+          test "$provider_state" = "Registered"
+
+          sub_hash="$(printf '%s' "$subscription_id" | sha256sum | cut -c1-8)"
+          principal_hash="$(printf '%s' "$principal_id" | sha256sum | cut -c1-16)"
+
+          {
+            echo "PRINCIPAL_ID=$principal_id"
+            echo "SUB_HASH=$sub_hash"
+          } >> "$GITHUB_ENV"
+
+          jq -n \
+            --arg commit "$GITHUB_SHA" \
+            --arg subscription_name "$subscription_name" \
+            --arg subscription_state "$subscription_state" \
+            --arg provider_state "$provider_state" \
+            --arg principal_fingerprint "sha256:$principal_hash" \
+            '{
+              schema_version:"project.azure-ai-go-live-context.v1",
+              exact_commit:$commit,
+              subscription_name:$subscription_name,
+              subscription_state:$subscription_state,
+              provider_registration_state:$provider_state,
+              principal_fingerprint:$principal_fingerprint,
+              raw_subscription_id_persisted:false,
+              raw_principal_id_persisted:false
+            }' > "$evidence/context.json"
+
+      - name: Select, What-If, and deploy first viable regional candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/azure-ai-live-evidence"
+          deployment_succeeded=false
+
+          for location in canadaeast eastus2; do
+            rg="rg-ai-msp-dev-${location}"
+            account="oai-msp-${SUB_HASH}-${location}"
+            deployment="azure-ai-live-${GITHUB_RUN_ID}-${location}"
+            models="$RUNNER_TEMP/models-${location}.json"
+
+            set +e
+            az rest \
+              --method get \
+              --url "https://management.azure.com/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/providers/Microsoft.CognitiveServices/locations/${location}/models?api-version=2024-10-01" \
+              --output json > "$models" 2>"$RUNNER_TEMP/models-${location}.err"
+            models_rc=$?
+            set -e
+            if (( models_rc != 0 )); then
+              continue
+            fi
+
+            if ! jq -e \
+              --arg name "$MODEL_NAME" \
+              --arg version "$MODEL_VERSION" \
+              '.value[] | select((.model.format // "") == "OpenAI" and (.model.name // "") == $name and (.model.version // "") == $version)' \
+              "$models" >/dev/null; then
+              continue
+            fi
+
+            set +e
+            az deployment sub what-if \
+              --name "$deployment" \
+              --location "$location" \
+              --template-file infra/azure-ai-live.bicep \
+              --parameters \
+                deployAzureAi=true \
+                resourceGroupName="$rg" \
+                location="$location" \
+                accountName="$account" \
+                deployModel=true \
+                deploymentName="$DEPLOYMENT_NAME" \
+                modelName="$MODEL_NAME" \
+                modelVersion="$MODEL_VERSION" \
+                deploymentSkuName="$DEPLOYMENT_SKU" \
+                deploymentCapacity="$DEPLOYMENT_CAPACITY" \
+                assignInferenceRole=false \
+              --result-format FullResourcePayloads \
+              --output json > "$evidence/what-if-${location}.json" 2>"$evidence/what-if-${location}.err"
+            what_if_rc=$?
+            if (( what_if_rc != 0 )); then
+              set -e
+              continue
+            fi
+
+            az deployment sub create \
+              --name "$deployment" \
+              --location "$location" \
+              --template-file infra/azure-ai-live.bicep \
+              --parameters \
+                deployAzureAi=true \
+                resourceGroupName="$rg" \
+                location="$location" \
+                accountName="$account" \
+                deployModel=true \
+                deploymentName="$DEPLOYMENT_NAME" \
+                modelName="$MODEL_NAME" \
+                modelVersion="$MODEL_VERSION" \
+                deploymentSkuName="$DEPLOYMENT_SKU" \
+                deploymentCapacity="$DEPLOYMENT_CAPACITY" \
+                assignInferenceRole=false \
+              --output json > "$evidence/deployment-${location}.json" 2>"$evidence/deployment-${location}.err"
+            deploy_rc=$?
+            set -e
+
+            if (( deploy_rc == 0 )); then
+              deployment_succeeded=true
+              {
+                echo "AZURE_AI_LOCATION=$location"
+                echo "AZURE_AI_RESOURCE_GROUP=$rg"
+                echo "AZURE_AI_ACCOUNT=$account"
+                echo "AZURE_AI_DEPLOYMENT_RECORD=$deployment"
+                echo "AZURE_OPENAI_BASE_URL=https://${account}.openai.azure.com/openai/v1/"
+              } >> "$GITHUB_ENV"
+              break
+            fi
+          done
+
+          [[ "$deployment_succeeded" == true ]] || {
+            echo "No bounded candidate deployed successfully." >&2
+            exit 1
+          }
+
+      - name: Grant exact inference role
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/azure-ai-live-evidence"
+          account_id="$(az cognitiveservices account show --resource-group "$AZURE_AI_RESOURCE_GROUP" --name "$AZURE_AI_ACCOUNT" --query id --output tsv)"
+          test -n "$account_id"
+
+          az role assignment create \
+            --assignee-object-id "$PRINCIPAL_ID" \
+            --assignee-principal-type ServicePrincipal \
+            --role "Cognitive Services OpenAI User" \
+            --scope "$account_id" \
+            --output json > "$evidence/inference-role-assignment.json"
+
+          echo "AZURE_AI_ACCOUNT_ID=$account_id" >> "$GITHUB_ENV"
+
+      - name: Verify deployed resource, model, RBAC, and one bounded response
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/azure-ai-live-evidence"
+
+          az cognitiveservices account show \
+            --resource-group "$AZURE_AI_RESOURCE_GROUP" \
+            --name "$AZURE_AI_ACCOUNT" \
+            --output json \
+            | jq '{name,location,kind,sku:.sku.name,provisioningState:.properties.provisioningState,disableLocalAuth:.properties.disableLocalAuth,publicNetworkAccess:.properties.publicNetworkAccess}' \
+            > "$evidence/account-verification.json"
+
+          az cognitiveservices account deployment show \
+            --resource-group "$AZURE_AI_RESOURCE_GROUP" \
+            --name "$AZURE_AI_ACCOUNT" \
+            --deployment-name "$DEPLOYMENT_NAME" \
+            --output json \
+            | jq '{name,provisioningState:.properties.provisioningState,model:.properties.model,sku}' \
+            > "$evidence/model-verification.json"
+
+          az role assignment list \
+            --assignee-object-id "$PRINCIPAL_ID" \
+            --scope "$AZURE_AI_ACCOUNT_ID" \
+            --query "[?roleDefinitionName=='Cognitive Services OpenAI User'].{role:roleDefinitionName,scope:scope,principalType:principalType}" \
+            --output json \
+            | sed "s#${{ secrets.AZURE_SUBSCRIPTION_ID }}#<subscription>#g" \
+            > "$evidence/rbac-verification.json"
+          jq -e 'length > 0' "$evidence/rbac-verification.json" >/dev/null
+
+          request='{"model":"'"$DEPLOYMENT_NAME"'","input":"Reply with exactly: AZURE AI LIVE","max_output_tokens":32}'
+          success=false
+          for attempt in $(seq 1 12); do
+            token="$(az account get-access-token --scope https://ai.azure.com/.default --query accessToken --output tsv 2>/dev/null || az account get-access-token --resource https://cognitiveservices.azure.com --query accessToken --output tsv)"
+            http_code="$(curl --silent --show-error \
+              --output "$RUNNER_TEMP/response.json" \
+              --write-out '%{http_code}' \
+              --request POST \
+              --url "${AZURE_OPENAI_BASE_URL}responses" \
+              --header "Authorization: Bearer ${token}" \
+              --header 'Content-Type: application/json' \
+              --data "$request" || true)"
+            if [[ "$http_code" == "200" ]]; then
+              success=true
+              break
+            fi
+            sleep 15
+          done
+          [[ "$success" == true ]] || {
+            jq '{error}' "$RUNNER_TEMP/response.json" > "$evidence/model-call-failure.json" 2>/dev/null || true
+            exit 1
+          }
+
+          jq '
+            def output_text:
+              .output_text // ([.output[]?.content[]? | select(.type == "output_text") | .text] | join(""));
+            {
+              status:"verified",
+              id,
+              model,
+              output_text:output_text,
+              usage,
+              prompt_classification:"bounded_non_sensitive_demo",
+              max_output_tokens:32
+            }
+          ' "$RUNNER_TEMP/response.json" > "$evidence/model-call-receipt.json"
+          jq -e '.output_text | contains("AZURE AI LIVE")' "$evidence/model-call-receipt.json" >/dev/null
+
+          jq -n \
+            --arg commit "$GITHUB_SHA" \
+            --arg resource_group "$AZURE_AI_RESOURCE_GROUP" \
+            --arg location "$AZURE_AI_LOCATION" \
+            --arg account "$AZURE_AI_ACCOUNT" \
+            --arg deployment "$DEPLOYMENT_NAME" \
+            '{
+              schema_version:"project.azure-ai-go-live-result.v1",
+              status:"live_verified",
+              exact_commit:$commit,
+              resource_group:$resource_group,
+              location:$location,
+              account:$account,
+              deployment:$deployment,
+              local_authentication_disabled:true,
+              entra_inference_verified:true,
+              bounded_model_request_verified:true,
+              azure_mcp_connected:false
+            }' > "$evidence/go-live-summary.json"
+
+      - name: Write evidence manifest
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/azure-ai-live-evidence"
+          if [[ -d "$evidence" ]]; then
+            find "$evidence" -type f ! -name artifact-manifest.sha256 -print0 \
+              | sort -z \
+              | xargs -0 -r sha256sum \
+              > "$evidence/artifact-manifest.sha256"
+          fi
+
+      - name: Upload protected go-live evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-ai-go-live-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/azure-ai-live-evidence
+          if-no-files-found: error
+          retention-days: 30
