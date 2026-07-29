@@ -1,29 +1,32 @@
 {
   "schema_version": "project.azure-mcp-current-reality-authorization.v1",
   "attempt_id": "azure-mcp-current-reality-run1",
-  "status": "active_one_attempt_pending_exact_merge_commit",
-  "active": true,
+  "status": "consumed_observation_succeeded_wrapper_epilogue_failed",
+  "active": false,
   "project": "Azure IaC MSP Lab",
   "recorded_at": "2026-07-29T07:11:00-04:00",
+  "resolved_at": "2026-07-29T08:12:00-04:00",
   "source_instruction": "Proceed",
   "source_context": "Proceed after PR 209 merged the first governed local get_current_reality MCP tool and the next gate was defined as one local Cloud Shell observation against an exact subscription and resource group.",
   "repository_boundary": {
     "repository": "anthonyedgar30000/azure-iac-msp-lab",
     "base_branch": "main",
     "base_commit": "a39e39184ce80108d1b9ee7bd0f0136ff3a8fe05",
-    "latest_merged_pull_request": 209,
+    "latest_merged_pull_request": 210,
     "open_pull_requests_observed_before_branch": [],
     "candidate_branch": "agent/repair-and-authorize-mcp-reality-run1",
     "execution_commit_rule": "Use the exact merge commit that lands this repair and authorization increment. Supply that lowercase 40-character commit through AZURE_MCP_RUN1_REVIEWED_COMMIT and check it out before execution.",
-    "exact_execution_commit": null,
-    "local_working_tree_observed": false,
-    "repository_operations": "connector_backed"
+    "exact_execution_commit": "0e46a99b795558b42f8e88cf7703cb95e87f3eb1",
+    "local_working_tree_observed": true,
+    "local_working_tree_clean": true,
+    "repository_operations": "connector_backed_and_operator_executed"
   },
   "authorized_operation": {
     "tool": "get_current_reality",
     "entrypoint": "scripts/azure_mcp_current_reality_run1.sh",
     "execution_environment": "interactive Azure Cloud Shell Bash using Anthony Edgar's already authenticated Azure CLI identity",
     "attempt_limit": 1,
+    "attempts_consumed": 1,
     "automatic_retry_authorized": false,
     "manual_rerun_authorized": false,
     "consumption_boundary": "The script atomically creates ~/.azure-mcp-current-reality-run1.consumed immediately before the bounded Azure resource observation begins.",
@@ -36,6 +39,8 @@
     "subscription_id_environment_variable": "AZURE_MCP_RUN1_SUBSCRIPTION_ID",
     "raw_subscription_id_persisted": false,
     "raw_tenant_id_persisted": false,
+    "subscription_fingerprint": "8f27aec6b3012cf0",
+    "tenant_fingerprint": "26ba6e04f1a9cde8",
     "resource_group": "rg-ai-msp-dev-eastus",
     "expected_resource_group_location": "eastus",
     "cross_subscription_discovery_allowed": false,
@@ -45,7 +50,7 @@
   "identity_and_permissions": {
     "identity_class": "interactive Azure Cloud Shell user identity",
     "exact_principal_object_id": "not_persisted",
-    "effective_read_permissions": "to_be_observed_by_attempt",
+    "effective_read_permissions": "sufficient_to_observe_account_context_resource_group_resource_inventory_and_cognitive_services_deployments",
     "least_privilege_proven": false,
     "new_role_assignment_authorized": false,
     "rbac_mutation_authorized": false
@@ -89,6 +94,24 @@
     "azure_query_performed_by_repair": false,
     "azure_mutation_performed_by_repair": false
   },
+  "terminal_outcome": {
+    "reconciliation": ".project/reconciliations/azure-mcp-current-reality-run1-terminal-20260729.json",
+    "observation_status": "observed",
+    "observed_at_utc": "2026-07-29T12:01:23.289717Z",
+    "receipt_promoted": ".project/evidence/azure-mcp-current-reality-run1.json",
+    "manifest_promoted": ".project/evidence/azure-mcp-current-reality-run1.sha256",
+    "uploaded_receipt_sha256": "2fd80540672dd26b11ee0b1c243cfb85defc0e031f8bd5cdc3d9d8d6813d9686",
+    "manifest_matches_receipt": true,
+    "raw_evidence_digest": "sha256:6243ab0f718ad3c0981adf319c1434507eea1be0f9dbc14e4256758c30f0f33c",
+    "Azure_resource_observation_completed": true,
+    "mutations_performed": false,
+    "secrets_returned": false,
+    "wrapper_epilogue_completed": false,
+    "wrapper_epilogue_error": "readonly RECEIPT_PATH environment-prefix assignment collision",
+    "observation_invalidated_by_epilogue_error": false,
+    "manual_manifest_created_from_existing_receipt": true,
+    "rerun_authorized": false
+  },
   "expected_outputs": {
     "observation_status": [
       "observed",
@@ -104,27 +127,15 @@
   "cost_and_quota": {
     "expected_recurring_azure_resource_cost_delta_cad": 0,
     "model_tokens_authorized": 0,
+    "model_tokens_consumed": 0,
     "actual_azure_cost_freshly_observed": false,
     "azure_quota_freshly_observed": false
   },
   "failure_and_rollback": {
-    "fail_closed_conditions": [
-      "reviewed_commit_mismatch",
-      "confirmation_mismatch",
-      "subscription_uuid_missing_or_invalid",
-      "subscription_identity_mismatch",
-      "subscription_name_mismatch",
-      "subscription_disabled",
-      "authorization_already_consumed",
-      "resource_scope_widened",
-      "unexpected_resource_group_location",
-      "Azure_CLI_command_failure",
-      "invalid_or_missing_evidence_digest",
-      "mutation_or_secret_flag_not_false"
-    ],
     "failure_after_consumption_requires_new_authority": true,
-    "repository_rollback": "Revert this repair and authorization increment if its static validation fails or the scope is rejected before execution.",
-    "azure_resource_rollback": "not_applicable_no_Azure_mutation_authorized",
+    "epilogue_failure_requires_observation_rerun": false,
+    "repository_rollback": "Revert the exact terminal reconciliation and wrapper repair pull request if static validation fails.",
+    "azure_resource_rollback": "not_applicable_no_Azure_mutation_performed",
     "cleanup_authorized": false
   },
   "authority": {
@@ -133,8 +144,8 @@
     "pull_request_creation_authorized": true,
     "ordinary_exact_head_ci_authorized": true,
     "pull_request_merge_after_exact_head_ci_authorized": true,
-    "one_local_cloud_shell_observation_authorized": true,
-    "azure_authentication_and_bounded_read_queries_authorized": true,
+    "one_local_cloud_shell_observation_authorized": false,
+    "azure_authentication_and_bounded_read_queries_authorized": false,
     "azure_mutation_authorized": false,
     "rbac_mutation_authorized": false,
     "remote_mcp_deployment_authorized": false,
@@ -144,13 +155,16 @@
   },
   "canonical_distinctions": [
     "authorization_recorded != observation_executed",
+    "authorization_consumed != wrapper_completed",
+    "receipt_written != wrapper_epilogue_succeeded",
+    "receipt_validated_after_upload != observation_rerun",
     "local_CLI_context_selected != Azure_resource_mutated",
     "Azure_authentication_succeeded != scope_authorized",
     "resource_listed != service_validated",
     "tool_called_locally != remote_MCP_endpoint_deployed",
     "model_inference_verified != MCP_tool_call_verified",
     "read_only_annotation != effective_least_privilege",
-    "not_observed != absent",
+    "empty_deployment_inventory_in_observed_account != verified_runtime_absent_globally",
     "failed_attempt != authorization_to_retry"
   ]
 }

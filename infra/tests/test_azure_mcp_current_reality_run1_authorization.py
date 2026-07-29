@@ -13,7 +13,12 @@ REQUEST_PATH = (
     / "observation-requests"
     / "azure-mcp-current-reality-run1.json"
 )
-HANDOFF_PATH = ROOT / ".project" / "handoffs" / "azure-mcp-current-reality-run1.md"
+HANDOFF_PATH = (
+    ROOT
+    / ".project"
+    / "handoffs"
+    / "azure-mcp-current-reality-run1-terminal.md"
+)
 INDEX_PATH = ROOT / ".project" / "state-index.json"
 SCRIPT_PATH = ROOT / "scripts" / "azure_mcp_current_reality_run1.sh"
 CLI_PATH = ROOT / "azure_mcp_reality" / "cli.py"
@@ -21,6 +26,9 @@ SERVER_PATH = ROOT / "azure_mcp_reality" / "server.py"
 COMPAT_PATH = ROOT / "azure_mcp_reality" / "azure_cli_compat.py"
 
 REQUEST_POINTER = ".project/observation-requests/azure-mcp-current-reality-run1.json"
+TERMINAL_POINTER = (
+    ".project/reconciliations/azure-mcp-current-reality-run1-terminal-20260729.json"
+)
 UUID_PATTERN = re.compile(
     r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b"
 )
@@ -37,23 +45,32 @@ class AzureMcpCurrentRealityRun1AuthorizationTests(unittest.TestCase):
         cls.server = SERVER_PATH.read_text(encoding="utf-8")
         cls.compat = COMPAT_PATH.read_text(encoding="utf-8")
 
-    def test_request_is_one_attempt_and_not_executed(self) -> None:
+    def test_request_is_consumed_terminal_and_non_retriable(self) -> None:
         self.assertEqual(
             self.request["schema_version"],
             "project.azure-mcp-current-reality-authorization.v1",
         )
         self.assertEqual(self.request["attempt_id"], "azure-mcp-current-reality-run1")
-        self.assertTrue(self.request["active"])
+        self.assertEqual(
+            self.request["status"],
+            "consumed_observation_succeeded_wrapper_epilogue_failed",
+        )
+        self.assertFalse(self.request["active"])
         self.assertEqual(self.request["authorized_operation"]["attempt_limit"], 1)
+        self.assertEqual(self.request["authorized_operation"]["attempts_consumed"], 1)
         self.assertFalse(
             self.request["authorized_operation"]["automatic_retry_authorized"]
         )
         self.assertFalse(
             self.request["authorized_operation"]["manual_rerun_authorized"]
         )
-        self.assertIsNone(
-            self.request["repository_boundary"]["exact_execution_commit"]
+        self.assertEqual(
+            self.request["repository_boundary"]["exact_execution_commit"],
+            "0e46a99b795558b42f8e88cf7703cb95e87f3eb1",
         )
+        self.assertTrue(self.request["terminal_outcome"]["Azure_resource_observation_completed"])
+        self.assertFalse(self.request["terminal_outcome"]["wrapper_epilogue_completed"])
+        self.assertFalse(self.request["terminal_outcome"]["rerun_authorized"])
 
     def test_scope_is_exact_and_raw_identity_is_not_persisted(self) -> None:
         scope = self.request["scope"]
@@ -66,26 +83,47 @@ class AzureMcpCurrentRealityRun1AuthorizationTests(unittest.TestCase):
         self.assertFalse(scope["default_subscription_inference_allowed"])
         self.assertFalse(scope["model_supplied_scope_allowed"])
         self.assertIsNone(UUID_PATTERN.search(json.dumps(self.request)))
-        self.assertIsNone(UUID_PATTERN.search(self.handoff))
+        self.assertNotRegex(
+            self.handoff,
+            r"/subscriptions/[0-9a-fA-F]{8}-[0-9a-fA-F-]{27,}/",
+        )
+        self.assertNotIn("raw subscription UUID", self.handoff)
+        self.assertNotIn("raw tenant UUID", self.handoff)
 
-    def test_state_index_selects_active_authorization_without_claiming_execution(self) -> None:
-        self.assertEqual(
-            self.index["active_azure_mcp_current_reality_authorization"],
-            REQUEST_POINTER,
+    def test_state_index_selects_terminal_result_without_active_authority(self) -> None:
+        self.assertIsNone(
+            self.index["active_azure_mcp_current_reality_authorization"]
         )
         self.assertEqual(
             self.index["latest_azure_mcp_current_reality_authorization"],
             REQUEST_POINTER,
         )
-        self.assertFalse(
+        self.assertEqual(
+            self.index["latest_consumed_azure_mcp_current_reality_authorization"],
+            TERMINAL_POINTER,
+        )
+        self.assertEqual(
+            self.index["latest_azure_mcp_current_reality_reconciliation"],
+            TERMINAL_POINTER,
+        )
+        self.assertTrue(
             self.index["azure_mcp_current_reality_local_execution_observed"]
+        )
+        self.assertTrue(
+            self.index["azure_mcp_current_reality_receipt_validated"]
+        )
+        self.assertFalse(
+            self.index["azure_mcp_current_reality_run1_wrapper_epilogue_completed"]
+        )
+        self.assertFalse(
+            self.index["azure_mcp_current_reality_run1_rerun_authorized"]
         )
         self.assertFalse(
             self.index["azure_mcp_current_reality_remote_endpoint_deployed"]
         )
         self.assertFalse(self.index["azure_ai_mcp_connected"])
         self.assertIn(
-            "authorization_recorded != observation_executed",
+            "authorization_consumed != wrapper_completed",
             self.index["claim_boundaries"],
         )
 
@@ -105,7 +143,20 @@ class AzureMcpCurrentRealityRun1AuthorizationTests(unittest.TestCase):
         marker = self.script.index("set -o noclobber")
         tool_call = self.script.index("-m azure_mcp_reality.cli")
         self.assertLess(marker, tool_call)
-        self.assertIn("failure after that point consumes", self.handoff)
+        self.assertIn("Do not rerun run 1", self.handoff)
+
+    def test_wrapper_validation_names_do_not_collide_with_readonly_variables(self) -> None:
+        self.assertIn('readonly RECEIPT_PATH="/tmp/${ATTEMPT_ID}.json"', self.script)
+        self.assertIn('RUN1_RECEIPT_PATH="$RECEIPT_PATH"', self.script)
+        self.assertIn('os.environ["RUN1_RECEIPT_PATH"]', self.script)
+        self.assertNotIn('\nRECEIPT_PATH="$RECEIPT_PATH" \\\n', self.script)
+        for name in (
+            "RUN1_EXPECTED_COMMIT",
+            "RUN1_EXPECTED_SUBSCRIPTION_NAME",
+            "RUN1_EXPECTED_RESOURCE_GROUP",
+            "RUN1_EXPECTED_LOCATION",
+        ):
+            self.assertIn(name, self.script)
 
     def test_cli_and_server_use_the_compatibility_runner(self) -> None:
         self.assertIn("active_subscription_runner", self.cli)
@@ -123,8 +174,8 @@ class AzureMcpCurrentRealityRun1AuthorizationTests(unittest.TestCase):
 
     def test_cloud_and_model_mutations_remain_denied(self) -> None:
         authority = self.request["authority"]
-        self.assertTrue(authority["one_local_cloud_shell_observation_authorized"])
-        self.assertTrue(
+        self.assertFalse(authority["one_local_cloud_shell_observation_authorized"])
+        self.assertFalse(
             authority["azure_authentication_and_bounded_read_queries_authorized"]
         )
         for key in (
