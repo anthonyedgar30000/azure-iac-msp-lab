@@ -6,10 +6,15 @@ param deployAzureAi bool = false
 @description('Dedicated Azure AI resource group.')
 param resourceGroupName string = 'rg-ai-msp-dev-canadaeast'
 
-@description('Azure region selected from protected execution evidence.')
+@description('Azure region selected from bounded live model, capacity, and What-If evidence.')
 @allowed([
   'canadaeast'
   'eastus2'
+  'westus3'
+  'westus'
+  'eastus'
+  'northcentralus'
+  'southcentralus'
 ])
 param location string = 'canadaeast'
 
