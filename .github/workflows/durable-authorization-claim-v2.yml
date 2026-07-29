@@ -1,0 +1,128 @@
+name: Durable single-use authorization claim v2
+
+on:
+  workflow_call:
+    inputs:
+      request_path:
+        description: Exact immutable request under .project/deployment-requests/
+        required: true
+        type: string
+    outputs:
+      request_id:
+        value: ${{ jobs.claim.outputs.request_id }}
+      reviewed_source:
+        value: ${{ jobs.claim.outputs.reviewed_source }}
+      operation:
+        value: ${{ jobs.claim.outputs.operation }}
+      environment:
+        value: ${{ jobs.claim.outputs.environment }}
+      subscription:
+        value: ${{ jobs.claim.outputs.subscription }}
+      tenant:
+        value: ${{ jobs.claim.outputs.tenant }}
+      resource_group:
+        value: ${{ jobs.claim.outputs.resource_group }}
+      location:
+        value: ${{ jobs.claim.outputs.location }}
+      scope_hash:
+        value: ${{ jobs.claim.outputs.scope_hash }}
+      provider_registration_authorized:
+        value: ${{ jobs.claim.outputs.provider_registration_authorized }}
+      resource_group_mutation_authorized:
+        value: ${{ jobs.claim.outputs.resource_group_mutation_authorized }}
+      rbac_mutation_authorized:
+        value: ${{ jobs.claim.outputs.rbac_mutation_authorized }}
+      entra_application_mutation_authorized:
+        value: ${{ jobs.claim.outputs.entra_application_mutation_authorized }}
+      deployment_authorized:
+        value: ${{ jobs.claim.outputs.deployment_authorized }}
+      verification_authorized:
+        value: ${{ jobs.claim.outputs.verification_authorized }}
+
+permissions:
+  contents: read
+
+jobs:
+  claim:
+    name: Validate and atomically consume v2 authority
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      id-token: none
+    env:
+      GH_TOKEN: ${{ github.token }}
+    outputs:
+      request_id: ${{ steps.validate.outputs.request_id }}
+      reviewed_source: ${{ steps.validate.outputs.reviewed_source }}
+      operation: ${{ steps.validate.outputs.operation }}
+      environment: ${{ steps.validate.outputs.environment }}
+      subscription: ${{ steps.validate.outputs.subscription }}
+      tenant: ${{ steps.validate.outputs.tenant }}
+      resource_group: ${{ steps.validate.outputs.resource_group }}
+      location: ${{ steps.validate.outputs.location }}
+      scope_hash: ${{ steps.validate.outputs.scope_hash }}
+      provider_registration_authorized: ${{ steps.validate.outputs.provider_registration_authorized }}
+      resource_group_mutation_authorized: ${{ steps.validate.outputs.resource_group_mutation_authorized }}
+      rbac_mutation_authorized: ${{ steps.validate.outputs.rbac_mutation_authorized }}
+      entra_application_mutation_authorized: ${{ steps.validate.outputs.entra_application_mutation_authorized }}
+      deployment_authorized: ${{ steps.validate.outputs.deployment_authorized }}
+      verification_authorized: ${{ steps.validate.outputs.verification_authorized }}
+    steps:
+      - name: Check out exact executing repository state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Validate request and immutable tree delta
+        id: validate
+        env:
+          REQUEST_PATH: ${{ inputs.request_path }}
+          CALLER_WORKFLOW_REF: ${{ github.workflow_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$REQUEST_PATH" == .project/deployment-requests/*.json ]]
+          python infra/scripts/authority_claim_v2.py \
+            --request "$REQUEST_PATH" \
+            --repository "$GITHUB_REPOSITORY" \
+            --caller-workflow-ref "$CALLER_WORKFLOW_REF" \
+            --github-output "$GITHUB_OUTPUT" \
+            --evidence-output "$RUNNER_TEMP/authority-validation-v2.json"
+
+          reviewed_source="$(jq -r '.reviewed_source' "$RUNNER_TEMP/authority-validation-v2.json")"
+          git cat-file -e "${reviewed_source}^{commit}"
+          git merge-base --is-ancestor "$reviewed_source" "$GITHUB_SHA"
+          mapfile -t changed < <(git diff --name-only "$reviewed_source" "$GITHUB_SHA")
+          [[ "${#changed[@]}" -eq 1 ]]
+          [[ "${changed[0]}" == "$REQUEST_PATH" ]]
+
+      - name: Atomically consume request
+        env:
+          CLAIM_REF: ${{ steps.validate.outputs.claim_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          payload="$(jq -cn --arg ref "$CLAIM_REF" --arg sha "$GITHUB_SHA" '{ref:$ref,sha:$sha}')"
+          if ! response="$(gh api --method POST \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2026-03-10' \
+              "repos/$GITHUB_REPOSITORY/git/refs" --input - <<< "$payload" 2>&1)"; then
+            echo "::error::Authorization request is already consumed or atomic claim failed closed."
+            printf '%s\n' "$response" >&2
+            exit 1
+          fi
+          printf '%s\n' "$response" > "$RUNNER_TEMP/authority-claim-v2.json"
+          [[ "$(jq -r '.ref' "$RUNNER_TEMP/authority-claim-v2.json")" == "$CLAIM_REF" ]]
+          [[ "$(jq -r '.object.sha' "$RUNNER_TEMP/authority-claim-v2.json")" == "$GITHUB_SHA" ]]
+
+      - name: Upload authorization evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: authorization-claim-v2-${{ steps.validate.outputs.request_id }}
+          path: |
+            ${{ runner.temp }}/authority-validation-v2.json
+            ${{ runner.temp }}/authority-claim-v2.json
+          if-no-files-found: error
+          retention-days: 30

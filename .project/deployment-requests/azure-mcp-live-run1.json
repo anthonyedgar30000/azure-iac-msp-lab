@@ -1,0 +1,46 @@
+{
+  "schema_version": "project.deployment-authorization-request.v2",
+  "request_id": "019c0f2f-1e00-7000-8000-000000000001",
+  "request_digest": "sha256:3b84921ea90026ccca92142560e5f94a9859c91ee2b3b9fdfe9bfbe74336d437",
+  "status": "draft_not_authorized",
+  "active": false,
+  "issued_at": "2026-07-29T03:49:25Z",
+  "valid_until": "2026-07-30T03:49:25Z",
+  "reviewed_source": "0000000000000000000000000000000000000000",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "workflow": {
+    "path": ".github/workflows/azure-mcp-live-deploy.yml",
+    "operation": "deploy-azure-mcp-live",
+    "environment": "dev"
+  },
+  "target": {
+    "subscription": "Azure for Students",
+    "tenant": "sha256:26ba6e04f1a9cde8b97b64734498f4cbe81d5dcbf7b0f451d81570817c2967bc",
+    "resource_group": "rg-azure-mcp-dev-westus2",
+    "location": "westus2",
+    "scope_hash": "sha256:a1d65dbb7cad83ce22f2c9c58a3698da80e3bff741fc71718ea5d49d74a82ae2"
+  },
+  "authority": {
+    "attempt_limit": 1,
+    "renewable": false,
+    "transferable": false,
+    "automatic_retry_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false,
+    "provider_registration_authorized": true,
+    "resource_group_mutation_authorized": true,
+    "rbac_mutation_authorized": true,
+    "entra_application_mutation_authorized": true,
+    "deployment_authorized": true,
+    "verification_authorized": true
+  },
+  "authorized_identity": {
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "actor_path": "github-actions/reusable-workflow-v2"
+  },
+  "human_authority": {
+    "authority": "user",
+    "instruction": "Fix",
+    "interpretation": "Make one hardened read-only Azure MCP endpoint live in westus2, with provider registration, dedicated resource-group creation, a user-assigned runtime identity, Reader only at rg-servicetracer-dev-westus2, one single-tenant Entra server application, one Container App deployment, and bounded live verification. No retry, automatic rollback, or cleanup is authorized."
+  }
+}
