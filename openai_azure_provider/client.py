@@ -5,6 +5,8 @@ from typing import Any
 
 from .config import AzureOpenAISettings
 
+_ALLOWED_REASONING_EFFORTS = frozenset({"minimal", "low", "medium", "high"})
+
 
 def build_client(
     settings: AzureOpenAISettings,
@@ -61,6 +63,7 @@ def create_response(
     input_text: str,
     *,
     max_output_tokens: int = 600,
+    reasoning_effort: str | None = None,
 ) -> Any:
     """Execute one explicit Responses API call through a supplied client."""
 
@@ -70,8 +73,16 @@ def create_response(
     if not 1 <= max_output_tokens <= 4096:
         raise ValueError("max_output_tokens must be between 1 and 4096")
 
-    return client.responses.create(
-        model=settings.deployment,
-        input=prompt,
-        max_output_tokens=max_output_tokens,
-    )
+    request: dict[str, Any] = {
+        "model": settings.deployment,
+        "input": prompt,
+        "max_output_tokens": max_output_tokens,
+    }
+    if reasoning_effort is not None:
+        normalized_effort = reasoning_effort.strip().lower()
+        if normalized_effort not in _ALLOWED_REASONING_EFFORTS:
+            allowed = ", ".join(sorted(_ALLOWED_REASONING_EFFORTS))
+            raise ValueError(f"reasoning_effort must be one of: {allowed}")
+        request["reasoning"] = {"effort": normalized_effort}
+
+    return client.responses.create(**request)
