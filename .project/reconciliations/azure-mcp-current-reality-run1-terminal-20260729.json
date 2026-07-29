@@ -1,0 +1,181 @@
+{
+  "schema_version": "project.reconciliation.azure-mcp-current-reality-run1-terminal.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T08:12:00-04:00",
+  "source_instruction": "Upload the run-1 receipt and manifest for terminal reconciliation.",
+  "classification": "consumed_observation_succeeded_wrapper_epilogue_failed_evidence_promoted",
+  "observation_boundary": "This reconciliation promotes the user-uploaded, redacted Cloud Shell receipt and SHA-256 manifest. It does not execute another Azure query, model call, MCP client connection, workflow, resource mutation, RBAC change, cleanup, or retry.",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "0e46a99b795558b42f8e88cf7703cb95e87f3eb1",
+    "latest_merged_pull_request": 210,
+    "pull_request_210_source_head": "8b01f785fe04f381a5f37ab83b8cdbb6475928a5",
+    "pull_request_210_exact_head_CI": {
+      "CI": "success",
+      "Azure_AI_activation_static_validation": "success",
+      "Azure_MCP_reality_bridge_contract": "success"
+    },
+    "merge_content_diff_from_reviewed_source": false,
+    "open_pull_requests_observed_before_branch": [],
+    "candidate_branch": "agent/reconcile-mcp-current-reality-run1",
+    "local_working_tree_observed_by_connector": false,
+    "repository_operations": "connector_backed"
+  },
+  "authorization": {
+    "request": ".project/observation-requests/azure-mcp-current-reality-run1.json",
+    "attempt_id": "azure-mcp-current-reality-run1",
+    "attempt_limit": 1,
+    "consumption_boundary_crossed": true,
+    "consumed": true,
+    "active": false,
+    "automatic_retry_authorized": false,
+    "manual_rerun_authorized": false,
+    "new_Azure_query_authorized_by_this_reconciliation": false,
+    "Azure_mutation_authorized": false,
+    "cleanup_authorized": false
+  },
+  "execution": {
+    "environment": "interactive Azure Cloud Shell Bash",
+    "identity_mode": "existing_azure_cli_session",
+    "exact_execution_commit": "0e46a99b795558b42f8e88cf7703cb95e87f3eb1",
+    "repository_working_tree_clean": true,
+    "tool_name": "get_current_reality",
+    "server_version": "azure-mcp-reality/0.1.0",
+    "tool_inventory_digest": "sha256:4f2dc29e7f88fb2f8c3f82ed217608bee83bd28f56ceb878b6c43cbdef2dee82",
+    "observed_at_utc": "2026-07-29T12:01:23.289717Z",
+    "correlation_id": "7ebaface-586f-4ba5-9b51-2b3e5dac62ce",
+    "observation_status": "observed",
+    "Azure_resource_observation_completed": true,
+    "mutations_performed": false,
+    "secrets_returned": false,
+    "Azure_OpenAI_model_request_performed": false,
+    "remote_MCP_endpoint_used": false,
+    "model_driven_tool_call_performed": false
+  },
+  "evidence": {
+    "receipt": ".project/evidence/azure-mcp-current-reality-run1.json",
+    "manifest": ".project/evidence/azure-mcp-current-reality-run1.sha256",
+    "uploaded_receipt_sha256": "2fd80540672dd26b11ee0b1c243cfb85defc0e031f8bd5cdc3d9d8d6813d9686",
+    "manifest_declared_sha256": "2fd80540672dd26b11ee0b1c243cfb85defc0e031f8bd5cdc3d9d8d6813d9686",
+    "receipt_and_manifest_match": true,
+    "receipt_internal_raw_evidence_digest": "sha256:6243ab0f718ad3c0981adf319c1434507eea1be0f9dbc14e4256758c30f0f33c",
+    "raw_subscription_ID_persisted": false,
+    "raw_tenant_ID_persisted": false,
+    "subscription_and_tenant_fingerprints_persisted": true,
+    "ARM_subscription_segment_redacted": true,
+    "tag_values_persisted": false
+  },
+  "observed_scope": {
+    "subscription_name": "Azure for Students",
+    "subscription_state": "Enabled",
+    "subscription_fingerprint": "8f27aec6b3012cf0",
+    "tenant_fingerprint": "26ba6e04f1a9cde8",
+    "cross_subscription_discovery_allowed": false,
+    "default_subscription_inference_allowed": false,
+    "resource_group": {
+      "name": "rg-ai-msp-dev-eastus",
+      "location": "eastus",
+      "provisioning_state": "Succeeded",
+      "managed_by": null,
+      "tag_keys": [
+        "environment",
+        "managedBy",
+        "purpose",
+        "workload"
+      ]
+    }
+  },
+  "observed_resources": {
+    "resource_count": 1,
+    "resources": [
+      {
+        "name": "oai-msp-anthony-dev-eastus",
+        "type": "Microsoft.CognitiveServices/accounts",
+        "kind": "OpenAI",
+        "location": "eastus",
+        "sku_name": "S0",
+        "resource_group": "rg-ai-msp-dev-eastus",
+        "deployment_inventory": []
+      }
+    ],
+    "cognitive_services_account_count": 1,
+    "deployment_count_on_observed_account": 0
+  },
+  "repository_to_Azure_reconciliation": {
+    "resource_group_declared_and_observed": {
+      "classification": "matched",
+      "detail": "rg-ai-msp-dev-eastus exists in eastus with provisioning state Succeeded."
+    },
+    "run6_target_account": {
+      "classification": "matched_resource_exists",
+      "detail": "oai-msp-anthony-dev-eastus exists as an S0 OpenAI Cognitive Services account in the expected resource group."
+    },
+    "run6_target_deployment": {
+      "classification": "not_present_in_observed_account",
+      "detail": "The deployment inventory for oai-msp-anthony-dev-eastus was empty at the observation time, consistent with run 6 never reaching deployment."
+    },
+    "verified_gpt5_runtime": {
+      "classification": "operational_but_ARM_scope_unreconciled",
+      "detail": "Prior evidence verifies gpt-5-mini inference at anthonyedgar30000-5982-resource.openai.azure.com. This receipt observed only rg-ai-msp-dev-eastus and did not observe a resource matching that endpoint host. The verified runtime must not be collapsed into the empty deployment inventory of oai-msp-anthony-dev-eastus."
+    },
+    "Azure_AI_MCP_connection": {
+      "classification": "not_established",
+      "detail": "The receipt explicitly records no MCP client connection, remote endpoint, or model-driven tool call."
+    }
+  },
+  "wrapper_incident": {
+    "stage": "post_observation_epilogue_before_manifest_and_summary",
+    "error": "scripts/azure_mcp_current_reality_run1.sh attempted an environment-prefix assignment to readonly shell variable RECEIPT_PATH",
+    "receipt_write_completed_before_error": true,
+    "receipt_validation_inside_wrapper_completed": false,
+    "manifest_inside_wrapper_completed": false,
+    "manifest_created_manually_from_existing_receipt": true,
+    "manual_manifest_matches_uploaded_receipt": true,
+    "observation_invalidated": false,
+    "authorization_consumed": true,
+    "rerun_allowed": false,
+    "repair_required": true,
+    "repair_scope": "Rename the Python validation environment variable so the wrapper never assigns to a readonly shell variable; add a regression test."
+  },
+  "limitations": [
+    "The observation proves only what the interactive Azure CLI identity could read at the recorded time.",
+    "Resource existence does not prove secure configuration, health, diagnostics, alerts, backup, recovery, resilience, or service validation.",
+    "No Azure cost, quota, activity log, metric, policy, networking, private endpoint, diagnostic setting, or effective-RBAC evaluation was performed.",
+    "An empty deployment inventory on the observed account does not prove the previously verified gpt-5-mini runtime is absent globally.",
+    "The ARM resource group and account identity behind the verified gpt-5-mini endpoint remain unobserved by this receipt.",
+    "Local tool execution does not establish remote MCP hosting or Azure OpenAI MCP invocation."
+  ],
+  "cost_and_quota": {
+    "expected_recurring_Azure_resource_cost_delta_CAD": 0,
+    "model_tokens_consumed_by_observation": 0,
+    "actual_Azure_cost_freshly_observed": false,
+    "Azure_quota_freshly_observed": false
+  },
+  "current_authority": {
+    "repository_reconciliation_and_wrapper_repair_authorized": true,
+    "ordinary_exact_head_pull_request_CI_authorized": true,
+    "pull_request_merge_after_exact_head_CI_authorized": true,
+    "Azure_authentication_or_query_authorized": false,
+    "Azure_mutation_authorized": false,
+    "RBAC_mutation_authorized": false,
+    "workflow_dispatch_or_rerun_authorized": false,
+    "local_observation_rerun_authorized": false,
+    "Azure_OpenAI_model_call_authorized": false,
+    "remote_MCP_deployment_authorized": false,
+    "cleanup_authorized": false
+  },
+  "canonical_distinctions": [
+    "authorization_consumed != wrapper_completed",
+    "receipt_written != wrapper_epilogue_succeeded",
+    "receipt_validated_after_upload != observation_rerun",
+    "resource_exists != service_validated",
+    "empty_deployment_inventory_in_observed_account != verified_runtime_absent_globally",
+    "observed_account_name != verified_endpoint_ARM_identity_reconciled",
+    "local_tool_execution_verified != remote_MCP_endpoint_deployed",
+    "MCP_observation_completed != Azure_OpenAI_MCP_call_verified",
+    "read_only_result != effective_least_privilege_proven",
+    "no_mutations_reported != all_security_controls_verified"
+  ],
+  "next_gate": "Merge the terminal reconciliation and readonly-variable regression repair. Then separately authorize a broader but still read-only Azure observation only if ARM reconciliation of the verified gpt-5-mini endpoint, effective RBAC, diagnostics, cost, quota, policy, or networking is required. Do not rerun run 1."
+}
