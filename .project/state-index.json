@@ -1,7 +1,7 @@
 {
   "schema_version": "project.state-index.v6",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-29T00:48:00-04:00",
+  "recorded_at": "2026-07-29T01:25:00-04:00",
   "canonical_current_reality": ".project/current-reality-v2.json",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
   "canonical_handoff": ".project/handoffs/current-state.md",
@@ -23,15 +23,19 @@
   "latest_azure_ai_activation_reconciliation": ".project/reconciliations/azure-ai-go-live-run4-terminal-20260729.json",
   "previous_azure_ai_activation_reconciliation": ".project/reconciliations/azure-ai-go-live-run3-terminal-20260729.json",
   "historical_azure_ai_activation_plan": ".project/reconciliations/post-pr193-azure-ai-live-activation-plan-20260729.json",
-  "latest_azure_ai_activation_request": ".project/deployment-requests/azure-ai-go-live-run4.json",
-  "azure_ai_activation_handoff": ".project/handoffs/azure-ai-go-live-run4-terminal.md",
-  "previous_azure_ai_activation_handoff": ".project/handoffs/azure-ai-go-live-run3-terminal.md",
+  "latest_azure_ai_activation_request": ".project/deployment-requests/azure-ai-go-live-run5.json",
+  "azure_ai_activation_handoff": ".project/handoffs/azure-ai-go-live-run5.md",
+  "previous_azure_ai_activation_handoff": ".project/handoffs/azure-ai-go-live-run4-terminal.md",
   "azure_ai_run3_handoff": ".project/handoffs/azure-ai-go-live-run3.md",
   "azure_ai_provider_contract": ".project/contracts/openai-azure-foundry-provider-v1.json",
   "azure_ai_live_activation_contract": ".project/contracts/azure-ai-live-activation-v1.json",
+  "azure_ai_run5_selector_contract": ".project/contracts/azure-ai-go-live-run5-selector-v1.json",
   "azure_ai_direct_activation_workflow": ".github/workflows/azure-ai-live-deploy.yml",
   "azure_ai_run2_workflow": ".github/workflows/azure-ai-go-live-run2.yml",
   "azure_ai_run3_workflow": ".github/workflows/azure-ai-go-live-run3.yml",
+  "azure_ai_run4_workflow": ".github/workflows/azure-ai-go-live-run4.yml",
+  "azure_ai_run5_workflow": ".github/workflows/azure-ai-go-live-run5.yml",
+  "azure_ai_run5_handoff": ".project/handoffs/azure-ai-go-live-run5.md",
   "separate_azure_ai_read_only_preflight_retired": true,
   "previous_repository_and_mcp_reconciliation": ".project/reconciliations/post-pr190-repository-and-mcp-reconciliation-20260728.json",
   "previous_repository_reconciliation": ".project/reconciliations/post-pr183-repository-watermark-20260728.json",
@@ -42,7 +46,7 @@
   "previous_azure_mcp_preflight_contract": ".project/contracts/azure-mcp-read-only-preflight-workflow-v1.json",
   "active_deployment_authorization": null,
   "active_azure_mcp_preflight_authorization": null,
-  "active_azure_ai_activation_authorization": null,
+  "active_azure_ai_activation_authorization": ".project/deployment-requests/azure-ai-go-live-run5.json",
   "consumed_deployment_authorization": ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json",
   "latest_consumed_deployment_authorization": ".project/deployment-requests/correlation-identity-run1.json",
   "latest_consumed_azure_mcp_preflight_authorization": ".project/reconciliations/azure-mcp-read-only-preflight-run1-terminal-20260729.json",
@@ -95,7 +99,7 @@
       ]
     }
   ],
-  "selection_rule": "Operational consumers must resolve the consumed Azure AI run-4 terminal reconciliation, the West US 2 model-listing evidence, latest successful Azure MCP evidence, live GitHub state, and current Azure evidence first; no Azure AI activation authority is active. Then resolve current reality, completion gate, deployment, authorization-control, and control-incident evidence before every write, merge, authentication, model call, role assignment, rollback, cleanup, or new deployment attempt.",
+  "selection_rule": "Operational consumers must resolve the fresh Azure AI run-5 selector authorization, the consumed run-4 terminal reconciliation, the exact bounded candidate matrix, latest successful Azure MCP evidence, live GitHub state, and current Azure evidence first. Run 5 may iterate read-only model, capacity, and What-If gates across the declared matrix but may perform only one deployment and one model request. Then resolve current reality, completion gate, deployment, authorization-control, and control-incident evidence before every write, merge, authentication, model call, role assignment, rollback, cleanup, or new deployment attempt.",
   "claim_boundaries": [
     "legacy_filename != current_authority",
     "historical_snapshot != live_state",
@@ -152,10 +156,14 @@
     "run3_policy_failure != run4_outcome",
     "model_not_listed != quota_exhausted",
     "what_if_not_started != what_if_failed",
-    "run4_failure != authorization_to_rerun"
+    "run4_failure != authorization_to_rerun",
+    "approved_candidate_matrix != live_subscription_availability",
+    "read_only_candidate_iteration != multiple_deployment_attempts",
+    "one_workflow != unbounded_mutation",
+    "GlobalStandard != regional_data_processing",
+    "Azure_for_Students_name_match != quota_available"
   ],
   "azure_ai_run3_terminal_handoff": ".project/handoffs/azure-ai-go-live-run3-terminal.md",
   "azure_ai_run4_handoff": ".project/handoffs/azure-ai-go-live-run4.md",
-  "azure_ai_run4_workflow": ".github/workflows/azure-ai-go-live-run4.yml",
   "azure_ai_run4_terminal_handoff": ".project/handoffs/azure-ai-go-live-run4-terminal.md"
 }
