@@ -1,11 +1,11 @@
 {
-  "schema_version": "project.state-index.v5",
+  "schema_version": "project.state-index.v6",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-28T20:07:06-04:00",
+  "recorded_at": "2026-07-28T22:07:09-04:00",
   "canonical_current_reality": ".project/current-reality-v2.json",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
   "canonical_handoff": ".project/handoffs/current-state.md",
-  "latest_repository_handoff": ".project/handoffs/post-pr190-current-state.md",
+  "latest_repository_handoff": ".project/handoffs/post-pr191-mcp-preflight-run1-current-state.md",
   "latest_verified_reconciliation": ".project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json",
   "latest_terminal_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
   "latest_deployment_reconciliation": ".project/reconciliations/correlation-identity-run1-terminal-20260727.json",
@@ -15,15 +15,20 @@
   "latest_repository_watermark_reconciliation": ".project/reconciliations/post-pr185-repository-watermark-20260728.json",
   "latest_lifecycle_reconciliation": ".project/reconciliations/post-pr187-authorization-control-reconciliation-20260728.json",
   "latest_authorization_control_reconciliation": ".project/reconciliations/post-pr187-authorization-control-reconciliation-20260728.json",
-  "latest_repository_and_mcp_reconciliation": ".project/reconciliations/post-pr190-repository-and-mcp-reconciliation-20260728.json",
+  "latest_repository_and_mcp_reconciliation": ".project/reconciliations/azure-mcp-read-only-preflight-run1-terminal-20260729.json",
+  "latest_azure_mcp_preflight_reconciliation": ".project/reconciliations/azure-mcp-read-only-preflight-run1-terminal-20260729.json",
+  "previous_repository_and_mcp_reconciliation": ".project/reconciliations/post-pr190-repository-and-mcp-reconciliation-20260728.json",
   "previous_repository_reconciliation": ".project/reconciliations/post-pr183-repository-watermark-20260728.json",
   "current_containment_reconciliation": ".project/reconciliations/post-pr182-containment-20260727.json",
   "replacement_authorization_design": ".project/designs/durable-single-use-authorization-ledger-v1.md",
   "replacement_authorization_contract": ".project/contracts/durable-single-use-authorization-ledger-v1.json",
-  "azure_mcp_preflight_contract": ".project/contracts/azure-mcp-read-only-preflight-workflow-v1.json",
+  "azure_mcp_preflight_contract": ".project/contracts/azure-mcp-read-only-preflight-workflow-v2.json",
+  "previous_azure_mcp_preflight_contract": ".project/contracts/azure-mcp-read-only-preflight-workflow-v1.json",
   "active_deployment_authorization": null,
+  "active_azure_mcp_preflight_authorization": null,
   "consumed_deployment_authorization": ".project/reconciliations/collector-provenance-deployment-authorization-1677606-20260726.json",
   "latest_consumed_deployment_authorization": ".project/deployment-requests/correlation-identity-run1.json",
+  "latest_consumed_azure_mcp_preflight_authorization": ".project/reconciliations/azure-mcp-read-only-preflight-run1-terminal-20260729.json",
   "superseded_open_pull_request": 189,
   "historical_reconciliations": [
     {
@@ -34,6 +39,11 @@
     {
       "path": ".project/reconciliations/post-pr137-provenance-authority-expiry-20260727.json",
       "classification": "historical_observation_boundary_before_run19_artifact_review",
+      "authoritative_for_current_operations": false
+    },
+    {
+      "path": ".project/reconciliations/post-pr190-repository-and-mcp-reconciliation-20260728.json",
+      "classification": "historical_repository_and_mcp_boundary_before_first_preflight_dispatch",
       "authoritative_for_current_operations": false
     }
   ],
@@ -57,7 +67,7 @@
       ]
     }
   ],
-  "selection_rule": "Operational consumers must resolve the latest repository-and-MCP reconciliation and latest repository handoff first, then the preserved canonical current reality and completion gate, the latest terminal reconciliation, the latest authorization-control reconciliation, current live GitHub state, and current authorization status before every write, merge, dispatch, authentication, ruleset change, live claim, OpenAI API call, or cloud action.",
+  "selection_rule": "Operational consumers must resolve the latest repository-and-MCP reconciliation, latest Azure MCP preflight reconciliation, latest repository handoff, current live GitHub state, and current authorization status first; then resolve preserved current reality, completion gate, deployment reconciliation, authorization-control reconciliation, and control-incident evidence before every write, merge, dispatch, authentication, ruleset change, live claim, OpenAI API call, or cloud action.",
   "claim_boundaries": [
     "legacy_filename != current_authority",
     "historical_snapshot != live_state",
@@ -73,7 +83,11 @@
     "main_contains_frontend_implementation != GitHub_Pages_publication_observed",
     "architecture_explained != runtime_proof_manufactured",
     "workflow_on_main != workflow_dispatched",
+    "workflow_dispatched != preflight_completed",
     "azure_authentication_configured != azure_authentication_performed",
+    "azure_authentication_succeeded != Azure_resource_observation_completed",
+    "command_invoked != Azure_API_query_completed",
+    "manual_Cloud_Shell_validation_succeeded != GitHub_OIDC_preflight_succeeded",
     "template_hashed != template_source_pinned",
     "preflight_passed != endpoint_deployed",
     "endpoint_deployed != OpenAI_client_connected",
@@ -83,6 +97,8 @@
     "closed_trigger_PR != historical_run_unrerunnable",
     "consumed_authorization != active_authorization",
     "failed_attempt != authorization_to_retry",
+    "authorization_consumed != authorization_renewed",
+    "artifact_uploaded != full_evidence_set_produced",
     "static_repository_proof != fresh_Azure_observation",
     "not_observed != false"
   ]

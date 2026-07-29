@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-readonly SCRIPT_VERSION="1.1.0"
+readonly SCRIPT_VERSION="1.1.1"
 readonly DEFAULT_TEMPLATE="azmcp-copilot-studio-aca-mi"
 readonly DEFAULT_AZD_ENVIRONMENT_NAME="azmcp-preflight"
 
@@ -53,7 +53,7 @@ observation_failures=0
 az version > "$evidence_dir/azure-cli-version.json"
 azd version > "$evidence_dir/azure-developer-cli-version.txt"
 
-account_json="$(az account show --subscription "$AZURE_MCP_HOSTING_SUBSCRIPTION_ID" --output json)"
+account_json="$(az account show --output json)"
 subscription_id="$(jq -r '.id' <<<"$account_json")"
 subscription_name="$(jq -r '.name' <<<"$account_json")"
 subscription_state="$(jq -r '.state' <<<"$account_json")"
@@ -66,7 +66,6 @@ principal_type="$(jq -r '.user.type // "unknown"' <<<"$account_json")"
 
 location_match="$(
   az account list-locations \
-    --subscription "$subscription_id" \
     --query "[?name=='$AZURE_MCP_LOCATION'].name | [0]" \
     --output tsv
 )"
