@@ -8,29 +8,36 @@ on:
       - '.github/workflows/azure-ai-go-live-run3.yml'
       - '.github/workflows/azure-ai-go-live-run4.yml'
       - '.github/workflows/azure-ai-go-live-run5.yml'
+      - '.github/workflows/azure-ai-go-live-run6.yml'
       - '.github/workflows/azure-ai-plan.yml'
       - 'scripts/azure_ai_go_live_run2.sh'
       - 'scripts/azure_ai_go_live_run3.sh'
       - 'scripts/azure_ai_go_live_run4.sh'
       - 'scripts/azure_ai_go_live_run5.sh'
+      - 'scripts/azure_ai_go_live_run6.sh'
       - 'infra/azure-ai-live.bicep'
       - 'infra/azure-ai-live.dev.bicepparam'
+      - 'infra/azure-ai-existing-account-adopt.bicep'
       - 'infra/modules/azure_ai_openai.bicep'
       - 'infra/tests/test_azure_ai_live_activation.py'
       - 'infra/tests/test_azure_ai_go_live_run2.py'
       - 'infra/tests/test_azure_ai_go_live_run3.py'
       - 'infra/tests/test_azure_ai_go_live_run4.py'
       - 'infra/tests/test_azure_ai_go_live_run5.py'
+      - 'infra/tests/test_azure_ai_go_live_run6.py'
       - '.project/contracts/azure-ai-live-activation-v1.json'
       - '.project/contracts/azure-ai-go-live-run5-selector-v1.json'
+      - '.project/contracts/azure-ai-manual-account-adoption-v1.json'
       - '.project/deployment-requests/azure-ai-go-live-run2.json'
       - '.project/deployment-requests/azure-ai-go-live-run3.json'
       - '.project/deployment-requests/azure-ai-go-live-run4.json'
       - '.project/deployment-requests/azure-ai-go-live-run5.json'
+      - '.project/deployment-requests/azure-ai-go-live-run6.json'
       - '.project/reconciliations/post-pr193-azure-ai-live-activation-plan-20260729.json'
       - '.project/reconciliations/azure-ai-go-live-run2-terminal-20260729.json'
       - '.project/reconciliations/azure-ai-go-live-run3-terminal-20260729.json'
       - '.project/reconciliations/azure-ai-go-live-run4-terminal-20260729.json'
+      - '.project/reconciliations/azure-ai-go-live-run5-terminal-20260729.json'
       - '.project/handoffs/post-pr193-azure-ai-live-activation-plan.md'
       - '.project/handoffs/azure-ai-go-live-run2.md'
       - '.project/handoffs/azure-ai-go-live-run2-terminal.md'
@@ -39,6 +46,8 @@ on:
       - '.project/handoffs/azure-ai-go-live-run4.md'
       - '.project/handoffs/azure-ai-go-live-run4-terminal.md'
       - '.project/handoffs/azure-ai-go-live-run5.md'
+      - '.project/handoffs/azure-ai-go-live-run5-terminal.md'
+      - '.project/handoffs/azure-ai-go-live-run6.md'
       - '.project/state-index.json'
   push:
     branches:
@@ -49,28 +58,36 @@ on:
       - 'scripts/azure_ai_go_live_run3.sh'
       - 'scripts/azure_ai_go_live_run4.sh'
       - 'scripts/azure_ai_go_live_run5.sh'
+      - 'scripts/azure_ai_go_live_run6.sh'
       - 'infra/azure-ai-live.bicep'
       - 'infra/azure-ai-live.dev.bicepparam'
+      - 'infra/azure-ai-existing-account-adopt.bicep'
       - 'infra/modules/azure_ai_openai.bicep'
       - 'infra/tests/test_azure_ai_live_activation.py'
       - 'infra/tests/test_azure_ai_go_live_run2.py'
       - 'infra/tests/test_azure_ai_go_live_run3.py'
       - 'infra/tests/test_azure_ai_go_live_run4.py'
       - 'infra/tests/test_azure_ai_go_live_run5.py'
+      - 'infra/tests/test_azure_ai_go_live_run6.py'
       - '.project/contracts/azure-ai-go-live-run5-selector-v1.json'
+      - '.project/contracts/azure-ai-manual-account-adoption-v1.json'
       - '.project/deployment-requests/azure-ai-go-live-run2.json'
       - '.project/deployment-requests/azure-ai-go-live-run3.json'
       - '.project/deployment-requests/azure-ai-go-live-run4.json'
       - '.project/deployment-requests/azure-ai-go-live-run5.json'
+      - '.project/deployment-requests/azure-ai-go-live-run6.json'
       - '.project/reconciliations/azure-ai-go-live-run2-terminal-20260729.json'
       - '.project/reconciliations/azure-ai-go-live-run3-terminal-20260729.json'
       - '.project/reconciliations/azure-ai-go-live-run4-terminal-20260729.json'
+      - '.project/reconciliations/azure-ai-go-live-run5-terminal-20260729.json'
       - '.project/handoffs/azure-ai-go-live-run2-terminal.md'
       - '.project/handoffs/azure-ai-go-live-run3.md'
       - '.project/handoffs/azure-ai-go-live-run3-terminal.md'
       - '.project/handoffs/azure-ai-go-live-run4.md'
       - '.project/handoffs/azure-ai-go-live-run4-terminal.md'
       - '.project/handoffs/azure-ai-go-live-run5.md'
+      - '.project/handoffs/azure-ai-go-live-run5-terminal.md'
+      - '.project/handoffs/azure-ai-go-live-run6.md'
       - '.project/state-index.json'
 
 permissions:
@@ -93,10 +110,12 @@ jobs:
           python -m unittest infra.tests.test_azure_ai_go_live_run3 -v
           python -m unittest infra.tests.test_azure_ai_go_live_run4 -v
           python -m unittest infra.tests.test_azure_ai_go_live_run5 -v
+          python -m unittest infra.tests.test_azure_ai_go_live_run6 -v
           bash -n scripts/azure_ai_go_live_run2.sh
           bash -n scripts/azure_ai_go_live_run3.sh
           bash -n scripts/azure_ai_go_live_run4.sh
           bash -n scripts/azure_ai_go_live_run5.sh
+          bash -n scripts/azure_ai_go_live_run6.sh
 
       - name: Lint and build Azure AI Bicep
         uses: azure/CLI@v2
@@ -107,6 +126,8 @@ jobs:
             az bicep version
             az bicep lint --file infra/azure-ai-live.bicep
             az bicep build --file infra/azure-ai-live.bicep --outfile /tmp/azure-ai-live.json
+            az bicep lint --file infra/azure-ai-existing-account-adopt.bicep
+            az bicep build --file infra/azure-ai-existing-account-adopt.bicep --outfile /tmp/azure-ai-existing-account-adopt.json
             az bicep lint --file infra/modules/azure_ai_openai.bicep
             az bicep build --file infra/modules/azure_ai_openai.bicep --outfile /tmp/azure-ai-openai-module.json
             az bicep build-params --file infra/azure-ai-live.dev.bicepparam --outfile /tmp/azure-ai-live.parameters.json
@@ -120,6 +141,7 @@ jobs:
           name: azure-ai-activation-static-validation
           path: |
             /tmp/azure-ai-live.json
+            /tmp/azure-ai-existing-account-adopt.json
             /tmp/azure-ai-openai-module.json
             /tmp/azure-ai-live.parameters.json
           if-no-files-found: warn

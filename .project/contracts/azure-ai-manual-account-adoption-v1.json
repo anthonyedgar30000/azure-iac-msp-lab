@@ -1,0 +1,128 @@
+{
+  "schema_version": "project.azure-ai-manual-account-adoption.v1",
+  "status": "active_repository_candidate",
+  "attempt_id": "azure-ai-go-live-run6",
+  "objective": "Adopt the portal-created East US Azure OpenAI account into the governed IaC path, deploy one bounded model, assign account-scoped Entra inference access, harden local authentication, and verify one response without creating a duplicate account or resource group.",
+  "manual_baseline": {
+    "subscription_name": "Azure for Students",
+    "resource_group": "rg-ai-msp-dev-eastus",
+    "account": "oai-msp-anthony-dev-eastus",
+    "location": "eastus",
+    "evidence_source": "user-provided Azure portal screenshots",
+    "account_exists": true,
+    "resource_group_exists": true,
+    "resource_group_deployment_succeeded_visible": true,
+    "model_deployment_exists": "not_established",
+    "endpoint_live": false,
+    "fresh_runtime_query_required": true
+  },
+  "intended_architecture": {
+    "application_client": "OpenAI Python SDK using the Azure /openai/v1 endpoint",
+    "azure_account": "existing oai-msp-anthony-dev-eastus",
+    "model_deployment": "gpt-41-mini-msp-dev",
+    "model": "gpt-4.1-mini",
+    "model_version": "2025-04-14",
+    "deployment_sku": "GlobalStandard",
+    "capacity": 1,
+    "authentication": "Microsoft Entra bearer token",
+    "local_api_key_authentication": false,
+    "public_network_access": "Enabled",
+    "azure_mcp_connection": false
+  },
+  "adoption_method": {
+    "template": "infra/azure-ai-existing-account-adopt.bicep",
+    "target_scope": "resourceGroup",
+    "resource_manager_mode": "incremental",
+    "account_declaration": "existing",
+    "same_resource_group_name_required": true,
+    "same_account_name_required": true,
+    "existing_resource_validation_before_what_if": true,
+    "resource_group_scope_what_if_required": true,
+    "subscription_scope_what_if_required": false,
+    "duplicate_account_creation_prohibited": true,
+    "duplicate_resource_group_creation_prohibited": true,
+    "account_creation_available_from_adoption_template": false,
+    "resource_group_creation_available_from_adoption_template": false,
+    "account_hardening_method": "az resource update against the freshly verified existing account ID",
+    "deployment_attempt_limit": 1
+  },
+  "identity_and_permissions": {
+    "workflow_identity": "GitHub OIDC service principal from the azure-lab environment",
+    "control_plane_permission": "effective permission to deploy and assign the declared account-scoped role",
+    "data_plane_role": "Cognitive Services OpenAI User",
+    "data_plane_role_scope": "selected Azure OpenAI account only",
+    "application_runtime_identity": "not_selected_by_this_increment"
+  },
+  "network_path": {
+    "source": "GitHub-hosted runner for the bounded verification call",
+    "destination": "https://oai-msp-anthony-dev-eastus.openai.azure.com/openai/v1/responses",
+    "transport": "HTTPS",
+    "private_endpoint": false,
+    "public_network_access": true,
+    "future_private_networking": "separate_increment"
+  },
+  "security_controls": {
+    "local_authentication_disabled": true,
+    "api_keys_persisted": false,
+    "secrets_in_repository": false,
+    "interactive_browser_authentication": false,
+    "account_scoped_role_assignment": true,
+    "bounded_non_sensitive_prompt": true,
+    "max_output_tokens": 32,
+    "model_request_limit": 1,
+    "automatic_retry": false,
+    "manual_rerun": false
+  },
+  "cost": {
+    "pricing_model": "GlobalStandard pay-as-you-go",
+    "provisioned_throughput": false,
+    "capacity": 1,
+    "verification_request_count": 1,
+    "actual_cost_freshly_observed": false,
+    "expected_cost_behavior": "token-based usage plus any ordinary Azure OpenAI account charges applicable to the subscription"
+  },
+  "validation": {
+    "subscription_name_and_state": true,
+    "resource_group_exact_name_and_location": true,
+    "account_exact_name_kind_location_and_provisioning_state": true,
+    "model_listing": true,
+    "available_capacity": true,
+    "conflicting_existing_deployment_check": true,
+    "what_if": true,
+    "post_deployment_account_properties": true,
+    "model_deployment_properties": true,
+    "account_scoped_rbac": true,
+    "one_responses_api_call": true
+  },
+  "expected_outputs": [
+    "manual-resource-group-baseline.json",
+    "manual-account-baseline.json",
+    "model-listing.json",
+    "model-capacity.json",
+    "what-if.json",
+    "deployment.json",
+    "account-hardening.json",
+    "account-verification.json",
+    "model-verification.json",
+    "rbac-verification.json",
+    "model-call-receipt.json",
+    "go-live-summary.json",
+    "manifest.sha256"
+  ],
+  "failure_rollback_cleanup": {
+    "pre_mutation_failure": "No Azure mutation; preserve evidence.",
+    "deployment_failure": "Preserve partial state; no automatic second attempt.",
+    "verification_failure": "Preserve deployed resources and evidence for diagnosis.",
+    "rollback": "Not authorized by this increment.",
+    "cleanup": "Not authorized by this increment."
+  },
+  "canonical_distinctions": [
+    "portal_success != service_validated",
+    "resource_exists != securely_configured",
+    "existing_resource_reference != account_creation",
+    "same_name_resource_group_deployment != duplicate_resource",
+    "IaC_adoption != historical_creation_proven_by_IaC",
+    "model_deployed != Entra_inference_verified",
+    "endpoint_live != application_integrated"
+  ]
+}

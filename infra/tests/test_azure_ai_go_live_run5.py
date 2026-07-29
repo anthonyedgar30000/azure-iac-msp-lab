@@ -139,8 +139,11 @@ class AzureAiGoLiveRun5Tests(unittest.TestCase):
         self.assertEqual(self.contract["mutation"]["deployment_attempt_limit"], 1)
         self.assertEqual(self.contract["verification"]["model_request_count"], 1)
 
-    def test_state_index_consumes_run5_and_disables_active_authority(self) -> None:
-        self.assertIsNone(self.state_index["active_azure_ai_activation_authorization"])
+    def test_state_index_consumes_run5_while_run6_is_active(self) -> None:
+        self.assertEqual(
+            self.state_index["active_azure_ai_activation_authorization"],
+            ".project/deployment-requests/azure-ai-go-live-run6.json",
+        )
         self.assertEqual(
             self.state_index["latest_consumed_azure_ai_activation_authorization"],
             ".project/reconciliations/azure-ai-go-live-run5-terminal-20260729.json",
@@ -154,8 +157,8 @@ class AzureAiGoLiveRun5Tests(unittest.TestCase):
             "infra/azure-ai-live.bicep",
         )
         self.assertEqual(
-            self.state_index["previous_azure_ai_activation_reconciliation"],
-            ".project/reconciliations/azure-ai-go-live-run4-terminal-20260729.json",
+            self.state_index["latest_azure_ai_activation_request"],
+            ".project/deployment-requests/azure-ai-go-live-run6.json",
         )
         self.assertEqual(self.run4_terminal["workflow"]["run_id"], 30423217542)
 
