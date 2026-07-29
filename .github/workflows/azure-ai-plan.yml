@@ -15,15 +15,16 @@ on:
       - '.project/contracts/azure-ai-live-activation-v1.json'
       - '.project/deployment-requests/azure-ai-go-live-run2.json'
       - '.project/reconciliations/post-pr193-azure-ai-live-activation-plan-20260729.json'
+      - '.project/reconciliations/azure-ai-go-live-run2-terminal-20260729.json'
       - '.project/handoffs/post-pr193-azure-ai-live-activation-plan.md'
       - '.project/handoffs/azure-ai-go-live-run2.md'
+      - '.project/handoffs/azure-ai-go-live-run2-terminal.md'
       - '.project/state-index.json'
   push:
     branches:
       - main
     paths:
       - '.github/workflows/azure-ai-plan.yml'
-      - '.github/workflows/azure-ai-go-live-run2.yml'
       - 'scripts/azure_ai_go_live_run2.sh'
       - 'infra/azure-ai-live.bicep'
       - 'infra/azure-ai-live.dev.bicepparam'
@@ -31,7 +32,8 @@ on:
       - 'infra/tests/test_azure_ai_live_activation.py'
       - 'infra/tests/test_azure_ai_go_live_run2.py'
       - '.project/deployment-requests/azure-ai-go-live-run2.json'
-      - '.project/handoffs/azure-ai-go-live-run2.md'
+      - '.project/reconciliations/azure-ai-go-live-run2-terminal-20260729.json'
+      - '.project/handoffs/azure-ai-go-live-run2-terminal.md'
       - '.project/state-index.json'
 
 permissions:
