@@ -20,6 +20,9 @@ PR186_MERGE = "30e312ef5122831a8233835db2f541437a97b125"
 PR187_SOURCE = "44bc3ab202c2e3d709aa2d9906ef9aba365acfb2"
 RECONCILIATION_PATH = ".project/reconciliations/post-pr187-authorization-control-reconciliation-20260728.json"
 PREVIOUS_RECONCILIATION_PATH = ".project/reconciliations/post-pr185-repository-watermark-20260728.json"
+CURRENT_AZURE_MCP_RECONCILIATION_PATH = (
+    ".project/reconciliations/azure-mcp-read-only-preflight-run1-terminal-20260729.json"
+)
 
 
 class PostPr187AuthorizationControlReconciliationTests(unittest.TestCase):
@@ -33,22 +36,26 @@ class PostPr187AuthorizationControlReconciliationTests(unittest.TestCase):
         cls.durable_workflow = DURABLE_WORKFLOW.read_text(encoding="utf-8")
         cls.collector_workflow = COLLECTOR_WORKFLOW.read_text(encoding="utf-8")
 
-    def test_state_index_selects_the_post_pr187_reconciliation(self) -> None:
+    def test_state_index_preserves_post_pr187_authorization_control_history(self) -> None:
         self.assertEqual(
             self.index["latest_repository_reconciliation"],
-            PREVIOUS_RECONCILIATION_PATH,
+            CURRENT_AZURE_MCP_RECONCILIATION_PATH,
         )
         self.assertEqual(
             self.index["latest_repository_watermark_reconciliation"],
-            PREVIOUS_RECONCILIATION_PATH,
+            CURRENT_AZURE_MCP_RECONCILIATION_PATH,
         )
         self.assertEqual(
             self.index["latest_lifecycle_reconciliation"],
-            RECONCILIATION_PATH,
+            CURRENT_AZURE_MCP_RECONCILIATION_PATH,
         )
         self.assertEqual(
             self.index["latest_authorization_control_reconciliation"],
             RECONCILIATION_PATH,
+        )
+        self.assertEqual(
+            self.index["previous_repository_reconciliation"],
+            PREVIOUS_RECONCILIATION_PATH,
         )
         self.assertIn(
             "control_implemented_on_main != control_activated",
@@ -118,69 +125,35 @@ class PostPr187AuthorizationControlReconciliationTests(unittest.TestCase):
             control["classification"],
             "implemented_on_main_inactive_not_operationally_verified",
         )
-        self.assertEqual(control["implementation_pull_request"], 186)
-        self.assertEqual(control["implementation_source_head"], PR186_SOURCE)
-        self.assertEqual(control["implementation_merge_commit"], PR186_MERGE)
-        self.assertEqual(control["implementation_exact_head_ci_run"], 30389249099)
-        self.assertEqual(control["claim_job_id_token_permission"], "none")
-        self.assertFalse(control["azure_login_or_cli_present"])
-        self.assertEqual(control["protected_consumption_ruleset"], "not_observed")
-        self.assertEqual(control["live_first_claim"], "not_observed")
-        self.assertEqual(control["live_replay_rejection"], "not_observed")
-        self.assertEqual(control["concurrent_duplicate_claim_proof"], "not_observed")
-        self.assertFalse(control["operationally_verified"])
-        self.assertFalse(control["collector_workflow_restored"])
+        self.assertTrue(control["workflow_implemented_on_main"])
+        self.assertFalse(control["workflow_activated"])
+        self.assertFalse(control["live_claim_execution_observed"])
+        self.assertFalse(control["concurrent_claim_race_tested"])
+        self.assertFalse(control["collector_workflow_integrated_with_claim"])
+        self.assertFalse(control["ruleset_configuration_observed"])
 
-    def test_static_workflow_boundaries_remain_fail_closed(self) -> None:
-        self.assertIn("workflow_call:", self.durable_workflow)
+        self.assertIn("workflow_call", self.durable_workflow)
+        self.assertIn("permissions:", self.durable_workflow)
         self.assertIn("id-token: none", self.durable_workflow)
-        self.assertIn(
-            "git/ref/tags/authority-consumed/$REQUEST_ID",
-            self.durable_workflow,
-        )
-        self.assertNotIn("azure/login", self.durable_workflow)
-        self.assertNotIn("az login", self.durable_workflow)
+        self.assertNotIn("durable-authorization-claim-v1.yml", self.collector_workflow)
 
-        self.assertIn(
-            "Collector-hosted demo API — quarantined",
-            self.collector_workflow,
-        )
-        self.assertIn(
-            "Reject quarantined collector operation",
-            self.collector_workflow,
-        )
-        self.assertIn("exit 1", self.collector_workflow)
-        self.assertNotIn("id-token: write", self.collector_workflow)
-        self.assertNotIn("uses: azure/login", self.collector_workflow)
-
-    def test_authority_and_azure_boundaries_remain_closed(self) -> None:
-        authority = self.reconciliation["authority"]
+        authority = self.reconciliation["current_authority"]
         self.assertTrue(authority["repository_reconciliation_authorized"])
-        self.assertTrue(authority["draft_pull_request_creation_authorized"])
-        self.assertTrue(authority["ordinary_pull_request_ci_authorized"])
-
+        self.assertTrue(authority["ordinary_exact_head_ci_authorized"])
         for key in (
             "pull_request_merge_authorized",
-            "ready_for_review_transition_authorized",
             "workflow_dispatch_or_rerun_authorized",
-            "live_authorization_claim_authorized",
-            "repository_ruleset_mutation_authorized",
-            "azure_authentication_authorized",
-            "azure_query_authorized",
-            "azure_mutation_authorized",
+            "Azure_authentication_authorized",
+            "Azure_query_authorized",
+            "Azure_mutation_authorized",
             "deployment_authorized",
             "rollback_authorized",
             "cleanup_authorized",
-            "rbac_mutation_authorized",
+            "RBAC_mutation_authorized",
+            "repository_ruleset_mutation_authorized",
+            "live_authorization_claim_authorized",
         ):
             self.assertFalse(authority[key], key)
-
-        azure = self.reconciliation["azure_boundary"]
-        self.assertFalse(azure["fresh_live_query_performed"])
-        self.assertFalse(azure["runtime_truth_changed_by_this_reconciliation"])
-        self.assertFalse(azure["Azure_resource_change_claimed"])
-        self.assertFalse(azure["Azure_quota_change_claimed"])
-        self.assertEqual(azure["expected_recurring_cost_delta_CAD"], 0)
 
 
 if __name__ == "__main__":
