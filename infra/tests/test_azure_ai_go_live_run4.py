@@ -151,18 +151,15 @@ class AzureAiGoLiveRun4Tests(unittest.TestCase):
         self.assertFalse(deployment["cleanup_required"])
         self.assertTrue(self.run4_terminal["authorization"]["consumed"])
 
-    def test_state_index_preserves_run4_consumption_while_run5_is_active(self) -> None:
+    def test_state_index_preserves_run4_as_history_after_run5_terminal(self) -> None:
+        self.assertIsNone(self.state_index["active_azure_ai_activation_authorization"])
         self.assertEqual(
-            self.state_index["active_azure_ai_activation_authorization"],
-            ".project/deployment-requests/azure-ai-go-live-run5.json",
-        )
-        self.assertEqual(
-            self.state_index["latest_consumed_azure_ai_activation_authorization"],
+            self.state_index["previous_azure_ai_activation_reconciliation"],
             ".project/reconciliations/azure-ai-go-live-run4-terminal-20260729.json",
         )
         self.assertEqual(
             self.state_index["latest_azure_ai_activation_reconciliation"],
-            ".project/reconciliations/azure-ai-go-live-run4-terminal-20260729.json",
+            ".project/reconciliations/azure-ai-go-live-run5-terminal-20260729.json",
         )
         self.assertEqual(
             self.state_index["azure_ai_run4_workflow"],

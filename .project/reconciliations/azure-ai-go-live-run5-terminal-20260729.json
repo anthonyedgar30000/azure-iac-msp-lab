@@ -1,0 +1,116 @@
+{
+  "schema_version": "project.azure-ai-go-live-terminal.v1",
+  "attempt_id": "azure-ai-go-live-run5",
+  "status": "consumed_terminal_failure",
+  "recorded_at": "2026-07-29T01:46:00-04:00",
+  "source_instruction": "Proceed with Azure AI go-live run 5 in Azure for Students, selecting the first deployable approved region and model combination in one bounded workflow.",
+  "repository": {
+    "pull_request": 205,
+    "reviewed_source_head": "e19a80079331f5aabd353e238af39b3ef7f7aec5",
+    "exact_merge_commit": "697930d2ebec0d14bed3e1796d440c719f651401"
+  },
+  "workflow": {
+    "name": "Azure AI go live run 5",
+    "run_id": 30425884534,
+    "run_attempt": 1,
+    "job_id": 90492164065,
+    "conclusion": "failure",
+    "exact_commit_checkout_verified": true,
+    "repository_validation_succeeded": true,
+    "azure_oidc_login_succeeded": true,
+    "executor_conclusion": "failure"
+  },
+  "artifact": {
+    "artifact_id": 8713618498,
+    "name": "azure-ai-go-live-run5-30425884534-1",
+    "digest": "sha256:39491be1c1292ffb9f31064645dd289ed718cebb4c862b4d5c57d712acb7162a",
+    "retention_days": 30,
+    "manifest_present": true
+  },
+  "azure_context": {
+    "subscription_name": "Azure for Students",
+    "subscription_state": "Enabled",
+    "provider_registration_state": "Registered",
+    "principal_fingerprint": "sha256:6f1db3ea4e8c9f6e",
+    "raw_subscription_id_persisted": false,
+    "raw_principal_id_persisted": false
+  },
+  "candidate_observations": {
+    "candidates_evaluated": 10,
+    "gpt_4o_mini": {
+      "model": "gpt-4o-mini",
+      "version": "2024-07-18",
+      "sku": "GlobalStandard",
+      "regions": ["westus3", "westus", "eastus", "northcentralus", "southcentralus"],
+      "model_listed_in_all_regions": true,
+      "reported_available_capacity_each_region": 0,
+      "what_if_attempted": false
+    },
+    "gpt_4_1_mini": {
+      "model": "gpt-4.1-mini",
+      "version": "2025-04-14",
+      "sku": "GlobalStandard",
+      "regions": ["westus3", "westus", "eastus", "northcentralus", "southcentralus"],
+      "model_listed_in_all_regions": true,
+      "reported_available_capacity_each_region": 200,
+      "capacity_sufficient_for_requested_capacity": true,
+      "what_if_command_attempted_for_each_region": true,
+      "what_if_change_plan_produced": false
+    }
+  },
+  "root_cause": {
+    "classification": "bicep_location_allowlist_excluded_all_capacity_sufficient_candidates",
+    "template_path": "infra/azure-ai-live.bicep",
+    "committed_allowed_locations": ["canadaeast", "eastus2"],
+    "capacity_sufficient_candidate_locations": ["westus3", "westus", "eastus", "northcentralus", "southcentralus"],
+    "representative_error": "InvalidTemplate: location was not part of the allowed values canadaeast,eastus2",
+    "subscription_policy_block_established_for_run5_candidates": false,
+    "azure_authentication_failure": false,
+    "model_listing_failure": false,
+    "quota_exhaustion_established_for_gpt_4_1_mini": false,
+    "deployment_failure": false,
+    "model_request_failure": false
+  },
+  "deployment_state": {
+    "what_if_change_plan_produced": false,
+    "deployment_started": false,
+    "resource_group_created": false,
+    "azure_openai_account_created": false,
+    "model_deployment_created": false,
+    "inference_role_assignment_created": false,
+    "model_request_performed": false,
+    "endpoint_live": false,
+    "partial_resources_established": false,
+    "cleanup_required": false
+  },
+  "repair_state": {
+    "location_allowlist_repair_identified": true,
+    "repair_included_in_terminal_reconciliation_candidate": true,
+    "repair_merged": false,
+    "new_deployment_authorized": false
+  },
+  "authorization": {
+    "attempt_limit": 1,
+    "attempts_observed": 1,
+    "consumed": true,
+    "automatic_retry_authorized": false,
+    "manual_rerun_authorized": false,
+    "new_attempt_requires_fresh_instruction": true,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "cost": {
+    "Azure_resource_cost_delta_established": 0,
+    "billable_model_request_performed": false,
+    "actual_cost_freshly_observed": false
+  },
+  "canonical_distinctions": [
+    "model_listed != deployable_template_parameter",
+    "capacity_sufficient != Bicep_location_allowed",
+    "InvalidTemplate != subscription_policy_denial",
+    "what_if_command_attempted != What_If_change_plan_produced",
+    "deployment_not_started != resource_created",
+    "repair_prepared != deployment_authorized",
+    "failed_run != authorization_to_rerun"
+  ]
+}
