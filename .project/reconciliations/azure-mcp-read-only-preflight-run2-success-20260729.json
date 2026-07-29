@@ -1,0 +1,154 @@
+{
+  "schema_version": "project.reconciliation.azure-mcp-read-only-preflight-run2-success.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-28T23:10:23-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "observation_boundary": "GitHub repository and protected workflow evidence observed through live main at 2099b6c60268976f95d8b9ebcc20601aa1fce7f1, successful Azure MCP read-only preflight run 30418812664 attempt 1, artifact 8711131933, and the downloaded template content manifest. No Azure mutation, provider registration, deployment, role assignment, model call, cleanup, rollback, or workflow rerun was performed by this reconciliation.",
+  "repository_state": {
+    "default_branch": "main",
+    "observed_main": "2099b6c60268976f95d8b9ebcc20601aa1fce7f1",
+    "latest_merged_pull_request": 193,
+    "latest_merged_source_head": "643f6f81fdb39d50a6476a3dc9a99bdfff026dc6",
+    "open_pull_requests": [
+      {
+        "number": 194,
+        "title": "Prepare Azure AI live activation preflight and IaC",
+        "state": "open_draft",
+        "head_sha": "8bcdef27a662ab8686a4ef1382777017353de0b8",
+        "exact_head_ci": "success",
+        "overlapping_path_with_this_increment": ".project/state-index.json",
+        "collision_avoided": true
+      }
+    ],
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "workflow_run": {
+    "workflow": ".github/workflows/azure-mcp-read-only-preflight.yml",
+    "run_id": 30418812664,
+    "run_attempt": 1,
+    "workflow_head_branch": "main",
+    "workflow_head_sha": "2099b6c60268976f95d8b9ebcc20601aa1fce7f1",
+    "checked_out_reviewed_commit": "02efa653cea281cf2b12781b1d2f63865b4dea2f",
+    "reviewed_commit_contains_script_version": "1.1.1",
+    "resource_group_input": "rg-azure-mcp-dev-westus2",
+    "location_input": "westus2",
+    "conclusion": "success",
+    "Azure_OIDC_authentication": "success",
+    "read_only_preflight": "success",
+    "observation_failures": 0,
+    "Azure_mutations_performed": false,
+    "deployment_performed": false,
+    "OpenAI_API_execution_performed": false
+  },
+  "protected_artifact": {
+    "artifact_id": 8711131933,
+    "name": "azure-mcp-read-only-preflight-30418812664-1",
+    "digest": "sha256:4867d34fd9ee64881f27a58ae5f534052de30583d830d9602d5833c4097a826b",
+    "size_bytes": 7501,
+    "created_at": "2026-07-29T03:10:23Z",
+    "expires_at": "2026-08-28T03:10:23Z",
+    "files": [
+      "account-context.json",
+      "artifact-manifest.sha256",
+      "azure-cli-version.json",
+      "azure-developer-cli-version.txt",
+      "existing-resource-summary.json",
+      "preflight-summary.json",
+      "provider-states.json",
+      "request.json",
+      "resource-group-state.json",
+      "template-files.sha256",
+      "template-risk-scan.txt"
+    ],
+    "raw_subscription_or_tenant_identifiers_persisted": false
+  },
+  "Azure_observations": {
+    "subscription_name": "Azure for Students",
+    "subscription_fingerprint": "sha256:8f27aec6b3012cf0d4a85d3859872f0daf34e014860650c7c2b3446cd3db0b7f",
+    "tenant_fingerprint": "sha256:26ba6e04f1a9cde8b97b64734498f4cbe81d5dcbf7b0f451d81570817c2967bc",
+    "principal_type": "servicePrincipal",
+    "location": "westus2",
+    "resource_group": {
+      "name": "rg-azure-mcp-dev-westus2",
+      "observation_status": "not_present"
+    },
+    "existing_resource_inventory": "not_applicable_resource_group_absent",
+    "provider_states": {
+      "Microsoft.App": "NotRegistered",
+      "Microsoft.OperationalInsights": "Registered",
+      "Microsoft.Insights": "Registered",
+      "Microsoft.ManagedIdentity": "Registered",
+      "Microsoft.Authorization": "Registered"
+    },
+    "actual_cost_CAD": "not_observed",
+    "quota": "not_observed"
+  },
+  "template_observation": {
+    "gallery_alias": "azmcp-copilot-studio-aca-mi",
+    "reference_kind": "azure_developer_cli_gallery_alias",
+    "official_source_repository": "Azure-Samples/azmcp-copilot-studio-aca-mi",
+    "official_source_repository_main_observed": "f156038315b196e880f3d2352032c01a691b30d9",
+    "downloaded_content_manifest_path": "infra/evidence/azure-mcp/azmcp-copilot-studio-aca-mi-20260729.sha256",
+    "downloaded_content_manifest_digest": "sha256:0667efecb0eded85dc69b87deda2022e73b3dd879f0658659749e13587375b8a",
+    "downloaded_content_matches_observed_upstream_commit": "not_verified",
+    "exact_upstream_source_commit_pinned": false,
+    "container_image_digest_observed": false,
+    "deployment_allowed": false
+  },
+  "security_review_findings": {
+    "server_runtime_read_only_flag_observed": true,
+    "enabled_namespace_observed": "storage",
+    "managed_identity_observed_in_template": true,
+    "default_Azure_RBAC_scope": "subscription",
+    "default_Azure_RBAC_role": "Reader",
+    "Entra_app_registrations_created": 2,
+    "delegated_scope_name": "Mcp.Tools.ReadWrite",
+    "client_preauthorization_observed": true,
+    "Microsoft_Graph_application_resources_observed": true,
+    "cleanup_requires_manual_Entra_app_deletion": true,
+    "least_privilege_verified": false,
+    "network_path_verified": false,
+    "alert_delivery_verified": false
+  },
+  "authority": {
+    "repository_reconciliation_authorized": true,
+    "branch_creation_authorized": true,
+    "declared_repository_file_writes_authorized": true,
+    "ordinary_pull_request_CI_authorized": true,
+    "draft_pull_request_creation_authorized": true,
+    "pull_request_merge_authorized": false,
+    "workflow_dispatch_or_rerun_authorized": false,
+    "provider_registration_authorized": false,
+    "Azure_mutation_authorized": false,
+    "deployment_authorized": false,
+    "RBAC_mutation_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false,
+    "OpenAI_API_execution_authorized": false
+  },
+  "canonical_boundaries": [
+    "preflight_passed != deployment_authorized",
+    "content_manifest_pinned != upstream_source_commit_pinned",
+    "server_read_only_flag != effective_least_privilege",
+    "subscription_Reader != resource_scoped_least_privilege",
+    "Mcp.Tools.ReadWrite_scope_name != runtime_mutation_authority",
+    "resource_group_not_present != permission_to_create",
+    "provider_not_registered != permission_to_register",
+    "artifact_uploaded != template_approved",
+    "estimated_cost != actual_cost",
+    "not_observed != false"
+  ],
+  "next_gate": {
+    "operation": "Resolve the exact upstream template commit and verify every downloaded file hash before preparing a deployment What-If.",
+    "requirements": [
+      "retrieve the exact upstream source commit rather than a moving gallery alias",
+      "match the complete downloaded manifest against that immutable commit or vendor a reviewed copy",
+      "pin the Azure MCP container image by digest",
+      "review subscription Reader against a narrower supported scope",
+      "review the Mcp.Tools.ReadWrite delegated scope and all preauthorized clients",
+      "review public ingress, TLS termination, forwarded-header behavior, DNS, and egress",
+      "define monitoring, alert verification, cost ceiling, rollback, cleanup, and Entra app deletion",
+      "prepare a no-mutation What-If only after the source and parameter set are immutable"
+    ]
+  }
+}
