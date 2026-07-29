@@ -31,6 +31,15 @@ RECONCILIATION_PATH = (
 )
 HANDOFF_PATH = ".project/handoffs/post-pr191-mcp-preflight-run1-current-state.md"
 CONTRACT_PATH = ".project/contracts/azure-mcp-read-only-preflight-workflow-v2.json"
+DEPLOYMENT_TERMINAL_PATH = (
+    ".project/reconciliations/correlation-identity-run1-terminal-20260727.json"
+)
+REPOSITORY_WATERMARK_PATH = (
+    ".project/reconciliations/post-pr185-repository-watermark-20260728.json"
+)
+AUTHORIZATION_CONTROL_PATH = (
+    ".project/reconciliations/post-pr187-authorization-control-reconciliation-20260728.json"
+)
 
 
 class AzureMcpPreflightRun1TerminalReconciliationTests(unittest.TestCase):
@@ -42,7 +51,7 @@ class AzureMcpPreflightRun1TerminalReconciliationTests(unittest.TestCase):
         cls.contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
         cls.script = SCRIPT.read_text(encoding="utf-8")
 
-    def test_state_index_selects_the_terminal_preflight_boundary(self) -> None:
+    def test_state_index_selects_the_mcp_boundary_without_repurposing_legacy_pointers(self) -> None:
         self.assertEqual(
             self.index["latest_repository_and_mcp_reconciliation"],
             RECONCILIATION_PATH,
@@ -51,13 +60,37 @@ class AzureMcpPreflightRun1TerminalReconciliationTests(unittest.TestCase):
             self.index["latest_azure_mcp_preflight_reconciliation"],
             RECONCILIATION_PATH,
         )
-        self.assertEqual(self.index["latest_terminal_reconciliation"], RECONCILIATION_PATH)
         self.assertEqual(self.index["latest_repository_handoff"], HANDOFF_PATH)
         self.assertEqual(self.index["azure_mcp_preflight_contract"], CONTRACT_PATH)
         self.assertIsNone(self.index["active_azure_mcp_preflight_authorization"])
         self.assertEqual(
             self.index["latest_consumed_azure_mcp_preflight_authorization"],
             RECONCILIATION_PATH,
+        )
+
+        self.assertEqual(
+            self.index["latest_terminal_reconciliation"],
+            DEPLOYMENT_TERMINAL_PATH,
+        )
+        self.assertEqual(
+            self.index["latest_authorization_resolution"],
+            DEPLOYMENT_TERMINAL_PATH,
+        )
+        self.assertEqual(
+            self.index["latest_repository_reconciliation"],
+            REPOSITORY_WATERMARK_PATH,
+        )
+        self.assertEqual(
+            self.index["latest_repository_watermark_reconciliation"],
+            REPOSITORY_WATERMARK_PATH,
+        )
+        self.assertEqual(
+            self.index["latest_lifecycle_reconciliation"],
+            AUTHORIZATION_CONTROL_PATH,
+        )
+        self.assertEqual(
+            self.index["latest_authorization_control_reconciliation"],
+            AUTHORIZATION_CONTROL_PATH,
         )
 
     def test_repository_watermark_advances_through_pr191(self) -> None:
