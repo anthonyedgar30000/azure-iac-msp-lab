@@ -5,15 +5,20 @@ on:
     paths:
       - ".project/contracts/azure-mcp-reality-bridge.json"
       - ".project/reconciliations/azure-mcp-current-reality-tool-20260729.json"
+      - ".project/observation-requests/azure-mcp-current-reality-run1.json"
       - ".project/handoffs/azure-mcp-current-reality-tool.md"
+      - ".project/handoffs/azure-mcp-current-reality-run1.md"
       - ".project/state-index.json"
       - "azure_mcp_reality/**"
       - "requirements/azure-mcp-reality-tool.txt"
       - "docs/architecture/azure-mcp-reality-bridge.md"
       - "docs/runbooks/azure-mcp-get-current-reality.md"
+      - "scripts/azure_mcp_current_reality_run1.sh"
       - "scripts/validate_azure_mcp_reality_bridge.py"
       - "tests/test_azure_mcp_reality_bridge.py"
       - "infra/tests/test_azure_mcp_current_reality_tool.py"
+      - "infra/tests/test_azure_mcp_active_subscription_compat.py"
+      - "infra/tests/test_azure_mcp_current_reality_run1_authorization.py"
       - ".github/workflows/azure-mcp-reality-bridge-contract.yml"
   push:
     branches:
@@ -21,15 +26,20 @@ on:
     paths:
       - ".project/contracts/azure-mcp-reality-bridge.json"
       - ".project/reconciliations/azure-mcp-current-reality-tool-20260729.json"
+      - ".project/observation-requests/azure-mcp-current-reality-run1.json"
       - ".project/handoffs/azure-mcp-current-reality-tool.md"
+      - ".project/handoffs/azure-mcp-current-reality-run1.md"
       - ".project/state-index.json"
       - "azure_mcp_reality/**"
       - "requirements/azure-mcp-reality-tool.txt"
       - "docs/architecture/azure-mcp-reality-bridge.md"
       - "docs/runbooks/azure-mcp-get-current-reality.md"
+      - "scripts/azure_mcp_current_reality_run1.sh"
       - "scripts/validate_azure_mcp_reality_bridge.py"
       - "tests/test_azure_mcp_reality_bridge.py"
       - "infra/tests/test_azure_mcp_current_reality_tool.py"
+      - "infra/tests/test_azure_mcp_active_subscription_compat.py"
+      - "infra/tests/test_azure_mcp_current_reality_run1_authorization.py"
       - ".github/workflows/azure-mcp-reality-bridge-contract.yml"
 
 permissions:
@@ -55,11 +65,14 @@ jobs:
       - name: Validate governed contract
         run: python scripts/validate_azure_mcp_reality_bridge.py
 
-      - name: Run contract and observer regression tests
+      - name: Run contract, observer, compatibility, and authority tests
         run: |
           python -m unittest tests.test_azure_mcp_reality_bridge -v
           python -m unittest infra.tests.test_azure_mcp_current_reality_tool -v
+          python -m unittest infra.tests.test_azure_mcp_active_subscription_compat -v
+          python -m unittest infra.tests.test_azure_mcp_current_reality_run1_authorization -v
           python -m py_compile azure_mcp_reality/*.py
+          bash -n scripts/azure_mcp_current_reality_run1.sh
 
       - name: Verify exact MCP tool descriptor without Azure access
         run: |
@@ -83,10 +96,12 @@ jobs:
           asyncio.run(verify())
           PY
 
-      - name: Confirm no cloud authority is available
+      - name: Confirm no cloud authority is available in CI
         run: |
           test -z "${AZURE_CLIENT_ID:-}"
           test -z "${AZURE_TENANT_ID:-}"
           test -z "${AZURE_SUBSCRIPTION_ID:-}"
           test -z "${AZURE_MCP_ALLOWED_SUBSCRIPTION_ID:-}"
           test -z "${AZURE_MCP_ALLOWED_RESOURCE_GROUP:-}"
+          test -z "${AZURE_MCP_RUN1_SUBSCRIPTION_ID:-}"
+          test -z "${AZURE_MCP_RUN1_CONFIRMATION:-}"
