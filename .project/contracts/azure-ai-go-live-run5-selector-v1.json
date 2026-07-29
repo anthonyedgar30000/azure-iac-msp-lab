@@ -1,13 +1,15 @@
 {
   "schema_version": "project.azure-ai-go-live-selector.v1",
-  "status": "active_repository_candidate",
+  "status": "executed_terminal_failure",
   "attempt_id": "azure-ai-go-live-run5",
   "objective": "Select the first candidate in a bounded approved matrix that passes live model listing, capacity, and subscription-scope What-If gates; then perform exactly one deployment and one verification request.",
   "subscription_boundary": {
     "required_name": "Azure for Students",
     "required_state": "Enabled",
     "configured_subscription_id_must_match_azure_login": true,
-    "other_subscriptions_authorized": false
+    "other_subscriptions_authorized": false,
+    "observed_name_match": true,
+    "observed_state_enabled": true
   },
   "selection": {
     "candidate_limit": 10,
@@ -47,7 +49,8 @@
     "capacity": 1,
     "provisioned_throughput_authorized": false,
     "budget_resource_authorized": false,
-    "actual_cost_freshly_observed": false
+    "actual_cost_freshly_observed": false,
+    "Azure_resource_cost_delta_established": 0
   },
   "evidence": {
     "raw_subscription_id_persisted": false,
@@ -56,9 +59,21 @@
     "candidate_observations_recorded": true,
     "what_if_recorded": true,
     "deployment_result_recorded": true,
-    "account_model_rbac_verification_recorded": true,
-    "model_call_receipt_recorded": true,
-    "sha256_manifest_required": true
+    "account_model_rbac_verification_recorded": false,
+    "model_call_receipt_recorded": false,
+    "sha256_manifest_required": true,
+    "terminal_reconciliation": ".project/reconciliations/azure-ai-go-live-run5-terminal-20260729.json"
+  },
+  "execution": {
+    "workflow_run": 30425884534,
+    "artifact_id": 8713618498,
+    "candidates_evaluated": 10,
+    "capacity_sufficient_candidates": 5,
+    "what_if_change_plan_produced": false,
+    "deployment_started": false,
+    "model_request_performed": false,
+    "endpoint_live": false,
+    "root_cause": "Bicep location allowlist excluded all capacity-sufficient candidates"
   },
   "failure_behavior": {
     "no_candidate": "Stop before mutation and consume the authorization.",
@@ -69,8 +84,9 @@
   "canonical_distinctions": [
     "approved_candidate_matrix != live_subscription_availability",
     "read_only_candidate_iteration != repeated_deployment_attempts",
-    "what_if_succeeded != deployment_succeeded",
-    "role_assignment_created != effective_data_plane_access",
+    "capacity_sufficient != template_parameter_allowed",
+    "what_if_command_attempted != What_If_change_plan_produced",
+    "role_assignment_not_created != effective_data_plane_access",
     "one_workflow != unbounded_mutation",
     "endpoint_exists != endpoint_live"
   ]
