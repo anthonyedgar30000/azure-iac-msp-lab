@@ -1,0 +1,31 @@
+{
+  "schema_version": "project.azure-mcp-live-scope.v1",
+  "scope": {
+    "provider_registration": [
+      "Microsoft.App"
+    ],
+    "creates": [
+      "/subscriptions/<authorized>/resourceGroups/rg-azure-mcp-dev-westus2",
+      "/subscriptions/<authorized>/resourceGroups/rg-azure-mcp-dev-westus2/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-azmcp-msp-dev",
+      "/subscriptions/<authorized>/resourceGroups/rg-azure-mcp-dev-westus2/providers/Microsoft.App/managedEnvironments/cae-azmcp-msp-dev",
+      "/subscriptions/<authorized>/resourceGroups/rg-azure-mcp-dev-westus2/providers/Microsoft.App/containerApps/ca-azmcp-msp-dev",
+      "/providers/Microsoft.Graph/applications/Azure MCP MSP Lab Read Only"
+    ],
+    "role_assignments": [
+      {
+        "role": "Reader",
+        "scope": "/subscriptions/<authorized>/resourceGroups/rg-servicetracer-dev-westus2",
+        "principal": "id-azmcp-msp-dev"
+      }
+    ],
+    "image": "mcr.microsoft.com/azure-sdk/azure-mcp@sha256:80ea86cdbb30d6403ceea36766bdf8b736805bf1a0ef0a688be4bf4bb95c9b8d",
+    "namespaces": [
+      "group",
+      "compute",
+      "monitor"
+    ],
+    "read_only": true,
+    "deletes": []
+  },
+  "scope_hash": "sha256:c3cc1dd604cf0eb462487225dddd63919eea2e234a5757dab61319414657cc4d"
+}
