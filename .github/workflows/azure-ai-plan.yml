@@ -3,14 +3,12 @@ name: Azure AI activation static validation
 on:
   pull_request:
     paths:
-      - '.github/workflows/azure-ai-read-only-preflight.yml'
+      - '.github/workflows/azure-ai-live-deploy.yml'
       - '.github/workflows/azure-ai-plan.yml'
-      - 'scripts/azure_ai_read_only_preflight.sh'
       - 'infra/azure-ai-live.bicep'
       - 'infra/azure-ai-live.dev.bicepparam'
       - 'infra/modules/azure_ai_openai.bicep'
       - 'infra/tests/test_azure_ai_live_activation.py'
-      - 'docs/runbooks/azure-ai-read-only-preflight.md'
       - '.project/contracts/azure-ai-live-activation-v1.json'
       - '.project/reconciliations/post-pr193-azure-ai-live-activation-plan-20260729.json'
       - '.project/handoffs/post-pr193-azure-ai-live-activation-plan.md'
@@ -19,18 +17,11 @@ on:
     branches:
       - main
     paths:
-      - '.github/workflows/azure-ai-read-only-preflight.yml'
       - '.github/workflows/azure-ai-plan.yml'
-      - 'scripts/azure_ai_read_only_preflight.sh'
       - 'infra/azure-ai-live.bicep'
       - 'infra/azure-ai-live.dev.bicepparam'
       - 'infra/modules/azure_ai_openai.bicep'
       - 'infra/tests/test_azure_ai_live_activation.py'
-      - 'docs/runbooks/azure-ai-read-only-preflight.md'
-      - '.project/contracts/azure-ai-live-activation-v1.json'
-      - '.project/reconciliations/post-pr193-azure-ai-live-activation-plan-20260729.json'
-      - '.project/handoffs/post-pr193-azure-ai-live-activation-plan.md'
-      - '.project/state-index.json'
 
 permissions:
   contents: read
@@ -48,7 +39,7 @@ jobs:
       - name: Run deterministic boundary tests
         run: python -m unittest infra.tests.test_azure_ai_live_activation -v
 
-      - name: Lint and build fail-closed Azure AI Bicep
+      - name: Lint and build Azure AI Bicep
         uses: azure/CLI@v2
         with:
           inlineScript: |

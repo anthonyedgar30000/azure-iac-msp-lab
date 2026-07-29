@@ -1,130 +1,96 @@
 {
-  "schema_version": "project.azure-ai-live-activation.v1",
-  "status": "repository_candidate_preflight_not_dispatched",
+  "schema_version": "project.azure-ai-live-activation.v2",
+  "status": "direct_go_live_candidate_merge_trigger_not_executed",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-28T23:05:32-04:00",
-  "objective": "Move the merged OpenAI SDK provider toward a live Microsoft Foundry or Azure OpenAI endpoint by first collecting subscription-specific model, quota, capacity, identity, RBAC, region, resource-group, and existing-account evidence without Azure mutation.",
+  "recorded_at": "2026-07-28T23:30:00-04:00",
+  "objective": "Deploy and verify one Azure OpenAI regional Standard model through a single merge-triggered workflow, without a separate read-only preflight run.",
   "repository_baseline": {
-    "observed_main": "2099b6c60268976f95d8b9ebcc20601aa1fce7f1",
-    "latest_merged_pull_request": 193,
-    "latest_merged_source_head": "643f6f81fdb39d50a6476a3dc9a99bdfff026dc6",
-    "latest_exact_head_ci_run": 30417651771,
-    "latest_exact_head_ci_conclusion": "success",
-    "open_pull_requests_observed": [],
-    "branch": "agent/azure-ai-live-activation-v1",
+    "observed_main": "375255c6bca57f672a326915e5a18708de3eaaad",
+    "latest_merged_pull_request": 194,
+    "branch": "agent/azure-ai-go-live-v1",
     "local_working_tree_observed": false,
     "repository_operations": "connector_backed"
   },
-  "candidate_architecture": {
-    "resource_group": "rg-ai-msp-dev-canadaeast",
+  "bounded_live_scope": {
+    "workflow": ".github/workflows/azure-ai-live-deploy.yml",
+    "trigger": "first push to main that introduces the workflow",
     "candidate_locations": [
       "canadaeast",
       "eastus2"
     ],
-    "candidate_models": [
-      {
-        "name": "gpt-4.1-mini",
-        "version": "2025-04-14"
-      },
-      {
-        "name": "gpt-5-mini",
-        "version": "2025-08-07"
-      }
-    ],
-    "preferred_deployment_type": "Standard",
-    "candidate_capacity_units": 1,
+    "model": {
+      "name": "gpt-4.1-mini",
+      "version": "2025-04-14"
+    },
+    "deployment_sku": "Standard",
+    "deployment_capacity": 1,
     "authentication": "Microsoft Entra only",
     "local_authentication_disabled": true,
-    "initial_network_path": "public Azure endpoint with Entra authentication; private endpoint not yet selected",
     "inference_role": "Cognitive Services OpenAI User",
-    "inference_role_definition_id": "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd",
-    "deployment_switch_default": false,
-    "role_assignment_switch_default": false
-  },
-  "preflight": {
-    "workflow": ".github/workflows/azure-ai-read-only-preflight.yml",
-    "script": "scripts/azure_ai_read_only_preflight.sh",
-    "github_environment": "azure-lab",
-    "authentication": "GitHub OIDC workload identity federation",
-    "exact_reviewed_commit_required": true,
-    "typed_confirmation_required": true,
-    "candidate_model_inventory_observed": false,
-    "quota_observed": false,
-    "capacity_observed": false,
-    "principal_rbac_observed": false,
-    "existing_ai_accounts_observed": false,
-    "provider_registration_observed": false,
-    "resource_group_state_observed": false
-  },
-  "iac_candidate": {
-    "subscription_root": "infra/azure-ai-live.bicep",
-    "resource_module": "infra/modules/azure_ai_openai.bicep",
-    "development_parameters": "infra/azure-ai-live.dev.bicepparam",
-    "resource_provider": "Microsoft.CognitiveServices",
-    "account_kind": "OpenAI",
-    "account_sku": "S0",
-    "deployment_api_version": "2024-10-01",
-    "resource_deployment_enabled_by_default": false,
-    "model_deployment_enabled_inside_resource": true,
-    "inference_role_assignment_enabled_by_default": false,
-    "diagnostic_settings_configured": false,
-    "private_endpoint_configured": false
+    "model_request_limit": {
+      "count": 1,
+      "max_output_tokens": 32,
+      "prompt_classification": "bounded_non_sensitive_demo"
+    },
+    "planned_fallbacks": 2,
+    "manual_rerun_authorized": false
   },
   "execution": {
     "azure_authentication_performed": false,
     "azure_query_performed": false,
     "azure_mutation_performed": false,
+    "provider_registration_performed": false,
     "resource_group_created": false,
     "openai_account_created": false,
     "model_deployment_created": false,
     "role_assignment_created": false,
-    "model_request_performed": false
+    "model_request_performed": false,
+    "service_verified_live": false
   },
   "authority": {
-    "human_instruction": "Lets get it live",
-    "interpretation": "Authorize repository preparation for a live activation path. Material subscription-specific model, quota, capacity, RBAC, cost, and region facts remain unknown, so this increment does not treat the instruction as exact authorization for a cloud mutation or model request.",
+    "human_instruction": "Go live already",
+    "interpretation": "Authorize the exact reviewed merge-triggered workflow to authenticate, perform bounded live checks, register Microsoft.CognitiveServices if required, run What-If, deploy the first viable candidate, assign the exact inference role, make one bounded model request, and capture evidence.",
     "repository_changes_authorized": true,
-    "branch_creation_authorized": true,
     "draft_pull_request_creation_authorized": true,
     "ordinary_exact_head_ci_authorized": true,
-    "pull_request_merge_authorized": false,
-    "workflow_dispatch_authorized": false,
-    "azure_authentication_authorized": false,
-    "azure_query_authorized": false,
-    "azure_mutation_authorized": false,
-    "provider_registration_authorized": false,
-    "rbac_mutation_authorized": false,
-    "model_deployment_authorized": false,
-    "model_request_authorized": false,
+    "pull_request_merge_authorized": true,
+    "merge_triggered_workflow_authorized": true,
+    "azure_authentication_authorized": true,
+    "azure_query_authorized": true,
+    "azure_mutation_authorized": true,
+    "provider_registration_authorized": true,
+    "resource_group_creation_authorized": true,
+    "rbac_mutation_authorized": true,
+    "model_deployment_authorized": true,
+    "one_bounded_model_request_authorized": true,
+    "manual_rerun_authorized": false,
     "rollback_authorized": false,
     "cleanup_authorized": false
   },
   "cost_and_quota": {
-    "repository_recurring_cost_delta_cad": 0,
-    "preflight_azure_resource_cost_delta_cad": 0,
-    "standard_model_billing_model": "pay_as_you_go_input_and_output_tokens",
-    "actual_azure_cost_freshly_observed": false,
-    "azure_ai_quota_freshly_observed": false,
-    "azure_ai_capacity_freshly_observed": false,
-    "monthly_cost_ceiling_selected": false
+    "deployment_type": "Standard pay-as-you-go",
+    "standing_model_capacity_charge_claimed": false,
+    "first_request_max_output_tokens": 32,
+    "actual_cost_freshly_observed": false,
+    "quota_freshly_observed": false,
+    "capacity_freshly_observed": false,
+    "failure_behavior": "The workflow stops if neither bounded regional candidate can deploy. It does not rerun or delete resources automatically."
   },
   "canonical_distinctions": [
-    "provider_on_main != endpoint_live",
-    "preflight_implemented != preflight_dispatched",
-    "preflight_passed != deployment_authorized",
+    "merge_triggered != deployment_succeeded",
     "model_listed != quota_available",
-    "quota_available != capacity_available",
+    "what_if_succeeded != deployment_succeeded",
     "account_created != model_deployed",
-    "model_deployed != inference_rbac_effective",
-    "inference_rbac_assigned != role_propagated",
-    "model_request_succeeded != Azure_operations_authorized",
+    "role_assignment_created != role_propagated",
+    "deployment_succeeded != model_request_verified",
+    "model_request_verified != Azure_MCP_connected",
+    "workflow_failure != authorization_to_rerun",
     "estimated_cost != actual_cost"
   ],
   "failure_rollback_cleanup": {
-    "preflight_failure": "Stop without provider registration, resource creation, role assignment, model deployment, or API request and preserve typed observation failures.",
-    "repository_rollback": "Close the pull request before merge or revert the exact merged commits through a separately reviewed change.",
-    "azure_rollback": "Not applicable until a separately authorized deployment occurs.",
-    "azure_cleanup": "Not applicable because this repository increment creates no Azure resources. Future deletion requires separate cleanup authority."
-  },
-  "next_gate": "Exact-head CI, human review and merge, then a new exact-commit-bound authorization to dispatch the read-only preflight. Deployment design must be reconciled to the protected preflight artifact before any Azure mutation."
+    "candidate_failure": "Continue only to the second predeclared region inside the same run.",
+    "terminal_failure": "Stop, preserve protected evidence, and do not rerun automatically.",
+    "rollback": "Not automatically authorized. A failed resource may remain for inspection.",
+    "cleanup": "Requires a separate explicit instruction after exact deployed resources are observed."
+  }
 }
