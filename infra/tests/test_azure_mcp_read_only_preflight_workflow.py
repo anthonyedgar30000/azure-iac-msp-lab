@@ -8,20 +8,35 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "azure-mcp-read-only-preflight.yml"
 SCRIPT_PATH = ROOT / "scripts" / "azure_mcp_cloud_shell_preflight.sh"
-CONTRACT_PATH = ROOT / ".project" / "contracts" / "azure-mcp-read-only-preflight-workflow-v1.json"
+CONTRACT_PATH = (
+    ROOT
+    / ".project"
+    / "contracts"
+    / "azure-mcp-read-only-preflight-workflow-v2.json"
+)
 
 
 class AzureMcpReadOnlyPreflightWorkflowTests(unittest.TestCase):
-    def test_contract_remains_implementation_only_and_fail_closed(self) -> None:
+    def test_contract_records_consumed_terminal_failure_and_fail_closed_repair(self) -> None:
         contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
-        self.assertEqual(contract["schema_version"], "project.azure-mcp-read-only-preflight-workflow.v1")
-        self.assertEqual(contract["status"], "implementation_candidate_not_executed")
-        self.assertTrue(contract["repository_implementation_authorized"])
-        self.assertFalse(contract["workflow_dispatch_authorized"])
-        self.assertFalse(contract["azure_authentication_performed"])
-        self.assertFalse(contract["azure_mutation_authorized"])
-        self.assertFalse(contract["azure_deployment_authorized"])
-        self.assertFalse(contract["openai_api_execution_authorized"])
+        self.assertEqual(
+            contract["schema_version"],
+            "project.azure-mcp-read-only-preflight-workflow.v2",
+        )
+        self.assertEqual(
+            contract["status"],
+            "first_dispatch_consumed_terminal_failure_repair_pending",
+        )
+        self.assertTrue(contract["current_authority"]["repository_repair_authorized"])
+        self.assertFalse(
+            contract["current_authority"]["workflow_dispatch_or_rerun_authorized"]
+        )
+        self.assertTrue(contract["first_dispatch"]["azure_oidc_authentication_succeeded"])
+        self.assertTrue(contract["first_dispatch"]["authorization_consumed"])
+        self.assertFalse(contract["first_dispatch"]["azure_mutations_performed"])
+        self.assertFalse(contract["first_dispatch"]["deployment_performed"])
+        self.assertFalse(contract["first_dispatch"]["openai_api_execution_performed"])
+        self.assertTrue(contract["failure_and_rollback"]["failed_run_is_terminal"])
 
     def test_workflow_is_manual_exact_commit_and_oidc_bounded(self) -> None:
         workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
@@ -43,14 +58,43 @@ class AzureMcpReadOnlyPreflightWorkflowTests(unittest.TestCase):
         for secret_name in ("AZURE_CLIENT_ID", "AZURE_TENANT_ID", "AZURE_SUBSCRIPTION_ID"):
             self.assertIn(f"secrets.{secret_name}", workflow)
         self.assertNotIn("OPENAI_API_KEY", workflow)
-        self.assertNotRegex(workflow, r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
+        self.assertNotRegex(
+            workflow,
+            r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+        )
+
+    def test_account_commands_use_verified_active_subscription_context(self) -> None:
+        script = SCRIPT_PATH.read_text(encoding="utf-8")
+        self.assertIn('readonly SCRIPT_VERSION="1.1.1"', script)
+        self.assertIn('account_json="$(az account show --output json)"', script)
+        self.assertIn("az account list-locations", script)
+        self.assertNotRegex(
+            script,
+            r"az account show(?:[ \t]|\\\n)+--subscription\b",
+        )
+        self.assertNotRegex(
+            script,
+            r"az account list-locations(?:[ \t]|\\\n)+--subscription\b",
+        )
+        self.assertIn(
+            '[[ "$subscription_id" == "$AZURE_MCP_HOSTING_SUBSCRIPTION_ID" ]]',
+            script,
+        )
+        self.assertIn('[[ "$subscription_state" == "Enabled" ]]', script)
 
     def test_preflight_is_noninteractive_and_contains_no_mutation_entry_point(self) -> None:
         script = SCRIPT_PATH.read_text(encoding="utf-8")
         self.assertIn("AZD_NON_INTERACTIVE=true", script)
         self.assertIn("AZD_SKIP_FIRST_RUN=true", script)
         self.assertIn("--no-prompt", script)
-        for command in ("az account show", "az provider show", "az group show", "az resource list", "azd init"):
+        for command in (
+            "az account show",
+            "az account list-locations",
+            "az provider show",
+            "az group show",
+            "az resource list",
+            "azd init",
+        ):
             self.assertIn(command, script)
         for pattern in (
             r"^\s*azd\s+(?:up|provision|deploy|down)\b",
