@@ -77,11 +77,10 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = if (dep
 
 module azureAi './modules/azure_ai_openai.bicep' = if (deployAzureAi) {
   name: 'azure-ai-live-${environment}'
-  scope: resourceGroup
+  scope: resourceGroup!
   params: {
     accountName: accountName
     location: location
-    environment: environment
     deployModel: deployModel
     deploymentName: deploymentName
     modelName: modelName
@@ -96,11 +95,11 @@ module azureAi './modules/azure_ai_openai.bicep' = if (deployAzureAi) {
 }
 
 output deploymentEnabled bool = deployAzureAi
-output deployedResourceGroupName string = deployAzureAi ? resourceGroup.name : resourceGroupName
-output deployedAccountId string = deployAzureAi ? azureAi.outputs.accountId : ''
-output deployedAccountName string = deployAzureAi ? azureAi.outputs.accountName : accountName
-output deployedBaseUrl string = deployAzureAi ? azureAi.outputs.baseUrl : ''
-output deployedModelDeploymentName string = deployAzureAi ? azureAi.outputs.deploymentName : ''
-output localAuthenticationDisabled bool = deployAzureAi ? azureAi.outputs.localAuthenticationDisabled : true
-output deployedPublicNetworkAccess string = deployAzureAi ? azureAi.outputs.publicNetworkAccess : 'not-deployed'
-output deployedInferenceRoleAssignmentId string = deployAzureAi ? azureAi.outputs.inferenceRoleAssignmentId : ''
+output deployedResourceGroupName string = deployAzureAi ? resourceGroup!.name : resourceGroupName
+output deployedAccountId string = deployAzureAi ? azureAi!.outputs.accountId : ''
+output deployedAccountName string = deployAzureAi ? azureAi!.outputs.accountName : accountName
+output deployedBaseUrl string = deployAzureAi ? azureAi!.outputs.baseUrl : ''
+output deployedModelDeploymentName string = deployAzureAi ? azureAi!.outputs.deploymentName : ''
+output localAuthenticationDisabled bool = deployAzureAi ? azureAi!.outputs.localAuthenticationDisabled : true
+output deployedPublicNetworkAccess string = deployAzureAi ? azureAi!.outputs.publicNetworkAccess : 'not-deployed'
+output deployedInferenceRoleAssignmentId string = deployAzureAi ? azureAi!.outputs.inferenceRoleAssignmentId : ''
