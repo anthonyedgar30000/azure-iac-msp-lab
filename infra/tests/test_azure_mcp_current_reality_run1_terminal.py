@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-import re
 import unittest
 
 
@@ -148,7 +147,7 @@ class AzureMcpCurrentRealityRun1TerminalTests(unittest.TestCase):
         self.assertTrue(incident["receipt_write_completed_before_error"])
         self.assertFalse(incident["receipt_validation_inside_wrapper_completed"])
         self.assertFalse(incident["manifest_inside_wrapper_completed"])
-        self.assertTrue(incident["manual_manifest_created_from_existing_receipt"])
+        self.assertTrue(incident["manifest_created_manually_from_existing_receipt"])
         self.assertFalse(incident["observation_invalidated"])
         self.assertTrue(incident["authorization_consumed"])
         self.assertFalse(incident["rerun_allowed"])
