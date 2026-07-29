@@ -1,12 +1,12 @@
 {
   "schema_version": "project.deployment-authorization-request.v2",
   "request_id": "019c0f2f-1e00-7000-8000-000000000001",
-  "request_digest": "sha256:3b84921ea90026ccca92142560e5f94a9859c91ee2b3b9fdfe9bfbe74336d437",
-  "status": "draft_not_authorized",
-  "active": false,
-  "issued_at": "2026-07-29T03:49:25Z",
-  "valid_until": "2026-07-30T03:49:25Z",
-  "reviewed_source": "0000000000000000000000000000000000000000",
+  "request_digest": "sha256:6f0ffd3a91c7013c540b940d82a04161c2916734517af9e59685abd5ebefd9b2",
+  "status": "authorized_unconsumed",
+  "active": true,
+  "issued_at": "2026-07-29T04:21:00Z",
+  "valid_until": "2026-07-30T04:21:00Z",
+  "reviewed_source": "da6c504f0c05f33c5634d366d03e4848026d5983",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "workflow": {
     "path": ".github/workflows/azure-mcp-live-deploy.yml",
