@@ -2,20 +2,16 @@
 
 ## Interpretation boundary
 
-This handoff records repository state observed through **2026-07-28T15:04:23-04:00** and Azure evidence last captured by preserved workflow artifacts. It is not a continuously refreshed GitHub or Azure dashboard. Query live GitHub state and obtain fresh Azure evidence before any write, merge, dispatch, authentication, or cloud action.
+This is a time-bounded repository and evidence reconciliation captured after `main` reached `f8f29d8601666646d354ffc450a85348e891483f` on **2026-07-29**. It does not replace live GitHub, Azure, deployment, runtime, cost, quota, RBAC, monitoring, backup, or recovery observations.
 
 ```text
-declared_in_code != deployed_in_azure
-deployment_succeeded != service_validated
-workflow_conclusion != live_service_truth
-deployment_succeeded != authority_valid
-issue_comment_consumption_record != enforced_single_use
-closed_trigger_PR != historical_run_unrerunnable
-repository_watermark_reconciled != Azure_freshly_observed
-main_contains_frontend_implementation != GitHub_Pages_publication_observed
-architecture_explained != runtime_proof_manufactured
-static_repository_proof != fresh_Azure_observation
-not_observed != false
+repository_record != continuously refreshed dashboard
+merged_repository_state != deployed Azure state
+resource_exists != service validated
+model response verified != Azure OpenAI connected to MCP
+local MCP tool called != remote MCP endpoint deployed
+failed attempt != authorization to retry
+not observed != absent
 ```
 
 ## Canonical files
@@ -25,208 +21,174 @@ state index: .project/state-index.json
 current reality: .project/current-reality-v2.json
 completion gate: .project/lab-v1-completion-gate-v2.json
 current handoff: .project/handoffs/current-state.md
-latest terminal deployment reconciliation: .project/reconciliations/correlation-identity-run1-terminal-20260727.json
-containment reconciliation: .project/reconciliations/post-pr182-containment-20260727.json
-previous repository reconciliation: .project/reconciliations/post-pr183-repository-watermark-20260728.json
-latest repository reconciliation: .project/reconciliations/post-pr185-repository-watermark-20260728.json
-consumed request: .project/deployment-requests/correlation-identity-run1.json
-replacement authorization design: .project/designs/durable-single-use-authorization-ledger-v1.md
+latest MCP terminal reconciliation: .project/reconciliations/azure-mcp-current-reality-run1-terminal-20260729.json
+latest MCP receipt: .project/evidence/azure-mcp-current-reality-run1.json
+latest Azure AI runtime reconciliation: .project/reconciliations/azure-ai-go-live-run6-terminal-and-runtime-wire-20260729.json
+latest Lab Factory handoff: .project/handoffs/azure-lab-factory-lite-v1.md
 ```
 
 ## Repository watermark
 
 ```text
 repository: anthonyedgar30000/azure-iac-msp-lab
-observed main: ca994ce53642587bea370bee1c5a0633faaaece8
-latest merged PR: #185
-PR #185 exact tested head: 36bbd5ab1ef3c579c43ad2df589f44362feced37
-PR #185 CI: 30359529916 / success
-merge-commit PR-triggered CI: not observed
-intermediate repository watermark PR #184: merged at b92e9e0d6c4c2bcb8d4b7628eb21fb342a19f686
-trigger PR #181: closed without merge
-open pull requests observed: #186 / draft / durable authorization implementation candidate
-local working tree: not observed; connector-backed repository operations
+observed default branch: main
+observed main: f8f29d8601666646d354ffc450a85348e891483f
+latest merged PR: #212
+PR #212 merge commit: f8f29d8601666646d354ffc450a85348e891483f
+PR #212 exact source head: e22b1fdc45c4a9d9298416c84d179f596b38060e
+PR #212 exact-head CI: 30500788666 / success
+previous substantive merged PR: #211
+PR #211 merge commit: ca0712569f0b4bc18ceba2610c988a01f91750f2
+PR #211 exact source head: c426ef5759b9a7ad7a3ef18083c9c740218d2225
+PR #211 CI: 30452108536 / success
+PR #211 MCP contract CI: 30452111122 / success
+PR #211 Azure AI static validation: 30452114873 / success
 ```
 
-The deployed collector application source remains `0b6b5322f25b3d0289f6c0febdcfd800ea4b909a`. Main is newer because it contains governance containment, repository reconciliations, the authorization-ledger design, the frontend architecture explainer, and deterministic tests.
+PR #212 merged the repository-only Azure Lab Factory Lite v1 foundation. That establishes code, contracts, documentation, and exact-source CI evidence. It does not establish current Azure capacity, quota, price, permissions, accepted What-If, deployment success, service health, cleanup success, or recurring Azure cost.
 
-The frontend architecture implementation is present in the repository and its exact PR head passed CI. GitHub Pages publication and browser rendering were not freshly observed, so the repository implementation is not promoted as deployed presentation truth.
+Two earlier administrative commits created and removed `tmp-placeholder`. GitHub reported no file-content difference between the PR #211 merge tree and the post-placeholder main tree.
 
-Draft PR #186 is concurrently open from the same `main@ca994ce...` base. Its exact head `138659609b15ef80f6cce12d916e26382ab71205` passed CI run `30389249099`, but it remains an unmerged implementation candidate. No ruleset, live claim, concurrent claim proof, collector restoration, or Azure operation is promoted from that branch.
+## Superseded reconciliation attempt
 
-## Correlation deployment authority
+Draft PR #213 was created from the pre-PR212 main head while PR #212 was still open. PR #212 merged before PR #213 could be verified. PR #213 was therefore closed unmerged as stale rather than rebased or promoted.
 
 ```text
-request: correlation-identity-run1
-attempt limit: 1
-consumed at: 2026-07-27T22:21:42Z
-renewable: false
-retry authorized: false
-rollback authorized: false
-attempts observed: 2
+PR #213 merged: false
+PR #213 authority inherited by this branch: false
+stale branch reused: false
+Azure action performed by PR #213: false
 ```
 
-Attempt 1 was the authorized consuming attempt. Attempt 2 was an unauthorized replay after consumption.
-
-### Attempt 1
+This replacement reconciliation starts from `main@f8f29d8` and owns only:
 
 ```text
-dispatcher run: 30310432132
-child deployment run: 30310439500
-child artifact: 8670172029
-artifact digest: sha256:8917c2adea01c881a7382020bad06dd94288c576141c0d80b865f382c3eecb7b
-authority: valid consuming attempt
-ARM parent: Succeeded
-ARM nested: Succeeded
-VM extension: Succeeded
-workflow conclusion: failure
-failure boundary: legacy CORS and GitHub Pages evidence observer
+.project/handoffs/current-state.md
+.project/reconciliations/post-pr212-canonical-handoff-20260729.json
+infra/tests/test_post_pr212_current_handoff.py
 ```
 
-### Attempt 2
+At branch creation, no other open pull request was treated as an active write owner. Any later concurrent work must be resolved live before merge.
+
+## Azure Lab Factory Lite v1
+
+Merged repository capability:
 
 ```text
-dispatcher run: 30310432132 / rerun
-child deployment run: 30315658677
-child artifact: 8672070574
-artifact digest: sha256:8e551e4b770996db41befc6f95b4dd6af08f674ae098e6bcde0d22234a049c8e
-authority: invalid unauthorized replay
-ARM parent: Succeeded
-ARM nested: Succeeded
-VM extension: Succeeded
-workflow conclusion: failure
-failure boundary: presentation evidence observer
+catalog: lab_factory/catalog.json
+planner package: lab_factory
+first profile: servicetracer-demo-api@1.0.0
+profile state: candidate
+template: workloads/servicetracer-demo-api/infra/main.bicep
+location: westus2
+default TTL: 8 hours
+maximum TTL: 24 hours
+cleanup automation: disabled
 ```
 
-The red child conclusions came from legacy or presentation evidence observers. They do not negate successful ARM convergence, extension convergence, or the preserved API evidence. They also do not make the unauthorized replay valid.
+Implemented behavior is bounded to local deterministic listing and request preparation. It does not authenticate to Azure, query Azure, execute ARM What-If, deploy, assign RBAC, call a model, host a remote MCP endpoint, or clean up resources.
 
-## Last evidenced Azure state
+Correct boundary:
 
-No fresh Azure query was performed by this reconciliation.
+```text
+catalog entry != released lab
+repository candidate != Azure deployable now
+prepare plan != ARM What-If
+merged planner != deployment authority
+cleanup definition != cleanup verified
+```
+
+## Azure MCP current-reality run 1
+
+The first bounded local `get_current_reality` observation completed at `2026-07-29T12:01:23.289717Z`. The wrapper failed afterward during its local epilogue, but the receipt had already been written. The receipt and operator-generated manifest were promoted and hash-validated. The one-shot authority is consumed and run 1 must not be rerun.
+
+Observed within the authorized scope:
 
 ```text
 subscription: Azure for Students
-subscription and tenant IDs: observed but not promoted
-resource group: rg-servicetracer-dev-westus2
-region: westus2
-collector VM: vm-stcollector-mst-dev
-VM size: Standard_B2ats_v2
-private IP: 10.20.40.10
-power state: running
-extension state: Succeeded
-extension source: 0b6b5322f25b3d0289f6c0febdcfd800ea4b909a
-standard public IPv4 usage: 2 / 3
-resource locks: 0
-actual cost: not observed
+subscription state: Enabled
+resource group: rg-ai-msp-dev-eastus
+resource-group location: eastus
+resource-group provisioning: Succeeded
+resource count: 1
+OpenAI account: oai-msp-anthony-dev-eastus
+account kind / SKU: OpenAI / S0
+deployments in observed account: 0
+Azure mutations performed: false
+secrets returned: false
 ```
 
-## Last evidenced live service state
+Separately verified Azure OpenAI runtime evidence remains:
 
 ```text
-health: healthy
-hosting model: collector_vm_systemd
-Azure host identity: verified
-deployed source: exact reviewed source
-12 health requests: passed
-CORS preflight: HTTP 204
-analysis POST: HTTP 200
-request header/body identity: verified
-transactions: 20
-successful / failed: 10 / 10
-exact root cause claimed: false
-browser DOM refresh: pending direct observation
-fresh runtime observation during this reconciliation: false
+base URL: https://anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/
+deployment: gpt-5-mini
+authentication: Microsoft Entra bearer token
+model response verified: true
+verified runtime ARM scope reconciled: false
 ```
 
-## Frontend architecture state
+Correct boundary:
 
 ```text
-repository implementation: merged in PR #185
-exact tested source: 36bbd5ab1ef3c579c43ad2df589f44362feced37
-exact-head CI: 30359529916 / success
-GitHub Pages publication freshly observed: false
-browser architecture rendering freshly verified: false
-Azure collector runtime change claimed: false
+empty deployment inventory in observed account != verified runtime absent globally
+observed account name != verified endpoint ARM identity reconciled
+verified model response != MCP connection verified
 ```
 
-## Control incident and merged containment
-
-The root cause is an **authorization consumption control failure** under the canonical **Authorization Consumption Principle**. The dispatcher wrote a consumed marker to an issue comment but did not consult a durable external single-use ledger before every dispatch. A GitHub Actions rerun reused the original opened-event request snapshot.
-
-PR #182 merged the repository-only containment:
+## MCP implementation state
 
 ```text
-shared collector workflow: quarantined fail-closed on main
-OIDC permission: absent
-Azure environment: absent
-Azure login: absent
-Azure commands: absent
-terminal behavior: reject and exit 1
-consumed one-shot dispatcher: deleted from main
-trigger PR #181: closed without merge
-new Azure authority created: false
-```
-
-Static repository proof establishes that a replay can no longer obtain Azure OIDC or execute Azure commands through the current child workflow. This is not a fresh Azure runtime observation.
-
-PR #183 reconciled that containment into canonical state and documented the proposed durable single-use authorization ledger. PR #184 advanced the repository watermark through that reconciliation. PR #185 added the frontend architecture explainer without restoring Azure execution. Draft PR #186 now carries a CI-verified implementation candidate, but it is not merged, activated, ruleset-protected, or operationally claim-tested. Canonical `main` still treats the authorization ledger as proposed, not implemented; the collector workflow remains quarantined.
-
-## Lab v1 gate
-
-```text
-exact source deployed: true
-runtime contract verified: true
-20-transaction scenario verified: true
-frontend architecture source and CI verified: true
-GitHub Pages publication and browser rendering verified: false
-monitoring and alert delivery verified: false
+local stdio server implemented: true
+localhost Streamable HTTP implemented: true
+remote MCP endpoint deployed: false
+Azure OpenAI called MCP tool: false
+ChatGPT connected to MCP: false
 effective least privilege verified: false
-fresh actual cost observed: false
-deployment automation safely available: false / quarantined
+fresh cost or quota observation: false
 ```
 
-## Historical compatibility anchors
+## ServiceTracer preserved evidence
 
-The following markers remain only so durable historical validators can reproduce their original observation boundaries. They do not override the current terminal or repository reconciliation.
+The collector and independent demo API evidence streams remain historical, bounded records. No fresh Azure or runtime query was performed by this reconciliation.
+
+Preserved collector evidence includes successful ARM and VM-extension convergence, a healthy collector service, and a 20-transaction scenario with 10 successes and 10 failures. Exact device root cause was not claimed. Browser rendering, effective least privilege, monitoring and alert delivery, and actual cost were not fully verified.
+
+The independent demo API evidence separately established deployment provenance, VM and network existence, public endpoint identity, TLS, CORS, health, and transaction-protocol behavior. Its bounded backend sample failed at the `radius_response` boundary and did not establish an exact device root cause. Cost, effective RBAC, backup, and recovery remained incomplete or not observed.
+
+## Authorization and containment
 
 ```text
-legacy canonical main: 665e051375594d11e58e434231bd06775dbdc560
-PR #92 source: 5b5af74d57fb5fd87ece2a34239cc6f29d04b12b
-PR #93 source: eecb5c872f76cb5e51df6f5451d5a61b79d87bba
-PR #93 merge: 99dc79c7093fa4cd5655c2d5a65095dd796f9f75
-independent demo deployed source: 8b3d55c616d8820edd523f77021a35fe24167bd0
-checks_green != protected_Azure_artifact_inspected
-human_operator_merge != prior_agent_merge_authority
-deployment grant status: consumed_blocked
-missing action: Microsoft.Compute/virtualMachines/extensions/write
-effective extension write: unverified
-authorization reconciliation merge: 92b0c3b1064158684a4b280348c77eeedba6dfc3
-independent planner run: 30064289707
-independent planner artifact: 8585693830
-independent planner digest: 7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8a87e5d7adc22
-independent SKU restriction: NotAvailableForSubscription
-independent VM family: standardBasv2Family
-typed readiness control: PR #73
-GitHub Pages publication authorized: false
-not_observed != false
-preserved verified preflight: .project/reconciliations/collector-provenance-preflight-run1-artifact-promotion-20260726.json
-prior run-19 reconciliation: .project/reconciliations/collector-provenance-deployment-run19-20260726.json
+active deployment authorization: none
+active Azure MCP preflight authorization: none
+active Azure MCP current-reality authorization: none
+active Azure AI activation authorization: none
+MCP run-1 rerun authorized: false
+workflow dispatch or rerun authorized: false
+Azure authentication or query authorized: false
+Azure mutation authorized: false
+RBAC mutation authorized: false
+cleanup authorized: false
+pull-request merge authorized by this handoff: false
 ```
 
-## Current authority
+The collector deployment workflow remains fail-closed for replay containment. Historical successful Azure convergence does not renew deployment authority.
+
+## Current implementation classification
 
 ```text
-repository watermark reconciliation: authorized
-pull-request creation: authorized
-ordinary pull-request CI: authorized
-pull-request merge: unauthorized
-workflow dispatch or rerun: unauthorized
-Azure authentication, query, or mutation: unauthorized
-rollback: unauthorized
-cleanup: unauthorized
-RBAC mutation: unauthorized
+Azure Lab Factory Lite v1: merged repository implementation and exact-source CI verified
+Azure Lab Factory deployment or operational use: not established
+Azure MCP tool: implemented on main
+Azure MCP run 1: observed, terminally reconciled, authority consumed
+Azure OpenAI gpt-5-mini runtime: separately verified
+verified runtime ARM identity: unreconciled
+remote MCP hosting: not deployed
+Azure OpenAI-to-MCP invocation: not verified
+ServiceTracer collector/demo evidence: preserved historical operational evidence
+fresh Azure cost, quota, RBAC, monitoring, backup, recovery: not established
 ```
 
 ## Next gate
 
-Review this repository-only reconciliation and draft PR #186 through their ordinary pull-request CI evidence. Merge of either PR requires fresh explicit authority. PR #186 remains only an implementation candidate until merged, protected by the required ruleset, and independently claim-tested. Separately observe GitHub Pages and browser rendering before claiming that the architecture explainer is publicly deployed. Any Azure restoration requires fresh explicit non-renewing authority.
+Review this three-file repository-only reconciliation through exact-head pull-request CI. Merge requires a separate explicit decision. Any new Azure observation, What-If, model call, MCP connection, workflow dispatch, deployment, RBAC change, cleanup, rollback, or retry requires a fresh bounded non-renewing authorization.
