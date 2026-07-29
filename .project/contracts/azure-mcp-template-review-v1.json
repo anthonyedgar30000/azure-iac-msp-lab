@@ -1,0 +1,67 @@
+{
+  "schema_version": "project.azure-mcp-template-review.v1",
+  "status": "preflight_passed_content_manifest_pinned_source_commit_unresolved",
+  "project": "Azure IaC MSP Lab",
+  "template": {
+    "gallery_alias": "azmcp-copilot-studio-aca-mi",
+    "official_repository": "Azure-Samples/azmcp-copilot-studio-aca-mi",
+    "official_repository_main_observed": "f156038315b196e880f3d2352032c01a691b30d9",
+    "download_observed_at": "2026-07-29T03:10:22Z",
+    "content_manifest": "infra/evidence/azure-mcp/azmcp-copilot-studio-aca-mi-20260729.sha256",
+    "content_manifest_digest": "sha256:0667efecb0eded85dc69b87deda2022e73b3dd879f0658659749e13587375b8a",
+    "exact_source_commit_for_downloaded_content": "unknown",
+    "exact_source_equality_verified": false,
+    "container_image_digest": "not_observed"
+  },
+  "observed_architecture": {
+    "hosting": "Azure Container Apps",
+    "server_transport": "HTTPS external ingress with internal container transport subject to template review",
+    "tool_namespace": "storage",
+    "runtime_mode": "--read-only",
+    "runtime_identity": "user-assigned managed identity",
+    "Azure_RBAC_default": "Reader at subscription scope",
+    "Entra_app_registrations": 2,
+    "delegated_scope": "Mcp.Tools.ReadWrite",
+    "telemetry": "Application Insights conditional",
+    "resource_group": "rg-azure-mcp-dev-westus2",
+    "region": "westus2"
+  },
+  "approval_state": {
+    "template_approved": false,
+    "source_pinned": false,
+    "image_pinned": false,
+    "identity_approved": false,
+    "RBAC_approved": false,
+    "Entra_scope_approved": false,
+    "network_path_approved": false,
+    "cost_ceiling_approved": false,
+    "What_If_authorized": false,
+    "deployment_authorized": false
+  },
+  "required_changes_or_decisions": [
+    "replace the moving gallery alias with an immutable reviewed source commit or vendored copy",
+    "prove the committed file manifest matches the successful preflight download",
+    "pin the Azure MCP server container image by digest",
+    "decide whether subscription Reader is necessary or whether resource-group or resource scope is supported",
+    "review and rename or constrain the Mcp.Tools.ReadWrite scope if its semantics are broader than the admitted read-only tool set",
+    "enumerate and approve every preauthorized client application",
+    "review TLS termination, forwarded headers, public ingress, DNS, outbound egress, and authentication metadata",
+    "define provider-registration, resource creation, RBAC, Entra, rollback, cleanup, monitoring, and cost authorities separately"
+  ],
+  "failure_and_cleanup": {
+    "source_mismatch": "stop before What-If and deployment",
+    "image_digest_missing": "stop before deployment",
+    "least_privilege_unresolved": "stop before role assignment",
+    "repository_rollback": "close or revert the repository-only review change",
+    "Azure_rollback": "not applicable because this contract performs no Azure mutation",
+    "future_cleanup_warning": "azd down does not remove the template-created Entra app registrations; those require separately authorized deletion"
+  },
+  "canonical_boundaries": [
+    "gallery_alias_resolved != source_commit_pinned",
+    "manifest_digest_recorded != source_equality_verified",
+    "read_only_process_flag != complete_security_boundary",
+    "subscription_Reader != proven_least_privilege",
+    "preflight_success != template_approval",
+    "template_approval != deployment_authority"
+  ]
+}
