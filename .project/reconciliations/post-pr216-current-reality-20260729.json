@@ -1,0 +1,143 @@
+{
+  "schema_version": "project.reconciliation.post-pr216-current-reality.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T20:52:00-04:00",
+  "source_instruction": "Proceed",
+  "classification": "repository_only_current_reality_compatibility_overlay",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "43586da96bb8edebe3abcea15eed93d5123d290b",
+    "latest_merged_pull_request": 216,
+    "latest_merge_commit": "43586da96bb8edebe3abcea15eed93d5123d290b",
+    "latest_merged_source_head": "4bdbb99c50f9535f92cba146a3e54e4a33b32f98",
+    "open_pull_requests_observed_at_branch_creation": [
+      218
+    ],
+    "implementation_branch": "agent/reconcile-current-reality-post-pr216",
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "concurrency": {
+    "pull_request_218": {
+      "state": "open_draft",
+      "head": "agent/lab-factory-mcp-tools-v1",
+      "head_sha": "5685e579c03c18eb20a0480fece0615a1cc991b4",
+      "changed_paths": [
+        ".github/workflows/azure-mcp-reality-bridge-contract.yml",
+        ".project/contracts/azure-mcp-lab-factory-tools-v1.json",
+        ".project/handoffs/azure-mcp-lab-factory-tools-v1.md",
+        "azure_mcp_reality/lab_factory_tools.py",
+        "azure_mcp_reality/server.py",
+        "infra/tests/test_azure_mcp_lab_factory_tools.py",
+        "scripts/validate_azure_mcp_lab_factory_tools.py"
+      ],
+      "path_overlap": false,
+      "authority_transferred": false,
+      "merge_order_requires_live_recheck": true
+    },
+    "superseded_current_reality_drafts": [
+      {
+        "pull_request": 217,
+        "reason": "noisy connector-backed commit provenance",
+        "merged": false
+      },
+      {
+        "pull_request": 219,
+        "reason": "main advanced when pull request 216 merged",
+        "merged": false
+      }
+    ]
+  },
+  "objective": "Add an authoritative post-PR216 repository and domain overlay to .project/current-reality-v2.json without breaking deterministic historical validators that still consume the PR185-era projection.",
+  "permitted_paths": [
+    ".project/current-reality-v2.json",
+    ".project/reconciliations/post-pr216-current-reality-20260729.json",
+    "infra/tests/test_post_pr216_current_reality.py"
+  ],
+  "protected_paths": [
+    ".project/state-index.json",
+    ".project/handoffs/current-state.md",
+    ".project/evidence/**",
+    ".project/deployment-requests/**",
+    ".project/observation-requests/**",
+    ".github/workflows/**",
+    "azure_mcp_reality/**",
+    "openai_azure_provider/**",
+    "lab_factory/**",
+    "workloads/**",
+    "**/*credential*",
+    "**/*secret*"
+  ],
+  "root_cause": {
+    "canonical_handoff_repaired_by_pull_request": 214,
+    "state_index_advanced_by_pull_request": 216,
+    "current_reality_repository_projection_still_ended_at_pull_request": 185,
+    "compatibility_constraint": "Existing deterministic validators intentionally reproduce the PR185-era projection, so replacing it in place would rewrite historical test meaning.",
+    "resolution": "Introduce explicit current_repository_state and current_domain_state authoritative overlays; mark the existing repository_state projection as historical compatibility only."
+  },
+  "verified_repository_evidence": {
+    "pr216_source_head": "4bdbb99c50f9535f92cba146a3e54e4a33b32f98",
+    "pr216_merge_commit": "43586da96bb8edebe3abcea15eed93d5123d290b",
+    "pr216_exact_head_ci_runs": {
+      "ci": {
+        "run_id": 30503733179,
+        "conclusion": "success"
+      },
+      "azure_mcp_reality_bridge_contract": {
+        "run_id": 30503733185,
+        "conclusion": "success"
+      },
+      "azure_ai_activation_static_validation": {
+        "run_id": 30503733207,
+        "conclusion": "success"
+      }
+    },
+    "pr214_source_head": "afdeaf6e4765ce4819ae3de5782cc5ca57cfcd12",
+    "pr214_merge_commit": "4136a47d9aa80da99e3849fc721bab55a883b20e",
+    "pr212_source_head": "e22b1fdc45c4a9d9298416c84d179f596b38060e",
+    "pr212_merge_commit": "f8f29d8601666646d354ffc450a85348e891483f"
+  },
+  "preserved_operational_boundaries": {
+    "state_index_v11_merged": true,
+    "azure_lab_factory_repository_implementation_merged": true,
+    "azure_lab_factory_azure_deployment_verified": false,
+    "azure_mcp_run1_observed": true,
+    "azure_mcp_run1_authority_consumed": true,
+    "azure_mcp_run1_rerun_authorized": false,
+    "remote_mcp_endpoint_deployed": false,
+    "azure_ai_verified_model_response": true,
+    "azure_ai_verified_runtime_arm_scope_reconciled": false,
+    "azure_openai_mcp_invocation_verified": false,
+    "fresh_azure_query_performed_by_this_increment": false,
+    "azure_mutation_performed_by_this_increment": false,
+    "fresh_actual_cost_or_quota_observed": false
+  },
+  "authority": {
+    "repository_writes": "three declared paths on agent/reconcile-current-reality-post-pr216",
+    "branch_creation": true,
+    "pull_request_creation": true,
+    "ordinary_pull_request_ci": true,
+    "pull_request_merge": false,
+    "workflow_dispatch_or_rerun": false,
+    "azure_authentication_or_query": false,
+    "arm_what_if": false,
+    "azure_mutation": false,
+    "rbac_mutation": false,
+    "model_call": false,
+    "remote_mcp_deployment": false,
+    "cleanup": false,
+    "rollback": false
+  },
+  "verification_criteria": [
+    "the authoritative overlay records main 43586da and pull request 216",
+    "all three pull request 216 exact-head workflow runs remain recorded as successful",
+    "state-index v11 and the Lab Factory Lite non-deployment boundary are preserved",
+    "the legacy PR185 repository projection remains present and explicitly historical",
+    "MCP run 1 remains terminal, consumed, and non-retriable",
+    "the separately verified gpt-5-mini runtime remains distinct from its unreconciled ARM identity",
+    "pull request 218 remains an open non-overlapping candidate and is not promoted as merged truth",
+    "no Azure, workflow dispatch, model call, MCP network, RBAC, cleanup, rollback, What-If, or deployment action occurs",
+    "ordinary exact-head pull-request CI passes"
+  ],
+  "next_gate": "Review exact-head CI and the three-file diff. Recheck main and pull request 218 immediately before any merge. Merge requires a separate explicit decision."
+}
