@@ -1,21 +1,22 @@
 {
   "schema_version": "project.current-selector.v2",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-30T00:08:00-04:00",
-  "selection_rule": "Resolve the selected versioned reality, state index, and handoff before current operations. Re-query live GitHub before writes or merge. Apply active authorizations only to the exact one-shot workflow they name. Historical trigger synchronizations, selectors, and compatibility files remain immutable evidence records.",
+  "recorded_at": "2026-07-30T00:22:00-04:00",
+  "selection_rule": "Resolve the selected versioned reality, state index, and handoff before current operations. Re-query live GitHub before writes or merge. Historical trigger synchronizations, selectors, and compatibility files remain immutable evidence records. No operational authorization is active unless a later selector explicitly names one.",
   "authoritative_current_reality": ".project/current-reality-v4.json",
   "authoritative_state_index": ".project/state-index-v13.json",
   "authoritative_handoff": ".project/handoffs/current-state-v3.md",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
   "latest_repository_sync_reconciliation": ".project/reconciliations/post-pr251-canonical-sync-20260730.json",
-  "latest_operational_overlay": ".project/reconciliations/azure-ai-go-live-run8-terminal-20260730.json",
+  "latest_operational_overlay": ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json",
+  "latest_servicetracer_terminal_reconciliation": ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json",
   "latest_azure_ai_terminal_reconciliation": ".project/reconciliations/azure-ai-go-live-run8-terminal-20260730.json",
   "prior_azure_ai_trigger_sync": ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json",
   "servicetracer_connector_blocker": ".project/reconciliations/servicetracer-demo-api-plan-run1-connector-event-blocked-20260729.json",
   "pending_azure_ai_terminal_reconciliation": null,
   "active_azure_ai_activation_authorization": null,
-  "active_servicetracer_planning_authorization": ".project/deployment-requests/servicetracer-demo-api-plan-run1.json",
-  "active_servicetracer_planning_gate": "direct_manual_workflow_dispatch",
+  "active_servicetracer_planning_authorization": null,
+  "active_deployment_authorization": null,
   "compatibility_records": [
     {
       "path": ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json",
@@ -23,9 +24,14 @@
       "boundary": "correctly consumed the run-8 merge trigger while terminal execution remained unavailable to that lookup"
     },
     {
+      "path": ".project/reconciliations/servicetracer-demo-api-plan-run1-connector-event-blocked-20260729.json",
+      "status": "historical_connector_blocker_preceding_direct_manual_terminal_attempt",
+      "boundary": "closed failed connector-event paths before the consumed direct workflow dispatch"
+    },
+    {
       "path": ".project/current-reality-v3.json",
       "status": "historical_compatibility_only",
-      "boundary": "authoritative repository snapshot through PR 221 before Azure AI runs 7 and 8 and ServiceTracer planner binding/authorization"
+      "boundary": "authoritative repository snapshot through PR 221 before Azure AI runs 7 and 8 and ServiceTracer planning"
     },
     {
       "path": ".project/state-index-v12.json",
