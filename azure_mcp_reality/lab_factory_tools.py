@@ -9,6 +9,10 @@ from lab_factory.catalog import (
     load_catalog,
     prepare_lab_plan,
 )
+from lab_factory.planning_binding import (
+    enrich_plan_with_planning,
+    profile_planning_summary,
+)
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -27,18 +31,28 @@ def list_lab_profiles_payload(
         else REPOSITORY_ROOT
     )
     catalog = load_catalog(catalog_path, repository_root=root)
+    profiles = list_profiles(catalog)
+    for profile in profiles:
+        profile["planning"] = profile_planning_summary(
+            catalog,
+            profile_id=profile["id"],
+            profile_version=profile["version"],
+            repository_root=root,
+        )
     return {
         "schema_version": "lab-factory.profile-list.v1",
-        "profiles": list_profiles(catalog),
+        "profiles": profiles,
         "execution": {
             "azure_queries_performed": False,
             "azure_mutations_performed": False,
+            "workflow_dispatch_performed": False,
             "deployment_authorized": False,
             "cleanup_authorized": False,
         },
         "claim_boundaries": [
             "catalog_entry != released_lab",
             "allowed_location != live_capacity_available",
+            "planner_bound != workflow_dispatched",
             "profile_listed != deployment_authorized",
         ],
     }
@@ -64,7 +78,7 @@ def prepare_lab_request_payload(
         else REPOSITORY_ROOT
     )
     catalog = load_catalog(catalog_path, repository_root=root)
-    return prepare_lab_plan(
+    base_plan = prepare_lab_plan(
         catalog,
         profile_id=profile_id,
         environment=environment,
@@ -73,6 +87,11 @@ def prepare_lab_request_payload(
         version=version,
         request_id=request_id,
         parameters=dict(parameters or {}),
+        repository_root=root,
+    )
+    return enrich_plan_with_planning(
+        catalog,
+        base_plan,
         repository_root=root,
     )
 

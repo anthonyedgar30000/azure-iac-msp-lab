@@ -1,0 +1,129 @@
+{
+  "schema_version": "project.lab-factory-ratified-planner-binding.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T22:29:00-04:00",
+  "source_instruction": "Proceed",
+  "objective": "Bind the ServiceTracer Lab Factory catalog and MCP preparation output to the existing ratified dual-subscription planning workflow without adding a second workflow, dispatching Azure, or widening deployment authority.",
+  "repository_baseline": {
+    "main": "ced77a61d278f66f0f1be477164e5167b08fcc7b",
+    "latest_merged_pull_request": 228,
+    "open_pull_requests_observed_before_branch": [],
+    "branch": "agent/bind-lab-factory-to-ratified-planner-v1",
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "architecture": {
+    "catalog": "lab_factory/catalog.json",
+    "catalog_version": "1.1.0",
+    "profile": "servicetracer-demo-api@1.0.0",
+    "MCP_tools": [
+      "list_lab_profiles",
+      "prepare_lab_request"
+    ],
+    "binding_module": "lab_factory/planning_binding.py",
+    "ratified_planner": ".github/workflows/servicetracer-demo-api-subproject-plan.yml",
+    "github_environment": "azure-api-payg",
+    "subscription_boundary": "dual_subscription",
+    "dependency_subscription_role": "Azure for Students read-only ServiceTracer dependency",
+    "target_subscription_role": "Pay-As-You-Go independent demo API planning target",
+    "provider_validation_level": "ProviderNoRbac",
+    "ARM_validation_in_planner": true,
+    "ARM_What_If_in_planner": true,
+    "deployment_command_in_planner": false
+  },
+  "planner_input_boundary": {
+    "derived_non_secret_inputs": [
+      "environment",
+      "location",
+      "prefix",
+      "dependency_resource_group",
+      "vm_size"
+    ],
+    "human_inputs_still_required": [
+      "dns_label",
+      "allowed_origin",
+      "maximum_monthly_cost_cad"
+    ],
+    "confirmation_pattern": "PLAN-DEMO-API-SUBPROJECT:{environment}:<dns-label>",
+    "parameter_values_returned_by_MCP": false,
+    "workflow_dispatch_performed": false,
+    "workflow_dispatch_authorized": false
+  },
+  "identity_and_permissions": {
+    "new_Azure_identity": false,
+    "new_RBAC_assignment": false,
+    "new_secret": false,
+    "dependency_and_target_identity_separation_preserved": true,
+    "effective_least_privilege_freshly_verified": false
+  },
+  "network_and_security": {
+    "new_network_path": false,
+    "remote_MCP_endpoint": false,
+    "ChatGPT_connection": false,
+    "model_call": false,
+    "planner_workflow_path_is_repository_relative_and_validated": true,
+    "deployment_command_rejected": true,
+    "wrong_GitHub_environment_rejected": true,
+    "supplied_parameter_values_redacted": true
+  },
+  "cost_and_quota": {
+    "currency": "CAD",
+    "repository_recurring_Azure_resource_cost_delta_CAD": 0,
+    "actual_Azure_cost_freshly_observed": false,
+    "Azure_quota_freshly_observed": false,
+    "planning_cost_ceiling_still_requires_human_input": true
+  },
+  "validation": {
+    "catalog_to_workflow_binding_tested": true,
+    "MCP_profile_output_binding_tested": true,
+    "MCP_prepare_output_binding_tested": true,
+    "determinism_tested": true,
+    "redaction_tested": true,
+    "wrong_environment_rejection_tested": true,
+    "deployment_capability_rejection_tested": true,
+    "ordinary_exact_head_CI_required": true
+  },
+  "authority": {
+    "repository_branch_and_declared_writes": true,
+    "pull_request_creation": true,
+    "ordinary_exact_head_CI": true,
+    "merge_after_green_and_freshness_recheck": true,
+    "workflow_dispatch": false,
+    "Azure_authentication_or_query": false,
+    "ARM_validation_execution": false,
+    "ARM_What_If_execution": false,
+    "Azure_mutation": false,
+    "deployment": false,
+    "RBAC_mutation": false,
+    "cleanup": false,
+    "rollback": false,
+    "model_call": false,
+    "remote_MCP_deployment": false,
+    "ChatGPT_connection": false
+  },
+  "failure_and_rollback": {
+    "fail_closed_conditions": [
+      "missing_planning_binding",
+      "planning_key_drift",
+      "workflow_missing",
+      "wrong_GitHub_environment",
+      "subscription_boundary_not_dual",
+      "provider_validation_level_changed",
+      "ARM_validation_or_What_If_removed",
+      "deployment_command_detected",
+      "identity_separation_marker_missing",
+      "installer_path_marker_missing"
+    ],
+    "repository_rollback": "Revert the exact pull request.",
+    "Azure_rollback": "Not applicable because no Azure operation is performed.",
+    "Azure_cleanup": "Not applicable because no Azure resource is created."
+  },
+  "canonical_distinctions": [
+    "catalog_bound_to_planner != workflow_dispatched",
+    "MCP_plan_prepared != Azure_preflight_observed",
+    "planner_contains_ARM_What_If != ARM_What_If_executed",
+    "planning_workflow_success != deployment_authorized",
+    "dependency_subscription != target_subscription",
+    "estimated_cost != actual_cost"
+  ],
+  "next_gate": "After merge, obtain a separate exact decision to dispatch the existing ServiceTracer dual-subscription planner once from main, then inspect and promote its protected evidence before any deployment decision."
+}

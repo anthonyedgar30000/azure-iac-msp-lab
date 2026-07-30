@@ -1,6 +1,6 @@
 {
   "schema_version": "lab-factory.catalog.v1",
-  "catalog_version": "1.0.0",
+  "catalog_version": "1.1.0",
   "profiles": [
     {
       "id": "servicetracer-demo-api",
@@ -43,6 +43,28 @@
         "defaults": {
           "vmSize": "Standard_F1als_v7"
         }
+      },
+      "planning": {
+        "workflow_path": ".github/workflows/servicetracer-demo-api-subproject-plan.yml",
+        "github_environment": "azure-api-payg",
+        "dispatch_mode": "manual_only",
+        "subscription_boundary": "dual_subscription",
+        "dependency_subscription_role": "azure_for_students_read_only_dependency",
+        "target_subscription_role": "pay_as_you_go_planning_only_target",
+        "dependency_resource_group_pattern": "rg-servicetracer-{environment}-westus2",
+        "prefix": "mst",
+        "vm_size": "Standard_F1als_v7",
+        "provider_validation_level": "ProviderNoRbac",
+        "includes_arm_validation": true,
+        "includes_arm_what_if": true,
+        "deployment_command_present": false,
+        "required_human_inputs": [
+          "dns_label",
+          "allowed_origin",
+          "maximum_monthly_cost_cad"
+        ],
+        "confirmation_pattern": "PLAN-DEMO-API-SUBPROJECT:{environment}:<dns-label>",
+        "artifact_name_prefix": "servicetracer-demo-api-subproject-plan"
       },
       "preflight_checks": [
         "exact_subscription_selected",
