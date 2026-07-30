@@ -1,0 +1,70 @@
+{
+  "schema_version": "project.lab-factory-preflight-authorization.v1",
+  "attempt_id": "lab-factory-preflight-run1",
+  "status": "active_one_attempt",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:50:00-04:00",
+  "source_instruction": "Proceed",
+  "repository_boundary": {
+    "base_main": "0b6fa63d86ae52119b63ef6c9421c8d13215cb59",
+    "latest_merged_pull_request": 223,
+    "candidate_branch": "agent/lab-factory-preflight-run1",
+    "activation_trigger": "the first merge commit to main that introduces .github/workflows/lab-factory-preflight-run1.yml",
+    "exact_merge_commit": "resolved_by_github_push_event",
+    "open_pull_requests_before_branch": []
+  },
+  "attempt_limit": 1,
+  "attempts_observed": 0,
+  "profile": {
+    "id": "servicetracer-demo-api",
+    "version": "1.0.0",
+    "release_state": "candidate",
+    "environment": "test",
+    "location": "westus2",
+    "ttl_hours": 8,
+    "resource_group": "rg-st-demo-api-test-westus2",
+    "vm_size": "Standard_F1als_v7",
+    "cost_ceiling_CAD": 5.0
+  },
+  "authority": {
+    "pull_request_creation_authorized": true,
+    "ordinary_exact_head_ci_authorized": true,
+    "pull_request_merge_authorized": true,
+    "merge_triggered_preflight_authorized": true,
+    "azure_authentication_authorized": true,
+    "azure_read_only_queries_authorized": true,
+    "arm_validation_authorized": true,
+    "arm_what_if_authorized": true,
+    "public_dependency_health_query_authorized": true,
+    "provider_registration_authorized": false,
+    "azure_mutation_authorized": false,
+    "deployment_authorized": false,
+    "rbac_mutation_authorized": false,
+    "model_call_authorized": false,
+    "automatic_retry_authorized": false,
+    "manual_rerun_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "failure_behavior": {
+    "terminal_failure": "Stop, upload bounded evidence, and consume this authorization.",
+    "partial_resources": "Not applicable: the workflow performs no Azure mutation.",
+    "retry": "A second preflight requires a fresh explicit instruction."
+  },
+  "cost_boundary": {
+    "currency": "CAD",
+    "ceiling": 5.0,
+    "price_source": "Azure Retail Prices API",
+    "estimate_scope": "8 hours of Standard_F1als_v7 Linux consumption plus a conservative CAD 1.50 allowance for disk, public IP, and incidental lab resources",
+    "deployment_spend_authorized": false,
+    "actual_cost_known_before_execution": false
+  },
+  "canonical_distinctions": [
+    "prepared_request != ARM_What-If",
+    "preflight_passed != deployment_authorized",
+    "allowed_location != live_capacity_available",
+    "estimated_cost != actual_cost",
+    "workflow_success != service_validated",
+    "failed_preflight != authorization_to_retry"
+  ]
+}
