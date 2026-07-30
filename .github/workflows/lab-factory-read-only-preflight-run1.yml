@@ -1,0 +1,255 @@
+name: Lab Factory read-only preflight run 1
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/lab-factory-read-only-preflight-run1.yml'
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+
+concurrency:
+  group: lab-factory-read-only-preflight-run1
+  cancel-in-progress: false
+
+env:
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+  WORKDIR: ${{ runner.temp }}/lab-factory-read-only-preflight-run1
+
+jobs:
+  preflight:
+    name: Execute one read-only Lab Factory preflight
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact merge commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Validate exact one-attempt authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_RUN_ATTEMPT" = '1'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          jq -e '
+            .schema_version == "project.lab-factory-read-only-preflight-authorization.v1"
+            and .attempt_id == "lab-factory-read-only-preflight-run1"
+            and .status == "active_one_attempt"
+            and .attempt_limit == 1
+            and .attempts_observed == 0
+            and .scope.profile == "servicetracer-demo-api@1.0.0"
+            and .scope.environment == "test"
+            and .scope.location == "westus2"
+            and .scope.ttl_hours == 8
+            and .scope.cost_ceiling_CAD == 5
+            and .authority.one_merge_triggered_preflight == true
+            and .authority.azure_authentication == true
+            and .authority.azure_read_only_queries == true
+            and .authority.arm_validation == true
+            and .authority.one_terminal_issue_receipt == true
+            and .authority.provider_registration == false
+            and .authority.arm_what_if == false
+            and .authority.azure_mutation == false
+            and .authority.deployment == false
+            and .authority.rbac_mutation == false
+            and .authority.model_call == false
+            and .authority.automatic_retry == false
+            and .authority.manual_rerun == false
+            and .authority.rollback == false
+            and .authority.cleanup == false
+          ' .project/deployment-requests/lab-factory-read-only-preflight-run1.json >/dev/null
+
+      - name: Validate repository contract and Bicep
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest \
+            infra.tests.test_lab_factory_azure_preflight \
+            infra.tests.test_lab_factory_read_only_preflight_run1 \
+            -v
+          az bicep install
+          az bicep lint --file workloads/servicetracer-demo-api/infra/main.bicep
+          az bicep build \
+            --file workloads/servicetracer-demo-api/infra/main.bicep \
+            --outfile "$RUNNER_TEMP/servicetracer-demo-api.json"
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build bounded synthetic validation parameters
+        env:
+          REVIEWED_COMMIT: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$WORKDIR/evidence"
+          ssh-keygen -q -t ed25519 -N '' -C 'lab-factory-preflight-run1' -f "$WORKDIR/preflight-key"
+          export PARAMETER_FILE="$WORKDIR/parameters.json"
+          export PUBLIC_KEY_FILE="$WORKDIR/preflight-key.pub"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          reviewed = os.environ['REVIEWED_COMMIT']
+          parameters = {
+              'dnsLabel': f"stpf-{reviewed[:12]}",
+              'allowedOrigin': 'https://example.invalid',
+              'backendTransactionUrl': 'https://example.invalid/transaction',
+              'adminSshPublicKey': Path(os.environ['PUBLIC_KEY_FILE']).read_text(encoding='utf-8').strip(),
+              'sourceRepository': 'https://github.com/anthonyedgar30000/azure-iac-msp-lab.git',
+              'sourceRef': reviewed,
+              'installerUri': (
+                  'https://raw.githubusercontent.com/anthonyedgar30000/'
+                  f'azure-iac-msp-lab/{reviewed}/workloads/servicetracer-demo-api/scripts/install.sh'
+              ),
+          }
+          path = Path(os.environ['PARAMETER_FILE'])
+          path.write_text(json.dumps(parameters, sort_keys=True), encoding='utf-8')
+          path.chmod(0o600)
+          PY
+          rm -f "$WORKDIR/preflight-key"
+
+      - name: Run bounded Azure preflight
+        id: run_preflight
+        continue-on-error: true
+        env:
+          AZURE_LAB_PREFLIGHT_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          REVIEWED_COMMIT: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/run_lab_factory_azure_preflight.py \
+            --profile servicetracer-demo-api \
+            --environment test \
+            --ttl-hours 8 \
+            --cost-ceiling-cad 5.00 \
+            --request-id "lab-preflight-${REVIEWED_COMMIT:0:12}" \
+            --parameters-file "$WORKDIR/parameters.json" \
+            --output "$WORKDIR/evidence/preflight-result.json"
+
+      - name: Remove temporary parameter material
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f "$WORKDIR/parameters.json" "$WORKDIR/preflight-key" "$WORKDIR/preflight-key.pub"
+
+      - name: Write terminal receipt
+        if: always()
+        env:
+          STEP_OUTCOME: ${{ steps.run_preflight.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$WORKDIR/evidence"
+          result="$WORKDIR/evidence/preflight-result.json"
+          status='execution_error'
+          next_gate='terminal_reconciliation_required'
+          digest='not_produced'
+          if [[ -f "$result" ]]; then
+            status="$(jq -r '.status // "unknown"' "$result")"
+            next_gate="$(jq -r '.next_gate // "terminal_reconciliation_required"' "$result")"
+            digest="$(jq -r '.preflight_digest // "not_produced"' "$result")"
+          fi
+          jq -n \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg commit "$GITHUB_SHA" \
+            --arg step_outcome "$STEP_OUTCOME" \
+            --arg status "$status" \
+            --arg next_gate "$next_gate" \
+            --arg preflight_digest "$digest" \
+            --arg artifact "lab-factory-read-only-preflight-run1-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            '{
+              schema_version:"project.lab-factory-read-only-preflight-terminal-receipt.v1",
+              run_id:($run_id|tonumber),
+              run_attempt:($run_attempt|tonumber),
+              exact_commit:$commit,
+              step_outcome:$step_outcome,
+              status:$status,
+              next_gate:$next_gate,
+              preflight_digest:$preflight_digest,
+              artifact_name:$artifact,
+              azure_mutation_performed:false,
+              arm_what_if_performed:false,
+              deployment_authorized:false,
+              secrets_or_raw_azure_identifiers_in_receipt:false
+            }' > "$WORKDIR/evidence/terminal-receipt.json"
+
+      - name: Write evidence manifest
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          find "$WORKDIR/evidence" -type f ! -name artifact-manifest.sha256 -print0 \
+            | sort -z \
+            | xargs -0 -r sha256sum \
+            > "$WORKDIR/evidence/artifact-manifest.sha256"
+
+      - name: Upload protected evidence
+        id: upload_evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lab-factory-read-only-preflight-run1-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.WORKDIR }}/evidence
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish minimal terminal issue receipt
+        if: ${{ always() && github.run_attempt == 1 }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          receipt="$WORKDIR/evidence/terminal-receipt.json"
+          status="$(jq -r '.status' "$receipt")"
+          body="$RUNNER_TEMP/lab-factory-preflight-issue.md"
+          {
+            echo '## Lab Factory read-only preflight run 1 terminal receipt'
+            echo
+            echo "- Run ID: \`$(jq -r '.run_id' "$receipt")\`"
+            echo "- Run attempt: \`$(jq -r '.run_attempt' "$receipt")\`"
+            echo "- Exact commit: \`$(jq -r '.exact_commit' "$receipt")\`"
+            echo "- Status: \`$status\`"
+            echo "- Next gate: \`$(jq -r '.next_gate' "$receipt")\`"
+            echo "- Artifact: \`$(jq -r '.artifact_name' "$receipt")\`"
+            echo
+            echo 'No Azure mutation or ARM What-If was available in this workflow. This issue creates no retry, deployment, rollback, cleanup, or merge authority.'
+          } > "$body"
+          gh issue create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Lab Factory preflight run 1 terminal: ${status}" \
+            --body-file "$body"
+
+      - name: Enforce terminal result
+        if: always()
+        env:
+          STEP_OUTCOME: ${{ steps.run_preflight.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          result="$WORKDIR/evidence/preflight-result.json"
+          [[ -f "$result" ]]
+          jq -e '.execution.azure_mutations_performed == false' "$result" >/dev/null
+          jq -e '.execution.arm_what_if_performed == false' "$result" >/dev/null
+          jq -e '.execution.deployment_authorized == false' "$result" >/dev/null
+          jq -e '.execution.cleanup_authorized == false' "$result" >/dev/null
+          jq -e '.azure_context.raw_identifiers_returned == false' "$result" >/dev/null
+          jq -e '.template_validation.parameter_values_returned == false' "$result" >/dev/null
+          test "$STEP_OUTCOME" = 'success'
+          jq -e '.status == "passed" and .next_gate == "what_if_review_required"' "$result" >/dev/null
