@@ -1,0 +1,32 @@
+{
+  "azure_environment_forwarded_to_server": false,
+  "azure_mutations_performed": false,
+  "azure_queries_performed": false,
+  "called_tools": [
+    "list_lab_profiles",
+    "prepare_lab_request",
+    "prepare_lab_request"
+  ],
+  "cleanup_authorized": false,
+  "client_and_server_colocated": true,
+  "deployment_authorized": false,
+  "get_current_reality_called": false,
+  "model_call_performed": false,
+  "next_gate": "preflight_required",
+  "observed_at_utc": "2026-07-30T01:21:02.226366+00:00",
+  "parameter_values_returned": false,
+  "plan_digest": "sha256:fa3171ed0b702c9be88afd3ffbed99181c22366a727dc1f3ad78ba7f6994dfa6",
+  "profile": "servicetracer-demo-api@1.0.0",
+  "profile_release_state": "candidate",
+  "remote_endpoint_used": false,
+  "request_id": "lab-mcp-smoke-001",
+  "schema_version": "lab-factory.mcp-local-smoke-receipt.v1",
+  "source_sha": "1aeead3a987dbe2af9af1c46c5ac1e85033991ce",
+  "status": "passed",
+  "tool_inventory": [
+    "get_current_reality",
+    "list_lab_profiles",
+    "prepare_lab_request"
+  ],
+  "transport": "stdio"
+}

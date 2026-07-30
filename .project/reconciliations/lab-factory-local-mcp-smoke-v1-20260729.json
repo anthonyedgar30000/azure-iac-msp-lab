@@ -1,0 +1,186 @@
+{
+  "schema_version": "project.reconciliation.lab-factory-local-mcp-smoke.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:12:00-04:00",
+  "source_instruction": "Proceed",
+  "classification": "repository_and_local_protocol_validation_candidate",
+  "status": "candidate_pending_exact_head_smoke",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "8926a5b48db9bb7cb08523d337e43d20ba7ed69d",
+    "latest_merged_pull_request": 220,
+    "open_pull_requests_observed_before_branch": [],
+    "branch": "agent/lab-factory-local-mcp-smoke-v1",
+    "working_tree_observation": "not_observed_connector_backed"
+  },
+  "intended_architecture": {
+    "client": "MCP Python SDK ClientSession",
+    "transport": "stdio",
+    "server_command": "python -m azure_mcp_reality.server --transport stdio",
+    "client_and_server_colocated": true,
+    "remote_endpoint_used": false,
+    "called_tools": [
+      "list_lab_profiles",
+      "prepare_lab_request",
+      "prepare_lab_request"
+    ],
+    "prohibited_tool_call": "get_current_reality",
+    "planner": "lab_factory.prepare_lab_plan",
+    "catalog": "lab_factory/catalog.json"
+  },
+  "region_and_resource_scope": {
+    "repository_profile_location": "westus2",
+    "live_Azure_region_or_capacity_observed": false,
+    "Azure_subscription_scope": null,
+    "Azure_resource_group_scope": null,
+    "Azure_resource_creation": false,
+    "Azure_resource_mutation": false
+  },
+  "dependencies": {
+    "python": "3.12",
+    "mcp_sdk": "mcp[cli]==1.24.0",
+    "repository_checkout_required": true,
+    "exact_source_sha_required": true,
+    "Azure_CLI_required": false,
+    "OpenAI_SDK_required": false
+  },
+  "identity_and_permissions": {
+    "Azure_identity_required": false,
+    "Azure_credentials_forwarded_to_server": false,
+    "OpenAI_API_key_required": false,
+    "GitHub_workflow_permissions": {
+      "contents": "read",
+      "id-token": "none"
+    },
+    "new_managed_identity": false,
+    "new_RBAC_assignment": false,
+    "new_secret": false
+  },
+  "network_paths": {
+    "MCP_transport": "local_stdio",
+    "TCP_listener_required": false,
+    "remote_ingress": false,
+    "Azure_control_plane_call": false,
+    "model_provider_call": false
+  },
+  "security_controls": [
+    "exact_three_tool_inventory_required",
+    "get_current_reality_not_called",
+    "reduced_child_process_environment",
+    "Azure_and_model_credentials_not_forwarded",
+    "parameter_values_not_returned",
+    "identical_requests_must_produce_identical_plans",
+    "Azure_query_and_mutation_flags_must_remain_false",
+    "deployment_and_cleanup_authority_flags_must_remain_false",
+    "bounded_45_second_timeout",
+    "exact_source_sha_match_required",
+    "workflow_has_no_manual_dispatch",
+    "workflow_has_no_OIDC_permission"
+  ],
+  "cost_and_quota": {
+    "expected_recurring_Azure_resource_cost_delta_cad": 0,
+    "actual_Azure_cost_freshly_observed": false,
+    "Azure_quota_freshly_observed": false,
+    "GitHub_Actions_and_package_download_usage_may_apply": true
+  },
+  "preserved_Azure_evidence_boundary": {
+    "latest_bounded_subscription_name": "Azure for Students",
+    "latest_bounded_subscription_state": "Enabled",
+    "latest_bounded_resource_group": "rg-ai-msp-dev-eastus",
+    "latest_bounded_observation_time": "2026-07-29T12:01:23.289717Z",
+    "fresh_Azure_query_by_this_increment": false,
+    "fresh_Azure_cost_or_quota_by_this_increment": false,
+    "preserved_evidence_is_current_truth": false
+  },
+  "deployment_method": {
+    "repository_changes": [
+      "scripts/smoke_test_lab_factory_mcp_stdio.py",
+      ".github/workflows/lab-factory-mcp-local-smoke.yml",
+      "docs/runbooks/lab-factory-local-mcp-smoke.md",
+      ".project/reconciliations/lab-factory-local-mcp-smoke-v1-20260729.json",
+      "infra/tests/test_lab_factory_local_mcp_smoke_contract.py"
+    ],
+    "execution": "ordinary pull-request CI on a GitHub-hosted runner",
+    "workflow_dispatch_added": false,
+    "Azure_deployment_workflow_used": false
+  },
+  "validation_commands": [
+    "python -m pip install -r requirements/azure-mcp-reality-tool.txt",
+    "python scripts/smoke_test_lab_factory_mcp_stdio.py --output /tmp/lab-factory-mcp-local-smoke-receipt.json",
+    "python -m unittest infra.tests.test_lab_factory_local_mcp_smoke_contract -v"
+  ],
+  "expected_outputs": {
+    "status": "passed",
+    "tool_inventory": [
+      "get_current_reality",
+      "list_lab_profiles",
+      "prepare_lab_request"
+    ],
+    "profile": "servicetracer-demo-api@1.0.0",
+    "profile_release_state": "candidate",
+    "next_gate": "preflight_required",
+    "parameter_values_returned": false,
+    "Azure_queries_performed": false,
+    "Azure_mutations_performed": false,
+    "deployment_authorized": false,
+    "cleanup_authorized": false,
+    "receipt_artifact": "lab-factory-mcp-local-smoke-receipt"
+  },
+  "failure_and_rollback": {
+    "fail_closed_conditions": [
+      "server_initialization_failure",
+      "unexpected_tool_inventory",
+      "MCP_tool_error",
+      "profile_contract_mismatch",
+      "parameter_value_echoed",
+      "nondeterministic_plan",
+      "Azure_execution_flag_true",
+      "deployment_or_cleanup_authority_true",
+      "source_sha_mismatch",
+      "timeout"
+    ],
+    "repository_rollback": "Revert the exact pull request.",
+    "runtime_rollback": "Terminate the local stdio subprocess.",
+    "Azure_rollback": "Not applicable because no Azure query or mutation is performed.",
+    "cleanup": "Not applicable because no Azure resource is created."
+  },
+  "evidence_to_capture": [
+    "exact source head",
+    "workflow run identifier and conclusion",
+    "job step conclusions",
+    "bounded JSON receipt artifact",
+    "receipt SHA-256 digest",
+    "final branch versus main comparison"
+  ],
+  "authority": {
+    "repository_branch_and_declared_file_writes_authorized": true,
+    "pull_request_creation_authorized": true,
+    "ordinary_exact_head_CI_authorized": true,
+    "local_MCP_client_call_to_repository_only_tools_authorized": true,
+    "pull_request_merge_authorized_after_green_exact_head_CI": true,
+    "get_current_reality_execution_authorized": false,
+    "Azure_authentication_or_query_authorized": false,
+    "ARM_What_If_authorized": false,
+    "Azure_mutation_authorized": false,
+    "Azure_deployment_authorized": false,
+    "RBAC_mutation_authorized": false,
+    "model_call_authorized": false,
+    "remote_MCP_deployment_authorized": false,
+    "ChatGPT_connection_authorized": false,
+    "cleanup_authorized": false
+  },
+  "canonical_distinctions": [
+    "local_MCP_implementation != local_MCP_client_call_verified",
+    "local_MCP_client_call_verified != ChatGPT_connected",
+    "profile_listed != released_lab",
+    "prepared_request != ARM_What_If",
+    "prepared_request != deployment_authorized",
+    "catalog_allowed_location != live_capacity_available",
+    "parameter_validated != parameter_value_persisted",
+    "workflow_success != Azure_service_validated",
+    "estimated_cost != actual_cost",
+    "cleanup_not_required != recovery_tested"
+  ],
+  "next_gate": "Run exact-head pull-request CI, inspect the bounded receipt, record the terminal result, and merge only if the branch remains fresh and every expected boundary is satisfied."
+}
