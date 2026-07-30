@@ -82,21 +82,29 @@ class ServiceTracerPlanRun1ManualGateTests(unittest.TestCase):
         self.assertFalse(document["operation_boundary"]["azure_mutations_performed"])
         self.assertFalse(document["operation_boundary"]["deployment_started"])
 
-    def test_canonical_planner_remains_dual_subscription_and_non_deploying(self) -> None:
+    def test_canonical_planner_uses_student_subscription_and_remains_non_deploying(self) -> None:
         for marker in (
             "workflow_dispatch:",
-            "environment: azure-api-payg",
-            "AZURE_DEPENDENCY_CLIENT_ID",
-            "AZURE_TARGET_CLIENT_ID",
-            "AZURE_DEPENDENCY_SUBSCRIPTION_ID",
-            "AZURE_TARGET_SUBSCRIPTION_ID",
+            "environment: azure-lab",
+            "AZURE_CLIENT_ID",
+            "AZURE_TENANT_ID",
+            "AZURE_SUBSCRIPTION_ID",
+            'subscription_boundary:"single_subscription"',
             "ProviderNoRbac",
             "az deployment sub validate",
             "az deployment sub what-if",
         ):
             self.assertIn(marker, self.planner)
-        self.assertNotIn("az deployment sub create", self.planner)
-        self.assertNotIn("az role assignment create", self.planner)
+        for marker in (
+            "environment: azure-api-payg",
+            "AZURE_DEPENDENCY_CLIENT_ID",
+            "AZURE_TARGET_CLIENT_ID",
+            "AZURE_DEPENDENCY_SUBSCRIPTION_ID",
+            "AZURE_TARGET_SUBSCRIPTION_ID",
+            "az deployment sub create",
+            "az role assignment create",
+        ):
+            self.assertNotIn(marker, self.planner)
 
 
 if __name__ == "__main__":
