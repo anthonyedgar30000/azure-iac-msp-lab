@@ -5,15 +5,20 @@ on:
     paths:
       - ".project/contracts/azure-mcp-reality-bridge.json"
       - ".project/contracts/azure-mcp-lab-factory-tools-v1.json"
+      - ".project/contracts/azure-mcp-local-client-probe-v1.json"
       - ".project/reconciliations/azure-mcp-current-reality-tool-20260729.json"
       - ".project/reconciliations/azure-mcp-current-reality-run1-terminal-20260729.json"
+      - ".project/reconciliations/azure-mcp-local-client-probe-v1-terminal-20260729.json"
       - ".project/evidence/azure-mcp-current-reality-run1.json"
       - ".project/evidence/azure-mcp-current-reality-run1.sha256"
+      - ".project/evidence/azure-mcp-local-client-probe.json"
+      - ".project/evidence/azure-mcp-local-client-probe.sha256"
       - ".project/observation-requests/azure-mcp-current-reality-run1.json"
       - ".project/handoffs/azure-mcp-current-reality-tool.md"
       - ".project/handoffs/azure-mcp-current-reality-run1.md"
       - ".project/handoffs/azure-mcp-current-reality-run1-terminal.md"
       - ".project/handoffs/azure-mcp-lab-factory-tools-v1.md"
+      - ".project/handoffs/azure-mcp-local-client-probe-v1.md"
       - ".project/state-index.json"
       - "azure_mcp_reality/**"
       - "lab_factory/**"
@@ -29,6 +34,7 @@ on:
       - "infra/tests/test_azure_mcp_current_reality_run1_authorization.py"
       - "infra/tests/test_azure_mcp_current_reality_run1_terminal.py"
       - "infra/tests/test_azure_mcp_lab_factory_tools.py"
+      - "infra/tests/test_azure_mcp_local_client_probe.py"
       - ".github/workflows/azure-mcp-reality-bridge-contract.yml"
   push:
     branches:
@@ -36,15 +42,20 @@ on:
     paths:
       - ".project/contracts/azure-mcp-reality-bridge.json"
       - ".project/contracts/azure-mcp-lab-factory-tools-v1.json"
+      - ".project/contracts/azure-mcp-local-client-probe-v1.json"
       - ".project/reconciliations/azure-mcp-current-reality-tool-20260729.json"
       - ".project/reconciliations/azure-mcp-current-reality-run1-terminal-20260729.json"
+      - ".project/reconciliations/azure-mcp-local-client-probe-v1-terminal-20260729.json"
       - ".project/evidence/azure-mcp-current-reality-run1.json"
       - ".project/evidence/azure-mcp-current-reality-run1.sha256"
+      - ".project/evidence/azure-mcp-local-client-probe.json"
+      - ".project/evidence/azure-mcp-local-client-probe.sha256"
       - ".project/observation-requests/azure-mcp-current-reality-run1.json"
       - ".project/handoffs/azure-mcp-current-reality-tool.md"
       - ".project/handoffs/azure-mcp-current-reality-run1.md"
       - ".project/handoffs/azure-mcp-current-reality-run1-terminal.md"
       - ".project/handoffs/azure-mcp-lab-factory-tools-v1.md"
+      - ".project/handoffs/azure-mcp-local-client-probe-v1.md"
       - ".project/state-index.json"
       - "azure_mcp_reality/**"
       - "lab_factory/**"
@@ -60,6 +71,7 @@ on:
       - "infra/tests/test_azure_mcp_current_reality_run1_authorization.py"
       - "infra/tests/test_azure_mcp_current_reality_run1_terminal.py"
       - "infra/tests/test_azure_mcp_lab_factory_tools.py"
+      - "infra/tests/test_azure_mcp_local_client_probe.py"
       - ".github/workflows/azure-mcp-reality-bridge-contract.yml"
 
 permissions:
@@ -87,11 +99,12 @@ jobs:
           python scripts/validate_azure_mcp_reality_bridge.py
           python scripts/validate_azure_mcp_lab_factory_tools.py
 
-      - name: Run contract, observer, Lab Factory, compatibility, authority, and terminal tests
+      - name: Run contract, observer, Lab Factory, compatibility, authority, terminal, and client tests
         run: |
           python -m unittest tests.test_azure_mcp_reality_bridge -v
           python -m unittest infra.tests.test_azure_mcp_current_reality_tool -v
           python -m unittest infra.tests.test_azure_mcp_lab_factory_tools -v
+          python -m unittest infra.tests.test_azure_mcp_local_client_probe -v
           python -m unittest infra.tests.test_lab_factory_lite -v
           python -m unittest infra.tests.test_azure_mcp_active_subscription_compat -v
           python -m unittest infra.tests.test_azure_mcp_current_reality_run1_authorization -v
@@ -162,6 +175,48 @@ jobs:
           asyncio.run(verify())
           PY
 
+      - name: Execute exact local MCP stdio probe without Azure access
+        run: |
+          mkdir -p /tmp/azure-mcp-local-client-probe
+          python -m azure_mcp_reality.local_client_probe \
+            --output /tmp/azure-mcp-local-client-probe/azure-mcp-local-client-probe.json
+          sha256sum \
+            /tmp/azure-mcp-local-client-probe/azure-mcp-local-client-probe.json \
+            > /tmp/azure-mcp-local-client-probe/azure-mcp-local-client-probe.sha256
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          receipt = json.loads(
+              Path(
+                  "/tmp/azure-mcp-local-client-probe/azure-mcp-local-client-probe.json"
+              ).read_text(encoding="utf-8")
+          )
+          assert receipt["schema_version"] == "azure-mcp.local-client-probe.v1"
+          assert receipt["repository"]["head"] == "${{ github.sha }}"
+          assert receipt["transport"]["type"] == "stdio_subprocess"
+          assert receipt["transport"]["network_listener_created"] is False
+          assert receipt["calls"]["list_lab_profiles"]["profile_ids"] == [
+              "servicetracer-demo-api"
+          ]
+          prepared = receipt["calls"]["prepare_lab_request"]
+          assert prepared["operation"] == "prepare_only"
+          assert prepared["ready_for_preflight"] is True
+          assert prepared["what_if_required"] is True
+          assert prepared["explicit_deployment_authorization_required"] is True
+          assert prepared["next_gate"] == "preflight_required"
+          for value in receipt["negative_evidence"].values():
+              assert value is False
+          PY
+
+      - name: Upload sanitized local MCP probe evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-mcp-local-client-probe
+          path: /tmp/azure-mcp-local-client-probe/
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Confirm no cloud authority is available in CI
         run: |
           test -z "${AZURE_CLIENT_ID:-}"
@@ -171,3 +226,5 @@ jobs:
           test -z "${AZURE_MCP_ALLOWED_RESOURCE_GROUP:-}"
           test -z "${AZURE_MCP_RUN1_SUBSCRIPTION_ID:-}"
           test -z "${AZURE_MCP_RUN1_CONFIRMATION:-}"
+          test -z "${AZURE_OPENAI_API_KEY:-}"
+          test -z "${OPENAI_API_KEY:-}"
