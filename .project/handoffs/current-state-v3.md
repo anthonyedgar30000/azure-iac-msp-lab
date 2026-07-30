@@ -2,13 +2,13 @@
 
 ## Interpretation boundary
 
-This is the authoritative repository and evidence handoff selected by `.project/CURRENT.json`. It records GitHub state after PR #250 merged, the recovered Azure AI run-8 terminal artifact, and issue/workflow evidence for the still-unconsumed ServiceTracer planning authorization.
+This is the authoritative repository and evidence handoff selected by `.project/CURRENT.json`. It records GitHub state after PR #251 merged, the recovered Azure AI run-8 terminal artifact, and the direct-manual ServiceTracer planning gate.
 
 ```text
 repository record != continuously refreshed dashboard
 merged repository state != deployed Azure state
-authorization recorded != workflow dispatched
-issue command present != dispatcher job started
+human authority recorded != workflow dispatched
+connector paths closed != planning authority consumed
 ARM What-If != Azure mutation
 planning succeeded != deployment authorized
 not observed != absent
@@ -22,9 +22,10 @@ current reality: .project/current-reality-v4.json
 state index: .project/state-index-v13.json
 current handoff: .project/handoffs/current-state-v3.md
 completion gate: .project/lab-v1-completion-gate-v2.json
-repository sync: .project/reconciliations/post-pr250-canonical-sync-20260730.json
+repository sync: .project/reconciliations/post-pr251-canonical-sync-20260730.json
 Azure AI terminal: .project/reconciliations/azure-ai-go-live-run8-terminal-20260730.json
 prior run-8 trigger sync: .project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json
+ServiceTracer connector blocker: .project/reconciliations/servicetracer-demo-api-plan-run1-connector-event-blocked-20260729.json
 ```
 
 Previous versioned and unversioned files remain historical compatibility records.
@@ -33,10 +34,10 @@ Previous versioned and unversioned files remain historical compatibility records
 
 ```text
 repository: anthonyedgar30000/azure-iac-msp-lab
-observed main: feae9da6427c2205f86185e729dc88f820cd67e7
-latest merged PR: #250
-latest merged source head: 8530fab6dcf9e9aaad25f7d44e773da786de5a13
-PR #250 exact-head CI: 30512595145 / success
+observed main: 09fe72e3a82ea6ae56e1e85fd9745c9940ed6c12
+latest merged PR: #251
+latest merged source head: 2d17b70edc2d0474967db388bd3d425fb5400b74
+PR #251 exact-head CI: 30512881241 / success
 open PRs observed: none
 local working tree: not observed through connector
 ```
@@ -58,7 +59,7 @@ model request performed: false
 active Azure AI authorization: none
 ```
 
-The GitHub OIDC principal did not have the required direct account-scoped inference role at the recorded time. This does not prove that every possible inherited access path is absent.
+The GitHub OIDC principal did not have the required direct account-scoped inference role at the recorded time. This does not prove every inherited access path is absent.
 
 The separately verified `gpt-5-mini` runtime remains distinct:
 
@@ -86,17 +87,18 @@ ARM What-If: available
 deployment command: absent
 ```
 
-The one-shot planning authority remains active and unconsumed:
+PR #251 removed all failed connector-event dispatcher paths. The one-shot planning authority remains active and unconsumed:
 
 ```text
 attempt: servicetracer-demo-api-plan-run1
 tracking issue: #232
-original command comment: 5126207104
-current command: EXECUTE-SERVICETRACER-PLAN-RUN1-EDIT1:feae9da6427c2205f86185e729dc88f820cd67e7
-edited-command recovery PR: #250
-edited-command workflow run: 30512805833
-edited-command workflow jobs started: false
-durable consumption marker observed: false
+connector dispatcher paths present: false
+fresh human authorization comment: 5126316629
+fresh instruction: Proceed you have my authority.
+expected dispatch main: 09fe72e3a82ea6ae56e1e85fd9745c9940ed6c12
+direct manual dispatch authorized: true
+dispatch performed: false
+authority consumed: false
 accepted child dispatches observed: 0
 remaining authorized dispatches: 1
 Azure authentication/query observed: false
@@ -107,7 +109,7 @@ planning ceiling is spend authority: false
 deployment authorized: false
 ```
 
-Do not repeat the edited-command recovery. The remaining safe execution path is one manual `workflow_dispatch` of the canonical planner from `main` using the exact authorized inputs, or a separately authorized dispatcher repair. This sync performs neither.
+The only remaining authorized operation is one direct GitHub Actions **Run workflow** on the canonical planner from `main` using the exact recorded inputs. Authority is consumed when the dispatch is accepted. This sync does not dispatch it.
 
 ## Azure and operational unknowns
 
@@ -154,4 +156,4 @@ cleanup or rollback
 
 ## Next gate
 
-Complete this repository-only canonical sync. Afterward, the only active operational authorization is the one ServiceTracer planning dispatch. Protected planning evidence must be reviewed before any deployment authorization is created.
+Complete this repository-only canonical sync. Afterward, the only active operational authorization is one direct manual ServiceTracer planning dispatch. Its protected planning artifact must be reviewed before any deployment authorization is created.
