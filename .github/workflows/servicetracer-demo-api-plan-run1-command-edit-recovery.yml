@@ -1,0 +1,297 @@
+name: One-shot ServiceTracer planning run 1 edited-command recovery
+
+on:
+  issue_comment:
+    types: [edited]
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+
+concurrency:
+  group: one-shot-servicetracer-demo-api-plan-run1
+  cancel-in-progress: false
+
+env:
+  AUTHORIZATION_FILE: .project/deployment-requests/servicetracer-demo-api-plan-run1.json
+  ARTIFACT_DIR: servicetracer-demo-api-plan-run1-command-edit-recovery-evidence
+  CONSUMED_MARKER: '<!-- servicetracer-demo-api-plan-run1-consumed -->'
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  dispatch-observe-and-reconcile:
+    name: Consume authority and dispatch from exact edited command
+    if: >-
+      github.repository == 'anthonyedgar30000/azure-iac-msp-lab' &&
+      github.event.issue.number == 232 &&
+      github.event.issue.pull_request == null &&
+      github.event.comment.id == 5126207104 &&
+      github.event.comment.user.login == 'anthonyedgar30000' &&
+      startsWith(github.event.comment.body, 'EXECUTE-SERVICETRACER-PLAN-RUN1-EDIT1:')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check out immutable edited-command target
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate exact edited command and unconsumed authority
+        id: authority
+        env:
+          COMMAND_BODY: ${{ github.event.comment.body }}
+          COMMAND_COMMENT_ID: ${{ github.event.comment.id }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          test -f "$AUTHORIZATION_FILE"
+          [[ "$COMMAND_BODY" =~ ^EXECUTE-SERVICETRACER-PLAN-RUN1-EDIT1:([0-9a-f]{40})$ ]]
+          command_main="${BASH_REMATCH[1]}"
+          [[ "$COMMAND_COMMENT_ID" == '5126207104' ]]
+
+          git fetch origin main
+          observed_main="$(git rev-parse origin/main)"
+          [[ "$observed_main" == "$command_main" ]]
+          [[ "$(git rev-parse HEAD)" == "$command_main" ]]
+          git cat-file -e "${command_main}:$AUTHORIZATION_FILE"
+          git cat-file -e "${command_main}:.github/workflows/servicetracer-demo-api-subproject-plan.yml"
+          git cat-file -e "${command_main}:.github/workflows/servicetracer-demo-api-plan-run1-command-edit-recovery.yml"
+
+          jq -e '
+            .schema_version == "project.servicetracer-demo-api-plan-authorization.v1" and
+            .attempt_id == "servicetracer-demo-api-plan-run1" and
+            .status == "authorized_pending_dispatch" and
+            .active == true and
+            .attempt_limit == 1 and
+            .dispatch.authorized == true and
+            .dispatch.performed == false and
+            .dispatch.workflow_dispatch_only == true and
+            .dispatch.rerun_authorized == false and
+            .dispatch.confirmation == "PLAN-DEMO-API-SUBPROJECT:dev:st-demo-api-vm-aeg30000" and
+            .inputs.environment == "dev" and
+            .inputs.location == "westus2" and
+            .inputs.prefix == "mst" and
+            .inputs.dependency_resource_group == "rg-servicetracer-dev-westus2" and
+            .inputs.dns_label == "st-demo-api-vm-aeg30000" and
+            .inputs.allowed_origin == "https://anthonyedgar30000.github.io" and
+            .inputs.vm_size == "Standard_F1als_v7" and
+            .inputs.maximum_monthly_cost_cad == "25.00" and
+            .scope.github_environment == "azure-api-payg" and
+            .scope.subscription_boundary == "dual_subscription" and
+            .scope.provider_validation_level == "ProviderNoRbac" and
+            .scope.arm_validation_authorized == true and
+            .scope.arm_what_if_authorized == true and
+            .scope.azure_resource_mutation_authorized == false and
+            .scope.deployment_authorized == false and
+            .scope.rbac_mutation_authorized == false and
+            .scope.provider_registration_authorized == false and
+            .scope.cleanup_authorized == false and
+            .scope.rollback_authorized == false and
+            .failure_behavior.consume_on_authenticated_attempt == true and
+            .failure_behavior.automatic_retry == false and
+            .failure_behavior.manual_rerun == false
+          ' "$AUTHORIZATION_FILE" >/dev/null
+
+          comments="$(gh api "repos/$GITHUB_REPOSITORY/issues/232/comments?per_page=100")"
+          consumed_count="$(jq -r '[.[] | select((.body // "") | contains("<!-- servicetracer-demo-api-plan-run1-consumed -->"))] | length' <<< "$comments")"
+          edited_count="$(jq -r --argjson id "$COMMAND_COMMENT_ID" --arg body "$COMMAND_BODY" '[.[] | select(.id == $id and .body == $body and .user.login == "anthonyedgar30000")] | length' <<< "$comments")"
+          [[ "$consumed_count" == '0' ]]
+          [[ "$edited_count" == '1' ]]
+
+          cp "$AUTHORIZATION_FILE" "$ARTIFACT_DIR/authorization.json"
+          jq -n \
+            --arg command_main "$command_main" \
+            --arg command_comment_id "$COMMAND_COMMENT_ID" \
+            '{command_main:$command_main,command_comment_id:($command_comment_id|tonumber),event:"issue_comment.edited",prior_consumption_markers:0,matching_edited_command:1,authority_consumed:false,azure_mutation_authorized:false,deployment_authorized:false}' \
+            > "$ARTIFACT_DIR/authority-before-attempt.json"
+
+          echo "dispatcher_main_sha=$command_main" >> "$GITHUB_OUTPUT"
+          echo "command_comment_id=$COMMAND_COMMENT_ID" >> "$GITHUB_OUTPUT"
+          echo "environment=$(jq -r '.inputs.environment' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "location=$(jq -r '.inputs.location' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "prefix=$(jq -r '.inputs.prefix' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "dependency_resource_group=$(jq -r '.inputs.dependency_resource_group' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "dns_label=$(jq -r '.inputs.dns_label' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "allowed_origin=$(jq -r '.inputs.allowed_origin' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "vm_size=$(jq -r '.inputs.vm_size' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "maximum_monthly_cost_cad=$(jq -r '.inputs.maximum_monthly_cost_cad' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "confirmation=$(jq -r '.dispatch.confirmation' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+
+      - name: Consume the one-shot authority before dispatch
+        id: consume
+        env:
+          DISPATCHER_MAIN_SHA: ${{ steps.authority.outputs.dispatcher_main_sha }}
+          COMMAND_COMMENT_ID: ${{ steps.authority.outputs.command_comment_id }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          consumed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          body="$(cat <<EOF
+          $CONSUMED_MARKER
+          ## ServiceTracer planning authority consumed
+
+          The one-shot authority was consumed before attempting the child planning workflow dispatch.
+
+          - dispatcher main source: \`$DISPATCHER_MAIN_SHA\`
+          - edited command comment: \`$COMMAND_COMMENT_ID\`
+          - consumed at: \`$consumed_at\`
+          - deployment authority: **false**
+          - retry or Re-run: **not authorized**
+          EOF
+          )"
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/issues/232/comments" \
+            -f body="$body" >/dev/null
+          jq -n \
+            --arg consumed_at "$consumed_at" \
+            --arg dispatcher_main_sha "$DISPATCHER_MAIN_SHA" \
+            --arg command_comment_id "$COMMAND_COMMENT_ID" \
+            '{consumed_at:$consumed_at,dispatcher_main_sha:$dispatcher_main_sha,command_comment_id:($command_comment_id|tonumber),authority_consumed:true,child_dispatch_attempted:false,retry_authorized:false,azure_mutation_authorized:false,deployment_authorized:false}' \
+            > "$ARTIFACT_DIR/authority-consumed.json"
+          echo "consumed_at=$consumed_at" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch the ratified planning workflow once
+        id: dispatch
+        env:
+          CONSUMED_AT: ${{ steps.consume.outputs.consumed_at }}
+          DISPATCHER_MAIN_SHA: ${{ steps.authority.outputs.dispatcher_main_sha }}
+          LAB_ENVIRONMENT: ${{ steps.authority.outputs.environment }}
+          LOCATION: ${{ steps.authority.outputs.location }}
+          PREFIX: ${{ steps.authority.outputs.prefix }}
+          DEPENDENCY_RESOURCE_GROUP: ${{ steps.authority.outputs.dependency_resource_group }}
+          DNS_LABEL: ${{ steps.authority.outputs.dns_label }}
+          ALLOWED_ORIGIN: ${{ steps.authority.outputs.allowed_origin }}
+          VM_SIZE: ${{ steps.authority.outputs.vm_size }}
+          MAXIMUM_MONTHLY_COST_CAD: ${{ steps.authority.outputs.maximum_monthly_cost_cad }}
+          CONFIRMATION: ${{ steps.authority.outputs.confirmation }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          gh workflow run servicetracer-demo-api-subproject-plan.yml \
+            --ref main \
+            -f environment="$LAB_ENVIRONMENT" \
+            -f location="$LOCATION" \
+            -f prefix="$PREFIX" \
+            -f dependency_resource_group="$DEPENDENCY_RESOURCE_GROUP" \
+            -f dns_label="$DNS_LABEL" \
+            -f allowed_origin="$ALLOWED_ORIGIN" \
+            -f vm_size="$VM_SIZE" \
+            -f maximum_monthly_cost_cad="$MAXIMUM_MONTHLY_COST_CAD" \
+            -f confirmation="$CONFIRMATION"
+          accepted_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          jq -n \
+            --arg consumed_at "$CONSUMED_AT" \
+            --arg accepted_at "$accepted_at" \
+            --arg dispatcher_main_sha "$DISPATCHER_MAIN_SHA" \
+            '{consumed_at:$consumed_at,accepted_at:$accepted_at,dispatcher_main_sha:$dispatcher_main_sha,authority_consumed:true,child_dispatch_accepted:true,retry_authorized:false,azure_mutation_authorized:false,deployment_authorized:false}' \
+            > "$ARTIFACT_DIR/dispatch-accepted.json"
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/issues/232/comments" \
+            -f body="## ServiceTracer planning dispatch accepted
+
+The authorized child planning workflow dispatch was accepted from the edited command.
+
+- dispatcher main source: \`$DISPATCHER_MAIN_SHA\`
+- accepted at: \`$accepted_at\`
+- deployment authority: **false**
+- retry or Re-run: **not authorized**" >/dev/null
+          echo "accepted_at=$accepted_at" >> "$GITHUB_OUTPUT"
+
+      - name: Locate and preserve the terminal child run
+        id: child
+        env:
+          ACCEPTED_AT: ${{ steps.dispatch.outputs.accepted_at }}
+          DISPATCHER_MAIN_SHA: ${{ steps.authority.outputs.dispatcher_main_sha }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          run_id=""
+          for _ in $(seq 1 60); do
+            runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/servicetracer-demo-api-subproject-plan.yml/runs?event=workflow_dispatch&branch=main&per_page=20")"
+            run_id="$(jq -r --arg accepted "$ACCEPTED_AT" --arg sha "$DISPATCHER_MAIN_SHA" '[.workflow_runs[] | select(.created_at >= $accepted and .head_sha == $sha)] | sort_by(.created_at) | .[0].id // empty' <<< "$runs")"
+            [[ -n "$run_id" ]] && break
+            sleep 5
+          done
+          [[ -n "$run_id" ]]
+          run_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$run_id"
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/issues/232/comments" \
+            -f body="Planning workflow located: [$run_id]($run_url). No second dispatch will be issued." >/dev/null
+
+          set +e
+          gh run watch "$run_id" --interval 10
+          watch_exit=$?
+          set -e
+          details="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id")"
+          artifacts="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/artifacts")"
+          status="$(jq -r '.status' <<< "$details")"
+          conclusion="$(jq -r '.conclusion // "not_completed"' <<< "$details")"
+          head_sha="$(jq -r '.head_sha' <<< "$details")"
+          artifact_summary="$(jq -c '[.artifacts[] | {id,name,size_in_bytes,digest,expired}]' <<< "$artifacts")"
+
+          mkdir -p "$ARTIFACT_DIR/child"
+          set +e
+          gh run download "$run_id" --dir "$ARTIFACT_DIR/child"
+          download_exit=$?
+          set -e
+
+          jq -n \
+            --argjson run_id "$run_id" \
+            --arg status "$status" \
+            --arg conclusion "$conclusion" \
+            --arg head_sha "$head_sha" \
+            --arg url "$run_url" \
+            --argjson watch_exit "$watch_exit" \
+            --argjson download_exit "$download_exit" \
+            --argjson artifacts "$artifact_summary" \
+            '{run_id:$run_id,status:$status,conclusion:$conclusion,head_sha:$head_sha,url:$url,watch_exit:$watch_exit,artifact_download_exit:$download_exit,artifacts:$artifacts,authority_consumed:true,retry_authorized:false,azure_mutation_authorized:false,deployment_authorized:false}' \
+            > "$ARTIFACT_DIR/child-terminal.json"
+
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/issues/232/comments" \
+            -f body="## ServiceTracer planning terminal result
+
+- workflow: [$run_id]($run_url)
+- workflow head: \`$head_sha\`
+- status: **$status**
+- conclusion: **$conclusion**
+- artifacts: \`$artifact_summary\`
+- deployment authority: **false**
+- retry performed: **false**
+
+Protected evidence was copied into the edited-command dispatcher artifact. No deployment, rollback, or cleanup was authorized." >/dev/null
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "conclusion=$conclusion" >> "$GITHUB_OUTPUT"
+
+      - name: Write edited-command evidence manifest
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          find "$ARTIFACT_DIR" -type f ! -name artifact-manifest.sha256 -print0 \
+            | sort -z \
+            | xargs -0 -r sha256sum \
+            > "$ARTIFACT_DIR/artifact-manifest.sha256"
+
+      - name: Upload edited-command evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: servicetracer-demo-api-plan-run1-command-edit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce child success after evidence upload
+        if: always()
+        env:
+          CHILD_CONCLUSION: ${{ steps.child.outputs.conclusion }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          [[ "$CHILD_CONCLUSION" == "success" ]]
