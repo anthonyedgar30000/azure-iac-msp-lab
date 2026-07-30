@@ -1,0 +1,54 @@
+{
+  "schema_version": "project.state-index.v13",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:50:00-04:00",
+  "selector": ".project/CURRENT.json",
+  "authoritative_current_reality": ".project/current-reality-v4.json",
+  "authoritative_handoff": ".project/handoffs/current-state-v3.md",
+  "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
+  "latest_repository_sync_reconciliation": ".project/reconciliations/pre-lab-factory-preflight-run1-20260729.json",
+  "repository_state": {
+    "default_branch": "main",
+    "observed_main": "0b6fa63d86ae52119b63ef6c9421c8d13215cb59",
+    "latest_merged_pull_request": 223,
+    "candidate_branch": "agent/lab-factory-preflight-run1",
+    "open_pull_requests_before_branch": [],
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "lab_factory_preflight": {
+    "attempt_id": "lab-factory-preflight-run1",
+    "profile": "servicetracer-demo-api@1.0.0",
+    "request": ".project/deployment-requests/lab-factory-preflight-run1.json",
+    "contract": ".project/contracts/lab-factory-preflight-v1.json",
+    "workflow": ".github/workflows/lab-factory-preflight-run1.yml",
+    "executor": "scripts/lab_factory_preflight_run1.sh",
+    "capacity_and_cost_assessor": "scripts/assess_lab_factory_preflight.py",
+    "what_if_assessor": "scripts/assert_lab_factory_preflight_what_if.py",
+    "handoff": ".project/handoffs/lab-factory-preflight-run1.md",
+    "status": "active_repository_candidate_not_executed",
+    "attempt_limit": 1,
+    "deployment_authorized": false,
+    "cleanup_authorized": false
+  },
+  "active_authorizations": {
+    "deployment": null,
+    "azure_mcp_preflight": null,
+    "azure_mcp_current_reality": null,
+    "azure_ai_activation": null,
+    "lab_factory_preflight": ".project/deployment-requests/lab-factory-preflight-run1.json",
+    "lab_factory_deployment": null
+  },
+  "previous_authoritative_state": {
+    "current_reality": ".project/current-reality-v3.json",
+    "state_index": ".project/state-index-v12.json",
+    "handoff": ".project/handoffs/current-state-v2.md"
+  },
+  "selection_rule": "Read .project/CURRENT.json first. Re-query live GitHub before writes or merge. The active Lab Factory authority permits one merge-triggered read-only preflight and does not permit Azure resource changes, deployment, rerun, rollback, or cleanup.",
+  "claim_boundaries": [
+    "repository_candidate != workflow_executed",
+    "prepared_request != ARM_What-If",
+    "preflight_passed != deployment_authorized",
+    "retail_estimate != actual_cost",
+    "failed_preflight != authorization_to_retry"
+  ]
+}
