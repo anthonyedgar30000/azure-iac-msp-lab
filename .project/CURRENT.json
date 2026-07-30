@@ -1,0 +1,28 @@
+{
+  "schema_version": "project.current-selector.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:15:00-04:00",
+  "selection_rule": "These versioned files are authoritative for current operations. Legacy unversioned and v2 files remain immutable compatibility records unless a newer selector supersedes this file.",
+  "authoritative_current_reality": ".project/current-reality-v3.json",
+  "authoritative_state_index": ".project/state-index-v12.json",
+  "authoritative_handoff": ".project/handoffs/current-state-v2.md",
+  "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
+  "latest_repository_sync_reconciliation": ".project/reconciliations/post-pr220-canonical-sync-20260729.json",
+  "compatibility_records": [
+    {
+      "path": ".project/current-reality-v2.json",
+      "status": "historical_compatibility_only",
+      "boundary": "authoritative overlay through PR 218 before PR 220 merged"
+    },
+    {
+      "path": ".project/state-index.json",
+      "status": "historical_compatibility_only",
+      "boundary": "state-index v11 with preserved historical repository selectors"
+    },
+    {
+      "path": ".project/handoffs/current-state.md",
+      "status": "historical_compatibility_only",
+      "boundary": "post-PR212 handoff retained for deterministic validators"
+    }
+  ]
+}
