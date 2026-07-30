@@ -132,9 +132,15 @@ class AzureAiGoLiveRun7Tests(unittest.TestCase):
         self.assertIn("infra/azure-ai-existing-account-model-only.bicep", self.static_workflow)
         self.assertIn("id-token: none", self.static_workflow)
 
-    def test_current_selector_remains_time_bounded_until_terminal_reconciliation(self) -> None:
-        self.assertEqual(self.selector["authoritative_current_reality"], ".project/current-reality-v3.json")
-        self.assertEqual(self.selector["authoritative_state_index"], ".project/state-index-v12.json")
+    def test_run7_selector_boundary_remains_historical_after_later_authority(self) -> None:
+        compatibility = {
+            item["path"]: item["status"]
+            for item in self.selector["compatibility_records"]
+        }
+        self.assertIn(".project/current-reality-v3.json", compatibility)
+        self.assertIn(".project/state-index-v12.json", compatibility)
+        self.assertTrue("historical" in compatibility[".project/current-reality-v3.json"])
+        self.assertTrue("historical" in compatibility[".project/state-index-v12.json"])
         self.assertIn("terminal reconciliation must supersede", self.handoff)
 
     def test_contract_matches_existing_only_architecture(self) -> None:
