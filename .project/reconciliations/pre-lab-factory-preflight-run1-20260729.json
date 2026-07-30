@@ -1,0 +1,80 @@
+{
+  "schema_version": "project.reconciliation.pre-lab-factory-preflight-run1.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:50:00-04:00",
+  "source_instruction": "Proceed",
+  "observation_boundary": "Live GitHub was observed through main at 0b6fa63d86ae52119b63ef6c9421c8d13215cb59 and merged PR 223. No fresh Azure query occurred while creating this repository candidate.",
+  "repository": {
+    "base_main": "0b6fa63d86ae52119b63ef6c9421c8d13215cb59",
+    "latest_merged_pull_request": 223,
+    "open_pull_requests_before_branch": [],
+    "branch": "agent/lab-factory-preflight-run1",
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "intended_architecture": {
+    "profile": "servicetracer-demo-api@1.0.0",
+    "environment": "test",
+    "region": "westus2",
+    "scope": "Azure for Students subscription and planned rg-st-demo-api-test-westus2 only",
+    "identity": "existing GitHub OIDC workload identity in environment azure-lab",
+    "network_paths": [
+      "GitHub runner to Azure Resource Manager",
+      "GitHub runner to Azure Retail Prices API",
+      "GitHub runner to the existing ServiceTracer health endpoint"
+    ],
+    "operation": "read-only Azure observations, ARM validation, and FullResourcePayloads What-If",
+    "deployment": false
+  },
+  "preflight_checks": [
+    "exact repository commit",
+    "subscription name and enabled state",
+    "provider registration state without registration",
+    "existing ServiceTracer dependency health",
+    "target resource-group absence",
+    "DNS label availability",
+    "VM SKU restrictions",
+    "VM-family and regional vCPU quota",
+    "Standard public IPv4 quota",
+    "CAD retail estimate under CAD 5.00",
+    "deterministic prepared request",
+    "subscription-scope ARM validation",
+    "fail-closed What-If change and scope classification"
+  ],
+  "security_controls": [
+    "exact one-attempt request",
+    "no workflow_dispatch trigger",
+    "GITHUB_RUN_ATTEMPT must equal 1",
+    "no provider registration or Azure create/delete commands",
+    "ephemeral SSH key with private key removed before evidence upload",
+    "subscription, tenant, and dependency public IP redaction",
+    "protected artifact with SHA-256 manifest"
+  ],
+  "cost": {
+    "accepted_ceiling_CAD": 5.0,
+    "estimate_method": "eight VM hours at current CAD retail price plus CAD 1.50 conservative incidental allowance",
+    "repository_cost_delta_CAD": 0,
+    "actual_cost_observed": false,
+    "deployment_spend_authorized": false
+  },
+  "failure_and_recovery": {
+    "fail_closed": true,
+    "authorization_consumed_on_terminal_run": true,
+    "automatic_retry": false,
+    "manual_rerun": false,
+    "rollback": "not applicable because no Azure mutation is available",
+    "cleanup": "not applicable because no Azure resource is created"
+  },
+  "expected_evidence": [
+    "request and exact commit",
+    "redacted Azure context",
+    "provider states",
+    "dependency observation",
+    "prepared plan",
+    "resource-group and DNS state",
+    "SKU, quota, and cost assessment",
+    "redacted ARM validation and What-If",
+    "What-If assessment",
+    "terminal summary and SHA-256 manifest"
+  ],
+  "next_gate": "Exact-head CI, final live-main recheck, merge, one preflight execution, and terminal evidence reconciliation. Deployment remains a separate decision."
+}
