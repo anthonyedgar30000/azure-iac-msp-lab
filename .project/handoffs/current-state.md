@@ -178,6 +178,7 @@ independent planner digest: 7aae2cff0df757a4b436c5b87507162624813e64bd32946bada8
 independent SKU restriction: NotAvailableForSubscription
 independent VM family: standardBasv2Family
 typed readiness control: PR #73
+historical lifecycle marker: Draft PR #186 / superseded; not a current open workstream
 GitHub Pages publication authorized: false
 not_observed != false
 ```
@@ -191,6 +192,7 @@ active Azure MCP current-reality authorization: none
 active Azure AI activation authorization: none
 MCP run-1 rerun authorized: false
 workflow dispatch or rerun authorized: false
+workflow dispatch or rerun: unauthorized
 Azure authentication or query authorized: false
 Azure mutation authorized: false
 RBAC mutation authorized: false
