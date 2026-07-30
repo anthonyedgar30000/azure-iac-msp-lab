@@ -1,12 +1,14 @@
 {
   "schema_version": "project.state-index.v13",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-30T00:08:00-04:00",
+  "recorded_at": "2026-07-30T00:22:00-04:00",
   "selector": ".project/CURRENT.json",
   "authoritative_current_reality": ".project/current-reality-v4.json",
   "authoritative_handoff": ".project/handoffs/current-state-v3.md",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
   "latest_repository_sync_reconciliation": ".project/reconciliations/post-pr251-canonical-sync-20260730.json",
+  "latest_operational_overlay": ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json",
+  "latest_servicetracer_terminal_reconciliation": ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json",
   "latest_azure_ai_terminal_reconciliation": ".project/reconciliations/azure-ai-go-live-run8-terminal-20260730.json",
   "prior_azure_ai_trigger_sync": ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json",
   "servicetracer_connector_blocker": ".project/reconciliations/servicetracer-demo-api-plan-run1-connector-event-blocked-20260729.json",
@@ -22,7 +24,8 @@
         "conclusion": "success"
       }
     },
-    "open_pull_requests_observed": [],
+    "open_pull_requests_before_sync": [],
+    "open_pull_requests_current": [252],
     "local_working_tree": "not_observed_connector_backed"
   },
   "domain_state": {
@@ -34,10 +37,12 @@
       "canonical_planner": ".github/workflows/servicetracer-demo-api-subproject-plan.yml",
       "github_environment": "azure-api-payg",
       "subscription_boundary": "dual_subscription",
+      "planning_dispatch_verified": true,
       "arm_validation_capability": true,
       "arm_what_if_capability": true,
       "deployment_capability": false,
-      "live_planning_dispatch_verified": false,
+      "arm_validation_verified": false,
+      "arm_what_if_verified": false,
       "azure_deployment_verified": false,
       "service_validation_verified": false,
       "cleanup_verified": false,
@@ -45,19 +50,19 @@
     },
     "servicetracer_planning_run1": {
       "authorization": ".project/deployment-requests/servicetracer-demo-api-plan-run1.json",
-      "tracking_issue": 232,
-      "status": "authorized_pending_direct_manual_dispatch",
+      "terminal_reconciliation": ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json",
+      "terminal_evidence": ".project/evidence/servicetracer-demo-api-plan-run1-terminal-summary.json",
+      "status": "consumed_terminal_failure",
       "attempt_limit": 1,
-      "accepted_dispatches_observed": 0,
-      "remaining_authorized_dispatches": 1,
-      "connector_dispatch_paths_closed_pull_request": 251,
-      "connector_dispatch_paths_present": false,
-      "fresh_human_authorization_comment_id": 5126316629,
-      "direct_manual_dispatch_authorized": true,
-      "dispatch_performed": false,
-      "authority_consumed": false,
-      "azure_authentication_or_query_observed": false,
-      "arm_validation_or_what_if_observed": false,
+      "attempts_observed": 1,
+      "workflow_run_id": 30513630134,
+      "artifact_id": 8748027710,
+      "failure_stage": "validate_main_bound_dual_subscription_read_only_authority",
+      "failure_classification": "confirmation_input_mismatch",
+      "authority_consumed": true,
+      "azure_login_started": false,
+      "arm_validation_performed": false,
+      "arm_what_if_performed": false,
       "azure_mutation_or_deployment_observed": false,
       "deployment_authorized": false,
       "rerun_authorized": false
@@ -102,7 +107,7 @@
     "azure_mcp_current_reality": null,
     "azure_ai_activation": null,
     "lab_factory_deployment": null,
-    "servicetracer_demo_api_planning": ".project/deployment-requests/servicetracer-demo-api-plan-run1.json"
+    "servicetracer_demo_api_planning": null
   },
   "consumed_authorities": {
     "azure_mcp_current_reality_run1": true,
@@ -111,6 +116,8 @@
     "azure_ai_go_live_run7": true,
     "azure_ai_go_live_run8": true,
     "azure_ai_go_live_run8_rerun_authorized": false,
+    "servicetracer_demo_api_plan_run1": true,
+    "servicetracer_demo_api_plan_run1_rerun_authorized": false,
     "correlation_identity_run1": true
   },
   "compatibility_lineage": [
@@ -135,16 +142,14 @@
       "authoritative_for_current_operations": false
     }
   ],
-  "selection_rule": "Read .project/CURRENT.json first. Resolve v4 current reality, v13 state index, and v3 handoff. Re-query live GitHub before writes or merge. Azure AI run 8 is consumed and not rerunnable. The only active operational authorization is one direct manual ServiceTracer planning dispatch. Planning does not authorize deployment.",
+  "selection_rule": "Read .project/CURRENT.json first. Resolve v4 current reality, v13 state index, and v3 handoff. Re-query live GitHub before writes or merge. Azure AI run 8 and ServiceTracer planning run 1 are consumed and not rerunnable. No operational authorization remains active.",
   "claim_boundaries": [
-    "declared_in_code != deployed_in_azure",
-    "human_authority_recorded != workflow_dispatched",
-    "connector_paths_closed != planning_authority_consumed",
-    "planning_succeeded != deployment_authorized",
-    "ARM_What_If != Azure_mutation",
+    "workflow_dispatch_accepted != authority_validation_passed",
+    "authority_consumed != Azure_login_started",
+    "confirmation_mismatch != Azure_preflight_failure",
+    "planning_attempt_failed != deployment_attempted",
     "Azure_login_succeeded != Azure_AI_activation_succeeded",
     "required_direct_role_missing != all_effective_access_absent",
-    "run8_target != separately_verified_gpt5_runtime",
     "estimated_cost != actual_cost",
     "not_observed != false"
   ]
