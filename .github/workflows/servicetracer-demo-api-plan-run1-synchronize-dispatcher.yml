@@ -1,8 +1,8 @@
-name: One-shot ServiceTracer planning run 1 synchronize recovery
+name: One-shot ServiceTracer planning run 1 generation-3 recovery
 
 on:
   pull_request_target:
-    types: [synchronize]
+    types: [opened]
     branches: [main]
     paths:
       - '.project/triggers/servicetracer-demo-api-plan-run1.json'
@@ -20,20 +20,20 @@ concurrency:
 env:
   AUTHORIZATION_FILE: .project/deployment-requests/servicetracer-demo-api-plan-run1.json
   TRIGGER_FILE: .project/triggers/servicetracer-demo-api-plan-run1.json
-  ARTIFACT_DIR: servicetracer-demo-api-plan-run1-synchronize-evidence
+  ARTIFACT_DIR: servicetracer-demo-api-plan-run1-generation3-evidence
   CONSUMED_MARKER: '<!-- servicetracer-demo-api-plan-run1-consumed -->'
   GH_TOKEN: ${{ github.token }}
 
 jobs:
   dispatch-observe-and-reconcile:
-    name: Dispatch the ratified planner after missed opened event
+    name: Dispatch the ratified planner from one hardened trigger
     if: >-
       github.repository == 'anthonyedgar30000/azure-iac-msp-lab' &&
-      github.event.action == 'synchronize' &&
-      github.event.pull_request.number == 238 &&
+      github.event.action == 'opened' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login == 'anthonyedgar30000' &&
       github.base_ref == 'main' &&
-      github.head_ref == 'trigger/servicetracer-demo-api-plan-run1'
+      github.head_ref == 'trigger/servicetracer-demo-api-plan-run1-v3'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -68,15 +68,18 @@ jobs:
             .schema_version == "project.servicetracer-demo-api-plan-trigger.v1" and
             .attempt_id == "servicetracer-demo-api-plan-run1" and
             .tracking_issue == 232 and
-            .authorized_by == "user instruction: Proceed auth granted" and
+            .authorized_by == "user instruction: Proceed" and
             .admission_pull_request == 235 and
             .prior_trigger_pull_request == 236 and
             .prior_trigger_dispatch_observed == false and
+            .prior_recovery_pull_request == 238 and
+            .prior_recovery_dispatch_observed == false and
             .trigger_generation == 3 and
             .dispatch_requested == true and
             .merge_authorized == false and
             .retry_authorized == false and
-            .synchronize_recovery_requested == true and
+            .opened_recovery_requested == true and
+            (.dispatcher_main | test("^[0-9a-f]{40}$")) and
             .boundary.azure_mutation_authorized == false and
             .boundary.deployment_authorized == false and
             .boundary.rollback_authorized == false and
@@ -126,9 +129,8 @@ jobs:
           reviewed_main="$(jq -r '.repository_boundary.base_commit' "$AUTHORIZATION_FILE")"
           trigger_dispatcher_main="$(jq -r '.dispatcher_main' "$ARTIFACT_DIR/trigger.json")"
           [[ "$reviewed_main" =~ ^[0-9a-f]{40}$ ]]
-          [[ "$trigger_dispatcher_main" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$trigger_dispatcher_main" == "$EVENT_BASE_SHA" ]]
           git merge-base --is-ancestor "$reviewed_main" "$dispatcher_main_sha"
-          git merge-base --is-ancestor "$trigger_dispatcher_main" "$dispatcher_main_sha"
           git cat-file -e "${dispatcher_main_sha}:$AUTHORIZATION_FILE"
           git cat-file -e "${dispatcher_main_sha}:.github/workflows/servicetracer-demo-api-subproject-plan.yml"
           git cat-file -e "${dispatcher_main_sha}:.github/workflows/servicetracer-demo-api-plan-run1-synchronize-dispatcher.yml"
@@ -319,11 +321,11 @@ Protected evidence was copied into the dispatcher artifact. No deployment, rollb
             | xargs -0 -r sha256sum \
             > "$ARTIFACT_DIR/artifact-manifest.sha256"
 
-      - name: Upload synchronize dispatcher evidence
+      - name: Upload generation-3 dispatcher evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: servicetracer-demo-api-plan-run1-synchronize-${{ github.run_id }}-${{ github.run_attempt }}
+          name: servicetracer-demo-api-plan-run1-generation3-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.ARTIFACT_DIR }}
           if-no-files-found: error
           retention-days: 30
