@@ -1,0 +1,88 @@
+{
+  "schema_version": "project.azure-ai-go-live-terminal-reconciliation.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T23:41:00-04:00",
+  "attempt_id": "azure-ai-go-live-run8",
+  "status": "consumed_terminal_failure",
+  "source_instruction": "Fix and proceed",
+  "repository": {
+    "source_pull_request": 237,
+    "reviewed_source_head": "c6b95f799f467da95adeb4ed0e815ccd5501171f",
+    "execution_commit": "798486cb9e7c20fcf7fe508314317605dd4100ba",
+    "current_main_at_reconciliation_start": "8387c44aa4b82ae77cf32f53053187488d13d6ba"
+  },
+  "workflow": {
+    "run_id": 30510660758,
+    "attempt": 1,
+    "job_id": 90769840287,
+    "conclusion": "failure",
+    "artifact_id": 8746964307,
+    "artifact_name": "azure-ai-go-live-run8-30510660758-1",
+    "artifact_digest": "sha256:e05dccbc1618e052f905f12f03d3576a05357bdf6c298d380a140f3ecef25f51",
+    "promoted_terminal_evidence": ".project/evidence/azure-ai-go-live-run8-terminal-summary.json",
+    "promoted_terminal_evidence_sha256": "sha256:572489ee1380b239b4cd229ad1d99ef8aeb2e9831ee46366ed0b4664d4e417b7"
+  },
+  "result": {
+    "failure_stage": "existing_direct_role_validation",
+    "failure_classification": "required_direct_account_scoped_inference_role_missing",
+    "required_role": "Cognitive Services OpenAI User",
+    "required_role_definition_id": "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd",
+    "direct_account_scoped_matches": 0,
+    "direct_account_role_verified": false,
+    "effective_inference_access_verified": false
+  },
+  "observed_azure": {
+    "subscription_name": "Azure for Students",
+    "subscription_state": "Enabled",
+    "provider_registration": "Microsoft.CognitiveServices Registered",
+    "resource_group": "rg-ai-msp-dev-eastus",
+    "resource_group_location": "eastus",
+    "resource_group_provisioning": "Succeeded",
+    "account": "oai-msp-anthony-dev-eastus",
+    "account_kind": "OpenAI",
+    "account_sku": "S0",
+    "account_provisioning": "Succeeded",
+    "account_public_network_access": "Enabled",
+    "account_disable_local_auth": null,
+    "tenant_context_freshly_observed": false,
+    "actual_cost_freshly_observed": false,
+    "quota_freshly_observed": false
+  },
+  "operation_boundary": {
+    "deployment_inventory_queried": false,
+    "model_listing_queried": false,
+    "model_capacity_queried": false,
+    "arm_what_if_performed": false,
+    "azure_mutations_performed": false,
+    "deployment_started": false,
+    "account_hardening_started": false,
+    "model_request_performed": false,
+    "model_tokens_consumed": 0,
+    "endpoint_live": false,
+    "separate_verified_gpt5_runtime_modified": false
+  },
+  "authority": {
+    "authorization_consumed": true,
+    "active_azure_ai_activation_authorization": null,
+    "workflow_rerun_authorized": false,
+    "new_azure_ai_attempt_authorized": false,
+    "rbac_mutation_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "failure_and_rollback": {
+    "failure_behavior": "Stop before mutation and preserve protected evidence.",
+    "azure_rollback": "Not applicable because no Azure mutation occurred.",
+    "azure_cleanup": "Not applicable because no Azure resource was created, updated, or deleted.",
+    "repository_repair": "A later attempt must first establish the exact direct account-scoped inference role through separately authorized identity administration."
+  },
+  "canonical_distinctions": [
+    "role_query_completed != required_role_present",
+    "required_direct_role_missing != all_effective_access_absent",
+    "Azure_login_succeeded != Azure_AI_activation_succeeded",
+    "account_exists != deployment_exists",
+    "no_mutation != no_observation",
+    "run8_consumed != run9_authorized",
+    "separate_verified_gpt5_runtime != run8_target"
+  ]
+}
