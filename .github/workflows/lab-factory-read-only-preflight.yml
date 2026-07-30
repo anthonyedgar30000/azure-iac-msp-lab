@@ -111,13 +111,13 @@ jobs:
           parameters = {
               'dnsLabel': f"stpf-{reviewed[:12]}",
               'allowedOrigin': 'https://example.invalid',
-              'backendTransactionUrl': 'https://example.invalid/api/demo/run',
+              'backendTransactionUrl': 'https://example.invalid/transaction',
               'adminSshPublicKey': Path(os.environ['PUBLIC_KEY_FILE']).read_text(encoding='utf-8').strip(),
               'sourceRepository': 'https://github.com/anthonyedgar30000/azure-iac-msp-lab.git',
               'sourceRef': reviewed,
               'installerUri': (
                   'https://raw.githubusercontent.com/anthonyedgar30000/'
-                  f'azure-iac-msp-lab/{reviewed}/workloads/servicetracer-demo-api/install.sh'
+                  f'azure-iac-msp-lab/{reviewed}/workloads/servicetracer-demo-api/scripts/install.sh'
               ),
           }
           path = Path(os.environ['PARAMETER_FILE'])
