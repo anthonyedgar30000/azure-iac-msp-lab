@@ -1,14 +1,15 @@
 {
   "schema_version": "project.reconciliation.lab-factory-dual-subscription-planner-binding.v1",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-29T22:35:00-04:00",
+  "recorded_at": "2026-07-29T22:40:00-04:00",
   "source_instruction": "Proceed",
-  "observation_boundary": "Live GitHub was observed through main at ced77a61d278f66f0f1be477164e5167b08fcc7b and merged PR 228 before this branch. No Azure authentication, query, ARM validation, ARM What-If, workflow dispatch, mutation, deployment, cleanup, model call, remote MCP connection, or ChatGPT connection was performed by this repository increment.",
+  "observation_boundary": "Live GitHub was observed through main at b81bd342ca59d51ee155c0e69cce9dbe19d70a14 and merged PR 229 before this exact candidate was rooted. PR 229 changed only Azure AI terminal and selector state and did not overlap this increment. No Azure authentication, query, ARM validation, ARM What-If, workflow dispatch, mutation, deployment, cleanup, model call, remote MCP connection, or ChatGPT connection was performed by this repository increment.",
   "repository": {
-    "base_main": "ced77a61d278f66f0f1be477164e5167b08fcc7b",
-    "latest_merged_pull_request": 228,
+    "base_main": "b81bd342ca59d51ee155c0e69cce9dbe19d70a14",
+    "latest_merged_pull_request": 229,
     "open_pull_requests_before_branch": [],
-    "branch": "agent/bind-lab-factory-dual-subscription-planner",
+    "branch": "agent/bind-lab-factory-dual-subscription-planner-v2",
+    "candidate_head": "resolved_after_final_commit",
     "local_working_tree": "not_observed_connector_backed"
   },
   "finding": {
