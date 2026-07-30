@@ -13,6 +13,7 @@ from lab_factory.catalog import load_catalog, prepare_lab_plan
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+EXPECTED_WORKFLOW = ".github/workflows/servicetracer-demo-api-subproject-plan.yml"
 
 
 class AzureMcpLabFactoryToolsTests(unittest.TestCase):
@@ -35,12 +36,23 @@ class AzureMcpLabFactoryToolsTests(unittest.TestCase):
         result = list_lab_profiles_payload(repository_root=REPOSITORY_ROOT)
         self.assertEqual(result["schema_version"], "lab-factory.profile-list.v1")
         self.assertEqual([item["id"] for item in result["profiles"]], ["servicetracer-demo-api"])
+        profile = result["profiles"][0]
+        planning = profile["planning"]
+        self.assertEqual(planning["workflow_path"], EXPECTED_WORKFLOW)
+        self.assertEqual(planning["github_environment"], "azure-api-payg")
+        self.assertEqual(planning["dispatch_mode"], "manual_only")
+        self.assertEqual(planning["subscription_boundary"], "dual_subscription")
+        self.assertEqual(planning["provider_validation_level"], "ProviderNoRbac")
+        self.assertTrue(planning["includes_arm_validation"])
+        self.assertTrue(planning["includes_arm_what_if"])
+        self.assertFalse(planning["deployment_command_present"])
         self.assertFalse(result["execution"]["azure_queries_performed"])
         self.assertFalse(result["execution"]["azure_mutations_performed"])
+        self.assertFalse(result["execution"]["workflow_dispatch_performed"])
         self.assertFalse(result["execution"]["deployment_authorized"])
         self.assertFalse(result["execution"]["cleanup_authorized"])
 
-    def test_prepare_tool_matches_direct_planner(self) -> None:
+    def test_prepare_tool_preserves_direct_planner_and_adds_binding(self) -> None:
         parameters = self._complete_parameters()
         tool_result = prepare_lab_request_payload(
             profile_id="servicetracer-demo-api",
@@ -61,8 +73,59 @@ class AzureMcpLabFactoryToolsTests(unittest.TestCase):
             parameters=parameters,
             repository_root=REPOSITORY_ROOT,
         )
-        self.assertEqual(tool_result, direct_result)
+
+        self.assertEqual(tool_result["base_plan_digest"], direct_result["plan_digest"])
+        for key in (
+            "schema_version",
+            "request",
+            "resolved_profile",
+            "deployment",
+            "gates",
+            "execution",
+            "next_gate",
+            "claim_boundaries",
+        ):
+            self.assertEqual(tool_result[key], direct_result[key], key)
+
         self.assertEqual(tool_result["deployment"]["operation"], "prepare_only")
+        planning = tool_result["planning"]
+        self.assertEqual(planning["workflow_path"], EXPECTED_WORKFLOW)
+        self.assertEqual(planning["github_environment"], "azure-api-payg")
+        self.assertEqual(planning["dispatch_mode"], "manual_only")
+        self.assertFalse(planning["workflow_dispatch_performed"])
+        self.assertEqual(planning["subscription_boundary"], "dual_subscription")
+        self.assertEqual(
+            planning["dependency_subscription_role"],
+            "azure_for_students_read_only_dependency",
+        )
+        self.assertEqual(
+            planning["target_subscription_role"],
+            "pay_as_you_go_planning_only_target",
+        )
+        self.assertEqual(planning["provider_validation_level"], "ProviderNoRbac")
+        self.assertTrue(planning["includes_arm_validation"])
+        self.assertTrue(planning["includes_arm_what_if"])
+        self.assertFalse(planning["deployment_command_present"])
+        self.assertEqual(
+            planning["derived_non_secret_inputs"],
+            {
+                "environment": "test",
+                "location": "westus2",
+                "prefix": "mst",
+                "dependency_resource_group": "rg-servicetracer-test-westus2",
+                "vm_size": "Standard_F1als_v7",
+            },
+        )
+        self.assertEqual(
+            planning["required_human_input_names"],
+            ["dns_label", "allowed_origin", "maximum_monthly_cost_cad"],
+        )
+        self.assertEqual(
+            planning["confirmation_pattern"],
+            "PLAN-DEMO-API-SUBPROJECT:test:<dns-label>",
+        )
+        self.assertFalse(planning["live_subscription_state_observed"])
+        self.assertFalse(planning["dispatch_authorized"])
         self.assertFalse(tool_result["execution"]["azure_queries_performed"])
         self.assertFalse(tool_result["execution"]["azure_mutations_performed"])
         self.assertFalse(tool_result["execution"]["deployment_authorized"])
