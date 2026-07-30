@@ -1,0 +1,92 @@
+{
+  "calls": {
+    "list_lab_profiles": {
+      "execution": {
+        "azure_mutations_performed": false,
+        "azure_queries_performed": false,
+        "cleanup_authorized": false,
+        "deployment_authorized": false
+      },
+      "is_error": false,
+      "profile_ids": [
+        "servicetracer-demo-api"
+      ],
+      "release_states": [
+        "candidate"
+      ],
+      "schema_version": "lab-factory.profile-list.v1"
+    },
+    "prepare_lab_request": {
+      "execution": {
+        "azure_mutations_performed": false,
+        "azure_queries_performed": false,
+        "cleanup_authorized": false,
+        "deployment_authorized": false
+      },
+      "explicit_deployment_authorization_required": true,
+      "is_error": false,
+      "missing_required_parameters": [],
+      "next_gate": "preflight_required",
+      "operation": "prepare_only",
+      "plan_digest": "sha256:4e9a858383ab78e2fef896421be4c65f122484394667d332bc6c0dea51e3bb71",
+      "ready_for_preflight": true,
+      "request": {
+        "environment": "test",
+        "location": "westus2",
+        "profile_id": "servicetracer-demo-api",
+        "profile_version": "1.0.0",
+        "request_id": "local-mcp-probe-001",
+        "ttl_hours": 6
+      },
+      "resource_group": "rg-st-demo-api-test-westus2",
+      "schema_version": "lab-factory.plan.v1",
+      "what_if_required": true
+    }
+  },
+  "claim_boundaries": [
+    "local_MCP_protocol_call_verified != ChatGPT_connected",
+    "profile_listed != released_lab",
+    "prepared_request != ARM_WhatIf",
+    "prepared_request != deployment_authorized",
+    "allowed_location != live_capacity_available",
+    "parameter_values_transmitted_to_tool != parameter_values_returned"
+  ],
+  "negative_evidence": {
+    "arm_what_if_performed": false,
+    "azure_authentication_performed": false,
+    "azure_credentials_forwarded_to_server": false,
+    "azure_mutations_performed": false,
+    "azure_queries_performed": false,
+    "chatgpt_connection_configured": false,
+    "cleanup_authorized": false,
+    "cleanup_performed": false,
+    "deployment_authorized": false,
+    "deployment_performed": false,
+    "get_current_reality_called": false,
+    "model_call_performed": false,
+    "remote_mcp_endpoint_deployed": false
+  },
+  "protocol": {
+    "initialized": true,
+    "protocol_version": "2025-11-25",
+    "server_name": "Azure IaC MSP Lab Assistant",
+    "server_version": "1.24.0"
+  },
+  "receipt_digest": "sha256:70f236ea8d17b96d8586845a96f2cff09e02fc08888c78554c3d41137a07de8f",
+  "repository": {
+    "head": "d2cd7e68a6dd954d5c114b827817a1d866827ca3",
+    "working_tree_clean": true
+  },
+  "schema_version": "azure-mcp.local-client-probe.v1",
+  "tool_inventory": [
+    "get_current_reality",
+    "list_lab_profiles",
+    "prepare_lab_request"
+  ],
+  "transport": {
+    "network_listener_created": false,
+    "remote_endpoint_used": false,
+    "server_module": "azure_mcp_reality.server",
+    "type": "stdio_subprocess"
+  }
+}
