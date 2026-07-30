@@ -83,8 +83,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Check out exact workflow commit
+      - name: Check out exact source commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -193,7 +195,7 @@ jobs:
               ).read_text(encoding="utf-8")
           )
           assert receipt["schema_version"] == "azure-mcp.local-client-probe.v1"
-          assert receipt["repository"]["head"] == "${{ github.sha }}"
+          assert receipt["repository"]["head"] == "${{ github.event.pull_request.head.sha || github.sha }}"
           assert receipt["transport"]["type"] == "stdio_subprocess"
           assert receipt["transport"]["network_listener_created"] is False
           assert receipt["calls"]["list_lab_profiles"]["profile_ids"] == [
