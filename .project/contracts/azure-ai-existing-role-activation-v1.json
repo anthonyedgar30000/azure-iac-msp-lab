@@ -1,0 +1,99 @@
+{
+  "schema_version": "project.azure-ai-existing-role-activation.v1",
+  "status": "active_repository_candidate",
+  "attempt_id": "azure-ai-go-live-run7",
+  "objective": "Complete the original East US Azure OpenAI account by verifying the pre-existing direct inference role, deploying one bounded model, disabling local key authentication, and proving one Entra-authenticated response.",
+  "architecture": {
+    "subscription": "Azure for Students",
+    "resource_group": "rg-ai-msp-dev-eastus",
+    "existing_account": "oai-msp-anthony-dev-eastus",
+    "model_deployment": "gpt-41-mini-msp-dev",
+    "model": "gpt-4.1-mini",
+    "model_version": "2025-04-14",
+    "deployment_sku": "GlobalStandard",
+    "capacity": 1,
+    "client": "GitHub-hosted runner for one verification request",
+    "authentication": "Microsoft Entra bearer token",
+    "template": "infra/azure-ai-existing-account-model-only.bicep",
+    "resource_group_creation_available": false,
+    "account_creation_available": false,
+    "role_assignment_creation_available": false
+  },
+  "dependencies": {
+    "resource_group_preexists": true,
+    "account_preexists": true,
+    "direct_account_scoped_openai_user_role_preexists": true,
+    "microsoft_cognitive_services_registered": true,
+    "model_and_capacity_rechecked_at_runtime": true
+  },
+  "identity_and_permissions": {
+    "workflow_identity": "GitHub OIDC service principal from azure-lab",
+    "required_control_plane": [
+      "read the target resource group and account",
+      "run resource-group What-If",
+      "create or reconcile one model deployment",
+      "update account authentication settings"
+    ],
+    "required_data_plane_role": "Cognitive Services OpenAI User",
+    "required_role_scope": "exact Azure OpenAI account",
+    "role_creation_by_workflow": false
+  },
+  "network": {
+    "source": "GitHub-hosted runner",
+    "destination": "https://oai-msp-anthony-dev-eastus.openai.azure.com/openai/v1/responses",
+    "transport": "HTTPS",
+    "public_network_access": "Enabled",
+    "private_endpoint": false
+  },
+  "security": {
+    "local_api_key_authentication_disabled": true,
+    "api_key_use": false,
+    "direct_account_role_verified_before_mutation": true,
+    "secrets_persisted": false,
+    "one_non_sensitive_prompt": true,
+    "model_request_limit": 1,
+    "max_output_tokens": 32,
+    "automatic_retry": false,
+    "manual_rerun": false
+  },
+  "cost": {
+    "mode": "token-metered Global Standard",
+    "capacity": 1,
+    "verification_requests": 1,
+    "provisioned_throughput": false,
+    "actual_cost_known": false,
+    "quota_signal": "live regional model-capacity response"
+  },
+  "validation": {
+    "exact_subscription_name_and_state": true,
+    "exact_resource_group_and_account": true,
+    "direct_role_assignment": true,
+    "deployment_inventory": true,
+    "model_listing_and_lifecycle": true,
+    "regional_capacity": true,
+    "model_only_what_if": true,
+    "post_deployment_account_properties": true,
+    "post_deployment_model_properties": true,
+    "post_deployment_role_still_present": true,
+    "single_responses_api_call": true
+  },
+  "failure_rollback_cleanup": {
+    "pre_mutation_failure": "Stop with evidence and no Azure mutation.",
+    "post_deployment_failure": "Preserve state for inspection; no retry.",
+    "rollback": "Requires separate authority; likely delete only gpt-41-mini-msp-dev and explicitly decide whether to restore local auth.",
+    "cleanup": "Requires separate authority and verified absence of dependent clients."
+  },
+  "evidence": {
+    "protected_artifact": true,
+    "redacted_identifiers": true,
+    "sha256_manifest": true,
+    "terminal_summary": true
+  },
+  "canonical_distinctions": [
+    "portal_role_assignment != workflow_verified_role_assignment",
+    "role_assignment_exists != role_effective",
+    "model_deployment_exists != endpoint_verified",
+    "run7_original_account != separately_verified_gpt5_runtime",
+    "model_response_verified != demo_application_integrated"
+  ]
+}
