@@ -1,0 +1,69 @@
+{
+  "schema_version": "project.servicetracer-demo-api-plan-terminal-evidence.v1",
+  "project": "Azure IaC MSP Lab",
+  "attempt_id": "servicetracer-demo-api-plan-run1",
+  "recorded_at": "2026-07-30T00:22:00-04:00",
+  "source": {
+    "human_authorization_comment_id": 5126316629,
+    "authorization_instruction": "Proceed you have my authority.",
+    "workflow": ".github/workflows/servicetracer-demo-api-subproject-plan.yml",
+    "workflow_run_id": 30513630134,
+    "workflow_attempt": 1,
+    "job_id": 90778676285,
+    "head_branch": "main",
+    "head_sha": "09fe72e3a82ea6ae56e1e85fd9745c9940ed6c12",
+    "artifact_id": 8748027710,
+    "artifact_name": "servicetracer-demo-api-subproject-plan-30513630134-1",
+    "artifact_digest": "sha256:a3bb46d90bdff6329bcfe15f5b00b1f144b68b009724f9e912ca890ced9384d9",
+    "artifact_expires_at": "2026-08-29T04:20:55Z"
+  },
+  "terminal": {
+    "workflow_conclusion": "failure",
+    "status": "authority_validation_failed",
+    "failure_stage": "validate_main_bound_dual_subscription_read_only_authority",
+    "failure_classification": "confirmation_input_mismatch",
+    "authorization_consumed": true,
+    "rerun_authorized": false
+  },
+  "validation": {
+    "checked_out_head_verified": "09fe72e3a82ea6ae56e1e85fd9745c9940ed6c12",
+    "expected_confirmation": "PLAN-DEMO-API-SUBPROJECT:dev:st-demo-api-vm-aeg30000",
+    "provided_confirmation_persisted": false,
+    "exact_confirmation_match": false,
+    "repository_tests_started": false
+  },
+  "operation_boundary": {
+    "azure_login_started": false,
+    "dependency_subscription_query_started": false,
+    "target_subscription_query_started": false,
+    "provider_policy_quota_sku_inventory_queried": false,
+    "arm_validation_performed": false,
+    "arm_what_if_performed": false,
+    "azure_mutations_performed": false,
+    "deployment_started": false,
+    "cleanup_or_rollback_performed": false,
+    "model_request_performed": false
+  },
+  "artifact_observation": {
+    "downloaded": true,
+    "files": [
+      "artifact-manifest.sha256"
+    ],
+    "manifest_entry_count": 0,
+    "planning_summary_present": false,
+    "azure_evidence_present": false
+  },
+  "cost_and_quota": {
+    "azure_resource_cost_delta_from_run_cad": 0,
+    "actual_azure_cost_freshly_observed": false,
+    "quota_freshly_observed": false,
+    "planning_ceiling_cad": "25.00",
+    "planning_ceiling_is_spend_authority": false
+  },
+  "limitations": [
+    "The run failed before Azure authentication, so it establishes no fresh subscription, provider, policy, quota, SKU, dependency, resource-group, inventory, validation, or What-If state.",
+    "The actual supplied confirmation value is not persisted; only failure of the exact comparison is established.",
+    "The protected artifact contains only an empty manifest and no Azure planning evidence.",
+    "No raw subscription IDs, tenant IDs, credentials, tokens, or secrets are preserved."
+  ]
+}
