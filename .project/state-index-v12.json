@@ -1,0 +1,166 @@
+{
+  "schema_version": "project.state-index.v12",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:15:00-04:00",
+  "selector": ".project/CURRENT.json",
+  "authoritative_current_reality": ".project/current-reality-v3.json",
+  "authoritative_handoff": ".project/handoffs/current-state-v2.md",
+  "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
+  "latest_repository_sync_reconciliation": ".project/reconciliations/post-pr220-canonical-sync-20260729.json",
+  "repository_state": {
+    "default_branch": "main",
+    "observed_main": "8926a5b48db9bb7cb08523d337e43d20ba7ed69d",
+    "latest_merged_pull_request": 220,
+    "latest_merge_commit": "8926a5b48db9bb7cb08523d337e43d20ba7ed69d",
+    "latest_merged_source_head": "5d5e8cf2e9022204f3cd032945f777237c9d8f4d",
+    "exact_head_ci": {
+      "run_id": 30504354336,
+      "conclusion": "success"
+    },
+    "merge_commit_pr_triggered_workflows": "not_observed",
+    "open_pull_requests_observed": [
+      {
+        "pull_request": 221,
+        "title": "Verify Lab Factory tools through a local MCP client",
+        "state": "open_draft",
+        "base_sha": "8926a5b48db9bb7cb08523d337e43d20ba7ed69d",
+        "head_sha": "1aeead3a987dbe2af9af1c46c5ac1e85033991ce",
+        "changed_paths_overlap_this_increment": false,
+        "initial_exact_head_runs": {
+          "ci": {
+            "run_id": 30505375909,
+            "conclusion": "success"
+          },
+          "lab_factory_local_mcp_smoke": {
+            "run_id": 30505376018,
+            "conclusion": "success"
+          }
+        },
+        "terminal_evidence_reconciliation_observed": false,
+        "merged": false,
+        "authority_transferred": false
+      }
+    ],
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "domain_state": {
+    "azure_lab_factory_lite": {
+      "repository_implementation_merged": true,
+      "implementation_pull_request": 212,
+      "profile": "servicetracer-demo-api@1.0.0",
+      "profile_state": "candidate",
+      "location": "westus2",
+      "arm_what_if_verified": false,
+      "azure_deployment_verified": false,
+      "service_validation_verified": false,
+      "cleanup_verified": false,
+      "actual_cost_or_quota_verified": false
+    },
+    "azure_mcp_server": {
+      "implementation_pull_request": 218,
+      "server_version": "azure-mcp-reality/0.1.0",
+      "local_stdio_implemented": true,
+      "loopback_streamable_http_implemented": true,
+      "tool_inventory": [
+        "get_current_reality",
+        "list_lab_profiles",
+        "prepare_lab_request"
+      ],
+      "repository_only_tools": [
+        "list_lab_profiles",
+        "prepare_lab_request"
+      ],
+      "local_client_call_verified_on_main": false,
+      "concurrent_local_smoke_candidate_pull_request": 221,
+      "concurrent_candidate_initial_ci_succeeded": true,
+      "concurrent_candidate_terminal_evidence_observed": false,
+      "remote_endpoint_deployed": false,
+      "chatgpt_connection_verified": false,
+      "azure_openai_mcp_invocation_verified": false
+    },
+    "azure_mcp_current_reality_run1": {
+      "observed_at": "2026-07-29T12:01:23.289717Z",
+      "subscription_name": "Azure for Students",
+      "subscription_state": "Enabled",
+      "resource_group": "rg-ai-msp-dev-eastus",
+      "resource_group_location": "eastus",
+      "resource_group_provisioning": "Succeeded",
+      "resource_count": 1,
+      "openai_account": "oai-msp-anthony-dev-eastus",
+      "openai_account_kind": "OpenAI",
+      "openai_account_sku": "S0",
+      "observed_deployment_count": 0,
+      "authorization_consumed": true,
+      "rerun_authorized": false,
+      "azure_mutations_performed": false,
+      "secrets_returned": false
+    },
+    "azure_ai_verified_runtime": {
+      "base_url": "https://anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/",
+      "deployment": "gpt-5-mini",
+      "authentication": "Microsoft Entra bearer token",
+      "model_response_verified": true,
+      "arm_resource_identity_reconciled": false,
+      "azure_openai_mcp_invocation_verified": false,
+      "chatgpt_mcp_connection_verified": false
+    },
+    "servicetracer": {
+      "classification": "preserved_historical_operational_evidence",
+      "fresh_azure_or_runtime_query_during_this_sync": false,
+      "collector_health_previously_verified": true,
+      "twenty_transaction_scenario_previously_verified": true,
+      "exact_device_root_cause_claimed": false,
+      "current_power_state_verified": false,
+      "monitoring_alert_delivery_freshly_verified": false,
+      "effective_least_privilege_freshly_verified": false,
+      "actual_cost_freshly_verified": false,
+      "backup_or_recovery_freshly_verified": false
+    }
+  },
+  "active_authorizations": {
+    "deployment": null,
+    "azure_mcp_preflight": null,
+    "azure_mcp_current_reality": null,
+    "azure_ai_activation": null,
+    "lab_factory_deployment": null
+  },
+  "consumed_authorities": {
+    "azure_mcp_current_reality_run1": true,
+    "azure_mcp_current_reality_run1_rerun_authorized": false,
+    "azure_ai_go_live_run6": true,
+    "correlation_identity_run1": true
+  },
+  "compatibility_lineage": [
+    {
+      "path": ".project/current-reality-v2.json",
+      "classification": "historical_post_pr218_compatibility_snapshot",
+      "authoritative_for_current_operations": false
+    },
+    {
+      "path": ".project/state-index.json",
+      "classification": "historical_state_index_v11",
+      "authoritative_for_current_operations": false
+    },
+    {
+      "path": ".project/handoffs/current-state.md",
+      "classification": "historical_post_pr212_handoff",
+      "authoritative_for_current_operations": false
+    }
+  ],
+  "selection_rule": "Read .project/CURRENT.json first. Resolve the versioned v3 reality, v12 state index, and v2 handoff, then re-query live GitHub before writes or merge and obtain separately bounded authority before any Azure, workflow, model, MCP-client, deployment, rollback, or cleanup action.",
+  "claim_boundaries": [
+    "declared_in_code != deployed_in_azure",
+    "deployment_succeeded != service_validated",
+    "repository_watermark != fresh_Azure_observation",
+    "exact_head_CI_success != merge_commit_CI_observed",
+    "open_PR_initial_success != terminal_evidence_promoted",
+    "local_MCP_implementation != local_client_call_verified_on_main",
+    "local_client_call_verified != ChatGPT_connected",
+    "prepared_request != ARM_What-If",
+    "prepared_request != deployment_authorized",
+    "empty_observed_account_deployment_inventory != verified_runtime_absent_globally",
+    "verified_model_response != Azure_OpenAI_MCP_connection_verified",
+    "estimated_cost != actual_cost",
+    "not_observed != false"
+  ]
+}
