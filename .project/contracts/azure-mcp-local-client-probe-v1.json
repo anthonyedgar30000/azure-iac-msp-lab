@@ -2,17 +2,19 @@
   "schema_version": "project.contract.azure-mcp-local-client-probe.v1",
   "project": "Azure IaC MSP Lab",
   "workstream": "Azure MCP local Lab Factory client verification",
-  "recorded_at": "2026-07-29T21:12:00-04:00",
+  "recorded_at": "2026-07-29T21:35:00-04:00",
   "source_instruction": "Proceed",
-  "status": "implementation_and_exact_head_probe_pending",
+  "status": "terminal_verified_exact_source_evidence_promoted",
   "repository": {
     "name": "anthonyedgar30000/azure-iac-msp-lab",
     "base_branch": "main",
     "base_commit": "8926a5b48db9bb7cb08523d337e43d20ba7ed69d",
-    "latest_merged_pull_request": 220,
+    "latest_merged_pull_request_at_start": 220,
     "open_pull_requests_observed_before_branch": [],
     "implementation_branch": "agent/verify-local-mcp-lab-factory-client-v1",
-    "local_working_tree": "not_observed_connector_backed"
+    "pull_request": 222,
+    "exact_probed_source_head": "d2cd7e68a6dd954d5c114b827817a1d866827ca3",
+    "local_working_tree": "clean_in_exact_source_receipt"
   },
   "objective": "Prove through a real MCP stdio client session that the merged local server can list the bounded Lab Factory catalog and prepare one exact request while preserving every Azure preflight, deployment-authorization, validation, and cleanup gate.",
   "protocol_scope": {
@@ -23,13 +25,13 @@
       "list_lab_profiles",
       "prepare_lab_request"
     ],
-    "tools_authorized_for_probe": [
+    "tools_called": [
       "list_lab_profiles",
       "prepare_lab_request"
     ],
-    "get_current_reality_call_authorized": false,
-    "remote_transport_authorized": false,
-    "network_listener_authorized": false
+    "get_current_reality_called": false,
+    "remote_transport_used": false,
+    "network_listener_created": false
   },
   "exact_prepare_request": {
     "profile_id": "servicetracer-demo-api",
@@ -48,64 +50,81 @@
       "sourceRepository"
     ],
     "parameter_values_promoted": false,
-    "expected_resource_group": "rg-st-demo-api-test-westus2",
-    "expected_operation": "prepare_only",
-    "expected_next_gate": "preflight_required"
+    "resource_group": "rg-st-demo-api-test-westus2",
+    "operation": "prepare_only",
+    "ready_for_preflight": true,
+    "what_if_required": true,
+    "explicit_deployment_authorization_required": true,
+    "next_gate": "preflight_required",
+    "plan_digest": "sha256:4e9a858383ab78e2fef896421be4c65f122484394667d332bc6c0dea51e3bb71"
+  },
+  "verified_evidence": {
+    "workflow_run": 30505927462,
+    "workflow_job": 90755550858,
+    "workflow_conclusion": "success",
+    "artifact_id": 8745291415,
+    "artifact_archive_digest": "sha256:391e509d0f30f310251b2ba626ac68f54ab026e2cd908398c5fe092b301830a9",
+    "receipt_path": ".project/evidence/azure-mcp-local-client-probe.json",
+    "manifest_path": ".project/evidence/azure-mcp-local-client-probe.sha256",
+    "receipt_file_sha256": "1f1cf91c47fdd347f835894b2ac8a7c9fb37552170cddbee7d1805740d54ab81",
+    "manifest_matches_receipt": true,
+    "internal_receipt_digest": "sha256:70f236ea8d17b96d8586845a96f2cff09e02fc08888c78554c3d41137a07de8f",
+    "internal_receipt_digest_validated": true,
+    "parameter_values_present": false,
+    "secret_values_present": false
   },
   "identity_and_authority": {
     "new_Azure_identity": false,
     "Azure_credentials_forwarded_to_server": false,
-    "Azure_authentication_authorized": false,
-    "Azure_query_authorized": false,
-    "ARM_WhatIf_authorized": false,
-    "Azure_mutation_authorized": false,
+    "Azure_authentication_performed": false,
+    "Azure_query_performed": false,
+    "ARM_WhatIf_performed": false,
+    "Azure_mutation_performed": false,
     "deployment_authorized": false,
-    "RBAC_mutation_authorized": false,
-    "model_call_authorized": false,
-    "remote_MCP_deployment_authorized": false,
-    "ChatGPT_connection_authorized": false,
+    "deployment_performed": false,
+    "RBAC_mutation_performed": false,
+    "model_call_performed": false,
+    "remote_MCP_endpoint_deployed": false,
+    "ChatGPT_connection_configured": false,
     "cleanup_authorized": false,
-    "workflow_dispatch_or_rerun_authorized": false,
+    "cleanup_performed": false,
+    "workflow_dispatch_or_rerun_performed": false,
     "ordinary_pull_request_CI_authorized": true,
-    "artifact_upload_authorized": true
+    "artifact_promotion_authorized": true,
+    "merge_after_final_exact_head_CI_authorized": true
   },
   "security_controls": {
     "Azure_and_model_environment_variables_removed_from_server_subprocess": true,
-    "parameter_values_must_not_appear_in_receipt": true,
-    "tool_inventory_must_match_exactly": true,
-    "prepared_plan_must_preserve_WhatIf_gate": true,
-    "prepared_plan_must_preserve_explicit_deployment_authorization_gate": true,
-    "prepared_plan_must_report_zero_Azure_queries": true,
-    "prepared_plan_must_report_zero_Azure_mutations": true
-  },
-  "expected_evidence": {
-    "receipt_schema": "azure-mcp.local-client-probe.v1",
-    "workflow_artifact_name": "azure-mcp-local-client-probe",
-    "receipt_file": "azure-mcp-local-client-probe.json",
-    "manifest_file": "azure-mcp-local-client-probe.sha256",
-    "exact_source_head_required": true,
-    "artifact_promotion_requires_hash_verification": true
+    "parameter_values_absent_from_receipt": true,
+    "tool_inventory_matched_exactly": true,
+    "prepared_plan_preserved_WhatIf_gate": true,
+    "prepared_plan_preserved_explicit_deployment_authorization_gate": true,
+    "prepared_plan_reported_zero_Azure_queries": true,
+    "prepared_plan_reported_zero_Azure_mutations": true,
+    "exact_source_head_bound_in_receipt": true
   },
   "cost_and_quota": {
     "expected_recurring_Azure_resource_cost_delta_CAD": 0,
-    "model_tokens_authorized": 0,
+    "model_tokens_consumed": 0,
     "actual_Azure_cost_freshly_observed": false,
     "Azure_quota_freshly_observed": false
   },
   "failure_and_rollback": {
-    "failure_behavior": "Fail CI before merge and perform no cloud action.",
+    "failure_behavior": "Fail exact-head CI before merge and perform no cloud action.",
     "repository_rollback": "Close the pull request or revert its exact merge commit.",
-    "Azure_rollback": "not_applicable_no_Azure_action_authorized",
-    "cleanup": "Stop the local subprocess; no Azure cleanup exists."
+    "Azure_rollback": "not_applicable_no_Azure_action_performed",
+    "cleanup": "Local subprocess closed by the stdio context manager; no Azure cleanup exists."
   },
   "claim_boundaries": [
     "local_MCP_protocol_call_verified != ChatGPT_connected",
+    "local_MCP_protocol_call_verified != remote_MCP_endpoint_deployed",
     "profile_listed != released_lab",
     "prepared_request != ARM_WhatIf",
     "prepared_request != deployment_authorized",
     "allowed_location != live_capacity_available",
     "protocol_call_succeeded != Azure_service_validated",
+    "parameter_values_transmitted_to_tool != parameter_values_returned",
     "cleanup_defined != cleanup_verified"
   ],
-  "next_gate": "Run exact-head pull-request CI, promote the hash-verified local MCP probe artifact, update the terminal reconciliation, and rerun exact-head CI before merge."
+  "next_gate": "Run final exact-head CI with the promoted receipt and reconciliation, merge if still current, then refresh the canonical post-merge repository watermark. Any Azure preflight remains a new separately authorized operation."
 }
