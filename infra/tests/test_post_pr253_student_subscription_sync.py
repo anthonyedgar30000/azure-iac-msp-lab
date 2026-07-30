@@ -96,7 +96,7 @@ class PostPr253StudentSubscriptionSyncTests(unittest.TestCase):
         self.assertEqual(evidence["subscription_name"], "Azure for Students")
         self.assertEqual(evidence["subscription_state"], "Enabled")
         self.assertFalse(evidence["fresh_administrative_secret_inspection_performed"])
-        self.assertIn("does not authorize", evidence["claim_boundary"])
+        self.assertIn("authorize a new planner dispatch", evidence["claim_boundary"])
 
     def test_historical_plan_is_not_reclassified_as_current(self) -> None:
         historical = self.reality["domain_state"]["servicetracer_planning_run1_historical"]
