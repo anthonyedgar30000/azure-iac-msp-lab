@@ -8,20 +8,22 @@ ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = ROOT / ".github/workflows/servicetracer-demo-api-plan-run1-synchronize-dispatcher.yml"
 
 
-class ServiceTracerPlanRun1SynchronizeDispatcherTests(unittest.TestCase):
+class ServiceTracerPlanRun1Generation3DispatcherTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.workflow = WORKFLOW.read_text(encoding="utf-8")
 
-    def test_recovery_is_exactly_scoped_to_trigger_pr_synchronize(self) -> None:
+    def test_recovery_is_exactly_scoped_to_generation3_opened_event(self) -> None:
         workflow = self.workflow
         self.assertIn("pull_request_target:", workflow)
-        self.assertIn("types: [synchronize]", workflow)
-        self.assertIn("github.event.pull_request.number == 238", workflow)
+        self.assertIn("types: [opened]", workflow)
+        self.assertIn("github.event.action == 'opened'", workflow)
         self.assertIn("github.event.pull_request.head.repo.full_name == github.repository", workflow)
-        self.assertIn("trigger/servicetracer-demo-api-plan-run1", workflow)
+        self.assertIn("github.event.pull_request.user.login == 'anthonyedgar30000'", workflow)
+        self.assertIn("trigger/servicetracer-demo-api-plan-run1-v3", workflow)
         self.assertIn("trigger_generation == 3", workflow)
-        self.assertIn("synchronize_recovery_requested == true", workflow)
+        self.assertIn("opened_recovery_requested == true", workflow)
+        self.assertIn("prior_recovery_pull_request == 238", workflow)
 
     def test_write_token_never_checks_out_pull_request_code(self) -> None:
         workflow = self.workflow
