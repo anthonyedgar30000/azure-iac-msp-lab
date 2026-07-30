@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import unittest
@@ -10,6 +11,7 @@ from azure_mcp_reality.local_client_probe import run_probe
 
 ROOT = Path(__file__).resolve().parents[2]
 PROBE_PATH = ROOT / "azure_mcp_reality" / "local_client_probe.py"
+MCP_AVAILABLE = importlib.util.find_spec("mcp") is not None
 
 
 def _canonical_json(value):
@@ -17,6 +19,7 @@ def _canonical_json(value):
 
 
 class AzureMcpLocalClientProbeTests(unittest.IsolatedAsyncioTestCase):
+    @unittest.skipUnless(MCP_AVAILABLE, "pinned MCP SDK is installed only in the focused workflow")
     async def test_stdio_client_calls_only_repository_lab_factory_tools(self) -> None:
         receipt = await run_probe()
 
