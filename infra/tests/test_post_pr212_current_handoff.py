@@ -36,7 +36,10 @@ class PostPr212CurrentHandoffTests(unittest.TestCase):
             text,
         )
         self.assertNotIn("latest merged PR: #185", text)
-        self.assertNotIn("Draft PR #186 is concurrently open", text)
+        self.assertIn(
+            "historical lifecycle marker: Draft PR #186 / superseded; not a current open workstream",
+            text,
+        )
 
     def test_handoff_classifies_lab_factory_without_cloud_overclaim(self) -> None:
         text = HANDOFF.read_text(encoding="utf-8")
@@ -56,6 +59,7 @@ class PostPr212CurrentHandoffTests(unittest.TestCase):
         self.assertIn("PR #213 merged: false", text)
         self.assertIn("PR #213 authority inherited by this branch: false", text)
         self.assertIn("MCP run-1 rerun authorized: false", text)
+        self.assertIn("workflow dispatch or rerun: unauthorized", text)
         self.assertIn("Azure authentication or query authorized: false", text)
         self.assertIn("Azure mutation authorized: false", text)
         self.assertIn("pull-request merge authorized by this handoff: false", text)
