@@ -1,17 +1,33 @@
 {
-  "schema_version": "project.current-selector.v1",
+  "schema_version": "project.current-selector.v2",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-29T22:59:00-04:00",
-  "selection_rule": "Resolve the selected versioned reality, state index, and handoff, then apply latest_operational_overlay before current operations. Apply active_azure_ai_activation_authorization only to the exact one-shot workflow it names. Legacy unversioned and v2 files remain immutable compatibility records unless a newer selector supersedes this file.",
-  "authoritative_current_reality": ".project/current-reality-v3.json",
-  "authoritative_state_index": ".project/state-index-v12.json",
-  "authoritative_handoff": ".project/handoffs/current-state-v2.md",
+  "recorded_at": "2026-07-29T23:41:00-04:00",
+  "selection_rule": "Resolve the selected versioned reality, state index, and handoff before current operations. Re-query live GitHub before writes or merge. Apply active authorizations only to the exact one-shot workflow they name. Historical selectors and compatibility files remain immutable evidence records.",
+  "authoritative_current_reality": ".project/current-reality-v4.json",
+  "authoritative_state_index": ".project/state-index-v13.json",
+  "authoritative_handoff": ".project/handoffs/current-state-v3.md",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
-  "latest_repository_sync_reconciliation": ".project/reconciliations/post-pr221-canonical-sync-20260729.json",
-  "latest_operational_overlay": ".project/reconciliations/azure-ai-go-live-run7-terminal-20260730.json",
-  "latest_azure_ai_terminal_reconciliation": ".project/reconciliations/azure-ai-go-live-run7-terminal-20260730.json",
-  "active_azure_ai_activation_authorization": ".project/deployment-requests/azure-ai-go-live-run8.json",
+  "latest_repository_sync_reconciliation": ".project/reconciliations/post-pr246-canonical-sync-20260730.json",
+  "latest_operational_overlay": ".project/reconciliations/azure-ai-go-live-run8-terminal-20260730.json",
+  "latest_azure_ai_terminal_reconciliation": ".project/reconciliations/azure-ai-go-live-run8-terminal-20260730.json",
+  "active_azure_ai_activation_authorization": null,
+  "active_servicetracer_planning_authorization": ".project/deployment-requests/servicetracer-demo-api-plan-run1.json",
   "compatibility_records": [
+    {
+      "path": ".project/current-reality-v3.json",
+      "status": "historical_compatibility_only",
+      "boundary": "authoritative repository snapshot through PR 221 before Azure AI runs 7 and 8 and ServiceTracer planner binding/authorization"
+    },
+    {
+      "path": ".project/state-index-v12.json",
+      "status": "historical_compatibility_only",
+      "boundary": "state index v12 through PR 221"
+    },
+    {
+      "path": ".project/handoffs/current-state-v2.md",
+      "status": "historical_compatibility_only",
+      "boundary": "post-PR221 handoff"
+    },
     {
       "path": ".project/current-reality-v2.json",
       "status": "historical_compatibility_only",
