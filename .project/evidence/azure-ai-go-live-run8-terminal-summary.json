@@ -1,0 +1,96 @@
+{
+  "schema_version": "project.azure-ai-go-live-terminal-evidence.v1",
+  "project": "Azure IaC MSP Lab",
+  "attempt_id": "azure-ai-go-live-run8",
+  "recorded_at": "2026-07-29T23:41:00-04:00",
+  "source": {
+    "pull_request": 237,
+    "reviewed_source_head": "c6b95f799f467da95adeb4ed0e815ccd5501171f",
+    "execution_commit": "798486cb9e7c20fcf7fe508314317605dd4100ba",
+    "workflow_run_id": 30510660758,
+    "workflow_attempt": 1,
+    "job_id": 90769840287,
+    "artifact_id": 8746964307,
+    "artifact_name": "azure-ai-go-live-run8-30510660758-1",
+    "artifact_digest": "sha256:e05dccbc1618e052f905f12f03d3576a05357bdf6c298d380a140f3ecef25f51",
+    "artifact_expires_at": "2026-08-29T03:15:06Z"
+  },
+  "terminal": {
+    "workflow_conclusion": "failure",
+    "status": "required_direct_role_missing",
+    "failure_stage": "existing_direct_role_validation",
+    "authorization_consumed": true,
+    "rerun_authorized": false
+  },
+  "observed_azure_context": {
+    "subscription_name": "Azure for Students",
+    "subscription_state": "Enabled",
+    "subscription_fingerprint": "sha256:8f27aec6b3012cf0",
+    "tenant_context_freshly_observed": false,
+    "provider_registration": {
+      "Microsoft.CognitiveServices": "Registered"
+    },
+    "resource_group": {
+      "name": "rg-ai-msp-dev-eastus",
+      "location": "eastus",
+      "provisioning_state": "Succeeded",
+      "tag_keys": [
+        "environment",
+        "managedBy",
+        "purpose",
+        "workload"
+      ]
+    },
+    "account": {
+      "name": "oai-msp-anthony-dev-eastus",
+      "location": "eastus",
+      "kind": "OpenAI",
+      "sku": "S0",
+      "provisioning_state": "Succeeded",
+      "disable_local_auth": null,
+      "public_network_access": "Enabled",
+      "custom_subdomain_name": "oai-msp-anthony-dev-eastus",
+      "tag_keys": [
+        "environment",
+        "managedBy",
+        "purpose",
+        "workload"
+      ]
+    }
+  },
+  "identity_observation": {
+    "principal_fingerprint": "sha256:6f1db3ea4e8c9f6e",
+    "required_role": "Cognitive Services OpenAI User",
+    "required_role_definition_id": "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd",
+    "required_scope": "exact target Azure OpenAI account",
+    "direct_account_scoped_matches": 0,
+    "direct_account_role_verified": false,
+    "effective_data_plane_access_verified": false,
+    "role_assignment_mutation_performed": false
+  },
+  "operation_boundary": {
+    "deployment_inventory_queried": false,
+    "model_listing_queried": false,
+    "model_capacity_queried": false,
+    "arm_what_if_performed": false,
+    "deployment_started": false,
+    "account_hardening_started": false,
+    "model_request_performed": false,
+    "model_tokens_consumed": 0,
+    "azure_mutations_performed": false,
+    "endpoint_live": false,
+    "separate_verified_gpt5_runtime_modified": false,
+    "azure_mcp_connected": false
+  },
+  "cost_and_quota": {
+    "azure_resource_cost_delta_from_run_cad": 0,
+    "actual_azure_cost_freshly_observed": false,
+    "quota_freshly_observed": false
+  },
+  "limitations": [
+    "The result proves only the direct account-scoped role inventory visible to the GitHub OIDC principal at the recorded time.",
+    "No deployment inventory, model listing, model capacity, policy evaluation, cost query, quota query, monitoring validation, backup validation, or recovery test occurred.",
+    "The separately verified gpt-5-mini runtime remains a distinct evidence lane with unreconciled ARM identity.",
+    "No raw subscription ID, tenant ID, principal ID, access token, API key, or secret is preserved."
+  ]
+}
