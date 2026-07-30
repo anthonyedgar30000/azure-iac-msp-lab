@@ -1,0 +1,167 @@
+{
+  "schema_version": "project.current-reality.v9",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:49:00-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "interpretation_boundary": "This is a time-bounded repository reconciliation at the start of ServiceTracer Lab Factory preflight run 1. No fresh Azure query, quota check, cost query, ARM validation, or What-If has yet occurred under this authorization.",
+  "selector": ".project/CURRENT.json",
+  "repository_state": {
+    "default_branch": "main",
+    "observed_main": "0b6fa63d86ae52119b63ef6c9421c8d13215cb59",
+    "latest_merged_pull_request": 223,
+    "latest_merge_commit": "0b6fa63d86ae52119b63ef6c9421c8d13215cb59",
+    "open_pull_requests_observed_before_branch": [],
+    "implementation_branch": "agent/servicetracer-lab-factory-preflight-run1",
+    "pull_request": "not_yet_created",
+    "exact_head_ci": "not_yet_run",
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "canonical_state": {
+    "authoritative_state_index": ".project/state-index-v13.json",
+    "authoritative_handoff": ".project/handoffs/current-state-v3.md",
+    "previous_current_reality": ".project/current-reality-v3.json",
+    "previous_state_index": ".project/state-index-v12.json",
+    "previous_handoff": ".project/handoffs/current-state-v2.md",
+    "authorization_reconciliation": ".project/reconciliations/servicetracer-lab-factory-preflight-run1-authorization-20260729.json"
+  },
+  "domain_state": {
+    "azure_lab_factory_lite": {
+      "repository_implementation_merged": true,
+      "implementation_pull_request": 212,
+      "profile": "servicetracer-demo-api@1.0.0",
+      "profile_state": "candidate",
+      "environment": "dev",
+      "location": "westus2",
+      "ttl_hours": 8,
+      "target_resource_group": "rg-st-demo-api-dev-westus2",
+      "vm_size": "Standard_F1als_v7",
+      "planning_ceiling_CAD": 5.0,
+      "local_mcp_prepare_verified": true,
+      "preflight_implementation_present_on_branch": true,
+      "preflight_authorized_after_merge": true,
+      "preflight_executed": false,
+      "arm_validation_verified": false,
+      "arm_what_if_verified": false,
+      "azure_deployment_authorized": false,
+      "azure_deployment_verified": false,
+      "service_validation_verified": false,
+      "cleanup_authorized": false,
+      "cleanup_verified": false,
+      "actual_cost_or_quota_verified": false
+    },
+    "azure_mcp_server": {
+      "implementation_pull_request": 218,
+      "local_client_observation_pull_request": 221,
+      "server_version": "azure-mcp-reality/0.1.0",
+      "tool_inventory": [
+        "get_current_reality",
+        "list_lab_profiles",
+        "prepare_lab_request"
+      ],
+      "local_client_call_verified_on_main": true,
+      "verified_transport": "stdio",
+      "prepared_request_next_gate": "preflight_required",
+      "remote_endpoint_deployed": false,
+      "chatgpt_connection_verified": false,
+      "azure_openai_mcp_invocation_verified": false
+    },
+    "latest_live_Azure_observation": {
+      "source": ".project/evidence/azure-mcp-current-reality-run1.json",
+      "observed_at": "2026-07-29T12:01:23.289717Z",
+      "subscription_name": "Azure for Students",
+      "subscription_state": "Enabled",
+      "resource_group": "rg-ai-msp-dev-eastus",
+      "resource_group_location": "eastus",
+      "resource_count": 1,
+      "fresh_for_ServiceTracer_preflight": false,
+      "claim_boundary": "prior read-only observation != current westus2 ServiceTracer capacity or quota"
+    },
+    "azure_ai_verified_runtime": {
+      "base_url": "https://anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/",
+      "deployment": "gpt-5-mini",
+      "authentication": "Microsoft Entra bearer token",
+      "model_response_verified": true,
+      "arm_resource_identity_reconciled": false,
+      "azure_openai_mcp_invocation_verified": false,
+      "chatgpt_mcp_connection_verified": false
+    },
+    "servicetracer": {
+      "classification": "preserved_historical_operational_evidence",
+      "collector_health_previously_verified": true,
+      "twenty_transaction_scenario_previously_verified": true,
+      "exact_device_root_cause_claimed": false,
+      "current_power_state_verified": false,
+      "monitoring_alert_delivery_freshly_verified": false,
+      "effective_least_privilege_freshly_verified": false,
+      "actual_cost_freshly_verified": false,
+      "backup_or_recovery_freshly_verified": false
+    }
+  },
+  "authority": {
+    "source_instruction": "Proceed",
+    "repository_branch_and_declared_writes": true,
+    "pull_request_creation": true,
+    "ordinary_exact_head_ci": true,
+    "merge_after_green_and_freshness_recheck": true,
+    "one_interactive_read_only_preflight_after_merge": true,
+    "azure_authentication_and_bounded_queries": true,
+    "arm_validation": true,
+    "arm_what_if": true,
+    "workflow_dispatch_or_rerun": false,
+    "azure_mutation": false,
+    "deployment": false,
+    "rbac_mutation": false,
+    "model_call": false,
+    "remote_mcp_deployment": false,
+    "chatgpt_connection": false,
+    "cleanup": false,
+    "rollback": false,
+    "retry": false
+  },
+  "security_and_network": {
+    "declared_public_ingress": [
+      "TCP/80 from Internet",
+      "TCP/443 from Internet"
+    ],
+    "declared_ssh_ingress": false,
+    "vnet_cidr": "10.30.0.0/24",
+    "subnet_cidr": "10.30.0.0/27",
+    "vm_system_assigned_identity_declared": true,
+    "runtime_network_path_verified": false,
+    "effective_least_privilege_verified": false
+  },
+  "cost": {
+    "expected_recurring_Azure_resource_cost_delta_CAD_from_repository_increment": 0,
+    "preflight_planning_ceiling_CAD": 5.0,
+    "planning_method": "eight hours of observed CAD VM retail rate plus CAD 2.00 contingency",
+    "actual_Azure_cost_freshly_observed": false,
+    "quota_freshly_observed": false,
+    "estimate_complete": false
+  },
+  "canonical_distinctions": [
+    "declared_in_code != deployed_in_azure",
+    "prepared_request != ARM_What-If",
+    "authorization_recorded != preflight_executed",
+    "preflight_executed != preflight_passed",
+    "preflight_passed != deployment_authorized",
+    "ARM_What-If != Azure_mutation",
+    "provider_registered != quota_sufficient",
+    "SKU_listed != unrestricted_for_subscription",
+    "network_declared != network_validated",
+    "estimated_cost != actual_cost",
+    "authentication_succeeded != effective_least_privilege",
+    "failed_attempt != authorization_to_retry",
+    "not_observed != false"
+  ],
+  "next_gate": {
+    "operation": "Run exact-head CI and merge after a live-main freshness check, then execute exactly one interactive Cloud Shell preflight at the exact merge commit.",
+    "requirements": [
+      "no Azure access from pull-request CI",
+      "no deployment or mutation verb in the script",
+      "preserve raw subscription and tenant identifiers outside evidence",
+      "consume authority before the first authenticated Azure observation",
+      "return passed, blocked, or observation_failed evidence without granting deployment authority",
+      "do not retry a consumed attempt"
+    ]
+  }
+}
