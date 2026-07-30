@@ -1,0 +1,200 @@
+name: Lab Factory read-only Azure preflight
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Bounded lab environment
+        required: true
+        default: test
+        type: choice
+        options:
+          - dev
+          - test
+      ttl_hours:
+        description: Requested lab lifetime in hours
+        required: true
+        default: '8'
+        type: choice
+        options:
+          - '1'
+          - '4'
+          - '8'
+          - '12'
+          - '24'
+      cost_ceiling_cad:
+        description: Maximum accepted fixed-cost estimate in CAD
+        required: true
+        default: '5.00'
+        type: string
+      reviewed_commit:
+        description: Exact 40-character repository commit reviewed for this preflight
+        required: true
+        type: string
+      confirmation:
+        description: Enter OBSERVE-LAB-PREFLIGHT:servicetracer-demo-api:<environment>:<ttl>:<cost>:<commit>
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: lab-factory-read-only-preflight
+  cancel-in-progress: false
+
+env:
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+
+jobs:
+  preflight:
+    name: Observe Lab Factory prerequisites without deployment
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact reviewed repository state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.reviewed_commit }}
+          fetch-depth: 0
+
+      - name: Validate exact bounded authority
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          TTL_HOURS: ${{ inputs.ttl_hours }}
+          COST_CEILING_CAD: ${{ inputs.cost_ceiling_cad }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$ENVIRONMENT" == 'dev' || "$ENVIRONMENT" == 'test' ]]
+          [[ "$TTL_HOURS" =~ ^(1|4|8|12|24)$ ]]
+          [[ "$COST_CEILING_CAD" =~ ^[0-9]+([.][0-9]{1,2})?$ ]]
+          [[ "$REVIEWED_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$(git rev-parse HEAD)" == "$REVIEWED_COMMIT" ]]
+          expected="OBSERVE-LAB-PREFLIGHT:servicetracer-demo-api:${ENVIRONMENT}:${TTL_HOURS}:${COST_CEILING_CAD}:${REVIEWED_COMMIT}"
+          [[ "$CONFIRMATION" == "$expected" ]] || {
+            echo "Confirmation must exactly equal: $expected" >&2
+            exit 1
+          }
+
+      - name: Validate repository-only preflight contract
+        run: python -m unittest infra.tests.test_lab_factory_azure_preflight -v
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build non-secret synthetic validation parameters
+        env:
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          workdir="$RUNNER_TEMP/lab-factory-read-only-preflight"
+          mkdir -p "$workdir/evidence"
+          ssh-keygen -q -t ed25519 -N '' -C 'lab-factory-preflight' -f "$workdir/preflight-key"
+          export PARAMETER_FILE="$workdir/parameters.json"
+          export PUBLIC_KEY_FILE="$workdir/preflight-key.pub"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          reviewed = os.environ['REVIEWED_COMMIT']
+          parameters = {
+              'dnsLabel': f"stpf-{reviewed[:12]}",
+              'allowedOrigin': 'https://example.invalid',
+              'backendTransactionUrl': 'https://example.invalid/api/demo/run',
+              'adminSshPublicKey': Path(os.environ['PUBLIC_KEY_FILE']).read_text(encoding='utf-8').strip(),
+              'sourceRepository': 'https://github.com/anthonyedgar30000/azure-iac-msp-lab.git',
+              'sourceRef': reviewed,
+              'installerUri': (
+                  'https://raw.githubusercontent.com/anthonyedgar30000/'
+                  f'azure-iac-msp-lab/{reviewed}/workloads/servicetracer-demo-api/install.sh'
+              ),
+          }
+          path = Path(os.environ['PARAMETER_FILE'])
+          path.write_text(json.dumps(parameters, sort_keys=True), encoding='utf-8')
+          path.chmod(0o600)
+          PY
+          rm -f "$workdir/preflight-key"
+
+      - name: Run read-only Lab Factory Azure preflight
+        id: run_preflight
+        continue-on-error: true
+        env:
+          AZURE_LAB_PREFLIGHT_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          TTL_HOURS: ${{ inputs.ttl_hours }}
+          COST_CEILING_CAD: ${{ inputs.cost_ceiling_cad }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          workdir="$RUNNER_TEMP/lab-factory-read-only-preflight"
+          python scripts/run_lab_factory_azure_preflight.py \
+            --profile servicetracer-demo-api \
+            --environment "$ENVIRONMENT" \
+            --ttl-hours "$TTL_HOURS" \
+            --cost-ceiling-cad "$COST_CEILING_CAD" \
+            --request-id "lab-preflight-${REVIEWED_COMMIT:0:12}" \
+            --parameters-file "$workdir/parameters.json" \
+            --output "$workdir/evidence/preflight-result.json"
+
+      - name: Remove temporary parameter material
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          workdir="$RUNNER_TEMP/lab-factory-read-only-preflight"
+          rm -f "$workdir/parameters.json" "$workdir/preflight-key" "$workdir/preflight-key.pub"
+
+      - name: Write evidence manifest
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence_dir="$RUNNER_TEMP/lab-factory-read-only-preflight/evidence"
+          if [[ -d "$evidence_dir" ]]; then
+            find "$evidence_dir" -type f ! -name artifact-manifest.sha256 -print0 \
+              | sort -z \
+              | xargs -0 -r sha256sum \
+              > "$evidence_dir/artifact-manifest.sha256"
+          fi
+
+      - name: Upload bounded non-secret evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lab-factory-read-only-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/lab-factory-read-only-preflight/evidence
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce preflight result after evidence upload
+        if: always()
+        env:
+          STEP_OUTCOME: ${{ steps.run_preflight.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          result="$RUNNER_TEMP/lab-factory-read-only-preflight/evidence/preflight-result.json"
+          [[ -f "$result" ]] || {
+            echo 'Preflight result was not produced.' >&2
+            exit 1
+          }
+          jq -e '.execution.azure_mutations_performed == false' "$result" >/dev/null
+          jq -e '.execution.arm_what_if_performed == false' "$result" >/dev/null
+          jq -e '.execution.deployment_authorized == false' "$result" >/dev/null
+          jq -e '.execution.cleanup_authorized == false' "$result" >/dev/null
+          jq -e '.azure_context.raw_identifiers_returned == false' "$result" >/dev/null
+          jq -e '.template_validation.parameter_values_returned == false' "$result" >/dev/null
+          [[ "$STEP_OUTCOME" == 'success' ]]
+          jq -e '.status == "passed" and .next_gate == "what_if_review_required"' "$result" >/dev/null

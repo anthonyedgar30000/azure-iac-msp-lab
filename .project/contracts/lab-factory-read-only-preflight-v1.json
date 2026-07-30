@@ -1,0 +1,99 @@
+{
+  "schema_version": "project.lab-factory-read-only-preflight.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:49:00-04:00",
+  "source_instruction": "Proceed",
+  "objective": "Implement an exact-commit-bound, read-only Azure preflight for the first Lab Factory profile without granting ARM What-If, deployment, RBAC, cleanup, retry, model, remote MCP, or ChatGPT authority.",
+  "repository_baseline": {
+    "main": "0b6fa63d86ae52119b63ef6c9421c8d13215cb59",
+    "latest_merged_pull_request": 223,
+    "open_pull_requests_observed": [],
+    "branch": "agent/lab-factory-read-only-preflight-v1",
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "architecture": {
+    "profile": "servicetracer-demo-api@1.0.0",
+    "catalog": "lab_factory/catalog.json",
+    "core": "lab_factory/azure_preflight.py",
+    "cli": "scripts/run_lab_factory_azure_preflight.py",
+    "workflow": ".github/workflows/lab-factory-read-only-preflight.yml",
+    "trigger": "workflow_dispatch_only",
+    "azure_authentication": "GitHub OIDC through azure-lab environment",
+    "location": "westus2",
+    "template_validation": "az deployment sub validate",
+    "arm_what_if": false,
+    "deployment": false
+  },
+  "read_only_observations": [
+    "active subscription identity and enabled state",
+    "subscription location catalog",
+    "Microsoft.Resources provider registration",
+    "Microsoft.Network provider registration",
+    "Microsoft.Compute provider registration",
+    "subscription-specific VM SKU restrictions",
+    "regional and VM-family compute quota",
+    "Standard public-IP quota",
+    "target resource-group state and resource count",
+    "effective candidate deployment actions",
+    "policy-assignment inventory",
+    "CAD retail price context",
+    "subscription-scope ARM template validation"
+  ],
+  "security": {
+    "exact_reviewed_commit_required": true,
+    "exact_confirmation_required": true,
+    "raw_subscription_or_tenant_ids_returned": false,
+    "parameter_values_returned": false,
+    "temporary_parameter_file_mode": "0600",
+    "temporary_parameter_material_deleted": true,
+    "workflow_environment": "azure-lab",
+    "workflow_permissions": {
+      "contents": "read",
+      "id-token": "write"
+    }
+  },
+  "cost": {
+    "currency": "CAD",
+    "ceiling_required": true,
+    "estimate_scope": "VM compute plus one Standard public IPv4 plus prorated Standard SSD E4 LRS",
+    "variable_egress_excluded": true,
+    "retail_price_is_actual_billed_cost": false,
+    "expected_recurring_Azure_resource_cost_delta_from_repository_increment_CAD": 0,
+    "fresh_actual_cost_observed_by_repository_CI": false,
+    "fresh_quota_observed_by_repository_CI": false
+  },
+  "authority": {
+    "repository_branch_and_declared_writes": true,
+    "pull_request_creation": true,
+    "ordinary_exact_head_CI": true,
+    "merge_after_green_and_freshness_recheck": true,
+    "live_workflow_dispatch_available_after_merge": true,
+    "live_workflow_dispatch_performed_by_this_repository_increment": false,
+    "azure_authentication_or_query_performed_by_ordinary_CI": false,
+    "arm_what_if": false,
+    "azure_mutation": false,
+    "deployment": false,
+    "rbac_mutation": false,
+    "cleanup": false,
+    "rollback": false,
+    "model_call": false,
+    "remote_MCP_deployment": false,
+    "ChatGPT_connection": false
+  },
+  "failure_and_rollback": {
+    "fail_closed": true,
+    "blocked_preflight_uploads_evidence_then_fails": true,
+    "repository_rollback": "Revert the exact pull request.",
+    "Azure_rollback": "Not applicable because the preflight has no mutation path.",
+    "Azure_cleanup": "Not applicable because the preflight creates no Azure resources."
+  },
+  "canonical_distinctions": [
+    "repository_preflight_implemented != live_preflight_dispatched",
+    "preflight_passed != ARM_What_If_reviewed",
+    "template_validation_passed != deployment_authorized",
+    "permission_check_sufficient != effective_least_privilege_verified",
+    "retail_price_estimate != actual_billed_cost",
+    "resource_group_safe != cleanup_verified"
+  ],
+  "next_gate": "After merge, dispatch one exact-commit-bound read-only preflight, inspect and promote its sanitized artifact, and stop before ARM What-If."
+}
