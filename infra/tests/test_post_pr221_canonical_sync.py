@@ -13,6 +13,7 @@ RECONCILIATION = ROOT / ".project/reconciliations/post-pr221-canonical-sync-2026
 MAIN = "82191482f48ccb81dc50b5966733a9d8ff7f2953"
 PR221_SOURCE = "968402ad52858d837de03e64c36addf372751d28"
 
+
 class PostPr221CanonicalSyncTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -22,11 +23,14 @@ class PostPr221CanonicalSyncTests(unittest.TestCase):
         cls.handoff = HANDOFF.read_text(encoding="utf-8")
         cls.reconciliation = json.loads(RECONCILIATION.read_text(encoding="utf-8"))
 
-    def test_selector_promotes_versioned_authoritative_files(self) -> None:
-        self.assertEqual(self.selector["authoritative_current_reality"], ".project/current-reality-v3.json")
-        self.assertEqual(self.selector["authoritative_state_index"], ".project/state-index-v12.json")
-        self.assertEqual(self.selector["authoritative_handoff"], ".project/handoffs/current-state-v2.md")
-        self.assertEqual({item["status"] for item in self.selector["compatibility_records"]}, {"historical_compatibility_only"})
+    def test_selector_preserves_pr221_files_as_historical_lineage(self) -> None:
+        self.assertEqual(self.selector["authoritative_current_reality"], ".project/current-reality-v4.json")
+        self.assertEqual(self.selector["authoritative_state_index"], ".project/state-index-v13.json")
+        self.assertEqual(self.selector["authoritative_handoff"], ".project/handoffs/current-state-v3.md")
+        compatibility = {item["path"]: item["status"] for item in self.selector["compatibility_records"]}
+        self.assertEqual(compatibility[".project/current-reality-v3.json"], "historical_compatibility_only")
+        self.assertEqual(compatibility[".project/state-index-v12.json"], "historical_compatibility_only")
+        self.assertEqual(compatibility[".project/handoffs/current-state-v2.md"], "historical_compatibility_only")
 
     def test_repository_state_advances_through_pr221(self) -> None:
         repo = self.reality["repository_state"]
@@ -93,6 +97,7 @@ class PostPr221CanonicalSyncTests(unittest.TestCase):
         self.assertTrue(authority["merge_after_green_and_freshness_recheck"])
         for key in ("workflow_dispatch_or_rerun", "azure_authentication_or_query", "arm_what_if", "azure_mutation", "rbac_mutation", "model_call", "local_mcp_client_call", "remote_mcp_deployment", "chatgpt_connection", "cleanup", "rollback"):
             self.assertFalse(authority[key], key)
+
 
 if __name__ == "__main__":
     unittest.main()
