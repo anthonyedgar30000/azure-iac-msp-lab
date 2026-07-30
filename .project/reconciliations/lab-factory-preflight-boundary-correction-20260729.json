@@ -1,0 +1,76 @@
+{
+  "schema_version": "project.reconciliation.lab-factory-preflight-boundary-correction.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T22:22:00-04:00",
+  "source_instruction": "Proceed",
+  "classification": "repository_only_correction_before_live_dispatch",
+  "repository": {
+    "base_main": "2b8477109052278d01c93fc8041cdb6b0ad12389",
+    "latest_merged_pull_request": 225,
+    "branch": "agent/remove-duplicate-lab-preflight-v1",
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "finding": {
+    "superseded_increment": "PR 225 single-subscription Lab Factory preflight",
+    "live_workflow_dispatch_observed": false,
+    "Azure_authentication_or_query_observed_from_PR225": false,
+    "Azure_mutation_observed_from_PR225": false,
+    "reason_for_correction": [
+      "The independent ServiceTracer demo API has a ratified dual-subscription planning boundary.",
+      "The target planning identity and GitHub environment are azure-api-payg, not azure-lab.",
+      "The repository already contains the active hardened planner .github/workflows/servicetracer-demo-api-subproject-plan.yml.",
+      "The active planner refreshes the dependency and target subscription state, providers, policy, SKU, quota, target inventory, ARM validation, and bounded What-If evidence.",
+      "The duplicate workflow used the wrong installer path; the authoritative installer is workloads/servicetracer-demo-api/scripts/install.sh."
+    ]
+  },
+  "canonical_planning_path": {
+    "workflow": ".github/workflows/servicetracer-demo-api-subproject-plan.yml",
+    "github_environment": "azure-api-payg",
+    "dependency_subscription_role": "Azure for Students read-only ServiceTracer dependency",
+    "target_subscription_role": "Pay-As-You-Go read-only planning target",
+    "provider_validation_level": "ProviderNoRbac",
+    "template": "workloads/servicetracer-demo-api/infra/main.bicep",
+    "installer": "workloads/servicetracer-demo-api/scripts/install.sh",
+    "deployment_command_present": false
+  },
+  "repository_changes": {
+    "delete_PR225_files": true,
+    "preserve_active_planner": true,
+    "preserve_catalog_and_MCP_prepare_tools": true,
+    "new_Azure_execution_path": false
+  },
+  "authority": {
+    "repository_correction": true,
+    "ordinary_pull_request_CI": true,
+    "merge_after_green_and_freshness_recheck": true,
+    "workflow_dispatch": false,
+    "Azure_authentication_or_query": false,
+    "ARM_What_If": false,
+    "Azure_mutation": false,
+    "deployment": false,
+    "RBAC_mutation": false,
+    "cleanup": false,
+    "rollback": false,
+    "model_call": false,
+    "remote_MCP_deployment": false,
+    "ChatGPT_connection": false
+  },
+  "cost": {
+    "repository_recurring_Azure_cost_delta_CAD": 0,
+    "actual_Azure_cost_freshly_observed": false,
+    "quota_freshly_observed": false
+  },
+  "failure_and_rollback": {
+    "repository_rollback": "Revert this correction only after re-establishing a valid dual-subscription replacement.",
+    "Azure_rollback": "Not applicable because no live PR 225 dispatch or Azure mutation occurred.",
+    "Azure_cleanup": "Not applicable because no Azure resource was created."
+  },
+  "canonical_distinctions": [
+    "merged_workflow != live_workflow_dispatched",
+    "generic_preflight != workload_ratified_planner",
+    "dependency_subscription != target_subscription",
+    "repository_correction != Azure_rollback",
+    "planning_evidence != deployment_authority"
+  ],
+  "next_gate": "Bind the Lab Factory catalog and MCP preparation output to the existing dual-subscription ServiceTracer planning workflow, then request one separate exact live dispatch decision."
+}
