@@ -1,0 +1,138 @@
+{
+  "schema_version": "project.azure-ai-go-live-terminal.v2",
+  "attempt_id": "azure-ai-go-live-run7",
+  "status": "consumed_terminal_failure",
+  "recorded_at": "2026-07-29T22:17:00-04:00",
+  "source_instruction": "Proceed with Azure AI run 7 using the existing account and existing account-scoped inference role.",
+  "repository": {
+    "pull_request": 226,
+    "reviewed_source_head": "b1723c5a5005ad356dd7944fbea77eaa4e7987cc",
+    "exact_merge_commit": "90befdda4cedc52eb84a19cee5d19f2f5b61a369",
+    "base_before_run7": "0b6fa63d86ae52119b63ef6c9421c8d13215cb59"
+  },
+  "workflow": {
+    "run_id": 30507904540,
+    "run_attempt": 1,
+    "job_id": 90761544877,
+    "name": "Azure AI go live run 7",
+    "job_name": "Verify role, deploy model, and verify Azure AI run 7",
+    "conclusion": "failure",
+    "duration_seconds_reported": 37
+  },
+  "artifact": {
+    "artifact_id": 8746021488,
+    "name": "azure-ai-go-live-run7-30507904540-1",
+    "digest": "sha256:89a101055b5df556b5e4bab47a2487ab13690e5824c9ec26cf219fbb345449df",
+    "expires_at": "2026-08-29T02:15:04Z",
+    "manifest_present": true,
+    "raw_subscription_id_persisted": false,
+    "raw_principal_id_persisted": false
+  },
+  "observed_azure_context": {
+    "subscription_name": "Azure for Students",
+    "subscription_state": "Enabled",
+    "subscription_fingerprint": "sha256:8f27aec6b3012cf0",
+    "provider_registration_state": "Registered",
+    "workflow_principal_fingerprint": "sha256:6f1db3ea4e8c9f6e"
+  },
+  "observed_target": {
+    "resource_group": {
+      "name": "rg-ai-msp-dev-eastus",
+      "location": "eastus",
+      "provisioning_state": "Succeeded",
+      "tags": {
+        "environment": "dev",
+        "managedBy": "manual-bootstrap",
+        "purpose": "azure-ai-demo",
+        "workload": "azure-iac-msp-lab"
+      }
+    },
+    "account": {
+      "name": "oai-msp-anthony-dev-eastus",
+      "location": "eastus",
+      "kind": "OpenAI",
+      "sku": "S0",
+      "provisioning_state": "Succeeded",
+      "disable_local_auth": null,
+      "public_network_access": "Enabled",
+      "custom_subdomain_name": "oai-msp-anthony-dev-eastus",
+      "tags": {
+        "environment": "dev",
+        "managedBy": "manual-bootstrap",
+        "purpose": "azure-ai-demo",
+        "workload": "azure-iac-msp-lab"
+      }
+    }
+  },
+  "terminal_result": {
+    "failure_stage": "existing_direct_role_validation",
+    "failure_status": "role_assignment_query_failed",
+    "failure_classification": "azure_cli_mutually_exclusive_scope_and_all_arguments",
+    "exact_error": "ERROR: group or scope are not required when --all is used",
+    "role_query_started": true,
+    "role_query_completed": false,
+    "required_role_exists_established": false,
+    "required_role_missing_established": false,
+    "effective_data_plane_access_established": false,
+    "deployment_inventory_queried": false,
+    "model_listing_queried": false,
+    "capacity_queried": false,
+    "what_if_started": false,
+    "deployment_started": false,
+    "account_hardening_started": false,
+    "model_request_performed": false,
+    "endpoint_live": false,
+    "azure_mutations_performed": false,
+    "separate_verified_gpt5_runtime_modified": false
+  },
+  "root_cause": {
+    "classification": "repository_executor_cli_argument_defect",
+    "command_family": "az role assignment list",
+    "invalid_combination": [
+      "--scope <target-account-id>",
+      "--all"
+    ],
+    "why_static_validation_did_not_detect_it": "Shell syntax and deterministic string guards cannot establish Azure CLI runtime option compatibility.",
+    "not_evidence_of": [
+      "missing Cognitive Services OpenAI User assignment",
+      "ineffective inference role",
+      "model unavailability",
+      "capacity exhaustion",
+      "What-If denial",
+      "deployment failure",
+      "inference failure"
+    ]
+  },
+  "repair_state": {
+    "repair_identified": true,
+    "historical_executor_should_remain_traceable": true,
+    "repair_patch": ".project/repairs/azure-ai-go-live-run7-role-query.patch",
+    "repair_description": "Remove --all from each role-assignment list command that also supplies --scope; retain --all only for the unscoped principal-discovery fallback.",
+    "repair_authorizes_new_attempt": false,
+    "run8_authorized": false
+  },
+  "cost": {
+    "azure_resource_cost_delta_established": 0,
+    "billable_model_request_performed": false,
+    "tokens_consumed": 0,
+    "actual_account_cost_freshly_observed": false,
+    "github_actions_and_artifact_storage_may_apply": true
+  },
+  "authorization": {
+    "consumed": true,
+    "automatic_retry_authorized": false,
+    "manual_rerun_authorized": false,
+    "new_attempt_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "next_safe_gate": "Merge repository-only reconciliation and repair evidence. A new Azure attempt requires fresh explicit authority and a new workflow identity-bound request; do not use GitHub Re-run.",
+  "canonical_distinctions": [
+    "role_query_failed != role_missing",
+    "account_observed != model_deployed",
+    "Azure_login_succeeded != workflow_succeeded",
+    "executor_repaired != new_attempt_authorized",
+    "run7_failure != permission_to_rerun",
+    "estimated_cost != actual_cost"
+  ]
+}
