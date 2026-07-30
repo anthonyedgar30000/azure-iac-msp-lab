@@ -1,13 +1,13 @@
 {
   "schema_version": "project.current-selector.v2",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-30T00:22:00-04:00",
-  "selection_rule": "Resolve the selected versioned reality, state index, and handoff before current operations. Re-query live GitHub before writes or merge. Historical trigger synchronizations, selectors, and compatibility files remain immutable evidence records. No operational authorization is active unless a later selector explicitly names one.",
-  "authoritative_current_reality": ".project/current-reality-v4.json",
-  "authoritative_state_index": ".project/state-index-v13.json",
-  "authoritative_handoff": ".project/handoffs/current-state-v3.md",
+  "recorded_at": "2026-07-30T08:02:00-04:00",
+  "selection_rule": "Resolve the selected versioned reality, state index, and handoff before current operations. Re-query live GitHub before writes or merge. Historical selectors and evidence remain immutable compatibility records. No operational authorization is active unless a later selector explicitly names one.",
+  "authoritative_current_reality": ".project/current-reality-v5.json",
+  "authoritative_state_index": ".project/state-index-v14.json",
+  "authoritative_handoff": ".project/handoffs/current-state-v4.md",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
-  "latest_repository_sync_reconciliation": ".project/reconciliations/post-pr251-canonical-sync-20260730.json",
+  "latest_repository_sync_reconciliation": ".project/reconciliations/post-pr253-student-subscription-sync-20260730.json",
   "latest_operational_overlay": ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json",
   "latest_servicetracer_terminal_reconciliation": ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json",
   "latest_azure_ai_terminal_reconciliation": ".project/reconciliations/azure-ai-go-live-run8-terminal-20260730.json",
@@ -18,6 +18,26 @@
   "active_servicetracer_planning_authorization": null,
   "active_deployment_authorization": null,
   "compatibility_records": [
+    {
+      "path": ".project/selectors/post-pr251-current.json",
+      "status": "historical_post_pr251_selector",
+      "boundary": "selected current-reality-v4, state-index-v13, and current-state-v3 before PR 253 corrected the subscription boundary"
+    },
+    {
+      "path": ".project/current-reality-v4.json",
+      "status": "historical_post_pr251_current_reality",
+      "boundary": "records the repository and terminal evidence state before PR 253"
+    },
+    {
+      "path": ".project/state-index-v13.json",
+      "status": "historical_post_pr251_state_index",
+      "boundary": "records the prior dual-subscription planner declaration"
+    },
+    {
+      "path": ".project/handoffs/current-state-v3.md",
+      "status": "historical_post_pr251_handoff",
+      "boundary": "records ServiceTracer planning run 1 and Azure AI run 8 before the student-subscription correction"
+    },
     {
       "path": ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json",
       "status": "historical_trigger_sync_superseded_by_terminal_artifact",
@@ -42,21 +62,6 @@
       "path": ".project/handoffs/current-state-v2.md",
       "status": "historical_compatibility_only",
       "boundary": "post-PR221 handoff"
-    },
-    {
-      "path": ".project/current-reality-v2.json",
-      "status": "historical_compatibility_only",
-      "boundary": "authoritative overlay through PR 218 before PR 220 and PR 221 merged"
-    },
-    {
-      "path": ".project/state-index.json",
-      "status": "historical_compatibility_only",
-      "boundary": "state-index v11 with preserved historical repository selectors"
-    },
-    {
-      "path": ".project/handoffs/current-state.md",
-      "status": "historical_compatibility_only",
-      "boundary": "post-PR212 handoff retained for deterministic validators"
     }
   ]
 }
