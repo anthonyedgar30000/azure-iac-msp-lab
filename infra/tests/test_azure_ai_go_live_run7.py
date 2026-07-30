@@ -17,7 +17,7 @@ TERMINAL = ROOT / ".project/reconciliations/azure-ai-go-live-run7-terminal-20260
 REPAIR_PATCH = ROOT / ".project/repairs/azure-ai-go-live-run7-role-query.patch"
 TEMPLATE = ROOT / "infra/azure-ai-existing-account-model-only.bicep"
 RUN6_TERMINAL = ROOT / ".project/reconciliations/azure-ai-go-live-run6-terminal-and-runtime-wire-20260729.json"
-SELECTOR = ROOT / ".project/CURRENT.json"
+SELECTOR = ROOT / ".project/selectors/post-pr251-current.json"
 
 
 class AzureAiGoLiveRun7Tests(unittest.TestCase):

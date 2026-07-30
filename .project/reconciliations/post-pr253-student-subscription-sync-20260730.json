@@ -1,0 +1,142 @@
+{
+  "schema_version": "project.canonical-sync.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-30T08:02:00-04:00",
+  "source_instruction": "Proceed",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "observed_main": "af4b050ab18110882e3551f66c69eb2b73a73f7b",
+    "latest_merged_pull_request": 253,
+    "latest_merged_source_head": "161c447a445d86364719d3d414ac6c7f6628e7b8",
+    "open_pull_requests_observed": [],
+    "local_working_tree": "not_observed_connector_backed",
+    "pr253_exact_head_ci": {
+      "ci": {
+        "run_id": 30516607869,
+        "conclusion": "success"
+      },
+      "azure_mcp_reality_bridge_contract": {
+        "run_id": 30516607858,
+        "conclusion": "success"
+      },
+      "lab_factory_local_mcp_smoke": {
+        "run_id": 30516607834,
+        "conclusion": "success"
+      }
+    },
+    "merge_commit_ci": {
+      "observed": false,
+      "reason": "The available commit-run lookup exposes pull-request-triggered runs only; no merge-commit push result was returned."
+    }
+  },
+  "canonical_resolution": {
+    "previous_selector_archive": ".project/selectors/post-pr251-current.json",
+    "previous_current_reality": ".project/current-reality-v4.json",
+    "previous_state_index": ".project/state-index-v13.json",
+    "previous_handoff": ".project/handoffs/current-state-v3.md",
+    "new_current_reality": ".project/current-reality-v5.json",
+    "new_state_index": ".project/state-index-v14.json",
+    "new_handoff": ".project/handoffs/current-state-v4.md",
+    "latest_operational_overlay": ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json"
+  },
+  "servicetracer_planner_correction": {
+    "pull_request": 253,
+    "merge_commit": "af4b050ab18110882e3551f66c69eb2b73a73f7b",
+    "source_head": "161c447a445d86364719d3d414ac6c7f6628e7b8",
+    "github_environment": "azure-lab",
+    "subscription_boundary": "single_subscription",
+    "subscription_intent": "Azure for Students only",
+    "identity_contract": [
+      "AZURE_CLIENT_ID",
+      "AZURE_TENANT_ID",
+      "AZURE_SUBSCRIPTION_ID"
+    ],
+    "azure_login_count": 1,
+    "dependency_resource_group_pattern": "rg-servicetracer-<environment>-westus2",
+    "target_resource_group_pattern": "rg-st-demo-api-<environment>-westus2",
+    "provider_validation_level": "ProviderNoRbac",
+    "deployment_command_present": false,
+    "rbac_mutation_command_present": false,
+    "cleanup_command_present": false,
+    "corrected_planner_dispatched": false,
+    "arm_validation_performed_for_corrected_planner": false,
+    "arm_what_if_performed_for_corrected_planner": false,
+    "azure_mutations_performed_by_correction": false
+  },
+  "protected_environment_evidence": {
+    "workflow": ".github/workflows/azure-ai-go-live-run8.yml",
+    "workflow_environment": "azure-lab",
+    "workflow_secret_contract": [
+      "AZURE_CLIENT_ID",
+      "AZURE_TENANT_ID",
+      "AZURE_SUBSCRIPTION_ID"
+    ],
+    "observed_run_id": 30510660758,
+    "observed_subscription_name": "Azure for Students",
+    "observed_subscription_state": "Enabled",
+    "evidence_scope": "time_bounded_workflow_execution_evidence",
+    "fresh_administrative_secret_inspection_performed": false,
+    "claim_boundary": "This supports the recent azure-lab subscription binding but does not expose secret values, prove current administrator configuration, or authorize a new ServiceTracer planner dispatch."
+  },
+  "historical_servicetracer_plan_run1": {
+    "status": "consumed_terminal_failure",
+    "workflow_run_id": 30513630134,
+    "failure_classification": "confirmation_input_mismatch",
+    "old_subscription_boundary": "dual_subscription",
+    "azure_login_started": false,
+    "arm_validation_performed": false,
+    "arm_what_if_performed": false,
+    "azure_mutations_performed": false,
+    "rerun_authorized": false,
+    "preserved_as_historical_evidence": true
+  },
+  "authority": {
+    "repository_branch_and_declared_writes": true,
+    "pull_request_creation": true,
+    "ordinary_exact_head_ci": true,
+    "merge_after_green_and_freshness_recheck": true,
+    "workflow_dispatch_or_rerun_by_this_sync": false,
+    "azure_authentication_or_query_by_this_sync": false,
+    "arm_what_if_by_this_sync": false,
+    "azure_mutation_by_this_sync": false,
+    "github_environment_or_secret_mutation": false,
+    "entra_identity_mutation": false,
+    "rbac_mutation": false,
+    "deployment": false,
+    "cleanup": false,
+    "rollback": false
+  },
+  "cost_and_quota": {
+    "expected_recurring_azure_resource_cost_delta_cad": 0,
+    "actual_azure_cost_freshly_observed": false,
+    "student_credit_freshly_observed": false,
+    "azure_quota_freshly_observed": false,
+    "planning_ceiling_cad": "25.00",
+    "planning_ceiling_is_spend_authority": false
+  },
+  "active_authorizations_after_sync": {
+    "servicetracer_planning": null,
+    "deployment": null,
+    "cleanup": null
+  },
+  "next_gate": {
+    "operation": "Obtain fresh explicit one-attempt read-only authority for the corrected Azure for Students planner.",
+    "requirements": [
+      "bind the authorization to the exact current main SHA and exact confirmation string",
+      "verify the runtime subscription context reports Azure for Students and Enabled",
+      "capture provider, policy, quota, SKU, target inventory, ARM validation, and What-If evidence",
+      "perform no Azure deployment or mutation",
+      "require separate explicit deployment authority after accepted planning evidence and cost review"
+    ]
+  },
+  "canonical_distinctions": [
+    "repository_boundary_corrected != Azure_runtime_revalidated",
+    "recent_azure_lab_evidence != current_secret_value_disclosure",
+    "same_subscription != same_resource_lifecycle",
+    "planner_merged != planner_dispatched",
+    "ProviderNoRbac_what_if != deployment",
+    "estimated_cost != actual_cost",
+    "not_observed != false"
+  ]
+}

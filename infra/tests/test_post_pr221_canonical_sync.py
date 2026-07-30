@@ -5,7 +5,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
-SELECTOR = ROOT / ".project/CURRENT.json"
+SELECTOR = ROOT / ".project/selectors/post-pr251-current.json"
 REALITY = ROOT / ".project/current-reality-v3.json"
 INDEX = ROOT / ".project/state-index-v12.json"
 HANDOFF = ROOT / ".project/handoffs/current-state-v2.md"
