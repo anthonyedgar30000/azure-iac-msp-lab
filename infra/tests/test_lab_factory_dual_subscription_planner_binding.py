@@ -15,6 +15,12 @@ RECONCILIATION = (
     / "reconciliations"
     / "lab-factory-dual-subscription-planner-binding-20260729.json"
 )
+HANDOFF = (
+    ROOT
+    / ".project"
+    / "handoffs"
+    / "lab-factory-dual-subscription-planner-binding.md"
+)
 RUNBOOK = ROOT / "docs" / "runbooks" / "lab-factory-mcp-planner-binding.md"
 WORKFLOW = ROOT / ".github" / "workflows" / "servicetracer-demo-api-subproject-plan.yml"
 
@@ -26,6 +32,7 @@ class LabFactoryDualSubscriptionPlannerBindingTests(unittest.TestCase):
         cls.profile = cls.catalog["profiles"][0]
         cls.workflow = WORKFLOW.read_text(encoding="utf-8")
         cls.reconciliation = json.loads(RECONCILIATION.read_text(encoding="utf-8"))
+        cls.handoff = HANDOFF.read_text(encoding="utf-8")
         cls.runbook = RUNBOOK.read_text(encoding="utf-8")
 
     def _parameters(self) -> dict[str, str]:
@@ -104,7 +111,7 @@ class LabFactoryDualSubscriptionPlannerBindingTests(unittest.TestCase):
         self.assertNotIn("az deployment sub create", self.workflow)
         self.assertNotIn("az role assignment create", self.workflow)
 
-    def test_reconciliation_and_runbook_keep_cloud_authority_closed(self) -> None:
+    def test_reconciliation_handoff_and_runbook_keep_cloud_authority_closed(self) -> None:
         document = self.reconciliation
         self.assertEqual(
             document["schema_version"],
@@ -145,6 +152,14 @@ class LabFactoryDualSubscriptionPlannerBindingTests(unittest.TestCase):
             "No Azure rollback or cleanup applies",
         ):
             self.assertIn(marker, self.runbook)
+
+        for marker in (
+            "base main: b81bd342ca59d51ee155c0e69cce9dbe19d70a14",
+            "workflow dispatch: not authorized",
+            "repository recurring Azure cost delta: CAD $0",
+            "planner bound != workflow dispatched",
+        ):
+            self.assertIn(marker, self.handoff)
 
 
 if __name__ == "__main__":
