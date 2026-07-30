@@ -1,0 +1,152 @@
+{
+  "schema_version": "project.reconciliation.lab-factory-local-mcp-smoke-run1-terminal.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:23:00-04:00",
+  "source_instruction": "Proceed",
+  "classification": "local_stdio_MCP_protocol_observation_terminal_run1",
+  "status": "passed_evidence_promoted_pending_final_exact_head_CI",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "8926a5b48db9bb7cb08523d337e43d20ba7ed69d",
+    "pull_request": 221,
+    "branch": "agent/lab-factory-local-mcp-smoke-v1",
+    "observed_run_source_head": "1aeead3a987dbe2af9af1c46c5ac1e85033991ce",
+    "final_exact_head": null,
+    "open_pull_requests_before_branch": [],
+    "working_tree_observation": "not_observed_connector_backed"
+  },
+  "observed_runs": {
+    "local_MCP_smoke": {
+      "workflow_name": "Lab Factory local MCP smoke",
+      "workflow_run_id": 30505376018,
+      "workflow_run_number": 1,
+      "conclusion": "success",
+      "job_id": 90753874033,
+      "source_head": "1aeead3a987dbe2af9af1c46c5ac1e85033991ce",
+      "artifact_id": 8745096720,
+      "artifact_name": "lab-factory-mcp-local-smoke-receipt",
+      "artifact_digest": "sha256:4f87360b534339e402f9d7fa3b9984cefe399194be2db3dcc8a2d85e78edc466",
+      "artifact_expires_at": "2026-08-29T01:21:02Z",
+      "receipt_sha256": "c7a3243108af9bca860c362c333171fce361baf7f23a56774cc83ae21a4d7fc3"
+    },
+    "repository_CI": {
+      "workflow_name": "CI",
+      "workflow_run_id": 30505375909,
+      "workflow_run_number": 715,
+      "conclusion": "success",
+      "source_head": "1aeead3a987dbe2af9af1c46c5ac1e85033991ce"
+    }
+  },
+  "promoted_evidence": {
+    "receipt": ".project/evidence/lab-factory-mcp-local-smoke-run1.json",
+    "receipt_digest": ".project/evidence/lab-factory-mcp-local-smoke-run1.sha256",
+    "receipt_matches_artifact_payload": true,
+    "receipt_source_head": "1aeead3a987dbe2af9af1c46c5ac1e85033991ce",
+    "receipt_observed_at_utc": "2026-07-30T01:21:02.226366+00:00",
+    "receipt_status": "passed"
+  },
+  "protocol_observation": {
+    "client": "MCP Python SDK ClientSession",
+    "transport": "stdio",
+    "server": "python -m azure_mcp_reality.server --transport stdio",
+    "client_and_server_colocated": true,
+    "remote_endpoint_used": false,
+    "tool_inventory": [
+      "get_current_reality",
+      "list_lab_profiles",
+      "prepare_lab_request"
+    ],
+    "called_tools": [
+      "list_lab_profiles",
+      "prepare_lab_request",
+      "prepare_lab_request"
+    ],
+    "get_current_reality_called": false,
+    "model_call_performed": false,
+    "Azure_environment_forwarded_to_server": false
+  },
+  "lab_factory_observation": {
+    "profile": "servicetracer-demo-api@1.0.0",
+    "profile_release_state": "candidate",
+    "request_id": "lab-mcp-smoke-001",
+    "location": "westus2",
+    "ttl_hours": 8,
+    "next_gate": "preflight_required",
+    "plan_digest": "sha256:fa3171ed0b702c9be88afd3ffbed99181c22366a727dc1f3ad78ba7f6994dfa6",
+    "identical_repeat_request_produced_identical_plan": true,
+    "parameter_values_returned": false,
+    "Azure_queries_performed": false,
+    "Azure_mutations_performed": false,
+    "deployment_authorized": false,
+    "cleanup_authorized": false
+  },
+  "security_and_identity": {
+    "Azure_identity_required": false,
+    "Azure_credentials_present_in_workflow": false,
+    "OpenAI_API_key_present_in_workflow": false,
+    "workflow_OIDC_permission": "none",
+    "workflow_contents_permission": "read",
+    "new_managed_identity": false,
+    "new_RBAC_assignment": false,
+    "new_secret": false,
+    "new_network_path": false
+  },
+  "Azure_reality_boundary": {
+    "fresh_Azure_authentication": false,
+    "fresh_Azure_query": false,
+    "ARM_What_If": false,
+    "Azure_mutation": false,
+    "Azure_deployment": false,
+    "service_validation": false,
+    "cleanup_execution": false,
+    "fresh_cost_observation": false,
+    "fresh_quota_observation": false,
+    "preserved_subscription_name": "Azure for Students",
+    "preserved_subscription_state": "Enabled",
+    "preserved_resource_group": "rg-ai-msp-dev-eastus",
+    "preserved_observation_time": "2026-07-29T12:01:23.289717Z",
+    "preserved_observation_promoted_as_current": false
+  },
+  "cost_and_quota": {
+    "expected_recurring_Azure_resource_cost_delta_cad": 0,
+    "actual_Azure_cost_freshly_observed": false,
+    "Azure_quota_freshly_observed": false,
+    "GitHub_Actions_and_package_download_usage_may_apply": true
+  },
+  "authority": {
+    "observed_local_MCP_client_calls_authorized": true,
+    "evidence_promotion_authorized": true,
+    "ordinary_final_exact_head_CI_authorized": true,
+    "merge_authorized_after_green_final_exact_head_CI_and_fresh_branch_check": true,
+    "get_current_reality_execution_authorized": false,
+    "Azure_authentication_or_query_authorized": false,
+    "ARM_What_If_authorized": false,
+    "Azure_mutation_authorized": false,
+    "Azure_deployment_authorized": false,
+    "RBAC_mutation_authorized": false,
+    "model_call_authorized": false,
+    "remote_MCP_deployment_authorized": false,
+    "ChatGPT_connection_authorized": false,
+    "cleanup_authorized": false
+  },
+  "canonical_distinctions": [
+    "local_MCP_implementation != local_MCP_client_call_verified",
+    "local_MCP_client_call_verified != ChatGPT_connected",
+    "profile_listed != released_lab",
+    "prepared_request != ARM_What_If",
+    "prepared_request != deployment_authorized",
+    "catalog_allowed_location != live_capacity_available",
+    "protocol_round_trip_verified != Azure_service_validated",
+    "workflow_artifact_promoted != continuously_fresh_observation",
+    "cleanup_not_required != recovery_tested"
+  ],
+  "failure_and_rollback": {
+    "run1_failure": null,
+    "repository_rollback": "Revert pull request 221.",
+    "runtime_rollback": "The stdio client and server processes exited normally after the bounded test.",
+    "Azure_rollback": "Not applicable because no Azure query or mutation occurred.",
+    "cleanup": "Not applicable because no Azure resource was created."
+  },
+  "next_gate": "Run CI again at the exact evidence-promotion head, inspect the new smoke receipt, verify the branch is zero behind live main and limited to the declared paths, then merge pull request 221."
+}
