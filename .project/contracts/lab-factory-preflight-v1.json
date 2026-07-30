@@ -1,0 +1,72 @@
+{
+  "schema_version": "project.lab-factory-preflight-contract.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:50:00-04:00",
+  "profile": "servicetracer-demo-api@1.0.0",
+  "workflow": ".github/workflows/lab-factory-preflight-run1.yml",
+  "executor": "scripts/lab_factory_preflight_run1.sh",
+  "capacity_and_cost_assessor": "scripts/assess_lab_factory_preflight.py",
+  "what_if_assessor": "scripts/assert_lab_factory_preflight_what_if.py",
+  "trigger": {
+    "type": "first_merge_to_main_introducing_workflow",
+    "attempt_limit": 1,
+    "workflow_dispatch": false,
+    "automatic_retry": false,
+    "manual_rerun": false
+  },
+  "scope": {
+    "subscription_name": "Azure for Students",
+    "environment": "test",
+    "location": "westus2",
+    "resource_group": "rg-st-demo-api-test-westus2",
+    "vm_size": "Standard_F1als_v7",
+    "ttl_hours": 8,
+    "cost_ceiling_CAD": 5.0
+  },
+  "required_checks": [
+    "exact_merge_commit",
+    "exact_subscription_selected",
+    "subscription_enabled",
+    "required_providers_registered_without_registration",
+    "dependency_health",
+    "target_resource_group_absent",
+    "derived_dns_label_available",
+    "vm_sku_unrestricted",
+    "family_quota_sufficient",
+    "regional_vcpu_quota_sufficient",
+    "standard_public_ipv4_quota_sufficient",
+    "CAD_retail_estimate_within_ceiling",
+    "deterministic_request_ready_for_preflight",
+    "ARM_subscription_validation",
+    "FullResourcePayloads_What_If",
+    "no_delete_or_modify",
+    "resource_scope_contained"
+  ],
+  "prohibited_operations": [
+    "provider_registration",
+    "resource_group_creation",
+    "ARM_deployment_create",
+    "resource_mutation",
+    "role_assignment",
+    "model_call",
+    "workflow_rerun",
+    "rollback",
+    "cleanup"
+  ],
+  "evidence": {
+    "artifact_name_pattern": "lab-factory-preflight-run1-<run-id>-<attempt>",
+    "retention_days": 30,
+    "raw_subscription_id_persisted": false,
+    "raw_tenant_id_persisted": false,
+    "private_ssh_key_persisted": false,
+    "parameter_values_returned_by_planner": false
+  },
+  "next_gate": "independent evidence review and fresh explicit deployment authority",
+  "claim_boundaries": [
+    "preflight_passed != deployment_authorized",
+    "retail_estimate != actual_cost",
+    "What_If_accepted != deployment_succeeded",
+    "quota_sufficient_at_preflight != capacity_reserved",
+    "workflow_success != service_validated"
+  ]
+}
