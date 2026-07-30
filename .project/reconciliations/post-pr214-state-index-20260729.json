@@ -1,0 +1,51 @@
+{
+  "schema_version": "project.repository-reconciliation.v1",
+  "recorded_at": "2026-07-29T20:30:00-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "base_branch": "main",
+  "observed_main": "4136a47d9aa80da99e3849fc721bab55a883b20e",
+  "latest_merged_pull_request": {
+    "number": 214,
+    "title": "Reconcile canonical handoff after PR #212",
+    "merge_commit": "4136a47d9aa80da99e3849fc721bab55a883b20e",
+    "merged_at": "2026-07-30T00:05:15Z"
+  },
+  "lab_factory_lite": {
+    "source_pull_request": 212,
+    "exact_head": "e22b1fdc45c4a9d9298416c84d179f596b38060e",
+    "merge_commit": "f8f29d8601666646d354ffc450a85348e891483f",
+    "exact_head_ci_run": 30500788666,
+    "exact_head_ci_conclusion": "success",
+    "contract": ".project/contracts/azure-lab-factory-lite-v1.json",
+    "handoff": ".project/handoffs/azure-lab-factory-lite-v1.md",
+    "architecture": "docs/architecture/azure-lab-factory-lite-v1.md",
+    "package": "lab_factory",
+    "catalog": "lab_factory/catalog.json",
+    "tests": "infra/tests/test_lab_factory_lite.py"
+  },
+  "operational_boundary": {
+    "repository_implementation_present": true,
+    "canonical_handoff_reconciled": true,
+    "state_index_was_stale": true,
+    "azure_queried_for_lab_factory": false,
+    "arm_what_if_executed_for_lab_factory": false,
+    "deployment_authorized": false,
+    "deployment_executed": false,
+    "actual_cost_observed": false,
+    "cleanup_verified": false
+  },
+  "authorization": {
+    "repository_reconciliation_only": true,
+    "active_deployment_authorization": null,
+    "active_preflight_authorization": null
+  },
+  "claim_boundaries": [
+    "candidate != deployable",
+    "catalog_entry != Azure_capacity_available",
+    "deterministic_plan != ARM_What-If",
+    "exact_head_CI_success != Azure_validation",
+    "merged_implementation != deployed_lab",
+    "estimated_cost != observed_cost",
+    "cleanup_contract_present != cleanup_verified"
+  ]
+}
