@@ -1,0 +1,36 @@
+diff --git a/scripts/azure_ai_go_live_run7.sh b/scripts/azure_ai_go_live_run7.sh
+index 21261d6..REPAIRED 100755
+--- a/scripts/azure_ai_go_live_run7.sh
++++ b/scripts/azure_ai_go_live_run7.sh
+@@ -245,7 +245,6 @@ az role assignment list \
+   --assignee-object-id "$principal_id" \
+   --scope "$account_id" \
+-  --all \
+   --output json > "$rbac_tmp" 2>"$EVIDENCE_DIR/rbac-query.err"
+ rbac_rc=$?
+ set -e
+@@ -427,7 +426,6 @@ predeploy_role_count="$(az role assignment list \
+   --assignee-object-id "$principal_id" \
+   --scope "$account_id" \
+-  --all \
+   --query "[?roleDefinitionName=='${ROLE_NAME}' && scope=='${account_id}'] | length(@)" \
+   --output tsv)"
+ if (( predeploy_role_count < 1 )); then
+@@ -507,7 +505,6 @@ az role assignment list \
+   --assignee-object-id "$principal_id" \
+   --scope "$account_id" \
+-  --all \
+   --output json \
+   | jq \
+       --arg role "$ROLE_NAME" \
+
+# Repair boundary
+#
+# Azure CLI rejects --all when --scope is supplied:
+#   ERROR: group or scope are not required when --all is used
+#
+# The unscoped principal-discovery fallback remains unchanged:
+#   az role assignment list --assignee "$AZURE_CLIENT_ID" --all ...
+#
+# Applying this patch repairs repository code only. It does not reactivate
+# azure-ai-go-live-run7, authorize a rerun, or authorize run 8.
