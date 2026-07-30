@@ -39,9 +39,9 @@ class AzureMcpLabFactoryToolsTests(unittest.TestCase):
         profile = result["profiles"][0]
         planning = profile["planning"]
         self.assertEqual(planning["workflow_path"], EXPECTED_WORKFLOW)
-        self.assertEqual(planning["github_environment"], "azure-api-payg")
+        self.assertEqual(planning["github_environment"], "azure-lab")
         self.assertEqual(planning["dispatch_mode"], "manual_only")
-        self.assertEqual(planning["subscription_boundary"], "dual_subscription")
+        self.assertEqual(planning["subscription_boundary"], "single_subscription")
         self.assertEqual(planning["provider_validation_level"], "ProviderNoRbac")
         self.assertTrue(planning["includes_arm_validation"])
         self.assertTrue(planning["includes_arm_what_if"])
@@ -90,17 +90,17 @@ class AzureMcpLabFactoryToolsTests(unittest.TestCase):
         self.assertEqual(tool_result["deployment"]["operation"], "prepare_only")
         planning = tool_result["planning"]
         self.assertEqual(planning["workflow_path"], EXPECTED_WORKFLOW)
-        self.assertEqual(planning["github_environment"], "azure-api-payg")
+        self.assertEqual(planning["github_environment"], "azure-lab")
         self.assertEqual(planning["dispatch_mode"], "manual_only")
         self.assertFalse(planning["workflow_dispatch_performed"])
-        self.assertEqual(planning["subscription_boundary"], "dual_subscription")
+        self.assertEqual(planning["subscription_boundary"], "single_subscription")
         self.assertEqual(
             planning["dependency_subscription_role"],
-            "azure_for_students_read_only_dependency",
+            "azure_for_students_existing_dependency",
         )
         self.assertEqual(
             planning["target_subscription_role"],
-            "pay_as_you_go_planning_only_target",
+            "azure_for_students_planning_target",
         )
         self.assertEqual(planning["provider_validation_level"], "ProviderNoRbac")
         self.assertTrue(planning["includes_arm_validation"])

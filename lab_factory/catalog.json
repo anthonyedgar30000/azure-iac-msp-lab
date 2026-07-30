@@ -1,6 +1,6 @@
 {
   "schema_version": "lab-factory.catalog.v1",
-  "catalog_version": "1.1.0",
+  "catalog_version": "1.2.0",
   "profiles": [
     {
       "id": "servicetracer-demo-api",
@@ -46,11 +46,11 @@
       },
       "planning": {
         "workflow_path": ".github/workflows/servicetracer-demo-api-subproject-plan.yml",
-        "github_environment": "azure-api-payg",
+        "github_environment": "azure-lab",
         "dispatch_mode": "manual_only",
-        "subscription_boundary": "dual_subscription",
-        "dependency_subscription_role": "azure_for_students_read_only_dependency",
-        "target_subscription_role": "pay_as_you_go_planning_only_target",
+        "subscription_boundary": "single_subscription",
+        "dependency_subscription_role": "azure_for_students_existing_dependency",
+        "target_subscription_role": "azure_for_students_planning_target",
         "dependency_resource_group_pattern": "rg-servicetracer-{environment}-westus2",
         "prefix": "mst",
         "vm_size": "Standard_F1als_v7",

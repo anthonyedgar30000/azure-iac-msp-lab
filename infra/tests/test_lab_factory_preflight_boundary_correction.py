@@ -31,17 +31,21 @@ class LabFactoryPreflightBoundaryCorrectionTests(unittest.TestCase):
         )
         cls.workflow = ACTIVE_WORKFLOW.read_text(encoding="utf-8")
 
-    def test_duplicate_single_subscription_path_is_absent(self) -> None:
+    def test_duplicate_preflight_path_is_absent(self) -> None:
         for path in SUPERSEDED_PATHS:
             self.assertFalse(path.exists(), str(path))
 
-    def test_existing_dual_subscription_planner_is_canonical(self) -> None:
+    def test_existing_single_subscription_planner_is_canonical(self) -> None:
         self.assertTrue(ACTIVE_WORKFLOW.is_file())
-        self.assertIn("environment: azure-api-payg", self.workflow)
-        self.assertIn("AZURE_DEPENDENCY_CLIENT_ID", self.workflow)
-        self.assertIn("AZURE_TARGET_CLIENT_ID", self.workflow)
-        self.assertIn("AZURE_DEPENDENCY_SUBSCRIPTION_ID", self.workflow)
-        self.assertIn("AZURE_TARGET_SUBSCRIPTION_ID", self.workflow)
+        self.assertIn("environment: azure-lab", self.workflow)
+        self.assertIn("AZURE_CLIENT_ID", self.workflow)
+        self.assertIn("AZURE_SUBSCRIPTION_ID", self.workflow)
+        self.assertIn("AZURE_TENANT_ID", self.workflow)
+        self.assertIn('subscription_boundary:"single_subscription"', self.workflow)
+        self.assertNotIn("AZURE_DEPENDENCY_CLIENT_ID", self.workflow)
+        self.assertNotIn("AZURE_TARGET_CLIENT_ID", self.workflow)
+        self.assertNotIn("AZURE_DEPENDENCY_SUBSCRIPTION_ID", self.workflow)
+        self.assertNotIn("AZURE_TARGET_SUBSCRIPTION_ID", self.workflow)
         self.assertIn("ProviderNoRbac", self.workflow)
         self.assertIn(
             "workloads/servicetracer-demo-api/scripts/install.sh",
@@ -51,7 +55,7 @@ class LabFactoryPreflightBoundaryCorrectionTests(unittest.TestCase):
         self.assertIn("az deployment sub what-if", self.workflow)
         self.assertNotIn("az deployment sub create", self.workflow)
 
-    def test_reconciliation_preserves_closed_cloud_authority(self) -> None:
+    def test_historical_reconciliation_preserves_closed_cloud_authority(self) -> None:
         document = self.reconciliation
         self.assertEqual(
             document["schema_version"],

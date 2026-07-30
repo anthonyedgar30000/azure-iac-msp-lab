@@ -10,7 +10,7 @@ on:
         type: choice
         options: [dev, test]
       location:
-        description: 'Approved target Azure Plan region'
+        description: 'Approved Azure for Students planning region'
         required: true
         default: westus2
         type: string
@@ -20,7 +20,7 @@ on:
         default: mst
         type: string
       dependency_resource_group:
-        description: 'Existing ServiceTracer dependency resource group'
+        description: 'Existing ServiceTracer dependency resource group in Azure for Students'
         required: true
         default: rg-servicetracer-dev-westus2
         type: string
@@ -65,7 +65,7 @@ jobs:
   plan:
     name: Plan independent ServiceTracer demo API workload
     runs-on: ubuntu-latest
-    environment: azure-api-payg
+    environment: azure-lab
     timeout-minutes: 45
     steps:
       - name: Check out immutable dispatch state
@@ -73,7 +73,7 @@ jobs:
         with:
           ref: ${{ github.sha }}
 
-      - name: Validate main-bound dual-subscription read-only authority
+      - name: Validate main-bound single-subscription read-only authority
         env:
           LAB_ENVIRONMENT: ${{ inputs.environment }}
           LOCATION: ${{ inputs.location }}
@@ -84,11 +84,9 @@ jobs:
           VM_SIZE: ${{ inputs.vm_size }}
           MAXIMUM_MONTHLY_COST_CAD: ${{ inputs.maximum_monthly_cost_cad }}
           CONFIRMATION: ${{ inputs.confirmation }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          DEPENDENCY_CLIENT_ID: ${{ secrets.AZURE_DEPENDENCY_CLIENT_ID }}
-          DEPENDENCY_SUBSCRIPTION_ID: ${{ secrets.AZURE_DEPENDENCY_SUBSCRIPTION_ID }}
-          TARGET_CLIENT_ID: ${{ secrets.AZURE_TARGET_CLIENT_ID }}
-          TARGET_SUBSCRIPTION_ID: ${{ secrets.AZURE_TARGET_SUBSCRIPTION_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           set -euo pipefail
           mkdir -p "$ARTIFACT_DIR"
@@ -103,17 +101,16 @@ jobs:
           [[ "$DNS_LABEL" =~ ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$ ]]
           [[ "$ALLOWED_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]
           [[ "$MAXIMUM_MONTHLY_COST_CAD" =~ ^[0-9]+([.][0-9]{1,2})?$ ]]
-          for value in "$AZURE_TENANT_ID" "$DEPENDENCY_CLIENT_ID" "$DEPENDENCY_SUBSCRIPTION_ID" "$TARGET_CLIENT_ID" "$TARGET_SUBSCRIPTION_ID"; do
+          for value in "$AZURE_CLIENT_ID" "$AZURE_TENANT_ID" "$AZURE_SUBSCRIPTION_ID"; do
             [[ "$value" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]
           done
-          [[ "$DEPENDENCY_CLIENT_ID" != "$TARGET_CLIENT_ID" ]]
-          [[ "$DEPENDENCY_SUBSCRIPTION_ID" != "$TARGET_SUBSCRIPTION_ID" ]]
           expected="PLAN-DEMO-API-SUBPROJECT:${LAB_ENVIRONMENT}:${DNS_LABEL}"
           [[ "$CONFIRMATION" == "$expected" ]] || {
             echo "Confirmation must exactly equal: $expected" >&2
             exit 1
           }
           target_resource_group="rg-st-demo-api-${LAB_ENVIRONMENT}-${LOCATION}"
+          [[ "$target_resource_group" != "$DEPENDENCY_RESOURCE_GROUP" ]]
           jq -n \
             --arg dispatch_sha "$GITHUB_SHA" \
             --arg ref "$GITHUB_REF" \
@@ -126,31 +123,33 @@ jobs:
             --arg allowed_origin "$ALLOWED_ORIGIN" \
             --arg vm_size "$VM_SIZE" \
             --arg maximum_monthly_cost_cad "$MAXIMUM_MONTHLY_COST_CAD" \
-            '{schema_version:"servicetracer.demo-api-subproject-plan-request.v3",dispatch_sha:$dispatch_sha,ref:$ref,environment:$environment,location:$location,prefix:$prefix,dependency_resource_group:$dependency_resource_group,target_resource_group:$target_resource_group,dns_label:$dns_label,allowed_origin:$allowed_origin,vm_size:$vm_size,maximum_monthly_cost_cad:($maximum_monthly_cost_cad|tonumber),subscription_boundary:"dual_subscription",github_environment:"azure-api-payg",dependency_subscription_read_only:true,target_subscription_planning_only:true,provider_validation_level:"ProviderNoRbac",azure_authentication_authorized:true,credential_creation_authorized:false,azure_mutations_authorized:false,deployment_authorized:false}' \
+            '{schema_version:"servicetracer.demo-api-subproject-plan-request.v4",dispatch_sha:$dispatch_sha,ref:$ref,environment:$environment,location:$location,prefix:$prefix,dependency_resource_group:$dependency_resource_group,target_resource_group:$target_resource_group,dns_label:$dns_label,allowed_origin:$allowed_origin,vm_size:$vm_size,maximum_monthly_cost_cad:($maximum_monthly_cost_cad|tonumber),subscription_boundary:"single_subscription",github_environment:"azure-lab",subscription_role:"azure_for_students_dependency_and_planning_target",dependency_resource_group_read_only:true,target_resource_group_planning_only:true,provider_validation_level:"ProviderNoRbac",azure_authentication_authorized:true,credential_creation_authorized:false,azure_mutations_authorized:false,deployment_authorized:false}' \
             > "$ARTIFACT_DIR/request.json"
 
       - name: Run subproject tests before Azure login
         run: python -m unittest discover -s workloads/servicetracer-demo-api/tests -v
 
-      - name: Log in to dependency subscription with workload identity federation
+      - name: Log in to Azure for Students with workload identity federation
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_DEPENDENCY_CLIENT_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_DEPENDENCY_SUBSCRIPTION_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Capture read-only ServiceTracer dependency state
+      - name: Capture Azure for Students context and read-only dependency state
         env:
           LAB_ENVIRONMENT: ${{ inputs.environment }}
           PREFIX: ${{ inputs.prefix }}
           DEPENDENCY_RESOURCE_GROUP: ${{ inputs.dependency_resource_group }}
-          DEPENDENCY_SUBSCRIPTION_ID: ${{ secrets.AZURE_DEPENDENCY_SUBSCRIPTION_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         run: |
           set -euo pipefail
           suffix="${PREFIX}-${LAB_ENVIRONMENT}"
-          az account show --query '{subscriptionId:id,subscriptionName:name,tenantId:tenantId,state:state,user:user}' --output json > "$ARTIFACT_DIR/dependency-azure-context.json"
-          jq -e --arg subscription "$DEPENDENCY_SUBSCRIPTION_ID" --arg tenant "$AZURE_TENANT_ID" '.subscriptionId==$subscription and .tenantId==$tenant and .state=="Enabled"' "$ARTIFACT_DIR/dependency-azure-context.json" > /dev/null
+          az account show --query '{subscriptionId:id,subscriptionName:name,tenantId:tenantId,state:state,user:user}' --output json > "$ARTIFACT_DIR/azure-context.json"
+          jq -e --arg subscription "$AZURE_SUBSCRIPTION_ID" --arg tenant "$AZURE_TENANT_ID" '.subscriptionId==$subscription and .tenantId==$tenant and .state=="Enabled"' "$ARTIFACT_DIR/azure-context.json" > /dev/null
+          cp "$ARTIFACT_DIR/azure-context.json" "$ARTIFACT_DIR/dependency-azure-context.json"
+          cp "$ARTIFACT_DIR/azure-context.json" "$ARTIFACT_DIR/target-azure-context.json"
           az group show --name "$DEPENDENCY_RESOURCE_GROUP" --output json > "$ARTIFACT_DIR/dependency-resource-group.json"
           az network public-ip show \
             --resource-group "$DEPENDENCY_RESOURCE_GROUP" \
@@ -158,25 +157,17 @@ jobs:
             --output json > "$ARTIFACT_DIR/dependency-public-ip.json"
           jq -e '.provisioningState=="Succeeded" and .ipAddress!=null and .ipAddress!=""' "$ARTIFACT_DIR/dependency-public-ip.json" > /dev/null
 
-      - name: Log in to target Azure Plan subscription with workload identity federation
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_TARGET_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_TARGET_SUBSCRIPTION_ID }}
-
-      - name: Capture and assess target provider, policy, quota, SKU, and resource state
+      - name: Capture and assess provider, policy, quota, SKU, and target resource state
         env:
           LAB_ENVIRONMENT: ${{ inputs.environment }}
           LOCATION: ${{ inputs.location }}
           VM_SIZE: ${{ inputs.vm_size }}
-          TARGET_SUBSCRIPTION_ID: ${{ secrets.AZURE_TARGET_SUBSCRIPTION_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         run: |
           set -euo pipefail
           target_resource_group="rg-st-demo-api-${LAB_ENVIRONMENT}-${LOCATION}"
-          az account show --query '{subscriptionId:id,subscriptionName:name,tenantId:tenantId,state:state,user:user}' --output json > "$ARTIFACT_DIR/target-azure-context.json"
-          jq -e --arg subscription "$TARGET_SUBSCRIPTION_ID" --arg tenant "$AZURE_TENANT_ID" '.subscriptionId==$subscription and .tenantId==$tenant and .state=="Enabled"' "$ARTIFACT_DIR/target-azure-context.json" > /dev/null
+          jq -e --arg subscription "$AZURE_SUBSCRIPTION_ID" --arg tenant "$AZURE_TENANT_ID" '.subscriptionId==$subscription and .tenantId==$tenant and .state=="Enabled"' "$ARTIFACT_DIR/azure-context.json" > /dev/null
           az provider show --namespace Microsoft.Compute --query '{namespace:namespace,registrationState:registrationState}' --output json > "$ARTIFACT_DIR/provider-compute.json"
           az provider show --namespace Microsoft.Network --query '{namespace:namespace,registrationState:registrationState}' --output json > "$ARTIFACT_DIR/provider-network.json"
           az policy assignment list --disable-scope-strict-match true --output json > "$ARTIFACT_DIR/target-policy-assignments.json"
@@ -280,7 +271,7 @@ jobs:
             exit 1
           fi
 
-      - name: Validate and capture target-subscription What-If
+      - name: Validate and capture Azure for Students What-If
         env:
           LAB_ENVIRONMENT: ${{ inputs.environment }}
           LOCATION: ${{ inputs.location }}
@@ -289,10 +280,10 @@ jobs:
           DNS_LABEL: ${{ inputs.dns_label }}
           ALLOWED_ORIGIN: ${{ inputs.allowed_origin }}
           VM_SIZE: ${{ inputs.vm_size }}
-          TARGET_SUBSCRIPTION_ID: ${{ secrets.AZURE_TARGET_SUBSCRIPTION_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           set -euo pipefail
-          jq -e --arg subscription "$TARGET_SUBSCRIPTION_ID" '.subscriptionId==$subscription' "$ARTIFACT_DIR/target-azure-context.json" > /dev/null
+          jq -e --arg subscription "$AZURE_SUBSCRIPTION_ID" '.subscriptionId==$subscription and .state=="Enabled"' "$ARTIFACT_DIR/azure-context.json" > /dev/null
           jq -e '.status=="ready_for_arm_what_if"' "$ARTIFACT_DIR/target-readiness-assessment.json" > /dev/null
           suffix="${PREFIX}-${LAB_ENVIRONMENT}"
           target_resource_group="rg-st-demo-api-${LAB_ENVIRONMENT}-${LOCATION}"
@@ -309,7 +300,7 @@ jobs:
             --arg source_repository "$source_repository" \
             --arg source_ref "$GITHUB_SHA" \
             --arg installer_uri "$installer_uri" \
-            '{target_resource_group:$target_resource_group,dependency_resource_group:$dependency_resource_group,backend_transaction_url:$backend_transaction_url,source_repository:$source_repository,source_ref:$source_ref,installer_uri:$installer_uri,subscription_boundary:"dual_subscription",provider_validation_level:"ProviderNoRbac",dependency_subscription_read_only:true,target_subscription_planning_only:true,credential_creation_authorized:false}' \
+            '{target_resource_group:$target_resource_group,dependency_resource_group:$dependency_resource_group,backend_transaction_url:$backend_transaction_url,source_repository:$source_repository,source_ref:$source_ref,installer_uri:$installer_uri,subscription_boundary:"single_subscription",provider_validation_level:"ProviderNoRbac",dependency_resource_group_read_only:true,target_resource_group_planning_only:true,credential_creation_authorized:false}' \
             > "$ARTIFACT_DIR/effective-parameters.json"
 
           parameters=(
@@ -372,8 +363,7 @@ jobs:
           DNS_LABEL: ${{ inputs.dns_label }}
           VM_SIZE: ${{ inputs.vm_size }}
         run: |
-          dependency_name="$(jq -r '.subscriptionName // "not-observed"' "$ARTIFACT_DIR/dependency-azure-context.json" 2>/dev/null || echo not-observed)"
-          target_name="$(jq -r '.subscriptionName // "not-observed"' "$ARTIFACT_DIR/target-azure-context.json" 2>/dev/null || echo not-observed)"
+          subscription_name="$(jq -r '.subscriptionName // "not-observed"' "$ARTIFACT_DIR/azure-context.json" 2>/dev/null || echo not-observed)"
           readiness_status="$(jq -r '.status // "not-observed"' "$ARTIFACT_DIR/target-readiness-assessment.json" 2>/dev/null || echo not-observed)"
           readiness_reasons="$(jq -c '.blocking_reasons // []' "$ARTIFACT_DIR/target-readiness-assessment.json" 2>/dev/null || echo '[]')"
           {
@@ -381,9 +371,9 @@ jobs:
             echo
             echo "- Dispatch SHA: \`$GITHUB_SHA\`"
             echo "- Ref: \`$GITHUB_REF\`"
-            echo "- GitHub environment: \`azure-api-payg\`"
-            echo "- Dependency subscription: \`$dependency_name\` (read-only source)"
-            echo "- Target subscription: \`$target_name\` (read-only planning target)"
+            echo '- GitHub environment: `azure-lab`'
+            echo "- Azure subscription: \`$subscription_name\` (dependency reads and target planning)"
+            echo '- Subscription boundary: `single_subscription`'
             echo "- Target resource group: \`rg-st-demo-api-${LAB_ENVIRONMENT}-${LOCATION}\`"
             echo "- DNS label: \`$DNS_LABEL\`"
             echo "- VM size: \`$VM_SIZE\`"

@@ -1,0 +1,81 @@
+{
+  "schema_version": "project.reconciliation.servicetracer-student-subscription-boundary-correction.v1",
+  "recorded_at": "2026-07-30T01:12:00-04:00",
+  "project": "Azure IaC MSP Lab",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_main": "cc59d75e55839249b6fa9b3c959d9c8b80a4d7e5",
+    "working_branch": "fix/servicetracer-student-single-subscription",
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "evidence": {
+    "workflow_run_id": 30515368322,
+    "job_id": 90783879915,
+    "artifact_id": 8748650790,
+    "artifact_name": "servicetracer-demo-api-subproject-plan-evidence",
+    "observed_subscription_name": "Azure subscription 1",
+    "observed_subscription_state": "Warned",
+    "failure_stage": "capture_and_assess_target_provider_policy_quota_sku_and_resource_state",
+    "arm_validation_performed": false,
+    "arm_what_if_performed": false,
+    "azure_mutation_or_deployment_observed": false,
+    "claim_boundary": "The run proves that the protected workflow configuration selected Azure subscription 1 for the target login. It does not prove the current state of Azure for Students or any deployment outcome."
+  },
+  "user_direction": {
+    "instruction": "Use only the Azure for Students subscription for ServiceTracer planning and future deployment work.",
+    "received_on": "2026-07-30",
+    "architecture_effect": "Replace the dual-subscription boundary with one Azure for Students subscription and separate dependency and target resource groups."
+  },
+  "intended_architecture": {
+    "subscription_boundary": "single_subscription",
+    "subscription": "Azure for Students",
+    "github_environment": "azure-lab",
+    "identity_contract": [
+      "AZURE_CLIENT_ID",
+      "AZURE_TENANT_ID",
+      "AZURE_SUBSCRIPTION_ID"
+    ],
+    "dependency_resource_group_pattern": "rg-servicetracer-<environment>-westus2",
+    "target_resource_group_pattern": "rg-st-demo-api-<environment>-westus2",
+    "resource_group_isolation_required": true,
+    "provider_validation_level": "ProviderNoRbac",
+    "deployment_command_present": false
+  },
+  "repository_changes": {
+    "planner": "Use one Azure for Students workload-identity login and preserve planning-only commands.",
+    "lab_factory_catalog": "Bind the profile to azure-lab and single_subscription.",
+    "tests": "Reject Pay-As-You-Go and dual-subscription markers.",
+    "documentation": "Publish a current Azure for Students runbook and retain historical evidence boundaries.",
+    "cloud_configuration_mutated": false
+  },
+  "authority": {
+    "repository_branch_and_declared_writes": true,
+    "pull_request_creation": true,
+    "ordinary_ci": true,
+    "workflow_dispatch": false,
+    "azure_authentication_or_query": false,
+    "arm_what_if": false,
+    "azure_mutation": false,
+    "deployment": false,
+    "rbac_mutation": false,
+    "github_environment_mutation": false,
+    "github_secret_mutation": false,
+    "cleanup": false,
+    "rollback": false
+  },
+  "cost": {
+    "repository_change_cost_delta_cad": 0,
+    "student_credit_freshly_observed": false,
+    "actual_cost_freshly_observed": false,
+    "quota_freshly_observed": false
+  },
+  "validation_plan": [
+    "python .project/validate_current.py",
+    "python -m unittest discover -s infra/tests -v",
+    "python -m unittest discover -s workloads/servicetracer-demo-api/tests -v",
+    "az bicep lint --file workloads/servicetracer-demo-api/infra/main.bicep",
+    "az bicep build --file workloads/servicetracer-demo-api/infra/main.bicep"
+  ],
+  "next_gate": "Merge only after exact-head CI passes. Do not dispatch the planner until the azure-lab secret contract is re-verified as Azure for Students and a fresh one-attempt read-only planning authorization is granted."
+}

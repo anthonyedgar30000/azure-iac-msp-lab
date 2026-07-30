@@ -111,10 +111,10 @@ def _validated_binding(
 
     if planning["dispatch_mode"] != "manual_only":
         raise CatalogError("planning dispatch must remain manual-only")
-    if planning["subscription_boundary"] != "dual_subscription":
-        raise CatalogError("planning subscription boundary must remain dual-subscription")
-    if planning["github_environment"] != "azure-api-payg":
-        raise CatalogError("planning GitHub environment must remain azure-api-payg")
+    if planning["subscription_boundary"] != "single_subscription":
+        raise CatalogError("planning subscription boundary must remain single-subscription")
+    if planning["github_environment"] != "azure-lab":
+        raise CatalogError("planning GitHub environment must remain azure-lab")
     if planning["provider_validation_level"] != "ProviderNoRbac":
         raise CatalogError("planning validation must remain ProviderNoRbac")
     if planning["includes_arm_validation"] is not True:
@@ -152,11 +152,10 @@ def _validated_binding(
 
     workflow = resolved_workflow.read_text(encoding="utf-8")
     required_markers = (
-        "environment: azure-api-payg",
-        "AZURE_DEPENDENCY_CLIENT_ID",
-        "AZURE_TARGET_CLIENT_ID",
-        "AZURE_DEPENDENCY_SUBSCRIPTION_ID",
-        "AZURE_TARGET_SUBSCRIPTION_ID",
+        "environment: azure-lab",
+        "AZURE_CLIENT_ID",
+        "AZURE_SUBSCRIPTION_ID",
+        'subscription_boundary:"single_subscription"',
         "ProviderNoRbac",
         "az deployment sub validate",
         "az deployment sub what-if",
@@ -168,8 +167,19 @@ def _validated_binding(
             "ratified planner workflow is missing required markers: "
             + ", ".join(missing_markers)
         )
-    if "az deployment sub create" in workflow:
-        raise CatalogError("ratified planner unexpectedly contains deployment execution")
+    forbidden_markers = (
+        "AZURE_DEPENDENCY_CLIENT_ID",
+        "AZURE_TARGET_CLIENT_ID",
+        "AZURE_DEPENDENCY_SUBSCRIPTION_ID",
+        "AZURE_TARGET_SUBSCRIPTION_ID",
+        "az deployment sub create",
+    )
+    unexpected_markers = [marker for marker in forbidden_markers if marker in workflow]
+    if unexpected_markers:
+        raise CatalogError(
+            "ratified planner workflow contains forbidden dual-subscription or deployment markers: "
+            + ", ".join(unexpected_markers)
+        )
     return planning
 
 
