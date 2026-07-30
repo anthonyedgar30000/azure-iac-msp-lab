@@ -50,7 +50,7 @@ AZURE_SUBSCRIPTION_ID
 
 The workflow validates the configured subscription and tenant after one workload-identity login. It rejects any region or VM-size input other than the reviewed package and rejects a target resource-group name that equals the dependency resource group.
 
-The workflow does not create GitHub environments, secrets, federated credentials, Azure role assignments, resources, or deployment records.
+The workflow does not create GitHub environments, secrets, federated credentials, resources, or deployment records. It does not create Azure role assignments.
 
 ## Planner sequence
 
