@@ -1,0 +1,173 @@
+{
+  "schema_version": "project.azure-lab-factory-preflight-authorization.v1",
+  "project": "Azure IaC MSP Lab",
+  "attempt_id": "servicetracer-lab-factory-preflight-run1",
+  "recorded_at": "2026-07-29T21:49:00-04:00",
+  "source_instruction": "Proceed",
+  "status": "active_one_attempt_pending_exact_merge_commit",
+  "active": true,
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "0b6fa63d86ae52119b63ef6c9421c8d13215cb59",
+    "latest_merged_pull_request": 223,
+    "open_pull_requests_observed_before_branch": [],
+    "branch": "agent/servicetracer-lab-factory-preflight-run1",
+    "exact_execution_commit": null,
+    "execution_commit_rule": "Use the exact merge commit that lands this authorization and preflight implementation."
+  },
+  "prepared_request": {
+    "profile": "servicetracer-demo-api@1.0.0",
+    "profile_release_state": "candidate",
+    "environment": "dev",
+    "location": "westus2",
+    "ttl_hours": 8,
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "template": "workloads/servicetracer-demo-api/infra/main.bicep",
+    "template_scope": "subscription",
+    "vm_size": "Standard_F1als_v7",
+    "cost_ceiling_cad": 5.0,
+    "cost_ceiling_kind": "planning_gate_not_spend_authority"
+  },
+  "identity_and_scope": {
+    "execution_environment": "interactive Azure Cloud Shell Bash",
+    "identity": "existing authenticated user identity",
+    "subscription_name": "Azure for Students",
+    "subscription_id_source": "operator_supplied_runtime_environment_variable",
+    "subscription_id_persisted": false,
+    "tenant_id_persisted": false,
+    "cross_subscription_discovery": false,
+    "new_identity_created": false,
+    "new_rbac_assignment": false,
+    "effective_least_privilege_proven": false
+  },
+  "authorized_operations": [
+    "validate the exact repository commit and clean working tree",
+    "select and verify the exact Azure for Students subscription",
+    "observe Microsoft.Resources, Microsoft.Compute, Microsoft.Network, and Microsoft.ManagedIdentity provider registration state",
+    "observe Standard_F1als_v7 availability and restrictions in westus2",
+    "observe regional and VM-family vCPU quota in westus2",
+    "observe the exact target resource-group state and bounded resource inventory",
+    "query unauthenticated Azure retail prices in CAD for planning context",
+    "attempt a month-to-date Cost Management query and record permission failure without treating it as zero cost",
+    "compile the exact Bicep source",
+    "execute subscription-scope ARM template validation",
+    "execute subscription-scope ARM What-If with ResourceIdOnly output",
+    "write sanitized non-secret evidence and a SHA-256 manifest"
+  ],
+  "denied_operations": [
+    "az deployment sub create",
+    "az deployment group create",
+    "az provider register",
+    "az role assignment create",
+    "az role assignment delete",
+    "resource creation",
+    "resource update",
+    "resource deletion",
+    "RBAC mutation",
+    "policy mutation",
+    "network mutation",
+    "secret read or write",
+    "VM guest command execution",
+    "model request",
+    "remote MCP deployment",
+    "ChatGPT connection",
+    "cleanup",
+    "rollback",
+    "automatic retry",
+    "manual rerun under the same authorization"
+  ],
+  "expected_network_path": {
+    "internet_ingress": [
+      "TCP/80 to the dedicated VM public IP",
+      "TCP/443 to the dedicated VM public IP"
+    ],
+    "ssh_ingress": "not declared",
+    "virtual_network": "10.30.0.0/24",
+    "subnet": "10.30.0.0/27",
+    "public_ip": "Standard Regional static IPv4",
+    "claim_boundary": "template network path != deployed or validated network path"
+  },
+  "consumption": {
+    "attempt_limit": 1,
+    "marker": "~/.servicetracer-lab-factory-preflight-run1.consumed",
+    "boundary": "The marker is created immediately before the first authenticated Azure observation.",
+    "failure_after_consumption_requires_new_authority": true,
+    "retry_authorized": false
+  },
+  "expected_outputs": {
+    "preflight_status": [
+      "passed",
+      "blocked",
+      "observation_failed"
+    ],
+    "deployment_authorized": false,
+    "deployment_performed": false,
+    "azure_mutations_performed": false,
+    "secrets_returned": false,
+    "evidence_directory": "~/clouddrive/servicetracer-lab-factory-preflight-run1/evidence",
+    "manifest": "artifact-manifest.sha256"
+  },
+  "failure_and_rollback": {
+    "fail_closed_on": [
+      "commit mismatch",
+      "dirty working tree",
+      "confirmation mismatch",
+      "subscription mismatch",
+      "disabled subscription",
+      "provider not registered",
+      "SKU unavailable or restricted",
+      "insufficient or unobservable quota",
+      "target resource group already present",
+      "retail VM price unavailable",
+      "planning estimate exceeds CAD 5.00",
+      "template validation failure",
+      "What-If failure",
+      "unexpected What-If change type",
+      "resource outside the exact target resource group",
+      "unexpected resource type"
+    ],
+    "repository_rollback": "Revert the implementing pull request.",
+    "azure_rollback": "not_applicable_no_Azure_mutation_authorized",
+    "cleanup_authorized": false
+  },
+  "authority": {
+    "repository_branch_and_declared_writes": true,
+    "pull_request_creation": true,
+    "ordinary_exact_head_ci": true,
+    "merge_after_green_and_freshness_recheck": true,
+    "one_interactive_read_only_preflight_after_merge": true,
+    "azure_authentication_and_bounded_queries": true,
+    "arm_validation": true,
+    "arm_what_if": true,
+    "azure_mutation": false,
+    "deployment": false,
+    "rbac_mutation": false,
+    "model_call": false,
+    "remote_mcp_deployment": false,
+    "chatgpt_connection": false,
+    "cleanup": false,
+    "rollback": false,
+    "retry": false
+  },
+  "cost": {
+    "expected_recurring_Azure_resource_cost_delta_CAD": 0,
+    "preflight_model_tokens": 0,
+    "planning_ceiling_CAD": 5.0,
+    "planning_estimate_method": "eight hours of observed CAD VM retail rate plus a fixed CAD 2.00 storage-and-network contingency",
+    "actual_cost_freshly_observed": false,
+    "estimated_cost_is_not_actual_cost": true
+  },
+  "canonical_distinctions": [
+    "prepared_request != ARM_What-If",
+    "ARM_What-If_passed != deployment_authorized",
+    "provider_registered != quota_sufficient",
+    "SKU_listed != unrestricted_for_subscription",
+    "estimated_cost != actual_cost",
+    "target_resource_group_absent != DNS_label_globally_available",
+    "template_network_path != deployed_network_path",
+    "authentication_succeeded != effective_least_privilege",
+    "preflight_passed != service_validated",
+    "failed_attempt != authorization_to_retry"
+  ]
+}

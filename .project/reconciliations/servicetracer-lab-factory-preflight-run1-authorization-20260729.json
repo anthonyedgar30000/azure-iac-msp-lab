@@ -1,0 +1,96 @@
+{
+  "schema_version": "project.reconciliation.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:49:00-04:00",
+  "reconciliation": "ServiceTracer Lab Factory preflight run 1 authorization",
+  "source_instruction": "Proceed",
+  "repository_observation": {
+    "observed_main": "0b6fa63d86ae52119b63ef6c9421c8d13215cb59",
+    "latest_merged_pull_request": 223,
+    "open_pull_requests_before_branch": [],
+    "branch": "agent/servicetracer-lab-factory-preflight-run1",
+    "working_tree": "not_observed_connector_backed",
+    "pull_request_ci": "not_yet_run"
+  },
+  "current_selector_before_increment": {
+    "selector": ".project/CURRENT.json",
+    "current_reality": ".project/current-reality-v3.json",
+    "state_index": ".project/state-index-v12.json",
+    "handoff": ".project/handoffs/current-state-v2.md"
+  },
+  "evidence_considered": {
+    "lab_factory_catalog": "lab_factory/catalog.json",
+    "lab_factory_profile": "servicetracer-demo-api@1.0.0",
+    "prepared_request_next_gate": "preflight_required",
+    "template": "workloads/servicetracer-demo-api/infra/main.bicep",
+    "module": "workloads/servicetracer-demo-api/infra/modules/workload.bicep",
+    "local_mcp_client_receipt": ".project/evidence/lab-factory-mcp-local-smoke-run1.json",
+    "local_mcp_client_verified": true,
+    "fresh_Azure_query_during_repository_increment": false,
+    "fresh_cost_or_quota_observation": false,
+    "ARM_What_If_performed": false
+  },
+  "decision": {
+    "classification": "authorize_one_future_read_only_preflight_after_merge",
+    "authorization": ".project/observation-requests/servicetracer-lab-factory-preflight-run1.json",
+    "profile": "servicetracer-demo-api@1.0.0",
+    "environment": "dev",
+    "location": "westus2",
+    "ttl_hours": 8,
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "vm_size": "Standard_F1als_v7",
+    "planning_ceiling_CAD": 5.0,
+    "execution_observed": false,
+    "deployment_authorized": false,
+    "Azure_mutation_authorized": false,
+    "retry_authorized": false
+  },
+  "why_this_gate_is_required": [
+    "The profile remains candidate rather than released.",
+    "The local MCP request is deterministic but has not been tested against current Azure capacity or policy.",
+    "westus2 catalog allowance is not live SKU availability.",
+    "Standard_F1als_v7 source selection is not subscription quota proof.",
+    "Bicep compilation is not ARM template validation.",
+    "A prepared request is not an accepted ARM What-If.",
+    "The CAD planning estimate is not actual cost."
+  ],
+  "scope_and_security": {
+    "subscription_name": "Azure for Students",
+    "raw_subscription_or_tenant_UUID_persisted": false,
+    "new_identity_or_RBAC": false,
+    "network_source_reviewed": true,
+    "declared_public_ingress": [
+      "TCP/80 from Internet",
+      "TCP/443 from Internet"
+    ],
+    "declared_SSH_ingress": false,
+    "secret_values_persisted": false,
+    "ephemeral_SSH_private_key_persisted_to_evidence": false
+  },
+  "cost": {
+    "expected_recurring_Azure_resource_cost_delta_CAD": 0,
+    "planning_ceiling_CAD": 5.0,
+    "actual_cost_freshly_observed": false,
+    "quota_freshly_observed": false,
+    "cost_method": "CAD VM retail price for eight hours plus CAD 2.00 contingency",
+    "cost_method_complete": false
+  },
+  "failure_and_rollback": {
+    "failure_before_consumption": "Correct the local prerequisite without Azure execution.",
+    "failure_after_consumption": "Stop, preserve partial evidence, and obtain new authority before any retry.",
+    "repository_rollback": "Revert the implementing pull request.",
+    "Azure_rollback": "not_applicable_no_mutation_authorized",
+    "cleanup_authorized": false
+  },
+  "canonical_distinctions": [
+    "authorization_recorded != preflight_executed",
+    "preflight_executed != preflight_passed",
+    "preflight_passed != deployment_authorized",
+    "ARM_What_If != Azure_mutation",
+    "SKU_listed != quota_sufficient",
+    "estimated_cost != actual_cost",
+    "network_declared != network_validated",
+    "not_observed != false"
+  ],
+  "next_gate": "Run exact-head CI and merge only after a live-main freshness check. Then execute the one-attempt Cloud Shell preflight and reconcile its evidence."
+}

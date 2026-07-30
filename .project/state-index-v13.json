@@ -1,0 +1,146 @@
+{
+  "schema_version": "project.state-index.v13",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:49:00-04:00",
+  "selector": ".project/CURRENT.json",
+  "authoritative_current_reality": ".project/current-reality-v4.json",
+  "authoritative_handoff": ".project/handoffs/current-state-v3.md",
+  "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
+  "latest_repository_sync_reconciliation": ".project/reconciliations/post-pr221-canonical-sync-20260729.json",
+  "latest_lab_factory_preflight_authorization_reconciliation": ".project/reconciliations/servicetracer-lab-factory-preflight-run1-authorization-20260729.json",
+  "repository_state": {
+    "default_branch": "main",
+    "observed_main": "0b6fa63d86ae52119b63ef6c9421c8d13215cb59",
+    "latest_merged_pull_request": 223,
+    "latest_merge_commit": "0b6fa63d86ae52119b63ef6c9421c8d13215cb59",
+    "open_pull_requests_observed_before_branch": [],
+    "branch": "agent/servicetracer-lab-factory-preflight-run1",
+    "exact_head_ci": "not_yet_run",
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "domain_state": {
+    "azure_lab_factory_lite": {
+      "implementation_pull_request": 212,
+      "profile": "servicetracer-demo-api@1.0.0",
+      "profile_state": "candidate",
+      "prepared_request": {
+        "environment": "dev",
+        "location": "westus2",
+        "ttl_hours": 8,
+        "resource_group": "rg-st-demo-api-dev-westus2",
+        "vm_size": "Standard_F1als_v7",
+        "planning_ceiling_CAD": 5.0
+      },
+      "local_mcp_prepare_verified": true,
+      "preflight_authorization": ".project/observation-requests/servicetracer-lab-factory-preflight-run1.json",
+      "preflight_script": "scripts/azure_lab_factory_servicetracer_preflight_run1.sh",
+      "preflight_runbook": "docs/runbooks/servicetracer-lab-factory-preflight-run1.md",
+      "preflight_executed": false,
+      "arm_validation_verified": false,
+      "arm_what_if_verified": false,
+      "deployment_authorized": false,
+      "deployment_verified": false,
+      "service_validation_verified": false,
+      "cleanup_authorized": false,
+      "cleanup_verified": false,
+      "actual_cost_or_quota_verified": false
+    },
+    "azure_mcp_server": {
+      "implementation_pull_request": 218,
+      "local_client_observation_pull_request": 221,
+      "tool_inventory": [
+        "get_current_reality",
+        "list_lab_profiles",
+        "prepare_lab_request"
+      ],
+      "local_client_call_verified_on_main": true,
+      "prepared_request_next_gate": "preflight_required",
+      "remote_endpoint_deployed": false,
+      "chatgpt_connection_verified": false,
+      "azure_openai_mcp_invocation_verified": false
+    },
+    "latest_live_Azure_observation": {
+      "source": ".project/evidence/azure-mcp-current-reality-run1.json",
+      "observed_at": "2026-07-29T12:01:23.289717Z",
+      "subscription_name": "Azure for Students",
+      "resource_group": "rg-ai-msp-dev-eastus",
+      "fresh_for_ServiceTracer_preflight": false
+    },
+    "azure_ai_verified_runtime": {
+      "base_url": "https://anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/",
+      "deployment": "gpt-5-mini",
+      "model_response_verified": true,
+      "arm_resource_identity_reconciled": false,
+      "chatgpt_mcp_connection_verified": false
+    }
+  },
+  "active_authorizations": {
+    "deployment": null,
+    "azure_mcp_preflight": null,
+    "azure_mcp_current_reality": null,
+    "azure_ai_activation": null,
+    "lab_factory_preflight": ".project/observation-requests/servicetracer-lab-factory-preflight-run1.json",
+    "lab_factory_deployment": null
+  },
+  "consumed_authorities": {
+    "azure_mcp_current_reality_run1": true,
+    "azure_mcp_current_reality_run1_rerun_authorized": false,
+    "azure_ai_go_live_run6": true,
+    "correlation_identity_run1": true,
+    "servicetracer_lab_factory_preflight_run1": false
+  },
+  "cost_and_quota": {
+    "expected_recurring_Azure_resource_cost_delta_CAD": 0,
+    "preflight_planning_ceiling_CAD": 5.0,
+    "actual_cost_freshly_observed": false,
+    "quota_freshly_observed": false,
+    "estimate_complete": false
+  },
+  "compatibility_lineage": [
+    {
+      "path": ".project/current-reality-v3.json",
+      "classification": "historical_post_pr221_current_reality",
+      "authoritative_for_current_operations": false
+    },
+    {
+      "path": ".project/state-index-v12.json",
+      "classification": "historical_post_pr221_state_index",
+      "authoritative_for_current_operations": false
+    },
+    {
+      "path": ".project/handoffs/current-state-v2.md",
+      "classification": "historical_post_pr221_handoff",
+      "authoritative_for_current_operations": false
+    },
+    {
+      "path": ".project/current-reality-v2.json",
+      "classification": "older_compatibility_snapshot",
+      "authoritative_for_current_operations": false
+    },
+    {
+      "path": ".project/state-index.json",
+      "classification": "older_compatibility_state_index",
+      "authoritative_for_current_operations": false
+    },
+    {
+      "path": ".project/handoffs/current-state.md",
+      "classification": "older_compatibility_handoff",
+      "authoritative_for_current_operations": false
+    }
+  ],
+  "selection_rule": "Read .project/CURRENT.json first. The run-1 preflight authority permits exactly one interactive read-only Azure observation and ARM What-If after the implementing merge. It grants no deployment, mutation, cleanup, rollback, model, remote MCP, ChatGPT, workflow rerun, or retry authority.",
+  "claim_boundaries": [
+    "authorization_recorded != preflight_executed",
+    "preflight_executed != preflight_passed",
+    "preflight_passed != deployment_authorized",
+    "prepared_request != ARM_What-If",
+    "ARM_What-If != Azure_mutation",
+    "provider_registered != quota_sufficient",
+    "SKU_listed != unrestricted_for_subscription",
+    "network_declared != network_validated",
+    "estimated_cost != actual_cost",
+    "authentication_succeeded != effective_least_privilege",
+    "failed_attempt != authorization_to_retry",
+    "not_observed != false"
+  ]
+}

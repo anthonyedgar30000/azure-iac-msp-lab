@@ -1,28 +1,42 @@
 {
-  "schema_version": "project.current-selector.v1",
+  "schema_version": "project.current-selector.v2",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-29T21:34:21-04:00",
-  "selection_rule": "These versioned files are authoritative for current operations. Legacy unversioned and v2 files remain immutable compatibility records unless a newer selector supersedes this file.",
-  "authoritative_current_reality": ".project/current-reality-v3.json",
-  "authoritative_state_index": ".project/state-index-v12.json",
-  "authoritative_handoff": ".project/handoffs/current-state-v2.md",
+  "recorded_at": "2026-07-29T21:49:00-04:00",
+  "selection_rule": "These versioned files are authoritative for current operations. Previous selected versions and legacy unversioned files remain immutable historical records unless a newer selector supersedes this file.",
+  "authoritative_current_reality": ".project/current-reality-v4.json",
+  "authoritative_state_index": ".project/state-index-v13.json",
+  "authoritative_handoff": ".project/handoffs/current-state-v3.md",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
   "latest_repository_sync_reconciliation": ".project/reconciliations/post-pr221-canonical-sync-20260729.json",
+  "latest_authorization_reconciliation": ".project/reconciliations/servicetracer-lab-factory-preflight-run1-authorization-20260729.json",
+  "active_authorization": ".project/observation-requests/servicetracer-lab-factory-preflight-run1.json",
   "compatibility_records": [
     {
+      "path": ".project/current-reality-v3.json",
+      "status": "historical_post_pr221",
+      "boundary": "authoritative repository and local MCP state before ServiceTracer preflight authorization"
+    },
+    {
+      "path": ".project/state-index-v12.json",
+      "status": "historical_post_pr221",
+      "boundary": "state index before ServiceTracer preflight authorization"
+    },
+    {
+      "path": ".project/handoffs/current-state-v2.md",
+      "status": "historical_post_pr221",
+      "boundary": "handoff before ServiceTracer preflight authorization"
+    },
+    {
       "path": ".project/current-reality-v2.json",
-      "status": "historical_compatibility_only",
-      "boundary": "authoritative overlay through PR 218 before PR 220 and PR 221 merged"
+      "status": "older_historical_compatibility_only"
     },
     {
       "path": ".project/state-index.json",
-      "status": "historical_compatibility_only",
-      "boundary": "state-index v11 with preserved historical repository selectors"
+      "status": "older_historical_compatibility_only"
     },
     {
       "path": ".project/handoffs/current-state.md",
-      "status": "historical_compatibility_only",
-      "boundary": "post-PR212 handoff retained for deterministic validators"
+      "status": "older_historical_compatibility_only"
     }
   ]
 }

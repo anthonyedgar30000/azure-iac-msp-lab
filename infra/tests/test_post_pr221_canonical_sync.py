@@ -22,11 +22,21 @@ class PostPr221CanonicalSyncTests(unittest.TestCase):
         cls.handoff = HANDOFF.read_text(encoding="utf-8")
         cls.reconciliation = json.loads(RECONCILIATION.read_text(encoding="utf-8"))
 
-    def test_selector_promotes_versioned_authoritative_files(self) -> None:
-        self.assertEqual(self.selector["authoritative_current_reality"], ".project/current-reality-v3.json")
-        self.assertEqual(self.selector["authoritative_state_index"], ".project/state-index-v12.json")
-        self.assertEqual(self.selector["authoritative_handoff"], ".project/handoffs/current-state-v2.md")
-        self.assertEqual({item["status"] for item in self.selector["compatibility_records"]}, {"historical_compatibility_only"})
+    def test_versioned_pr221_files_remain_preserved_after_selector_advance(self) -> None:
+        compatibility = {
+            item["path"]: item["status"]
+            for item in self.selector["compatibility_records"]
+        }
+        self.assertIn(".project/current-reality-v3.json", compatibility)
+        self.assertIn(".project/state-index-v12.json", compatibility)
+        self.assertIn(".project/handoffs/current-state-v2.md", compatibility)
+        self.assertTrue(
+            all("historical" in compatibility[path] for path in (
+                ".project/current-reality-v3.json",
+                ".project/state-index-v12.json",
+                ".project/handoffs/current-state-v2.md",
+            ))
+        )
 
     def test_repository_state_advances_through_pr221(self) -> None:
         repo = self.reality["repository_state"]

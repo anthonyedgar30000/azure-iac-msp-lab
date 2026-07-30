@@ -1,0 +1,96 @@
+name: ServiceTracer Lab Factory preflight contract
+
+on:
+  pull_request:
+    paths:
+      - ".project/observation-requests/servicetracer-lab-factory-preflight-run1.json"
+      - ".project/CURRENT.json"
+      - ".project/current-reality-v4.json"
+      - ".project/state-index-v13.json"
+      - ".project/handoffs/current-state-v3.md"
+      - ".project/handoffs/servicetracer-lab-factory-preflight-run1.md"
+      - ".project/reconciliations/servicetracer-lab-factory-preflight-run1-authorization-20260729.json"
+      - "docs/runbooks/servicetracer-lab-factory-preflight-run1.md"
+      - "scripts/azure_lab_factory_servicetracer_preflight_run1.sh"
+      - "infra/tests/test_servicetracer_lab_factory_preflight_run1.py"
+      - ".github/workflows/servicetracer-lab-factory-preflight-contract.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".project/observation-requests/servicetracer-lab-factory-preflight-run1.json"
+      - ".project/CURRENT.json"
+      - ".project/current-reality-v4.json"
+      - ".project/state-index-v13.json"
+      - ".project/handoffs/current-state-v3.md"
+      - ".project/handoffs/servicetracer-lab-factory-preflight-run1.md"
+      - ".project/reconciliations/servicetracer-lab-factory-preflight-run1-authorization-20260729.json"
+      - "docs/runbooks/servicetracer-lab-factory-preflight-run1.md"
+      - "scripts/azure_lab_factory_servicetracer_preflight_run1.sh"
+      - "infra/tests/test_servicetracer_lab_factory_preflight_run1.py"
+      - ".github/workflows/servicetracer-lab-factory-preflight-contract.yml"
+
+permissions:
+  contents: read
+  id-token: none
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact workflow commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate JSON and shell syntax
+        run: |
+          python -m json.tool .project/observation-requests/servicetracer-lab-factory-preflight-run1.json > /dev/null
+          python -m json.tool .project/CURRENT.json > /dev/null
+          python -m json.tool .project/current-reality-v4.json > /dev/null
+          python -m json.tool .project/state-index-v13.json > /dev/null
+          python -m json.tool .project/reconciliations/servicetracer-lab-factory-preflight-run1-authorization-20260729.json > /dev/null
+          bash -n scripts/azure_lab_factory_servicetracer_preflight_run1.sh
+
+      - name: Run exact preflight boundary tests
+        run: python -m unittest infra.tests.test_servicetracer_lab_factory_preflight_run1 -v
+
+      - name: Confirm CI has no Azure or model authority
+        run: |
+          test -z "${AZURE_CLIENT_ID:-}"
+          test -z "${AZURE_TENANT_ID:-}"
+          test -z "${AZURE_SUBSCRIPTION_ID:-}"
+          test -z "${AZURE_LAB_FACTORY_RUN1_SUBSCRIPTION_ID:-}"
+          test -z "${AZURE_LAB_FACTORY_RUN1_CONFIRMATION:-}"
+          test -z "${OPENAI_API_KEY:-}"
+          test -z "${AZURE_OPENAI_API_KEY:-}"
+
+      - name: Reject executable mutation verbs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          script = Path("scripts/azure_lab_factory_servicetracer_preflight_run1.sh").read_text()
+          forbidden = [
+              "az deployment sub create",
+              "az deployment group create",
+              "az group create",
+              "az group delete",
+              "az provider register",
+              "az role assignment create",
+              "az role assignment delete",
+              "az vm create",
+              "az vm delete",
+              "az vm run-command",
+              "azd up",
+              "azd provision",
+              "azd deploy",
+              "azd down",
+          ]
+          present = [value for value in forbidden if value in script]
+          assert not present, present
+          PY
