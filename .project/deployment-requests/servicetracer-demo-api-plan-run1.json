@@ -1,0 +1,70 @@
+{
+  "schema_version": "project.servicetracer-demo-api-plan-authorization.v1",
+  "attempt_id": "servicetracer-demo-api-plan-run1",
+  "status": "authorized_pending_dispatch",
+  "active": true,
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T22:50:00-04:00",
+  "source_instruction": "Proceed need to start deploying",
+  "repository_boundary": {
+    "base_branch": "main",
+    "base_commit": "1eca6b55e93d7276ada5fb06ffd8707d3895936a",
+    "latest_merged_pull_request": 230,
+    "workflow": ".github/workflows/servicetracer-demo-api-subproject-plan.yml",
+    "workflow_ref_required": "refs/heads/main"
+  },
+  "attempt_limit": 1,
+  "dispatch": {
+    "authorized": true,
+    "performed": false,
+    "workflow_dispatch_only": true,
+    "rerun_authorized": false,
+    "confirmation": "PLAN-DEMO-API-SUBPROJECT:dev:st-demo-api-vm-aeg30000"
+  },
+  "inputs": {
+    "environment": "dev",
+    "location": "westus2",
+    "prefix": "mst",
+    "dependency_resource_group": "rg-servicetracer-dev-westus2",
+    "dns_label": "st-demo-api-vm-aeg30000",
+    "allowed_origin": "https://anthonyedgar30000.github.io",
+    "vm_size": "Standard_F1als_v7",
+    "maximum_monthly_cost_cad": "25.00"
+  },
+  "scope": {
+    "profile": "servicetracer-demo-api@1.0.0",
+    "github_environment": "azure-api-payg",
+    "subscription_boundary": "dual_subscription",
+    "dependency_subscription_role": "read_only_existing_dependency",
+    "target_subscription_role": "planning_only",
+    "provider_validation_level": "ProviderNoRbac",
+    "arm_validation_authorized": true,
+    "arm_what_if_authorized": true,
+    "azure_resource_mutation_authorized": false,
+    "deployment_authorized": false,
+    "rbac_mutation_authorized": false,
+    "provider_registration_authorized": false,
+    "cleanup_authorized": false,
+    "rollback_authorized": false
+  },
+  "cost": {
+    "planning_ceiling_cad": "25.00",
+    "ceiling_is_spend_authority": false,
+    "actual_cost_freshly_observed": false,
+    "quota_freshly_observed": false
+  },
+  "failure_behavior": {
+    "consume_on_authenticated_attempt": true,
+    "automatic_retry": false,
+    "manual_rerun": false,
+    "terminal_action": "Preserve protected evidence and stop. A second attempt requires fresh explicit authority."
+  },
+  "next_gate": "Review protected planning and ARM What-If evidence before creating any deployment authorization.",
+  "canonical_distinctions": [
+    "planning_dispatch_authorized != deployment_authorized",
+    "ARM_What-If != Azure_mutation",
+    "planning_ceiling != spend_authority",
+    "workflow_success != service_deployed",
+    "estimated_cost != actual_cost"
+  ]
+}
