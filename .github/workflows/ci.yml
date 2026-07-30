@@ -23,7 +23,7 @@ jobs:
           python-version: '3.12'
 
       - name: Validate workflow observability state
-        run: python .project/validate.py
+        run: python .project/validate_current.py
 
       - name: Run unit tests
         env:
