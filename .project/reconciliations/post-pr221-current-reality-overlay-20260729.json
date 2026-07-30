@@ -1,0 +1,52 @@
+{
+  "schema_version": "project.reconciliation.post-pr221-current-reality-overlay.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:33:00-04:00",
+  "source_instruction": "Fix and sync",
+  "classification": "repository_only_current_reality_overlay_reconciliation",
+  "status": "implemented_pending_exact_head_CI_and_merge",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "82191482f48ccb81dc50b5966733a9d8ff7f2953",
+    "latest_merged_pull_request": 221,
+    "open_pull_requests_before_branch": [],
+    "branch": "agent/post-pr221-current-reality-overlay"
+  },
+  "repair": {
+    "stale_projection": ".project/current-reality-v2.json remains authoritative only through post-PR218 repository and domain claims",
+    "new_overlay": ".project/current-reality-post-pr221.json",
+    "superseded_claim": "lab_factory_tools_live_client_call_observed=false",
+    "replacement_claim": "bounded local stdio client calls to list_lab_profiles and prepare_lab_request were verified by PR #221 evidence",
+    "historical_projection_rewritten": false
+  },
+  "verified_repository_evidence": {
+    "pull_request": 221,
+    "merge_commit": "82191482f48ccb81dc50b5966733a9d8ff7f2953",
+    "exact_source_head": "968402ad52858d837de03e64c36addf372751d28",
+    "repository_CI_run": 30505701542,
+    "repository_CI_conclusion": "success",
+    "local_MCP_smoke_run": 30505701531,
+    "local_MCP_smoke_conclusion": "success"
+  },
+  "authority_boundary": {
+    "repository_writes": true,
+    "ordinary_pull_request_CI": true,
+    "pull_request_creation": true,
+    "merge": false,
+    "workflow_dispatch_or_rerun": false,
+    "azure_authentication": false,
+    "azure_query": false,
+    "ARM_What_If": false,
+    "azure_mutation": false,
+    "deployment": false,
+    "RBAC_mutation": false,
+    "model_call": false,
+    "remote_MCP_deployment": false,
+    "ChatGPT_connection": false,
+    "cleanup": false,
+    "rollback": false,
+    "retry": false
+  },
+  "next_gate": "Run ordinary exact-head CI, verify the two-file overlay contract, recheck live main and open pull requests, and merge only after a separate explicit decision."
+}
