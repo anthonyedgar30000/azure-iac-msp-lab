@@ -147,14 +147,17 @@ class AzureAiGoLiveRun7Tests(unittest.TestCase):
         self.assertFalse(separate["modified_by_run7"])
         self.assertIn("separate verified gpt-5-mini runtime modified: false", self.terminal_handoff)
 
-    def test_selector_applies_terminal_overlay_without_rewriting_versioned_history(self) -> None:
+    def test_selector_preserves_run7_terminal_overlay_and_selects_fresh_run8(self) -> None:
         self.assertEqual(self.selector["authoritative_current_reality"], ".project/current-reality-v3.json")
         self.assertEqual(self.selector["authoritative_state_index"], ".project/state-index-v12.json")
         self.assertEqual(
             self.selector["latest_operational_overlay"],
             ".project/reconciliations/azure-ai-go-live-run7-terminal-20260730.json",
         )
-        self.assertIsNone(self.selector["active_azure_ai_activation_authorization"])
+        self.assertEqual(
+            self.selector["active_azure_ai_activation_authorization"],
+            ".project/deployment-requests/azure-ai-go-live-run8.json",
+        )
 
     def test_static_validation_and_contract_remain_bounded(self) -> None:
         self.assertIn("infra.tests.test_azure_ai_go_live_run7", self.static_workflow)
