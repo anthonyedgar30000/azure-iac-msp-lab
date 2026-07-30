@@ -1,0 +1,88 @@
+{
+  "schema_version": "project.azure-ai-go-live-trigger-sync.v1",
+  "attempt_id": "azure-ai-go-live-run8",
+  "status": "activation_trigger_observed_terminal_unreconciled",
+  "recorded_at": "2026-07-29T23:40:00-04:00",
+  "source_instruction": "Sync",
+  "repository": {
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "activation_pull_request": 237,
+    "activation_merge_commit": "798486cb9e7c20fcf7fe508314317605dd4100ba",
+    "activation_merge_message": "Merge PR #237: fix Azure AI role query and authorize run 8",
+    "latest_main_observed": "8387c44aa4b82ae77cf32f53053187488d13d6ba",
+    "latest_main_message": "Merge PR #246: execute refreshed ServiceTracer planning run 1",
+    "open_pull_requests_observed": [],
+    "working_tree_observed": false
+  },
+  "pre_merge_validation": {
+    "azure_ai_static_validation": {
+      "workflow_run": 30510551447,
+      "conclusion": "success"
+    },
+    "repository_ci": {
+      "workflow_run": 30510551439,
+      "conclusion": "success"
+    },
+    "candidate_head": "c6b95f799f467da95adeb4ed0e815ccd5501171f"
+  },
+  "activation": {
+    "configured_trigger": "the first merge commit to main that introduces .github/workflows/azure-ai-go-live-run8.yml",
+    "trigger_commit_observed": true,
+    "trigger_commit": "798486cb9e7c20fcf7fe508314317605dd4100ba",
+    "trigger_count_observed": 1,
+    "authorization_consumed": true,
+    "new_attempt_authorized": false,
+    "github_rerun_authorized": false
+  },
+  "workflow_evidence": {
+    "push_triggered_run_retrieved": false,
+    "workflow_run_id": null,
+    "job_id": null,
+    "artifact_id": null,
+    "artifact_digest": null,
+    "reason": "The connected GitHub workflow-run lookup exposes pull-request-triggered runs for a commit and returned no push-triggered run record. This is not evidence that no run occurred.",
+    "terminal_conclusion": "not_established"
+  },
+  "azure_operational_reality": {
+    "fresh_subscription_context_observed": false,
+    "fresh_resource_group_state_observed": false,
+    "fresh_account_state_observed": false,
+    "direct_role_query_completed": false,
+    "required_role_present": "not_established",
+    "required_role_missing": "not_established",
+    "deployment_inventory_observed": false,
+    "model_listing_observed": false,
+    "capacity_observed": false,
+    "what_if_observed": false,
+    "deployment_started": "not_established",
+    "deployment_succeeded": "not_established",
+    "account_hardening_started": "not_established",
+    "account_hardening_succeeded": "not_established",
+    "model_request_performed": "not_established",
+    "endpoint_live": "not_established",
+    "azure_mutations_performed": "not_established"
+  },
+  "cost": {
+    "actual_azure_cost_freshly_observed": false,
+    "billable_model_request_performed": "not_established",
+    "tokens_consumed": "not_established",
+    "azure_resource_cost_delta": "not_established",
+    "currency": "CAD"
+  },
+  "selector_effect": {
+    "active_azure_ai_activation_authorization": null,
+    "latest_azure_ai_terminal_reconciliation": ".project/reconciliations/azure-ai-go-live-run7-terminal-20260730.json",
+    "pending_azure_ai_terminal_reconciliation": ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json",
+    "latest_operational_overlay": ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json"
+  },
+  "next_safe_gate": "Retrieve protected run-8 workflow evidence or fresh Azure observations, then create a terminal reconciliation. Do not use GitHub Re-run and do not authorize another Azure attempt from this synchronization.",
+  "canonical_distinctions": [
+    "activation_trigger_observed != workflow_terminal_result_observed",
+    "workflow_run_not_retrieved != workflow_did_not_run",
+    "authorization_consumed != Azure_mutation_proven",
+    "repair_validated != role_verified",
+    "deployment_declared != deployment_observed",
+    "endpoint_intended != endpoint_live",
+    "estimated_cost != actual_cost"
+  ]
+}
