@@ -14,12 +14,15 @@ RUN7_EXECUTOR = ROOT / "scripts/azure_ai_go_live_run7.sh"
 RUN8_EXECUTOR = ROOT / "scripts/azure_ai_go_live_run8.sh"
 REQUEST = ROOT / ".project/deployment-requests/azure-ai-go-live-run8.json"
 CONTRACT = ROOT / ".project/contracts/azure-ai-existing-role-activation-v1.json"
-HANDOFF = ROOT / ".project/handoffs/azure-ai-go-live-run8.md"
+CANDIDATE_HANDOFF = ROOT / ".project/handoffs/azure-ai-go-live-run8.md"
+SYNC_HANDOFF = ROOT / ".project/handoffs/azure-ai-go-live-run8-trigger-sync.md"
+SYNC = ROOT / ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json"
 TEMPLATE = ROOT / "infra/azure-ai-existing-account-model-only.bicep"
 RUN7_TERMINAL = ROOT / ".project/reconciliations/azure-ai-go-live-run7-terminal-20260730.json"
 SELECTOR = ROOT / ".project/CURRENT.json"
 
 EXPECTED_RUN7_BLOB = "21261d6e563fc3a55eae8cb1dd9306e69cacae5a"
+RUN8_MERGE = "798486cb9e7c20fcf7fe508314317605dd4100ba"
 
 
 def git_blob_sha(data: bytes) -> str:
@@ -53,29 +56,48 @@ class AzureAiGoLiveRun8Tests(unittest.TestCase):
         cls.wrapper = RUN8_EXECUTOR.read_text(encoding="utf-8")
         cls.request = json.loads(REQUEST.read_text(encoding="utf-8"))
         cls.contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
-        cls.handoff = HANDOFF.read_text(encoding="utf-8")
+        cls.candidate_handoff = CANDIDATE_HANDOFF.read_text(encoding="utf-8")
+        cls.sync_handoff = SYNC_HANDOFF.read_text(encoding="utf-8")
+        cls.sync = json.loads(SYNC.read_text(encoding="utf-8"))
         cls.template = TEMPLATE.read_text(encoding="utf-8")
         cls.run7_terminal = json.loads(RUN7_TERMINAL.read_text(encoding="utf-8"))
         cls.selector = json.loads(SELECTOR.read_text(encoding="utf-8"))
         cls.derived, cls.repair_count = derive_run8(cls.run7)
 
-    def test_request_is_fresh_single_attempt_authority(self) -> None:
+    def test_request_authority_is_consumed_by_exact_merge_trigger(self) -> None:
         self.assertEqual(self.request["attempt_id"], "azure-ai-go-live-run8")
-        self.assertEqual(self.request["status"], "active_one_attempt")
-        self.assertTrue(self.request["active"])
+        self.assertEqual(
+            self.request["status"],
+            "consumed_activation_triggered_terminal_unreconciled",
+        )
+        self.assertFalse(self.request["active"])
         self.assertEqual(self.request["attempt_limit"], 1)
-        self.assertEqual(self.request["attempts_observed"], 0)
+        self.assertEqual(self.request["activation_triggers_observed"], 1)
+        boundary = self.request["repository_boundary"]
+        self.assertTrue(boundary["activation_trigger_observed"])
+        self.assertEqual(boundary["activation_trigger_count"], 1)
+        self.assertEqual(boundary["exact_merge_commit"], RUN8_MERGE)
         self.assertEqual(self.request["source_instruction"], "Fix and proceed")
-        self.assertIn("exactly one new bounded", self.request["normalized_intent"])
-        self.assertEqual(self.request["predecessor"]["attempt_id"], "azure-ai-go-live-run7")
-        self.assertFalse(self.request["predecessor"]["azure_mutations_performed"])
+        self.assertTrue(self.request["authority"]["consumed"])
+        self.assertFalse(self.request["authority"]["new_attempt_authorized"])
+
+    def test_terminal_result_is_not_invented(self) -> None:
+        execution = self.request["terminal_execution"]
+        self.assertFalse(execution["workflow_run_retrieved"])
+        self.assertIsNone(execution["workflow_run"])
+        self.assertEqual(execution["conclusion"], "not_established")
+        observed = self.request["observed"]
+        self.assertEqual(observed["push_workflow_terminal_result"], "not_established")
+        self.assertEqual(observed["required_direct_role_present"], "not_established")
+        self.assertEqual(observed["azure_mutations_performed"], "not_established")
+        self.assertIn("push run not retrieved != push run did not occur", self.sync_handoff)
 
     def test_run7_is_consumed_and_not_reactivated(self) -> None:
         self.assertEqual(self.run7_terminal["status"], "consumed_terminal_failure")
         self.assertTrue(self.run7_terminal["authorization"]["consumed"])
         self.assertFalse(self.run7_terminal["authorization"]["manual_rerun_authorized"])
         self.assertFalse(self.run7_terminal["terminal_result"]["azure_mutations_performed"])
-        self.assertIn("does not reactivate or rerun consumed run 7", self.handoff)
+        self.assertIn("does not reactivate or rerun consumed run 7", self.candidate_handoff)
 
     def test_historical_executor_is_pinned_and_unchanged(self) -> None:
         self.assertEqual(git_blob_sha(self.run7_bytes), EXPECTED_RUN7_BLOB)
@@ -106,7 +128,7 @@ class AzureAiGoLiveRun8Tests(unittest.TestCase):
         self.assertEqual(self.derived.count("curl --silent --show-error"), 1)
         self.assertNotIn("az role assignment create", self.derived)
 
-    def test_workflow_is_single_merge_trigger(self) -> None:
+    def test_workflow_remains_historical_single_merge_trigger(self) -> None:
         self.assertIn("name: Azure AI go live run 8", self.workflow)
         self.assertIn("branches:\n      - main", self.workflow)
         self.assertIn("'.github/workflows/azure-ai-go-live-run8.yml'", self.workflow)
@@ -128,28 +150,34 @@ class AzureAiGoLiveRun8Tests(unittest.TestCase):
         self.assertFalse(architecture["account_creation_available"])
         self.assertFalse(architecture["role_assignment_creation_available"])
 
-    def test_security_cost_and_failure_boundaries(self) -> None:
-        authority = self.request["authority"]
-        self.assertTrue(authority["one_model_deployment_authorized"])
-        self.assertTrue(authority["one_account_hardening_update_authorized"])
-        self.assertTrue(authority["one_model_request_authorized"])
-        self.assertFalse(authority["role_assignment_creation_authorized"])
-        self.assertFalse(authority["automatic_retry_authorized"])
-        self.assertFalse(authority["manual_rerun_authorized"])
-        self.assertFalse(self.request["security"]["api_keys_permitted"])
-        self.assertEqual(self.request["cost_and_quota"]["deployment_capacity"], 1)
-        self.assertEqual(self.request["cost_and_quota"]["model_request_count"], 1)
-        self.assertIn("GitHub Re-run is unauthorized", self.request["failure_behavior"]["retry"])
-
-    def test_selector_and_static_validation_cover_run8(self) -> None:
+    def test_sync_overlay_preserves_evidence_bound_factuality(self) -> None:
         self.assertEqual(
-            self.selector["active_azure_ai_activation_authorization"],
-            ".project/deployment-requests/azure-ai-go-live-run8.json",
+            self.sync["status"], "activation_trigger_observed_terminal_unreconciled"
         )
+        self.assertEqual(self.sync["repository"]["activation_merge_commit"], RUN8_MERGE)
+        self.assertEqual(self.sync["repository"]["open_pull_requests_observed"], [])
+        self.assertTrue(self.sync["activation"]["authorization_consumed"])
+        self.assertFalse(self.sync["workflow_evidence"]["push_triggered_run_retrieved"])
+        self.assertEqual(
+            self.sync["azure_operational_reality"]["endpoint_live"],
+            "not_established",
+        )
+        self.assertEqual(
+            self.sync["cost"]["azure_resource_cost_delta"], "not_established"
+        )
+
+    def test_selector_clears_authority_and_marks_terminal_pending(self) -> None:
+        sync_path = ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json"
+        self.assertIsNone(self.selector["active_azure_ai_activation_authorization"])
+        self.assertEqual(self.selector["latest_operational_overlay"], sync_path)
+        self.assertEqual(self.selector["latest_repository_sync_reconciliation"], sync_path)
+        self.assertEqual(self.selector["pending_azure_ai_terminal_reconciliation"], sync_path)
         self.assertEqual(
             self.selector["latest_azure_ai_terminal_reconciliation"],
             ".project/reconciliations/azure-ai-go-live-run7-terminal-20260730.json",
         )
+
+    def test_static_validation_still_covers_run8(self) -> None:
         self.assertIn("infra.tests.test_azure_ai_go_live_run8", self.static_workflow)
         self.assertIn("bash -n scripts/azure_ai_go_live_run8.sh", self.static_workflow)
         self.assertIn("id-token: none", self.static_workflow)

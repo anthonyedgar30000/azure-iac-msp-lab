@@ -1,10 +1,12 @@
 {
   "schema_version": "project.azure-ai-go-live-authorization.v3",
   "attempt_id": "azure-ai-go-live-run8",
-  "status": "active_one_attempt",
-  "active": true,
+  "status": "consumed_activation_triggered_terminal_unreconciled",
+  "active": false,
   "project": "Azure IaC MSP Lab",
   "recorded_at": "2026-07-29T22:59:00-04:00",
+  "consumed_at": "2026-07-29T23:14:39-04:00",
+  "synchronized_at": "2026-07-29T23:40:00-04:00",
   "source_instruction": "Fix and proceed",
   "normalized_intent": "Apply the recorded Azure CLI role-query repair and perform exactly one new bounded Azure AI activation attempt against the existing East US account.",
   "repository_boundary": {
@@ -13,8 +15,12 @@
     "latest_merged_pull_request_before_branch": 233,
     "open_pull_requests_before_branch": [234],
     "candidate_branch": "agent/azure-ai-go-live-run8-fixed-role-query",
+    "candidate_pull_request": 237,
+    "reviewed_source_head": "c6b95f799f467da95adeb4ed0e815ccd5501171f",
     "activation_trigger": "the first merge commit to main that introduces .github/workflows/azure-ai-go-live-run8.yml",
-    "exact_merge_commit": "resolved_by_github_push_event"
+    "exact_merge_commit": "798486cb9e7c20fcf7fe508314317605dd4100ba",
+    "activation_trigger_observed": true,
+    "activation_trigger_count": 1
   },
   "predecessor": {
     "attempt_id": "azure-ai-go-live-run7",
@@ -27,6 +33,17 @@
   },
   "attempt_limit": 1,
   "attempts_observed": 0,
+  "activation_triggers_observed": 1,
+  "terminal_execution": {
+    "workflow_run_retrieved": false,
+    "workflow_run": null,
+    "workflow_attempt": null,
+    "job_id": null,
+    "artifact_id": null,
+    "artifact_digest": null,
+    "conclusion": "not_established",
+    "reason": "The connected GitHub workflow lookup did not expose the push-triggered execution. This does not establish that no run occurred."
+  },
   "scope": {
     "subscription_name": "Azure for Students",
     "subscription_state_required": "Enabled",
@@ -55,7 +72,7 @@
     "separate_verified_runtime_untouched": {
       "endpoint": "https://anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/",
       "deployment": "gpt-5-mini",
-      "must_not_be_modified": true
+      "modified_by_run8": "not_established"
     }
   },
   "repair": {
@@ -64,16 +81,32 @@
     "run8_executor": "scripts/azure_ai_go_live_run8.sh",
     "method": "Derive an exact run-8 executor from the pinned historical run-7 blob, remove --all from exactly three role-list commands that also use --scope, and retain --all on the unscoped principal-discovery fallback.",
     "expected_scoped_repairs": 3,
-    "historical_executor_modified": false
+    "historical_executor_modified": false,
+    "static_validation_succeeded": true
+  },
+  "observed": {
+    "activation_merge_observed": true,
+    "push_workflow_terminal_result": "not_established",
+    "fresh_subscription_context": "not_established",
+    "fresh_resource_group_state": "not_established",
+    "fresh_account_state": "not_established",
+    "direct_role_query_completed": "not_established",
+    "required_direct_role_present": "not_established",
+    "required_direct_role_missing": "not_established",
+    "deployment_inventory_queried": "not_established",
+    "model_listing_queried": "not_established",
+    "capacity_queried": "not_established",
+    "what_if_started": "not_established",
+    "deployment_started": "not_established",
+    "deployment_succeeded": "not_established",
+    "account_hardening_started": "not_established",
+    "account_hardening_succeeded": "not_established",
+    "model_request_performed": "not_established",
+    "endpoint_live": "not_established",
+    "azure_mutations_performed": "not_established"
   },
   "authority": {
-    "azure_oidc_login_authorized": true,
-    "fresh_read_only_queries_authorized": true,
-    "arm_what_if_authorized": true,
-    "one_model_deployment_authorized": true,
-    "one_account_hardening_update_authorized": true,
-    "one_model_request_authorized": true,
-    "role_assignment_verification_authorized": true,
+    "consumed": true,
     "role_assignment_creation_authorized": false,
     "new_account_creation_authorized": false,
     "new_resource_group_creation_authorized": false,
@@ -82,55 +115,51 @@
     "second_deployment_attempt_authorized": false,
     "regional_fallback_authorized": false,
     "model_fallback_authorized": false,
+    "new_attempt_authorized": false,
     "rollback_authorized": false,
     "cleanup_authorized": false,
     "azure_mcp_connection_authorized": false
   },
   "security": {
     "api_keys_permitted": false,
-    "microsoft_entra_inference_required": true,
-    "direct_account_scope_required": true,
+    "api_keys_used": "not_established",
+    "model_request_performed": "not_established",
     "secrets_persisted": false,
     "raw_subscription_id_persisted": false,
-    "raw_principal_id_persisted": false,
-    "bounded_non_sensitive_prompt": "Reply with exactly: AZURE AI RUN 8 LIVE"
+    "raw_principal_id_persisted": false
   },
   "cost_and_quota": {
-    "pricing_mode": "Global Standard token-based usage",
+    "pricing_mode_intended": "Global Standard token-based usage",
     "provisioned_throughput_authorized": false,
-    "deployment_capacity": 1,
-    "model_request_count": 1,
-    "max_output_tokens": 32,
-    "reported_capacity_must_be_rechecked": true,
+    "deployment_capacity_intended": 1,
+    "billable_model_request_performed": "not_established",
+    "tokens_consumed": "not_established",
+    "azure_resource_cost_delta": "not_established",
     "actual_cost_freshly_observed": false,
-    "budget_resource_authorized": false
+    "capacity_freshly_observed": false,
+    "budget_resource_authorized": false,
+    "currency": "CAD"
   },
   "failure_behavior": {
-    "missing_or_mismatched_account": "Stop before mutation and preserve evidence.",
-    "missing_or_non_direct_inference_role": "Stop before mutation and preserve evidence.",
-    "model_or_capacity_failure": "Stop before mutation and preserve evidence.",
-    "conflicting_existing_deployment": "Stop before mutation and preserve evidence.",
-    "what_if_failure": "Stop before mutation and preserve evidence.",
-    "deployment_failure": "Stop after the single deployment attempt; preserve partial state.",
-    "hardening_failure": "Preserve the deployment and evidence; do not retry.",
-    "inference_failure": "Preserve the deployment, account state, and evidence; do not retry.",
-    "retry": "Run 8 is one-shot. GitHub Re-run is unauthorized. Any later attempt requires fresh explicit authority.",
-    "cleanup": "No automatic deletion or rollback is authorized."
+    "terminal_action": "Preserve evidence and reconcile the exact observed terminal state before any further Azure action.",
+    "retry": "Run 8 authority is consumed. GitHub Re-run is unauthorized. Any later attempt requires fresh explicit authority.",
+    "rollback": "Not authorized and not justified without terminal Azure evidence.",
+    "cleanup": "Not authorized and not justified without terminal Azure evidence."
   },
   "evidence": {
-    "protected_artifact_required": true,
-    "sha256_manifest_required": true,
-    "retention_days": 30,
-    "raw_secret_material_forbidden": true
+    "trigger_sync": ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json",
+    "trigger_sync_handoff": ".project/handoffs/azure-ai-go-live-run8-trigger-sync.md",
+    "protected_artifact_status": "not_retrieved",
+    "sha256_manifest_status": "not_established",
+    "raw_secret_material_persisted": false
   },
   "canonical_distinctions": [
-    "run7_consumed != run8_authorized",
-    "repair_applied != role_verified",
-    "role_assignment_exists != effective_data_plane_access",
-    "model_listed != deployment_allowed",
-    "what_if_succeeded != deployment_succeeded",
-    "deployment_succeeded != model_request_verified",
-    "endpoint_live != application_integrated",
+    "activation_trigger_observed != workflow_terminal_result_observed",
+    "workflow_run_not_retrieved != workflow_did_not_run",
+    "authorization_consumed != Azure_mutation_proven",
+    "repair_validated != role_verified",
+    "deployment_declared != deployment_observed",
+    "endpoint_intended != endpoint_live",
     "estimated_cost != actual_cost"
   ]
 }
