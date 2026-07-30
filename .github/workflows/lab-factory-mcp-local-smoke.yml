@@ -9,6 +9,9 @@ on:
       - "scripts/smoke_test_lab_factory_mcp_stdio.py"
       - "docs/runbooks/lab-factory-local-mcp-smoke.md"
       - ".project/reconciliations/lab-factory-local-mcp-smoke-v1-20260729.json"
+      - ".project/reconciliations/lab-factory-local-mcp-smoke-run1-terminal-20260729.json"
+      - ".project/evidence/lab-factory-mcp-local-smoke-run1.json"
+      - ".project/evidence/lab-factory-mcp-local-smoke-run1.sha256"
       - "infra/tests/test_lab_factory_local_mcp_smoke_contract.py"
       - ".github/workflows/lab-factory-mcp-local-smoke.yml"
   push:
@@ -21,6 +24,9 @@ on:
       - "scripts/smoke_test_lab_factory_mcp_stdio.py"
       - "docs/runbooks/lab-factory-local-mcp-smoke.md"
       - ".project/reconciliations/lab-factory-local-mcp-smoke-v1-20260729.json"
+      - ".project/reconciliations/lab-factory-local-mcp-smoke-run1-terminal-20260729.json"
+      - ".project/evidence/lab-factory-mcp-local-smoke-run1.json"
+      - ".project/evidence/lab-factory-mcp-local-smoke-run1.sha256"
       - "infra/tests/test_lab_factory_local_mcp_smoke_contract.py"
       - ".github/workflows/lab-factory-mcp-local-smoke.yml"
 
@@ -57,6 +63,35 @@ jobs:
           test -z "${AZURE_MCP_ALLOWED_SUBSCRIPTION_ID:-}"
           test -z "${AZURE_MCP_ALLOWED_RESOURCE_GROUP:-}"
           test -z "${OPENAI_API_KEY:-}"
+
+      - name: Validate promoted run-1 evidence
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          evidence_path = Path(".project/evidence/lab-factory-mcp-local-smoke-run1.json")
+          digest_path = Path(".project/evidence/lab-factory-mcp-local-smoke-run1.sha256")
+          terminal_path = Path(
+              ".project/reconciliations/lab-factory-local-mcp-smoke-run1-terminal-20260729.json"
+          )
+
+          evidence_bytes = evidence_path.read_bytes()
+          expected_digest = digest_path.read_text(encoding="utf-8").split()[0]
+          assert hashlib.sha256(evidence_bytes).hexdigest() == expected_digest
+
+          receipt = json.loads(evidence_bytes)
+          terminal = json.loads(terminal_path.read_text(encoding="utf-8"))
+          assert receipt["status"] == "passed"
+          assert receipt["source_sha"] == "1aeead3a987dbe2af9af1c46c5ac1e85033991ce"
+          assert receipt["get_current_reality_called"] is False
+          assert receipt["azure_queries_performed"] is False
+          assert receipt["azure_mutations_performed"] is False
+          assert terminal["observed_runs"]["local_MCP_smoke"]["workflow_run_id"] == 30505376018
+          assert terminal["observed_runs"]["repository_CI"]["workflow_run_id"] == 30505375909
+          assert terminal["promoted_evidence"]["receipt_sha256"] == expected_digest
+          PY
 
       - name: Run local stdio client smoke test
         run: |
