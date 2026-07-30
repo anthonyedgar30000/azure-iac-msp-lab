@@ -82,8 +82,19 @@ def _server_environment() -> dict[str, str]:
     return environment
 
 
+def _result_is_error(result: Any) -> bool:
+    value = getattr(result, "is_error", None)
+    if value is None:
+        value = getattr(result, "isError", None)
+    if not isinstance(value, bool):
+        raise RuntimeError("MCP tool response did not expose an error flag")
+    return value
+
+
 def _structured_content(result: Any) -> dict[str, Any]:
     structured = getattr(result, "structured_content", None)
+    if structured is None:
+        structured = getattr(result, "structuredContent", None)
     if isinstance(structured, dict):
         return structured
 
@@ -195,7 +206,7 @@ async def run_probe() -> dict[str, Any]:
                 raise RuntimeError(f"unexpected MCP tool inventory: {tool_names}")
 
             profile_result = await session.call_tool("list_lab_profiles", arguments={})
-            if profile_result.is_error:
+            if _result_is_error(profile_result):
                 raise RuntimeError("list_lab_profiles returned an MCP tool error")
             profile_payload = _structured_content(profile_result)
             _validate_profile_list(profile_payload)
@@ -212,7 +223,7 @@ async def run_probe() -> dict[str, Any]:
                     "parameters": dict(_TEST_PARAMETERS),
                 },
             )
-            if prepare_result.is_error:
+            if _result_is_error(prepare_result):
                 raise RuntimeError("prepare_lab_request returned an MCP tool error")
             prepare_payload = _structured_content(prepare_result)
             _validate_prepared_plan(prepare_payload)
