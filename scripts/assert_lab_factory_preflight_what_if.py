@@ -34,38 +34,50 @@ def _load(path: Path) -> dict[str, Any]:
 def _changes(payload: dict[str, Any]) -> list[dict[str, Any]]:
     candidates = payload.get("changes")
     if candidates is None:
-        candidates = payload.get("properties", {}).get("changes")
+        properties = payload.get("properties")
+        if isinstance(properties, dict):
+            candidates = properties.get("changes")
     if not isinstance(candidates, list):
         raise WhatIfError("What-If changes were not observed")
     return [item for item in candidates if isinstance(item, dict)]
 
 
 def assess(payload: dict[str, Any], *, resource_group: str) -> dict[str, Any]:
+    status = payload.get("status")
+    if status not in (None, "Succeeded") or payload.get("error") is not None:
+        raise WhatIfError("ARM What-If did not complete successfully")
+
     changes = _changes(payload)
     if not changes:
         raise WhatIfError("What-If returned no changes for an absent target resource group")
 
     normalized: list[dict[str, str]] = []
     observed_types: set[str] = set()
+    seen_resource_ids: set[str] = set()
     for change in changes:
         change_type = str(change.get("changeType") or "")
         resource_id = str(change.get("resourceId") or "")
         resource_type = str(change.get("resourceType") or "")
         if not resource_type:
-            after = change.get("after") or {}
-            resource_type = str(after.get("type") or "")
+            after = change.get("after") if isinstance(change.get("after"), dict) else {}
+            before = change.get("before") if isinstance(change.get("before"), dict) else {}
+            resource_type = str(after.get("type") or before.get("type") or "")
         if change_type not in ALLOWED_CHANGE_TYPES:
             raise WhatIfError(f"unexpected What-If change type: {change_type or '<missing>'}")
         if not resource_id:
             raise WhatIfError("What-If change omitted resourceId")
+        normalized_id = resource_id.lower()
+        if normalized_id in seen_resource_ids:
+            raise WhatIfError(f"duplicate What-If resource: {resource_id}")
+        seen_resource_ids.add(normalized_id)
         if resource_type not in ALLOWED_RESOURCE_TYPES:
             raise WhatIfError(f"unexpected resource type: {resource_type or '<missing>'}")
 
         if resource_type == "Microsoft.Resources/resourceGroups":
             expected_suffix = f"/resourceGroups/{resource_group}".lower()
-            if not resource_id.lower().endswith(expected_suffix):
+            if not normalized_id.endswith(expected_suffix):
                 raise WhatIfError(f"resource-group scope escaped: {resource_id}")
-        elif f"/resourceGroups/{resource_group}/".lower() not in resource_id.lower():
+        elif f"/resourceGroups/{resource_group}/".lower() not in normalized_id:
             raise WhatIfError(f"resource scope escaped target group: {resource_id}")
 
         observed_types.add(resource_type)
@@ -79,7 +91,7 @@ def assess(payload: dict[str, Any], *, resource_group: str) -> dict[str, Any]:
 
     required = {
         "Microsoft.Resources/resourceGroups",
-        "Microsoft.Resources/deployments",
+        "Microsoft.Compute/virtualMachines",
     }
     missing = sorted(required - observed_types)
     if missing:
@@ -95,6 +107,7 @@ def assess(payload: dict[str, Any], *, resource_group: str) -> dict[str, Any]:
         "scope_contained": True,
         "deletes_observed": False,
         "modifications_observed": False,
+        "duplicates_observed": False,
         "what_if_passed": True,
         "boundary": "accepted What-If != deployment authorized",
     }
