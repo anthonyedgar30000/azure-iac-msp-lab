@@ -10,10 +10,6 @@ import subprocess
 import sys
 from typing import Any
 
-import mcp.types as types
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
-
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_TOOLS = [
@@ -92,13 +88,15 @@ def _structured_content(result: Any) -> dict[str, Any]:
         return structured
 
     for block in getattr(result, "content", []):
-        if isinstance(block, types.TextContent):
-            try:
-                parsed = json.loads(block.text)
-            except json.JSONDecodeError:
-                continue
-            if isinstance(parsed, dict):
-                return parsed
+        text = getattr(block, "text", None)
+        if not isinstance(text, str):
+            continue
+        try:
+            parsed = json.loads(text)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return parsed
     raise RuntimeError("MCP tool response did not contain structured JSON content")
 
 
@@ -177,6 +175,9 @@ def _validate_prepared_plan(payload: dict[str, Any]) -> None:
 
 
 async def run_probe() -> dict[str, Any]:
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+
     repository_head = _git("rev-parse", "HEAD")
     working_tree_clean = _git("status", "--porcelain=v1", "--untracked-files=normal") == ""
     server_parameters = StdioServerParameters(
@@ -310,7 +311,7 @@ def main() -> int:
 
     try:
         receipt = asyncio.run(run_probe())
-    except (OSError, RuntimeError, subprocess.SubprocessError, ValueError) as exc:
+    except (ImportError, OSError, RuntimeError, subprocess.SubprocessError, ValueError) as exc:
         print(
             json.dumps(
                 {
