@@ -312,7 +312,7 @@ az deployment sub what-if \
   --output json \
   > "$RAW_DIR/arm-what-if.json"
 
-SUBSCRIPTION_ID="$subscription_id" TENANT_ID="$tenant_id" python - <<'PY'
+SUBSCRIPTION_ID="$subscription_id" TENANT_ID="$tenant_id" DEPENDENCY_IP="$dependency_ip" python - <<'PY'
 from pathlib import Path
 import os
 
@@ -321,6 +321,7 @@ evidence_dir = Path(os.environ["RUNNER_TEMP"]) / "lab-factory-preflight-run1"
 replacements = {
     os.environ["SUBSCRIPTION_ID"]: "<subscription-id>",
     os.environ["TENANT_ID"]: "<tenant-id>",
+    os.environ["DEPENDENCY_IP"]: "<dependency-public-ip>",
 }
 for name in ("arm-validation.json", "arm-what-if.json"):
     text = (raw_dir / name).read_text(encoding="utf-8")
