@@ -2,15 +2,15 @@
 
 ## Interpretation boundary
 
-This is the authoritative repository and evidence handoff selected by `.project/CURRENT.json`. It records GitHub state after PR #251 merged, the recovered Azure AI run-8 terminal artifact, and the direct-manual ServiceTracer planning gate.
+This is the authoritative repository and evidence handoff selected by `.project/CURRENT.json`. It records GitHub state after PR #251 merged and terminal evidence for Azure AI run 8 and ServiceTracer planning run 1.
 
 ```text
 repository record != continuously refreshed dashboard
 merged repository state != deployed Azure state
-human authority recorded != workflow dispatched
-connector paths closed != planning authority consumed
+workflow dispatch accepted != authority validation passed
+authority consumed != Azure login started
 ARM What-If != Azure mutation
-planning succeeded != deployment authorized
+planning attempt failed != deployment attempted
 not observed != absent
 ```
 
@@ -23,12 +23,11 @@ state index: .project/state-index-v13.json
 current handoff: .project/handoffs/current-state-v3.md
 completion gate: .project/lab-v1-completion-gate-v2.json
 repository sync: .project/reconciliations/post-pr251-canonical-sync-20260730.json
+latest operational overlay: .project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json
+ServiceTracer terminal: .project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json
 Azure AI terminal: .project/reconciliations/azure-ai-go-live-run8-terminal-20260730.json
 prior run-8 trigger sync: .project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json
-ServiceTracer connector blocker: .project/reconciliations/servicetracer-demo-api-plan-run1-connector-event-blocked-20260729.json
 ```
-
-Previous versioned and unversioned files remain historical compatibility records.
 
 ## Repository watermark
 
@@ -38,13 +37,60 @@ observed main: 09fe72e3a82ea6ae56e1e85fd9745c9940ed6c12
 latest merged PR: #251
 latest merged source head: 2d17b70edc2d0474967db388bd3d425fb5400b74
 PR #251 exact-head CI: 30512881241 / success
-open PRs observed: none
+sync PR: #252
 local working tree: not observed through connector
 ```
 
-## Azure AI
+## ServiceTracer planning run 1
 
-Run 8 is terminal and consumed:
+The direct workflow dispatch was accepted and consumed the one-shot planning authority:
+
+```text
+workflow: .github/workflows/servicetracer-demo-api-subproject-plan.yml
+workflow run: 30513630134 / attempt 1
+job: 90778676285
+head: 09fe72e3a82ea6ae56e1e85fd9745c9940ed6c12
+artifact: 8748027710
+artifact digest: sha256:a3bb46d90bdff6329bcfe15f5b00b1f144b68b009724f9e912ca890ced9384d9
+conclusion: failure
+failure stage: validate_main_bound_dual_subscription_read_only_authority
+failure class: confirmation_input_mismatch
+authority consumed: true
+rerun authorized: false
+```
+
+The job failed before Azure login because the supplied confirmation did not exactly match:
+
+```text
+PLAN-DEMO-API-SUBPROJECT:dev:st-demo-api-vm-aeg30000
+```
+
+The actual supplied value is not persisted.
+
+```text
+repository tests started: false
+Azure login started: false
+dependency subscription query started: false
+target subscription query started: false
+provider/policy/quota/SKU/inventory queried: false
+ARM validation performed: false
+ARM What-If performed: false
+Azure mutation/deployment observed: false
+planning ceiling: CAD $25.00
+planning ceiling is spend authority: false
+deployment authorized: false
+```
+
+The protected artifact contains only an empty `artifact-manifest.sha256`; it contains no planning summary or Azure evidence.
+
+Promoted evidence:
+
+```text
+.project/evidence/servicetracer-demo-api-plan-run1-terminal-summary.json
+SHA-256: 3c79f43342356bd448531ba35501d9ab0591f1eee8d2bba1f0437d44c88a71da
+```
+
+## Azure AI run 8
 
 ```text
 workflow run: 30510660758
@@ -61,59 +107,11 @@ active Azure AI authorization: none
 
 The GitHub OIDC principal did not have the required direct account-scoped inference role at the recorded time. This does not prove every inherited access path is absent.
 
-The separately verified `gpt-5-mini` runtime remains distinct:
-
-```text
-endpoint: https://anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/
-deployment: gpt-5-mini
-Entra response previously verified: true
-ARM identity reconciled: false
-modified by run 8: false
-Azure OpenAI MCP invocation verified: false
-ChatGPT MCP connection verified: false
-```
-
-## ServiceTracer Lab Factory planning
-
-```text
-profile: servicetracer-demo-api@1.0.0
-state: candidate
-canonical workflow: .github/workflows/servicetracer-demo-api-subproject-plan.yml
-GitHub environment: azure-api-payg
-dependency subscription role: read-only existing dependency
-target subscription role: planning only
-ARM validation: available
-ARM What-If: available
-deployment command: absent
-```
-
-PR #251 removed all failed connector-event dispatcher paths. The one-shot planning authority remains active and unconsumed:
-
-```text
-attempt: servicetracer-demo-api-plan-run1
-tracking issue: #232
-connector dispatcher paths present: false
-fresh human authorization comment: 5126316629
-fresh instruction: Proceed you have my authority.
-expected dispatch main: 09fe72e3a82ea6ae56e1e85fd9745c9940ed6c12
-direct manual dispatch authorized: true
-dispatch performed: false
-authority consumed: false
-accepted child dispatches observed: 0
-remaining authorized dispatches: 1
-Azure authentication/query observed: false
-ARM validation/What-If observed: false
-Azure mutation/deployment observed: false
-planning ceiling: CAD $25.00
-planning ceiling is spend authority: false
-deployment authorized: false
-```
-
-The only remaining authorized operation is one direct GitHub Actions **Run workflow** on the canonical planner from `main` using the exact recorded inputs. Authority is consumed when the dispatch is accepted. This sync does not dispatch it.
+The separately verified `gpt-5-mini` runtime remains distinct and was not modified by run 8.
 
 ## Azure and operational unknowns
 
-Run 8 freshly established the enabled Azure for Students subscription, registered Cognitive Services provider, East US resource group, and S0 OpenAI account. It did not freshly establish:
+Neither terminal failure freshly established all operational reality. Still unverified:
 
 ```text
 tenant context
@@ -130,30 +128,15 @@ backup or recovery
 
 ## Authority after sync
 
-Authorized and performed:
-
 ```text
-repository branch and declared files
-pull-request creation
-ordinary exact-head CI
-merge after green CI and a live-main freshness recheck
+active Azure AI authority: none
+active ServiceTracer planning authority: none
+active deployment authority: none
+Azure resource cost delta established by these terminal runs: CAD $0
 ```
 
-Not performed:
-
-```text
-workflow dispatch or rerun
-Azure authentication or query
-ARM What-If
-Azure mutation or deployment
-RBAC mutation
-model request
-new MCP client call
-remote MCP hosting
-ChatGPT connection
-cleanup or rollback
-```
+This sync performs no workflow dispatch, Azure login/query, What-If, mutation, deployment, role change, model request, rollback, or cleanup.
 
 ## Next gate
 
-Complete this repository-only canonical sync. Afterward, the only active operational authorization is one direct manual ServiceTracer planning dispatch. Its protected planning artifact must be reviewed before any deployment authorization is created.
+A new ServiceTracer planning attempt requires corrected confirmation-input handling and fresh explicit one-attempt authority. A new Azure AI attempt requires the exact direct account-scoped inference role and fresh explicit authority. Deployment remains a separate later decision after successful planning evidence.
