@@ -275,7 +275,10 @@ class LabFactoryAzurePreflightTests(unittest.TestCase):
         self.assertIn("id-token: write", workflow)
         self.assertIn("contents: read", workflow)
         self.assertIn("environment: azure-lab", workflow)
-        self.assertIn('"az", "deployment", "sub", "validate"', core)
+        self.assertRegex(
+            core,
+            r'"az",\s*"deployment",\s*"sub",\s*"validate"',
+        )
         for forbidden in (
             "az deployment sub create",
             "az deployment sub what-if",
