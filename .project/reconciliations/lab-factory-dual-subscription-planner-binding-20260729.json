@@ -1,0 +1,148 @@
+{
+  "schema_version": "project.reconciliation.lab-factory-dual-subscription-planner-binding.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T22:35:00-04:00",
+  "source_instruction": "Proceed",
+  "observation_boundary": "Live GitHub was observed through main at ced77a61d278f66f0f1be477164e5167b08fcc7b and merged PR 228 before this branch. No Azure authentication, query, ARM validation, ARM What-If, workflow dispatch, mutation, deployment, cleanup, model call, remote MCP connection, or ChatGPT connection was performed by this repository increment.",
+  "repository": {
+    "base_main": "ced77a61d278f66f0f1be477164e5167b08fcc7b",
+    "latest_merged_pull_request": 228,
+    "open_pull_requests_before_branch": [],
+    "branch": "agent/bind-lab-factory-dual-subscription-planner",
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "finding": {
+    "catalog_profile": "servicetracer-demo-api@1.0.0",
+    "generic_prepare_plan_present": true,
+    "local_MCP_prepare_call_previously_verified": true,
+    "canonical_dual_subscription_planner_present": true,
+    "catalog_to_planner_binding_before_increment": false,
+    "MCP_output_to_planner_binding_before_increment": false,
+    "live_planner_dispatch_observed": false
+  },
+  "intended_architecture": {
+    "planner_workflow": ".github/workflows/servicetracer-demo-api-subproject-plan.yml",
+    "github_environment": "azure-api-payg",
+    "trigger": "workflow_dispatch",
+    "dependency_subscription": {
+      "role": "existing ServiceTracer dependency source",
+      "access": "read_only",
+      "resource_group_default": "rg-servicetracer-dev-westus2"
+    },
+    "target_subscription": {
+      "role": "independent ServiceTracer demo API planning target",
+      "access": "planning_only",
+      "resource_group_pattern": "rg-st-demo-api-{environment}-{location}"
+    },
+    "region": "westus2",
+    "vm_size": "Standard_F1als_v7",
+    "provider_validation_level": "ProviderNoRbac",
+    "arm_validation": true,
+    "arm_what_if": true,
+    "deployment_command_available": false
+  },
+  "binding": {
+    "catalog_metadata_added": true,
+    "MCP_profile_list_exposes_planner_summary": true,
+    "MCP_prepared_plan_exposes_workflow_and_installer_digests": true,
+    "MCP_prepared_plan_exposes_input_names_and_provenance_only": true,
+    "parameter_values_returned": false,
+    "confirmation_value_returned": false,
+    "generic_CLI_plan_behavior_changed": false,
+    "MCP_next_gate_when_complete": "planner_dispatch_review_required",
+    "live_dispatch_authorized": false
+  },
+  "input_provenance": {
+    "workflow_inputs_from_request_or_profile": [
+      "environment",
+      "location",
+      "prefix",
+      "dns_label",
+      "allowed_origin",
+      "vm_size"
+    ],
+    "workflow_defaults": [
+      "dependency_resource_group",
+      "maximum_monthly_cost_cad"
+    ],
+    "derived_not_returned": [
+      "confirmation"
+    ],
+    "template_parameters_derived_by_workflow": {
+      "backendTransactionUrl": "dependency subscription public IP observation",
+      "adminSshPublicKey": "fixed validation-only placeholder",
+      "sourceRepository": "GitHub repository context",
+      "sourceRef": "immutable dispatch SHA",
+      "installerUri": "GitHub repository and dispatch SHA plus canonical installer path"
+    }
+  },
+  "identity_and_network": {
+    "dependency_and_target_workload_identities_are_distinct": true,
+    "dependency_and_target_subscriptions_are_distinct": true,
+    "dependency_network_path": "read existing ServiceTracer public IP only",
+    "target_network_path": "ARM planning endpoints only",
+    "new_inbound_network_path_created": false,
+    "credentials_created": false
+  },
+  "security_controls": [
+    "planner workflow digest returned",
+    "installer digest returned",
+    "parameter values omitted",
+    "confirmation value omitted",
+    "dual-subscription boundary explicit",
+    "ProviderNoRbac validation explicit",
+    "dispatch remains manual and unauthorized by preparation",
+    "deployment command unavailable",
+    "cleanup remains separately authorized"
+  ],
+  "cost": {
+    "currency": "CAD",
+    "repository_recurring_Azure_cost_delta": 0,
+    "planner_default_monthly_ceiling_CAD": 25.0,
+    "fresh_actual_cost_observed": false,
+    "fresh_quota_or_capacity_observed": false,
+    "boundary": "planning ceiling != actual billed cost"
+  },
+  "failure_and_rollback": {
+    "catalog_or_workflow_path_missing": "fail closed during repository tests",
+    "planner_metadata_drift": "fail closed before MCP result is returned",
+    "repository_rollback": "revert the exact binding pull request",
+    "Azure_rollback": "not applicable because no Azure operation is performed",
+    "cleanup": "not applicable for this repository-only increment"
+  },
+  "evidence_to_capture": [
+    "exact source commit",
+    "exact-head repository CI",
+    "MCP direct-call tests",
+    "local stdio MCP smoke receipt",
+    "workflow and installer SHA-256 digests",
+    "no-parameter-value-return assertions",
+    "live-main freshness check before merge"
+  ],
+  "authority": {
+    "repository_changes": true,
+    "ordinary_exact_head_CI": true,
+    "pull_request_creation": true,
+    "merge_after_green_and_freshness_recheck": true,
+    "local_repository_only_MCP_smoke": true,
+    "workflow_dispatch": false,
+    "Azure_authentication_or_query": false,
+    "ARM_validation_or_What_If": false,
+    "Azure_mutation": false,
+    "deployment": false,
+    "RBAC_mutation": false,
+    "model_call": false,
+    "remote_MCP_deployment": false,
+    "ChatGPT_connection": false,
+    "rollback": false,
+    "cleanup": false
+  },
+  "claim_boundaries": [
+    "planner_bound != workflow_dispatched",
+    "workflow_dispatch_prepared != ARM_What_If_reviewed",
+    "planning_succeeded != deployment_authorized",
+    "workflow_digest_recorded != workflow_executed",
+    "planning ceiling != actual billed cost"
+  ],
+  "next_gate": "Review exact-head CI and the local MCP smoke result, merge only after a live-main freshness check, then obtain one separate exact live dispatch decision for the canonical dual-subscription planner."
+}

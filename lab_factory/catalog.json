@@ -12,6 +12,37 @@
         "path": "workloads/servicetracer-demo-api/infra/main.bicep",
         "scope": "subscription"
       },
+      "planner": {
+        "workflow_path": ".github/workflows/servicetracer-demo-api-subproject-plan.yml",
+        "trigger": "workflow_dispatch",
+        "github_environment": "azure-api-payg",
+        "subscription_boundary": "dual_subscription",
+        "dependency_subscription_access": "read_only",
+        "target_subscription_access": "planning_only",
+        "provider_validation_level": "ProviderNoRbac",
+        "arm_validation_required": true,
+        "arm_what_if_required": true,
+        "deployment_command_available": false,
+        "installer_path": "workloads/servicetracer-demo-api/scripts/install.sh",
+        "input_bindings": {
+          "environment": "request.environment",
+          "location": "request.location",
+          "prefix": "profile.parameters.fixed.prefix",
+          "dependency_resource_group": "workflow_default:rg-servicetracer-dev-westus2",
+          "dns_label": "parameter:dnsLabel",
+          "allowed_origin": "parameter:allowedOrigin",
+          "vm_size": "profile.parameters.defaults.vmSize",
+          "maximum_monthly_cost_cad": "workflow_default:25.00",
+          "confirmation": "derived_not_returned"
+        },
+        "derived_template_parameters": {
+          "backendTransactionUrl": "dependency_subscription_public_ip_observation",
+          "adminSshPublicKey": "workflow_fixed_validation_placeholder",
+          "sourceRepository": "github.repository",
+          "sourceRef": "github.sha",
+          "installerUri": "github.repository_and_sha_plus_installer_path"
+        }
+      },
       "environments": [
         "dev",
         "test"

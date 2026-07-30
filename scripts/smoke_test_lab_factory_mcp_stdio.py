@@ -27,7 +27,7 @@ REQUEST_ID = "lab-mcp-smoke-001"
 SYNTHETIC_PARAMETERS = {
     "dnsLabel": "st-mcp-smoke-001",
     "allowedOrigin": "https://smoke.example.invalid",
-    "backendTransactionUrl": "https://backend.example.invalid/api/demo/run",
+    "backendTransactionUrl": "https://backend.example.invalid/transaction",
     "adminSshPublicKey": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAISmokeOnlyKey mcp-smoke",
     "sourceRepository": "https://github.com/anthonyedgar30000/azure-iac-msp-lab.git",
     "sourceRef": "0123456789abcdef0123456789abcdef01234567",
@@ -122,7 +122,7 @@ def _structured_payload(result: Any) -> dict[str, Any]:
 
 
 def _assert_profile_list(payload: dict[str, Any]) -> None:
-    _require(payload.get("schema_version") == "lab-factory.profile-list.v1", "profile-list schema mismatch")
+    _require(payload.get("schema_version") == "lab-factory.profile-list.v2", "profile-list schema mismatch")
     profiles = payload.get("profiles")
     _require(isinstance(profiles, list) and len(profiles) == 1, "unexpected profile inventory")
     profile = profiles[0]
@@ -130,9 +130,23 @@ def _assert_profile_list(payload: dict[str, Any]) -> None:
     _require(profile.get("version") == PROFILE_VERSION, "profile version mismatch")
     _require(profile.get("release_state") == "candidate", "profile release state mismatch")
     _require(profile.get("allowed_locations") == ["westus2"], "location allowlist mismatch")
+    planner = profile.get("planner", {})
+    _require(
+        planner.get("workflow_path") == ".github/workflows/servicetracer-demo-api-subproject-plan.yml",
+        "canonical planner workflow mismatch",
+    )
+    _require(planner.get("trigger") == "workflow_dispatch", "planner trigger mismatch")
+    _require(planner.get("github_environment") == "azure-api-payg", "planner environment mismatch")
+    _require(planner.get("subscription_boundary") == "dual_subscription", "subscription boundary mismatch")
+    _require(planner.get("provider_validation_level") == "ProviderNoRbac", "provider validation mismatch")
+    _require(planner.get("deployment_command_available") is False, "planner exposes deployment")
+    _require(planner.get("live_dispatch_authorized") is False, "profile list granted dispatch")
+    digest = planner.get("workflow_sha256")
+    _require(isinstance(digest, str) and digest.startswith("sha256:") and len(digest) == 71, "workflow digest invalid")
     execution = payload.get("execution", {})
     _require(execution.get("azure_queries_performed") is False, "profile listing queried Azure")
     _require(execution.get("azure_mutations_performed") is False, "profile listing mutated Azure")
+    _require(execution.get("workflow_dispatch_performed") is False, "profile listing dispatched workflow")
 
 
 def _assert_prepared_plan(payload: dict[str, Any]) -> None:
@@ -143,16 +157,35 @@ def _assert_prepared_plan(payload: dict[str, Any]) -> None:
     _require(request.get("profile_version") == PROFILE_VERSION, "prepared version mismatch")
     _require(request.get("location") == "westus2", "prepared location mismatch")
     _require(request.get("ttl_hours") == 8, "prepared TTL mismatch")
-    _require(payload.get("next_gate") == "preflight_required", "unexpected next gate")
+    _require(payload.get("next_gate") == "planner_dispatch_review_required", "unexpected next gate")
     deployment = payload.get("deployment", {})
     _require(deployment.get("operation") == "prepare_only", "operation is not prepare_only")
     _require(deployment.get("missing_required_parameters") == [], "required parameters remain missing")
     gates = payload.get("gates", {})
     _require(gates.get("ready_for_preflight") is True, "plan is not ready for bounded preflight")
     _require(gates.get("explicit_deployment_authorization_required") is True, "deployment authorization gate missing")
+    planner = payload.get("planner", {})
+    _require(planner.get("operation") == "prepare_only", "planner operation is not prepare_only")
+    _require(
+        planner.get("workflow_path") == ".github/workflows/servicetracer-demo-api-subproject-plan.yml",
+        "planner workflow mismatch",
+    )
+    _require(planner.get("github_environment") == "azure-api-payg", "planner environment mismatch")
+    _require(planner.get("subscription_boundary") == "dual_subscription", "planner subscription boundary mismatch")
+    _require(planner.get("dependency_subscription_access") == "read_only", "dependency access mismatch")
+    _require(planner.get("target_subscription_access") == "planning_only", "target access mismatch")
+    _require(planner.get("provider_validation_level") == "ProviderNoRbac", "planner validation mismatch")
+    _require(planner.get("arm_validation_required") is True, "ARM validation gate missing")
+    _require(planner.get("arm_what_if_required") is True, "ARM What-If gate missing")
+    _require(planner.get("deployment_command_available") is False, "planner exposes deployment command")
+    _require(planner.get("ready_for_dispatch_review") is True, "planner is not ready for dispatch review")
+    _require(planner.get("live_dispatch_authorized") is False, "planner granted live dispatch")
+    _require(planner.get("parameter_values_returned") is False, "planner returned parameter values")
+    _require(planner.get("confirmation_value_returned") is False, "planner returned confirmation value")
     execution = payload.get("execution", {})
     _require(execution.get("azure_queries_performed") is False, "prepare tool queried Azure")
     _require(execution.get("azure_mutations_performed") is False, "prepare tool mutated Azure")
+    _require(execution.get("workflow_dispatch_performed") is False, "prepare tool dispatched workflow")
     _require(execution.get("deployment_authorized") is False, "prepare tool granted deployment authority")
     _require(execution.get("cleanup_authorized") is False, "prepare tool granted cleanup authority")
     serialized = json.dumps(payload, sort_keys=True)
@@ -205,6 +238,9 @@ async def _run_smoke(root: Path) -> dict[str, Any]:
         "request_id": REQUEST_ID,
         "plan_digest": first["plan_digest"],
         "next_gate": first["next_gate"],
+        "planner_workflow": first["planner"]["workflow_path"],
+        "planner_subscription_boundary": first["planner"]["subscription_boundary"],
+        "planner_dispatch_authorized": False,
         "parameter_values_returned": False,
         "azure_queries_performed": False,
         "azure_mutations_performed": False,
@@ -226,7 +262,7 @@ def main() -> int:
     try:
         result = asyncio.run(asyncio.wait_for(_run_smoke(root), timeout=args.timeout_seconds))
         receipt = {
-            "schema_version": "lab-factory.mcp-local-smoke-receipt.v1",
+            "schema_version": "lab-factory.mcp-local-smoke-receipt.v2",
             "observed_at_utc": datetime.now(timezone.utc).isoformat(),
             "source_sha": _source_sha(root),
             "transport": "stdio",
