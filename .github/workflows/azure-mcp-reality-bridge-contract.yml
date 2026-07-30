@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - ".project/contracts/azure-mcp-reality-bridge.json"
+      - ".project/contracts/azure-mcp-lab-factory-tools-v1.json"
       - ".project/reconciliations/azure-mcp-current-reality-tool-20260729.json"
       - ".project/reconciliations/azure-mcp-current-reality-run1-terminal-20260729.json"
       - ".project/evidence/azure-mcp-current-reality-run1.json"
@@ -12,24 +13,29 @@ on:
       - ".project/handoffs/azure-mcp-current-reality-tool.md"
       - ".project/handoffs/azure-mcp-current-reality-run1.md"
       - ".project/handoffs/azure-mcp-current-reality-run1-terminal.md"
+      - ".project/handoffs/azure-mcp-lab-factory-tools-v1.md"
       - ".project/state-index.json"
       - "azure_mcp_reality/**"
+      - "lab_factory/**"
       - "requirements/azure-mcp-reality-tool.txt"
       - "docs/architecture/azure-mcp-reality-bridge.md"
       - "docs/runbooks/azure-mcp-get-current-reality.md"
       - "scripts/azure_mcp_current_reality_run1.sh"
       - "scripts/validate_azure_mcp_reality_bridge.py"
+      - "scripts/validate_azure_mcp_lab_factory_tools.py"
       - "tests/test_azure_mcp_reality_bridge.py"
       - "infra/tests/test_azure_mcp_current_reality_tool.py"
       - "infra/tests/test_azure_mcp_active_subscription_compat.py"
       - "infra/tests/test_azure_mcp_current_reality_run1_authorization.py"
       - "infra/tests/test_azure_mcp_current_reality_run1_terminal.py"
+      - "infra/tests/test_azure_mcp_lab_factory_tools.py"
       - ".github/workflows/azure-mcp-reality-bridge-contract.yml"
   push:
     branches:
       - main
     paths:
       - ".project/contracts/azure-mcp-reality-bridge.json"
+      - ".project/contracts/azure-mcp-lab-factory-tools-v1.json"
       - ".project/reconciliations/azure-mcp-current-reality-tool-20260729.json"
       - ".project/reconciliations/azure-mcp-current-reality-run1-terminal-20260729.json"
       - ".project/evidence/azure-mcp-current-reality-run1.json"
@@ -38,18 +44,22 @@ on:
       - ".project/handoffs/azure-mcp-current-reality-tool.md"
       - ".project/handoffs/azure-mcp-current-reality-run1.md"
       - ".project/handoffs/azure-mcp-current-reality-run1-terminal.md"
+      - ".project/handoffs/azure-mcp-lab-factory-tools-v1.md"
       - ".project/state-index.json"
       - "azure_mcp_reality/**"
+      - "lab_factory/**"
       - "requirements/azure-mcp-reality-tool.txt"
       - "docs/architecture/azure-mcp-reality-bridge.md"
       - "docs/runbooks/azure-mcp-get-current-reality.md"
       - "scripts/azure_mcp_current_reality_run1.sh"
       - "scripts/validate_azure_mcp_reality_bridge.py"
+      - "scripts/validate_azure_mcp_lab_factory_tools.py"
       - "tests/test_azure_mcp_reality_bridge.py"
       - "infra/tests/test_azure_mcp_current_reality_tool.py"
       - "infra/tests/test_azure_mcp_active_subscription_compat.py"
       - "infra/tests/test_azure_mcp_current_reality_run1_authorization.py"
       - "infra/tests/test_azure_mcp_current_reality_run1_terminal.py"
+      - "infra/tests/test_azure_mcp_lab_factory_tools.py"
       - ".github/workflows/azure-mcp-reality-bridge-contract.yml"
 
 permissions:
@@ -72,37 +82,82 @@ jobs:
       - name: Install pinned MCP SDK
         run: python -m pip install -r requirements/azure-mcp-reality-tool.txt
 
-      - name: Validate governed contract
-        run: python scripts/validate_azure_mcp_reality_bridge.py
+      - name: Validate governed contracts
+        run: |
+          python scripts/validate_azure_mcp_reality_bridge.py
+          python scripts/validate_azure_mcp_lab_factory_tools.py
 
-      - name: Run contract, observer, compatibility, authority, and terminal tests
+      - name: Run contract, observer, Lab Factory, compatibility, authority, and terminal tests
         run: |
           python -m unittest tests.test_azure_mcp_reality_bridge -v
           python -m unittest infra.tests.test_azure_mcp_current_reality_tool -v
+          python -m unittest infra.tests.test_azure_mcp_lab_factory_tools -v
+          python -m unittest infra.tests.test_lab_factory_lite -v
           python -m unittest infra.tests.test_azure_mcp_active_subscription_compat -v
           python -m unittest infra.tests.test_azure_mcp_current_reality_run1_authorization -v
           python -m unittest infra.tests.test_azure_mcp_current_reality_run1_terminal -v
-          python -m py_compile azure_mcp_reality/*.py
+          python -m py_compile azure_mcp_reality/*.py lab_factory/*.py
           bash -n scripts/azure_mcp_current_reality_run1.sh
 
-      - name: Verify exact MCP tool descriptor without Azure access
+      - name: Verify exact MCP tool descriptors without Azure access
         run: |
           python - <<'PY'
           import asyncio
           from azure_mcp_reality.server import build_server
 
           async def verify() -> None:
-              server = build_server(tool_handler=lambda: {"test": True})
-              tools = await server.list_tools()
-              assert len(tools) == 1
-              tool = tools[0]
-              assert tool.name == "get_current_reality"
-              assert tool.inputSchema == {"properties": {}, "title": "get_current_realityArguments", "type": "object"}
-              assert tool.annotations is not None
-              assert tool.annotations.readOnlyHint is True
-              assert tool.annotations.destructiveHint is False
-              assert tool.annotations.idempotentHint is True
-              assert tool.annotations.openWorldHint is True
+              server = build_server(
+                  tool_handler=lambda: {"test": True},
+                  list_lab_profiles_handler=lambda: {"profiles": []},
+                  prepare_lab_request_handler=lambda **kwargs: {"request": kwargs},
+              )
+              tools = {tool.name: tool for tool in await server.list_tools()}
+              assert set(tools) == {
+                  "get_current_reality",
+                  "list_lab_profiles",
+                  "prepare_lab_request",
+              }
+
+              reality = tools["get_current_reality"]
+              assert reality.inputSchema == {
+                  "properties": {},
+                  "title": "get_current_realityArguments",
+                  "type": "object",
+              }
+              assert reality.annotations is not None
+              assert reality.annotations.readOnlyHint is True
+              assert reality.annotations.destructiveHint is False
+              assert reality.annotations.idempotentHint is True
+              assert reality.annotations.openWorldHint is True
+
+              profiles = tools["list_lab_profiles"]
+              assert profiles.inputSchema == {
+                  "properties": {},
+                  "title": "list_lab_profilesArguments",
+                  "type": "object",
+              }
+              assert profiles.annotations is not None
+              assert profiles.annotations.readOnlyHint is True
+              assert profiles.annotations.destructiveHint is False
+              assert profiles.annotations.idempotentHint is True
+              assert profiles.annotations.openWorldHint is False
+
+              prepare = tools["prepare_lab_request"]
+              assert prepare.annotations is not None
+              assert prepare.annotations.readOnlyHint is True
+              assert prepare.annotations.destructiveHint is False
+              assert prepare.annotations.idempotentHint is True
+              assert prepare.annotations.openWorldHint is False
+              assert set(prepare.inputSchema["properties"]) == {
+                  "profile_id",
+                  "environment",
+                  "location",
+                  "ttl_hours",
+                  "version",
+                  "request_id",
+                  "parameters",
+              }
+              assert prepare.inputSchema["required"] == ["profile_id"]
 
           asyncio.run(verify())
           PY
