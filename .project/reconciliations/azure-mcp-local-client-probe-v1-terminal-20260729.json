@@ -1,0 +1,167 @@
+{
+  "schema_version": "project.reconciliation.azure-mcp-local-client-probe-v1-terminal.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:35:00-04:00",
+  "source_instruction": "Proceed",
+  "classification": "terminal_verified_exact_source_local_MCP_protocol_evidence",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "base_commit": "8926a5b48db9bb7cb08523d337e43d20ba7ed69d",
+    "latest_merged_pull_request_at_start": 220,
+    "open_pull_requests_observed_before_branch": [],
+    "implementation_branch": "agent/verify-local-mcp-lab-factory-client-v1",
+    "pull_request": 222,
+    "exact_probed_source_head": "d2cd7e68a6dd954d5c114b827817a1d866827ca3",
+    "working_tree_clean_in_receipt": true,
+    "merge_status_at_reconciliation": "pending_exact_head_CI_after_evidence_promotion"
+  },
+  "workflow": {
+    "name": "Azure MCP reality bridge contract",
+    "run_id": 30505927462,
+    "job_id": 90755550858,
+    "conclusion": "success",
+    "checkout": "exact_pull_request_source_head",
+    "oidc_available": false,
+    "Azure_credentials_available": false,
+    "OpenAI_credentials_available": false,
+    "workflow_dispatch_or_rerun_performed": false
+  },
+  "artifact": {
+    "artifact_id": 8745291415,
+    "name": "azure-mcp-local-client-probe",
+    "archive_digest": "sha256:391e509d0f30f310251b2ba626ac68f54ab026e2cd908398c5fe092b301830a9",
+    "receipt_path": ".project/evidence/azure-mcp-local-client-probe.json",
+    "manifest_path": ".project/evidence/azure-mcp-local-client-probe.sha256",
+    "receipt_file_sha256": "1f1cf91c47fdd347f835894b2ac8a7c9fb37552170cddbee7d1805740d54ab81",
+    "manifest_matches_receipt": true,
+    "internal_receipt_digest": "sha256:70f236ea8d17b96d8586845a96f2cff09e02fc08888c78554c3d41137a07de8f",
+    "internal_receipt_digest_validated": true,
+    "parameter_values_present": false,
+    "raw_Azure_identifiers_present": false,
+    "secret_values_present": false
+  },
+  "protocol_observation": {
+    "transport": "stdio_subprocess",
+    "protocol_initialized": true,
+    "protocol_version": "2025-11-25",
+    "server_name": "Azure IaC MSP Lab Assistant",
+    "server_version": "1.24.0",
+    "network_listener_created": false,
+    "remote_endpoint_used": false,
+    "tool_inventory": [
+      "get_current_reality",
+      "list_lab_profiles",
+      "prepare_lab_request"
+    ],
+    "get_current_reality_called": false
+  },
+  "list_lab_profiles_observation": {
+    "call_succeeded": true,
+    "schema_version": "lab-factory.profile-list.v1",
+    "profile_ids": [
+      "servicetracer-demo-api"
+    ],
+    "release_states": [
+      "candidate"
+    ],
+    "Azure_queries_performed": false,
+    "Azure_mutations_performed": false,
+    "deployment_authorized": false,
+    "cleanup_authorized": false
+  },
+  "prepare_lab_request_observation": {
+    "call_succeeded": true,
+    "schema_version": "lab-factory.plan.v1",
+    "request": {
+      "request_id": "local-mcp-probe-001",
+      "profile_id": "servicetracer-demo-api",
+      "profile_version": "1.0.0",
+      "environment": "test",
+      "location": "westus2",
+      "ttl_hours": 6
+    },
+    "operation": "prepare_only",
+    "resource_group": "rg-st-demo-api-test-westus2",
+    "missing_required_parameters": [],
+    "ready_for_preflight": true,
+    "what_if_required": true,
+    "explicit_deployment_authorization_required": true,
+    "next_gate": "preflight_required",
+    "plan_digest": "sha256:4e9a858383ab78e2fef896421be4c65f122484394667d332bc6c0dea51e3bb71",
+    "Azure_queries_performed": false,
+    "Azure_mutations_performed": false,
+    "deployment_authorized": false,
+    "cleanup_authorized": false,
+    "parameter_values_returned": false
+  },
+  "negative_evidence": {
+    "Azure_credentials_forwarded_to_server": false,
+    "Azure_authentication_performed": false,
+    "Azure_queries_performed": false,
+    "Azure_mutations_performed": false,
+    "ARM_WhatIf_performed": false,
+    "deployment_authorized": false,
+    "deployment_performed": false,
+    "RBAC_mutation_performed": false,
+    "model_call_performed": false,
+    "remote_MCP_endpoint_deployed": false,
+    "ChatGPT_connection_configured": false,
+    "cleanup_authorized": false,
+    "cleanup_performed": false
+  },
+  "repair_history": [
+    {
+      "boundary": "broad_CI_optional_dependency",
+      "observation": "The complete infrastructure test discovery did not install the optional MCP SDK.",
+      "repair": "Move MCP imports inside run_probe and skip only the live protocol test when the pinned SDK is absent; the focused workflow still installs and executes the real protocol test.",
+      "authority_widened": false
+    },
+    {
+      "boundary": "pinned_MCP_1_24_result_aliases",
+      "observation": "The pinned SDK exposed CallToolResult fields as isError and structuredContent.",
+      "repair": "Accept the pinned aliases and their snake-case counterparts without changing tool scope.",
+      "authority_widened": false
+    },
+    {
+      "boundary": "synthetic_pull_request_merge_ref",
+      "observation": "The first successful artifact bound to GitHub's synthetic pull-request merge commit rather than the exact source head.",
+      "repair": "Check out github.event.pull_request.head.sha explicitly and require the receipt head to match it.",
+      "first_artifact_promoted": false,
+      "authority_widened": false
+    }
+  ],
+  "authority": {
+    "repository_evidence_promotion_authorized": true,
+    "ordinary_exact_head_CI_authorized": true,
+    "merge_after_exact_head_CI_authorized": true,
+    "Azure_authentication_authorized": false,
+    "Azure_query_authorized": false,
+    "ARM_WhatIf_authorized": false,
+    "Azure_mutation_authorized": false,
+    "deployment_authorized": false,
+    "RBAC_mutation_authorized": false,
+    "model_call_authorized": false,
+    "remote_MCP_deployment_authorized": false,
+    "ChatGPT_connection_authorized": false,
+    "cleanup_authorized": false
+  },
+  "cost_and_quota": {
+    "expected_recurring_Azure_resource_cost_delta_CAD": 0,
+    "model_tokens_consumed": 0,
+    "actual_Azure_cost_freshly_observed": false,
+    "Azure_quota_freshly_observed": false
+  },
+  "claim_boundaries": [
+    "local_MCP_protocol_call_verified != ChatGPT_connected",
+    "local_MCP_protocol_call_verified != remote_MCP_endpoint_deployed",
+    "profile_listed != released_lab",
+    "prepared_request != ARM_WhatIf",
+    "prepared_request != deployment_authorized",
+    "allowed_location != live_capacity_available",
+    "protocol_call_succeeded != Azure_service_validated",
+    "parameter_values_transmitted_to_tool != parameter_values_returned",
+    "cleanup_defined != cleanup_verified"
+  ],
+  "next_gate": "Complete exact-head CI after evidence promotion, merge the reviewed source if still current, then refresh the canonical post-merge repository watermark. Any Azure preflight remains a new separately authorized operation."
+}
