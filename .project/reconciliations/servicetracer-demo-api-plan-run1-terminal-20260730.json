@@ -1,0 +1,86 @@
+{
+  "schema_version": "project.servicetracer-demo-api-plan-terminal-reconciliation.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-30T00:22:00-04:00",
+  "attempt_id": "servicetracer-demo-api-plan-run1",
+  "status": "consumed_terminal_failure",
+  "source_authority": {
+    "tracking_issue": 232,
+    "human_authorization_comment_id": 5126316629,
+    "instruction": "Proceed you have my authority.",
+    "attempt_limit": 1,
+    "consume_on_accepted_dispatch": true
+  },
+  "workflow": {
+    "path": ".github/workflows/servicetracer-demo-api-subproject-plan.yml",
+    "run_id": 30513630134,
+    "attempt": 1,
+    "job_id": 90778676285,
+    "head_branch": "main",
+    "head_sha": "09fe72e3a82ea6ae56e1e85fd9745c9940ed6c12",
+    "conclusion": "failure",
+    "artifact_id": 8748027710,
+    "artifact_name": "servicetracer-demo-api-subproject-plan-30513630134-1",
+    "artifact_digest": "sha256:a3bb46d90bdff6329bcfe15f5b00b1f144b68b009724f9e912ca890ced9384d9",
+    "promoted_evidence": ".project/evidence/servicetracer-demo-api-plan-run1-terminal-summary.json",
+    "promoted_evidence_sha256": "sha256:3c79f43342356bd448531ba35501d9ab0591f1eee8d2bba1f0437d44c88a71da"
+  },
+  "result": {
+    "failure_stage": "validate_main_bound_dual_subscription_read_only_authority",
+    "failure_classification": "confirmation_input_mismatch",
+    "expected_confirmation": "PLAN-DEMO-API-SUBPROJECT:dev:st-demo-api-vm-aeg30000",
+    "provided_confirmation_persisted": false,
+    "repository_tests_started": false,
+    "azure_login_started": false
+  },
+  "operation_boundary": {
+    "dependency_subscription_query_started": false,
+    "target_subscription_query_started": false,
+    "provider_policy_quota_sku_inventory_queried": false,
+    "arm_validation_performed": false,
+    "arm_what_if_performed": false,
+    "azure_mutations_performed": false,
+    "deployment_started": false,
+    "cleanup_or_rollback_performed": false,
+    "model_request_performed": false
+  },
+  "artifact_observation": {
+    "files": [
+      "artifact-manifest.sha256"
+    ],
+    "manifest_entry_count": 0,
+    "planning_summary_present": false,
+    "azure_evidence_present": false
+  },
+  "authority": {
+    "authorization_consumed": true,
+    "active_servicetracer_planning_authorization": null,
+    "workflow_rerun_authorized": false,
+    "second_planning_attempt_authorized": false,
+    "deployment_authorized": false,
+    "azure_mutation_authorized": false,
+    "rollback_authorized": false,
+    "cleanup_authorized": false
+  },
+  "cost_and_quota": {
+    "azure_resource_cost_delta_from_run_cad": 0,
+    "actual_azure_cost_freshly_observed": false,
+    "quota_freshly_observed": false,
+    "planning_ceiling_cad": "25.00",
+    "planning_ceiling_is_spend_authority": false
+  },
+  "failure_and_rollback": {
+    "failure_behavior": "Stop before Azure authentication and preserve terminal evidence.",
+    "azure_rollback": "Not applicable because Azure login and mutation never started.",
+    "azure_cleanup": "Not applicable because no Azure resource was created, updated, or deleted.",
+    "next_attempt": "A fresh planning attempt requires a corrected exact confirmation value and new explicit one-attempt authority."
+  },
+  "canonical_distinctions": [
+    "workflow_dispatch_accepted != authority_validation_passed",
+    "authority_consumed != Azure_login_started",
+    "confirmation_mismatch != Azure_preflight_failure",
+    "empty_artifact_manifest != no_workflow_execution",
+    "planning_attempt_failed != deployment_attempted",
+    "planning_ceiling != spend_authority"
+  ]
+}

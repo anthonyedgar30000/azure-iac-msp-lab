@@ -1,12 +1,13 @@
 {
   "schema_version": "project.azure-ai-go-live-authorization.v3",
   "attempt_id": "azure-ai-go-live-run8",
-  "status": "consumed_activation_triggered_terminal_unreconciled",
+  "status": "consumed_terminal_failure",
   "active": false,
   "project": "Azure IaC MSP Lab",
   "recorded_at": "2026-07-29T22:59:00-04:00",
   "consumed_at": "2026-07-29T23:14:39-04:00",
-  "synchronized_at": "2026-07-29T23:40:00-04:00",
+  "trigger_synchronized_at": "2026-07-29T23:40:00-04:00",
+  "terminalized_at": "2026-07-30T00:05:00-04:00",
   "source_instruction": "Fix and proceed",
   "normalized_intent": "Apply the recorded Azure CLI role-query repair and perform exactly one new bounded Azure AI activation attempt against the existing East US account.",
   "repository_boundary": {
@@ -32,17 +33,24 @@
     "repair_patch": ".project/repairs/azure-ai-go-live-run7-role-query.patch"
   },
   "attempt_limit": 1,
-  "attempts_observed": 0,
+  "attempts_observed": 1,
   "activation_triggers_observed": 1,
   "terminal_execution": {
-    "workflow_run_retrieved": false,
-    "workflow_run": null,
-    "workflow_attempt": null,
-    "job_id": null,
-    "artifact_id": null,
-    "artifact_digest": null,
-    "conclusion": "not_established",
-    "reason": "The connected GitHub workflow lookup did not expose the push-triggered execution. This does not establish that no run occurred."
+    "workflow_run_retrieved": true,
+    "workflow_run": 30510660758,
+    "workflow_attempt": 1,
+    "job_id": 90769840287,
+    "artifact_id": 8746964307,
+    "artifact_digest": "sha256:e05dccbc1618e052f905f12f03d3576a05357bdf6c298d380a140f3ecef25f51",
+    "conclusion": "failure",
+    "status": "required_direct_role_missing",
+    "failure_stage": "existing_direct_role_validation",
+    "direct_account_role_verified": false,
+    "azure_mutations_performed": false,
+    "deployment_started": false,
+    "model_request_performed": false,
+    "terminal_evidence": ".project/evidence/azure-ai-go-live-run8-terminal-summary.json",
+    "terminal_reconciliation": ".project/reconciliations/azure-ai-go-live-run8-terminal-20260730.json"
   },
   "scope": {
     "subscription_name": "Azure for Students",
@@ -72,7 +80,7 @@
     "separate_verified_runtime_untouched": {
       "endpoint": "https://anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/",
       "deployment": "gpt-5-mini",
-      "modified_by_run8": "not_established"
+      "modified_by_run8": false
     }
   },
   "repair": {
@@ -86,24 +94,24 @@
   },
   "observed": {
     "activation_merge_observed": true,
-    "push_workflow_terminal_result": "not_established",
-    "fresh_subscription_context": "not_established",
-    "fresh_resource_group_state": "not_established",
-    "fresh_account_state": "not_established",
-    "direct_role_query_completed": "not_established",
-    "required_direct_role_present": "not_established",
-    "required_direct_role_missing": "not_established",
-    "deployment_inventory_queried": "not_established",
-    "model_listing_queried": "not_established",
-    "capacity_queried": "not_established",
-    "what_if_started": "not_established",
-    "deployment_started": "not_established",
-    "deployment_succeeded": "not_established",
-    "account_hardening_started": "not_established",
-    "account_hardening_succeeded": "not_established",
-    "model_request_performed": "not_established",
-    "endpoint_live": "not_established",
-    "azure_mutations_performed": "not_established"
+    "push_workflow_terminal_result": "failure",
+    "fresh_subscription_context": true,
+    "fresh_resource_group_state": true,
+    "fresh_account_state": true,
+    "direct_role_query_completed": true,
+    "required_direct_role_present": false,
+    "required_direct_role_missing": true,
+    "deployment_inventory_queried": false,
+    "model_listing_queried": false,
+    "capacity_queried": false,
+    "what_if_started": false,
+    "deployment_started": false,
+    "deployment_succeeded": false,
+    "account_hardening_started": false,
+    "account_hardening_succeeded": false,
+    "model_request_performed": false,
+    "endpoint_live": false,
+    "azure_mutations_performed": false
   },
   "authority": {
     "consumed": true,
@@ -122,8 +130,8 @@
   },
   "security": {
     "api_keys_permitted": false,
-    "api_keys_used": "not_established",
-    "model_request_performed": "not_established",
+    "api_keys_used": false,
+    "model_request_performed": false,
     "secrets_persisted": false,
     "raw_subscription_id_persisted": false,
     "raw_principal_id_persisted": false
@@ -132,32 +140,34 @@
     "pricing_mode_intended": "Global Standard token-based usage",
     "provisioned_throughput_authorized": false,
     "deployment_capacity_intended": 1,
-    "billable_model_request_performed": "not_established",
-    "tokens_consumed": "not_established",
-    "azure_resource_cost_delta": "not_established",
+    "billable_model_request_performed": false,
+    "tokens_consumed": 0,
+    "azure_resource_cost_delta_cad": 0,
     "actual_cost_freshly_observed": false,
     "capacity_freshly_observed": false,
     "budget_resource_authorized": false,
     "currency": "CAD"
   },
   "failure_behavior": {
-    "terminal_action": "Preserve evidence and reconcile the exact observed terminal state before any further Azure action.",
+    "terminal_action": "The required direct account-scoped role was not found. Stop before mutation and preserve evidence.",
     "retry": "Run 8 authority is consumed. GitHub Re-run is unauthorized. Any later attempt requires fresh explicit authority.",
-    "rollback": "Not authorized and not justified without terminal Azure evidence.",
-    "cleanup": "Not authorized and not justified without terminal Azure evidence."
+    "rollback": "Not applicable because no Azure mutation occurred.",
+    "cleanup": "Not applicable because no Azure resource was created, updated, or deleted."
   },
   "evidence": {
     "trigger_sync": ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json",
-    "trigger_sync_handoff": ".project/handoffs/azure-ai-go-live-run8-trigger-sync.md",
-    "protected_artifact_status": "not_retrieved",
-    "sha256_manifest_status": "not_established",
+    "terminal_reconciliation": ".project/reconciliations/azure-ai-go-live-run8-terminal-20260730.json",
+    "terminal_summary": ".project/evidence/azure-ai-go-live-run8-terminal-summary.json",
+    "terminal_summary_sha256": "572489ee1380b239b4cd229ad1d99ef8aeb2e9831ee46366ed0b4664d4e417b7",
+    "protected_artifact_status": "retrieved_and_promoted_sanitized_summary",
     "raw_secret_material_persisted": false
   },
   "canonical_distinctions": [
     "activation_trigger_observed != workflow_terminal_result_observed",
-    "workflow_run_not_retrieved != workflow_did_not_run",
+    "trigger_sync_pending != terminal_artifact_unavailable",
     "authorization_consumed != Azure_mutation_proven",
     "repair_validated != role_verified",
+    "required_direct_role_missing != all_effective_access_absent",
     "deployment_declared != deployment_observed",
     "endpoint_intended != endpoint_live",
     "estimated_cost != actual_cost"

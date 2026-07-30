@@ -147,17 +147,22 @@ class AzureAiGoLiveRun7Tests(unittest.TestCase):
         self.assertFalse(separate["modified_by_run7"])
         self.assertIn("separate verified gpt-5-mini runtime modified: false", self.terminal_handoff)
 
-    def test_selector_preserves_run7_terminal_and_applies_run8_sync(self) -> None:
-        sync_path = ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json"
-        self.assertEqual(self.selector["authoritative_current_reality"], ".project/current-reality-v3.json")
-        self.assertEqual(self.selector["authoritative_state_index"], ".project/state-index-v12.json")
-        self.assertEqual(self.selector["latest_operational_overlay"], sync_path)
+    def test_selector_preserves_run7_lineage_after_later_terminal_syncs(self) -> None:
+        run8_trigger_sync = ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json"
+        self.assertEqual(self.selector["authoritative_current_reality"], ".project/current-reality-v4.json")
+        self.assertEqual(self.selector["authoritative_state_index"], ".project/state-index-v13.json")
+        self.assertEqual(self.selector["prior_azure_ai_trigger_sync"], run8_trigger_sync)
         self.assertEqual(
             self.selector["latest_azure_ai_terminal_reconciliation"],
-            ".project/reconciliations/azure-ai-go-live-run7-terminal-20260730.json",
+            ".project/reconciliations/azure-ai-go-live-run8-terminal-20260730.json",
         )
-        self.assertEqual(self.selector["pending_azure_ai_terminal_reconciliation"], sync_path)
+        self.assertEqual(
+            self.selector["latest_operational_overlay"],
+            ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json",
+        )
+        self.assertIsNone(self.selector["pending_azure_ai_terminal_reconciliation"])
         self.assertIsNone(self.selector["active_azure_ai_activation_authorization"])
+        self.assertIsNone(self.selector["active_servicetracer_planning_authorization"])
 
     def test_static_validation_and_contract_remain_bounded(self) -> None:
         self.assertIn("infra.tests.test_azure_ai_go_live_run7", self.static_workflow)

@@ -1,0 +1,110 @@
+{
+  "schema_version": "project.canonical-sync.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-30T00:22:00-04:00",
+  "source_instruction": "Sync",
+  "repository": {
+    "name": "anthonyedgar30000/azure-iac-msp-lab",
+    "base_branch": "main",
+    "observed_main": "09fe72e3a82ea6ae56e1e85fd9745c9940ed6c12",
+    "latest_merged_pull_request": 251,
+    "latest_merged_source_head": "2d17b70edc2d0474967db388bd3d425fb5400b74",
+    "sync_pull_request": 252,
+    "local_working_tree": "not_observed_connector_backed",
+    "pr251_exact_head_ci": {
+      "run_id": 30512881241,
+      "conclusion": "success"
+    }
+  },
+  "canonical_resolution": {
+    "previous_selector": ".project/CURRENT.json",
+    "previous_current_reality": ".project/current-reality-v3.json",
+    "previous_state_index": ".project/state-index-v12.json",
+    "previous_handoff": ".project/handoffs/current-state-v2.md",
+    "new_current_reality": ".project/current-reality-v4.json",
+    "new_state_index": ".project/state-index-v13.json",
+    "new_handoff": ".project/handoffs/current-state-v3.md",
+    "latest_operational_overlay": ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json",
+    "azure_ai_terminal_reconciliation": ".project/reconciliations/azure-ai-go-live-run8-terminal-20260730.json",
+    "servicetracer_terminal_reconciliation": ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json"
+  },
+  "azure_ai_run8": {
+    "status": "consumed_terminal_failure",
+    "workflow_run_id": 30510660758,
+    "job_id": 90769840287,
+    "artifact_id": 8746964307,
+    "artifact_digest": "sha256:e05dccbc1618e052f905f12f03d3576a05357bdf6c298d380a140f3ecef25f51",
+    "failure_stage": "existing_direct_role_validation",
+    "direct_account_role_matches": 0,
+    "azure_mutations_performed": false,
+    "model_request_performed": false,
+    "active_authorization_after_sync": null
+  },
+  "servicetracer_planning_run1": {
+    "status": "consumed_terminal_failure",
+    "active": false,
+    "attempt_limit": 1,
+    "attempts_observed": 1,
+    "tracking_issue": 232,
+    "human_authorization_comment_id": 5126316629,
+    "workflow_run_id": 30513630134,
+    "workflow_attempt": 1,
+    "job_id": 90778676285,
+    "head_sha": "09fe72e3a82ea6ae56e1e85fd9745c9940ed6c12",
+    "artifact_id": 8748027710,
+    "artifact_digest": "sha256:a3bb46d90bdff6329bcfe15f5b00b1f144b68b009724f9e912ca890ced9384d9",
+    "failure_stage": "validate_main_bound_dual_subscription_read_only_authority",
+    "failure_classification": "confirmation_input_mismatch",
+    "expected_confirmation": "PLAN-DEMO-API-SUBPROJECT:dev:st-demo-api-vm-aeg30000",
+    "provided_confirmation_persisted": false,
+    "authority_consumed": true,
+    "rerun_authorized": false,
+    "azure_login_started": false,
+    "azure_authentication_or_query_observed": false,
+    "arm_validation_or_what_if_observed": false,
+    "azure_mutation_or_deployment_observed": false,
+    "active_authorization_after_sync": null,
+    "deployment_authorized": false
+  },
+  "authority": {
+    "repository_branch_and_declared_writes": true,
+    "pull_request_creation": true,
+    "ordinary_exact_head_ci": true,
+    "merge_after_green_and_freshness_recheck": true,
+    "workflow_dispatch_or_rerun_by_this_sync": false,
+    "azure_authentication_or_query_by_this_sync": false,
+    "arm_what_if_by_this_sync": false,
+    "azure_mutation_by_this_sync": false,
+    "rbac_mutation": false,
+    "model_call": false,
+    "local_mcp_client_call": false,
+    "remote_mcp_deployment": false,
+    "chatgpt_connection": false,
+    "cleanup": false,
+    "rollback": false
+  },
+  "cost_and_quota": {
+    "expected_recurring_azure_resource_cost_delta_cad": 0,
+    "azure_resource_cost_delta_from_terminal_runs_cad": 0,
+    "actual_azure_cost_freshly_observed": false,
+    "azure_quota_freshly_observed": false,
+    "servicetracer_planning_ceiling_cad": "25.00",
+    "planning_ceiling_is_spend_authority": false
+  },
+  "active_authorizations_after_sync": {
+    "azure_ai_activation": null,
+    "servicetracer_planning": null,
+    "deployment": null
+  },
+  "canonical_distinctions": [
+    "repository_sync != Azure_query",
+    "workflow_dispatch_accepted != authority_validation_passed",
+    "authority_consumed != Azure_login_started",
+    "confirmation_mismatch != Azure_preflight_failure",
+    "planning_attempt_failed != deployment_attempted",
+    "run8_terminal_failure != all_Azure_OpenAI_runtime_absent",
+    "direct_role_missing != inherited_access_absent",
+    "estimated_cost != actual_cost",
+    "not_observed != false"
+  ]
+}
