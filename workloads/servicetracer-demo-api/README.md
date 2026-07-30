@@ -8,19 +8,17 @@ It consumes the existing ServiceTracer HTTPS transaction endpoint as a read-only
 
 ```text
 subproject != separate product
-shared_repository != shared_runtime_lifecycle
+shared_subscription != shared_resource_lifecycle
 backend_dependency != mutation_authority
 what_if_accepted != deployment_authorized
 ```
 
-## Ratified dual-subscription planning boundary
+## Ratified single-subscription planning boundary
 
 ```text
-Azure for Students dependency subscription
-└── rg-servicetracer-dev-westus2
-    └── existing ServiceTracer HTTPS endpoint (read only)
-
-Azure subscription 1 — Pay-As-You-Go target
+Azure for Students
+├── rg-servicetracer-dev-westus2
+│   └── existing ServiceTracer HTTPS endpoint (read only)
 └── future rg-st-demo-api-dev-westus2
     ├── vnet-st-demo-api-mst-dev
     ├── nsg-st-demo-api-mst-dev
@@ -29,7 +27,9 @@ Azure subscription 1 — Pay-As-You-Go target
     └── vm-st-demo-api-mst-dev
 ```
 
-The planner uses the isolated GitHub environment `azure-api-payg`, separate dependency and target OIDC identities, and `ProviderNoRbac` ARM validation. Successful OIDC logins and read operations prove functional access for the observed run; they do not by themselves prove the exact effective least-privilege RBAC scope.
+The existing dependency and proposed workload remain isolated by resource group and workload-specific naming while using the same Azure for Students subscription. The planner uses the protected GitHub environment `azure-lab`, one workload-identity login, and `ProviderNoRbac` ARM validation.
+
+The workflow's command set is planning-only. The effective RBAC assigned to the `azure-lab` identity may be broader than the commands used by this workflow, so successful authentication does not by itself prove effective least privilege.
 
 ## Intended application path
 
@@ -54,17 +54,7 @@ region: westus2
 VM size: Standard_F1als_v7
 ```
 
-The human-observed Cloud Shell session on `2026-07-24` reported:
-
-- unrestricted `Standard_F1als_v7` SKU record in `westus2`;
-- family `StandardFalsv7Family`;
-- 1 vCPU and 2 GiB memory;
-- Premium I/O support;
-- Total Regional vCPU usage `0/10`;
-- Falsv7-family vCPU usage `0/10`;
-- Standard IPv4 public-IP usage `0/20`.
-
-The same investigation found `Standard_B2ats_v2` blocked by zero Basv2-family quota and `Standard_F2s_v2` location-restricted for the target subscription.
+Historical Cloud Shell observations on `2026-07-24` reported an unrestricted `Standard_F1als_v7` record and sufficient regional, family, and Standard IPv4 public-IP quota in `westus2`. Those observations were not captured by the corrected single-subscription workflow and must be refreshed before they can support a new planning decision.
 
 ```text
 manual_cloud_shell_observation != protected_workflow_artifact
@@ -73,21 +63,22 @@ candidate_selected != deployment_authorized
 estimated_cost != actual_cost
 ```
 
-The next protected planner must refresh every value and capture target resource-group state before ARM What-If. Current invoice-level pricing and the candidate's actual monthly cost remain unverified.
+The next protected planner must refresh provider, policy, SKU, quota, subscription state, and target resource-group inventory before ARM What-If. Current invoice-level pricing, remaining student credit, and the candidate's actual monthly cost remain unverified.
 
 ## Identity and permissions
 
 The VM receives a system-assigned managed identity but no Azure role assignment in the initial workload.
 
-The planner uses:
+The planner uses the existing `azure-lab` workload-identity contract:
 
-- dependency identity: read-only access sufficient to inspect `rg-servicetracer-dev-westus2`;
-- target identity: read-only access sufficient to inspect the selected Pay-As-You-Go subscription;
+- `AZURE_CLIENT_ID`;
+- `AZURE_TENANT_ID`;
+- `AZURE_SUBSCRIPTION_ID` for Azure for Students;
 - `ProviderNoRbac` for subscription validation and What-If.
 
-The exact effective role-assignment scope must be captured separately before it can be claimed as verified least privilege.
+It reads the existing dependency resource group and evaluates a distinct target resource group in the same subscription. No second subscription, target identity, or Pay-As-You-Go environment is part of the current design.
 
-The VM has no inbound SSH rule. The planner uses a public-only ARM placeholder and creates no private credential.
+The exact effective role-assignment scope must be captured separately before it can be claimed as verified least privilege. The VM has no inbound SSH rule. The planner uses a public-only ARM placeholder and creates no private credential.
 
 ## Network and security controls
 
@@ -103,19 +94,19 @@ The VM has no inbound SSH rule. The planner uses a public-only ARM placeholder a
 
 ## Cost, policy, and quota implications
 
-The workload adds one Linux VM, one managed OS disk, one Standard public IP, and outbound data usage in the target subscription.
+The workload would add one Linux VM, one managed OS disk, one Standard public IP, and outbound data usage to Azure for Students. That could consume student credit and quota, but this repository correction performs no Azure operation and creates no cost delta.
 
-The planner captures subscription context, providers, inherited policy, regional compute usage, VM-family quota, public-IP quota, SKU restrictions, target inventory, ARM validation, and What-If evidence. The `maximum_monthly_cost_cad` input is a human ceiling only; it is not a computed price or billing control.
+The planner captures subscription context, providers, inherited policy, regional compute usage, VM-family quota, public-IP quota, SKU restrictions, target inventory, ARM validation, and What-If evidence. The `maximum_monthly_cost_cad` input is a human ceiling only; it is not a computed price, student-credit check, or billing control.
 
 ## Deployment method
 
-The only active workflow for this workload is:
+The active planning workflow is:
 
 ```text
 .github/workflows/servicetracer-demo-api-subproject-plan.yml
 ```
 
-It is a read-only planner. It runs from immutable `main`, validates the exact `westus2` / `Standard_F1als_v7` package, logs into the dependency and target subscriptions with distinct identities, captures evidence, classifies readiness, runs `ProviderNoRbac` validation and What-If, uploads evidence, and stops.
+It is a read-only planner. It runs from immutable `main`, validates the exact `westus2` / `Standard_F1als_v7` package, logs into Azure for Students once, reads the existing dependency, captures target evidence in the same subscription, classifies readiness, runs `ProviderNoRbac` validation and What-If, uploads evidence, and stops.
 
 It contains no deployment command.
 
@@ -124,6 +115,7 @@ It contains no deployment command.
 ```bash
 python .project/validate.py
 python -m unittest discover -s workloads/servicetracer-demo-api/tests -v
+python -m unittest discover -s infra/tests -v
 az bicep lint --file workloads/servicetracer-demo-api/infra/main.bicep
 az bicep build --file workloads/servicetracer-demo-api/infra/main.bicep
 bash -n workloads/servicetracer-demo-api/scripts/install.sh
