@@ -1,0 +1,75 @@
+{
+  "schema_version": "project.current-reality.v9",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:50:00-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "interpretation_boundary": "Pre-execution repository reconciliation for one read-only Lab Factory preflight. This record does not claim that the workflow ran or that Azure resources changed.",
+  "selector": ".project/CURRENT.json",
+  "repository_state": {
+    "default_branch": "main",
+    "observed_main": "0b6fa63d86ae52119b63ef6c9421c8d13215cb59",
+    "latest_merged_pull_request": 223,
+    "open_pull_requests_before_branch": [],
+    "candidate_branch": "agent/lab-factory-preflight-run1",
+    "candidate_pull_request": "resolved_after_creation",
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "canonical_state": {
+    "authoritative_state_index": ".project/state-index-v13.json",
+    "authoritative_handoff": ".project/handoffs/current-state-v3.md",
+    "previous_current_reality": ".project/current-reality-v3.json"
+  },
+  "lab_factory": {
+    "profile": "servicetracer-demo-api@1.0.0",
+    "profile_state": "candidate",
+    "prepared_request_next_gate": "preflight_required",
+    "preflight_candidate_implemented": true,
+    "preflight_executed": false,
+    "environment": "test",
+    "location": "westus2",
+    "resource_group": "rg-st-demo-api-test-westus2",
+    "vm_size": "Standard_F1als_v7",
+    "ttl_hours": 8,
+    "cost_ceiling_CAD": 5.0,
+    "arm_what_if_verified": false,
+    "azure_deployment_verified": false,
+    "service_validation_verified": false,
+    "cleanup_verified": false
+  },
+  "inherited_evidence": {
+    "local_mcp_planning_call_verified": true,
+    "verified_azure_ai_runtime": "gpt-5-mini with Microsoft Entra authentication",
+    "azure_ai_arm_identity_reconciled": false,
+    "servicetracer_operational_evidence_is_time_bounded": true,
+    "fresh_azure_query_during_candidate_creation": false
+  },
+  "authority": {
+    "source_instruction": "Proceed",
+    "repository_changes_and_pull_request": true,
+    "ordinary_exact_head_ci": true,
+    "merge_after_green_and_freshness_recheck": true,
+    "one_merge_triggered_read_only_preflight": true,
+    "azure_read_only_observation": true,
+    "arm_validation_and_what_if": true,
+    "azure_resource_change": false,
+    "deployment": false,
+    "role_change": false,
+    "workflow_rerun": false,
+    "rollback": false,
+    "cleanup": false
+  },
+  "cost": {
+    "accepted_planning_ceiling_CAD": 5.0,
+    "repository_cost_delta_CAD": 0,
+    "deployment_spend_authorized": false,
+    "actual_cost_freshly_observed": false
+  },
+  "claim_boundaries": [
+    "repository_candidate != workflow_executed",
+    "prepared_request != ARM_What-If",
+    "preflight_passed != deployment_authorized",
+    "retail_estimate != actual_cost",
+    "workflow_success != service_validated"
+  ],
+  "next_gate": "Run exact-head CI, recheck main, merge the exact green candidate, observe the one preflight, and reconcile its protected evidence."
+}
