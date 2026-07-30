@@ -1,0 +1,101 @@
+name: Lab Factory preflight run 1
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/lab-factory-preflight-run1.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: lab-factory-preflight-run1
+  cancel-in-progress: false
+
+env:
+  AZURE_CORE_ONLY_SHOW_ERRORS: 'true'
+
+jobs:
+  preflight:
+    name: Read-only Lab Factory preflight
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    timeout-minutes: 60
+    steps:
+      - name: Check out exact merge commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Validate exact repository candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          python -m unittest \
+            infra.tests.test_lab_factory_lite \
+            infra.tests.test_lab_factory_preflight_run1 \
+            -v
+          python -m py_compile \
+            scripts/assess_lab_factory_preflight.py \
+            scripts/assert_lab_factory_preflight_what_if.py
+          bash -n scripts/lab_factory_preflight_run1.sh
+          az bicep install
+          az bicep lint --file workloads/servicetracer-demo-api/infra/main.bicep
+          az bicep build \
+            --file workloads/servicetracer-demo-api/infra/main.bicep \
+            --outfile "$RUNNER_TEMP/servicetracer-demo-api.json"
+
+      - name: Log in to Azure with workload identity federation
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Execute one bounded read-only preflight
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          REVIEWED_COMMIT: ${{ github.sha }}
+        shell: bash
+        run: bash scripts/lab_factory_preflight_run1.sh
+
+      - name: Write evidence manifest
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/lab-factory-preflight-run1"
+          mkdir -p "$evidence"
+          find "$evidence" -maxdepth 1 -type f ! -name artifact-manifest.sha256 -print0 \
+            | sort -z \
+            | xargs -0 -r sha256sum \
+            > "$evidence/artifact-manifest.sha256"
+
+      - name: Summarize authority boundary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Lab Factory preflight run 1'
+            echo "- Exact merge commit: \`$GITHUB_SHA\`"
+            echo '- Profile: `servicetracer-demo-api@1.0.0` / `test` / `westus2`.'
+            echo '- Accepted planning ceiling: CAD $5.00.'
+            echo '- Operation: read-only Azure observation, ARM validation, and FullResourcePayloads What-If.'
+            echo '- Provider registration, deployment, RBAC mutation, model calls, rollback, cleanup, and reruns are not authorized.'
+            echo '- Protected non-secret evidence is attached for terminal reconciliation.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload protected preflight evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lab-factory-preflight-run1-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/lab-factory-preflight-run1
+          if-no-files-found: error
+          retention-days: 30
