@@ -1,0 +1,279 @@
+name: One-shot ServiceTracer planning observation run 1
+
+on:
+  pull_request:
+    types: [opened]
+    branches: [main]
+    paths:
+      - '.project/triggers/servicetracer-demo-api-plan-run1.json'
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+
+concurrency:
+  group: one-shot-servicetracer-demo-api-plan-run1
+  cancel-in-progress: false
+
+env:
+  AUTHORIZATION_FILE: .project/observation-requests/servicetracer-demo-api-plan-run1.json
+  TRIGGER_FILE: .project/triggers/servicetracer-demo-api-plan-run1.json
+  ARTIFACT_DIR: servicetracer-demo-api-plan-run1-dispatcher-evidence
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  dispatch-observe-and-reconcile:
+    name: Dispatch and observe the ratified planner once
+    if: >-
+      github.repository == 'anthonyedgar30000/azure-iac-msp-lab' &&
+      github.event.action == 'opened' &&
+      github.base_ref == 'main' &&
+      github.head_ref == 'trigger/servicetracer-demo-api-plan-run1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check out trigger context and history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate exact consumed-on-dispatch authority
+        id: authority
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          test -f "$AUTHORIZATION_FILE"
+          test -f "$TRIGGER_FILE"
+
+          jq -e '
+            .schema_version == "project.servicetracer-demo-api-plan-trigger.v1" and
+            .attempt_id == "servicetracer-demo-api-plan-run1" and
+            .tracking_issue == 232 and
+            .authorized_by == "user instruction: Proceed" and
+            .dispatch_requested == true and
+            .merge_authorized == false and
+            .retry_authorized == false
+          ' "$TRIGGER_FILE" >/dev/null
+
+          jq -e '
+            .schema_version == "project.lab-factory-planner-authorization.v1" and
+            .attempt_id == "servicetracer-demo-api-plan-run1" and
+            .status == "authorized_not_consumed" and
+            .source_instruction == "Proceed auth granted" and
+            .repository.name == "anthonyedgar30000/azure-iac-msp-lab" and
+            .repository.workflow == ".github/workflows/servicetracer-demo-api-subproject-plan.yml" and
+            .inputs.environment == "dev" and
+            .inputs.location == "westus2" and
+            .inputs.prefix == "mst" and
+            .inputs.dependency_resource_group == "rg-servicetracer-dev-westus2" and
+            .inputs.dns_label == "st-demo-api-vm-aeg30000" and
+            .inputs.allowed_origin == "https://anthonyedgar30000.github.io" and
+            .inputs.vm_size == "Standard_F1als_v7" and
+            .inputs.maximum_monthly_cost_cad == 25 and
+            .inputs.confirmation == "PLAN-DEMO-API-SUBPROJECT:dev:st-demo-api-vm-aeg30000" and
+            .boundary.github_environment == "azure-api-payg" and
+            .boundary.provider_validation_level == "ProviderNoRbac" and
+            .boundary.workflow_dispatch_attempts == 1 and
+            .boundary.azure_observation == true and
+            .boundary.arm_validation == true and
+            .boundary.arm_what_if == true and
+            .boundary.deployment == false and
+            .boundary.azure_mutation == false and
+            .boundary.rbac_change == false and
+            .boundary.cleanup == false and
+            .boundary.rerun == false
+          ' "$AUTHORIZATION_FILE" >/dev/null
+
+          git fetch origin main
+          dispatcher_main_sha="$(git rev-parse origin/main)"
+          reviewed_main="$(jq -r '.repository.reviewed_main' "$AUTHORIZATION_FILE")"
+          [[ "$reviewed_main" =~ ^[0-9a-f]{40}$ ]]
+          git cat-file -e "${reviewed_main}^{commit}"
+          git merge-base --is-ancestor "$reviewed_main" "$dispatcher_main_sha"
+          git cat-file -e "${dispatcher_main_sha}:$AUTHORIZATION_FILE"
+          git cat-file -e "${dispatcher_main_sha}:.github/workflows/servicetracer-demo-api-subproject-plan.yml"
+          git cat-file -e "${dispatcher_main_sha}:.github/workflows/servicetracer-demo-api-plan-run1-dispatcher.yml"
+
+          cp "$AUTHORIZATION_FILE" "$ARTIFACT_DIR/authorization.json"
+          cp "$TRIGGER_FILE" "$ARTIFACT_DIR/trigger.json"
+          jq -n \
+            --arg reviewed_main "$reviewed_main" \
+            --arg dispatcher_main_sha "$dispatcher_main_sha" \
+            --arg trigger_pr "${{ github.event.pull_request.number }}" \
+            '{reviewed_main:$reviewed_main,dispatcher_main_sha:$dispatcher_main_sha,trigger_pr:($trigger_pr|tonumber),authority_consumed:false,azure_mutation_authorized:false,deployment_authorized:false}' \
+            > "$ARTIFACT_DIR/authority-before-dispatch.json"
+
+          echo "dispatcher_main_sha=$dispatcher_main_sha" >> "$GITHUB_OUTPUT"
+          echo "environment=$(jq -r '.inputs.environment' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "location=$(jq -r '.inputs.location' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "prefix=$(jq -r '.inputs.prefix' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "dependency_resource_group=$(jq -r '.inputs.dependency_resource_group' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "dns_label=$(jq -r '.inputs.dns_label' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "allowed_origin=$(jq -r '.inputs.allowed_origin' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "vm_size=$(jq -r '.inputs.vm_size' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "maximum_monthly_cost_cad=$(jq -r '.inputs.maximum_monthly_cost_cad' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+          echo "confirmation=$(jq -r '.inputs.confirmation' "$AUTHORIZATION_FILE")" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch the ratified planning workflow once
+        id: dispatch
+        env:
+          DISPATCHER_MAIN_SHA: ${{ steps.authority.outputs.dispatcher_main_sha }}
+          LAB_ENVIRONMENT: ${{ steps.authority.outputs.environment }}
+          LOCATION: ${{ steps.authority.outputs.location }}
+          PREFIX: ${{ steps.authority.outputs.prefix }}
+          DEPENDENCY_RESOURCE_GROUP: ${{ steps.authority.outputs.dependency_resource_group }}
+          DNS_LABEL: ${{ steps.authority.outputs.dns_label }}
+          ALLOWED_ORIGIN: ${{ steps.authority.outputs.allowed_origin }}
+          VM_SIZE: ${{ steps.authority.outputs.vm_size }}
+          MAXIMUM_MONTHLY_COST_CAD: ${{ steps.authority.outputs.maximum_monthly_cost_cad }}
+          CONFIRMATION: ${{ steps.authority.outputs.confirmation }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          gh workflow run servicetracer-demo-api-subproject-plan.yml \
+            --ref main \
+            -f environment="$LAB_ENVIRONMENT" \
+            -f location="$LOCATION" \
+            -f prefix="$PREFIX" \
+            -f dependency_resource_group="$DEPENDENCY_RESOURCE_GROUP" \
+            -f dns_label="$DNS_LABEL" \
+            -f allowed_origin="$ALLOWED_ORIGIN" \
+            -f vm_size="$VM_SIZE" \
+            -f maximum_monthly_cost_cad="$MAXIMUM_MONTHLY_COST_CAD" \
+            -f confirmation="$CONFIRMATION"
+
+          jq -n \
+            --arg accepted_at "$started_at" \
+            --arg dispatcher_main_sha "$DISPATCHER_MAIN_SHA" \
+            '{accepted_at:$accepted_at,dispatcher_main_sha:$dispatcher_main_sha,authority_consumed:true,retry_authorized:false,rollback_authorized:false,cleanup_authorized:false,azure_mutation_authorized:false,deployment_authorized:false}' \
+            > "$ARTIFACT_DIR/dispatch-accepted.json"
+
+          body=$(cat <<EOF
+          ## ServiceTracer planning dispatch accepted
+
+          The one-shot authority is now **consumed**, regardless of terminal outcome.
+
+          - dispatcher main source: \`$DISPATCHER_MAIN_SHA\`
+          - trigger PR: #${{ github.event.pull_request.number }}
+          - accepted at: \`$started_at\`
+          - scope: read-only dual-subscription observations, ARM validation, and bounded What-If
+          - deployment authority: **false**
+          - retry or Re-run: **not authorized**
+          EOF
+          )
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/issues/232/comments" \
+            -f body="$body" >/dev/null
+
+          echo "started_at=$started_at" >> "$GITHUB_OUTPUT"
+
+      - name: Locate and preserve the terminal planning run
+        id: child
+        env:
+          STARTED_AT: ${{ steps.dispatch.outputs.started_at }}
+          DISPATCHER_MAIN_SHA: ${{ steps.authority.outputs.dispatcher_main_sha }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          run_id=""
+          for _ in $(seq 1 60); do
+            runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/servicetracer-demo-api-subproject-plan.yml/runs?event=workflow_dispatch&branch=main&per_page=20")"
+            run_id="$(jq -r \
+              --arg started "$STARTED_AT" \
+              --arg sha "$DISPATCHER_MAIN_SHA" \
+              '[.workflow_runs[] | select(.created_at >= $started and .head_sha == $sha)] | sort_by(.created_at) | .[0].id // empty' \
+              <<< "$runs")"
+            [[ -n "$run_id" ]] && break
+            sleep 5
+          done
+          [[ -n "$run_id" ]]
+
+          run_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$run_id"
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/issues/232/comments" \
+            -f body="Planning workflow located: [$run_id]($run_url). No second dispatch will be issued." \
+            >/dev/null
+
+          set +e
+          gh run watch "$run_id" --interval 10
+          watch_exit=$?
+          set -e
+
+          details="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id")"
+          artifacts="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/artifacts")"
+          status="$(jq -r '.status' <<< "$details")"
+          conclusion="$(jq -r '.conclusion // "not_completed"' <<< "$details")"
+          head_sha="$(jq -r '.head_sha' <<< "$details")"
+          artifact_summary="$(jq -c '[.artifacts[] | {id,name,size_in_bytes,digest,expired}]' <<< "$artifacts")"
+
+          mkdir -p "$ARTIFACT_DIR/child"
+          set +e
+          gh run download "$run_id" --dir "$ARTIFACT_DIR/child"
+          download_exit=$?
+          set -e
+
+          jq -n \
+            --argjson run_id "$run_id" \
+            --arg status "$status" \
+            --arg conclusion "$conclusion" \
+            --arg head_sha "$head_sha" \
+            --arg url "$run_url" \
+            --argjson watch_exit "$watch_exit" \
+            --argjson download_exit "$download_exit" \
+            --argjson artifacts "$artifact_summary" \
+            '{run_id:$run_id,status:$status,conclusion:$conclusion,head_sha:$head_sha,url:$url,watch_exit:$watch_exit,artifact_download_exit:$download_exit,artifacts:$artifacts,authority_consumed:true,retry_authorized:false,azure_mutation_authorized:false,deployment_authorized:false}' \
+            > "$ARTIFACT_DIR/child-terminal.json"
+
+          body=$(cat <<EOF
+          ## ServiceTracer planning terminal result
+
+          - workflow: [$run_id]($run_url)
+          - workflow head: \`$head_sha\`
+          - status: **$status**
+          - conclusion: **$conclusion**
+          - artifacts: \`$artifact_summary\`
+          - deployment authority: **false**
+          - retry performed: **false**
+
+          Protected evidence was copied into the dispatcher artifact. No deployment, rollback, or cleanup was authorized.
+          EOF
+          )
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/issues/232/comments" \
+            -f body="$body" >/dev/null
+
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "conclusion=$conclusion" >> "$GITHUB_OUTPUT"
+
+      - name: Write dispatcher evidence manifest
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "$ARTIFACT_DIR"
+          find "$ARTIFACT_DIR" -type f ! -name artifact-manifest.sha256 -print0 \
+            | sort -z \
+            | xargs -0 -r sha256sum \
+            > "$ARTIFACT_DIR/artifact-manifest.sha256"
+
+      - name: Upload one-shot dispatcher evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: servicetracer-demo-api-plan-run1-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_DIR }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce terminal child result after evidence upload
+        if: always()
+        env:
+          CHILD_CONCLUSION: ${{ steps.child.outputs.conclusion }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          [[ "$CHILD_CONCLUSION" == "success" ]]
