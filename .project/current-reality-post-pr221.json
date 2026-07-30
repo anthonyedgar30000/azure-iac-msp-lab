@@ -1,0 +1,86 @@
+{
+  "schema_version": "project.current-reality.overlay.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-29T21:33:00-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "classification": "authoritative_repository_and_local_MCP_overlay_post_PR221",
+  "selection_rule": "Resolve this overlay together with .project/current-reality-v2.json. This overlay supersedes only repository and local MCP client-call claims newer than PR #218. It does not supersede preserved Azure, runtime, deployment, authorization, cost, quota, monitoring, backup, or recovery evidence.",
+  "repository_state": {
+    "default_branch": "main",
+    "observed_main": "82191482f48ccb81dc50b5966733a9d8ff7f2953",
+    "latest_merged_pull_request": 221,
+    "latest_merge_commit": "82191482f48ccb81dc50b5966733a9d8ff7f2953",
+    "latest_merged_source_head": "968402ad52858d837de03e64c36addf372751d28",
+    "open_pull_requests_observed": [],
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "exact_head_validation": {
+    "repository_CI": {
+      "run_id": 30505701542,
+      "conclusion": "success"
+    },
+    "lab_factory_local_MCP_smoke": {
+      "run_id": 30505701531,
+      "conclusion": "success"
+    }
+  },
+  "local_MCP_observation": {
+    "implementation_pull_request": 218,
+    "protocol_verification_pull_request": 221,
+    "transport": "stdio",
+    "client_and_server_colocated": true,
+    "remote_endpoint_used": false,
+    "tool_inventory": [
+      "get_current_reality",
+      "list_lab_profiles",
+      "prepare_lab_request"
+    ],
+    "called_tools": [
+      "list_lab_profiles",
+      "prepare_lab_request",
+      "prepare_lab_request"
+    ],
+    "get_current_reality_called": false,
+    "lab_factory_tools_live_client_call_observed": true,
+    "profile": "servicetracer-demo-api@1.0.0",
+    "profile_release_state": "candidate",
+    "next_gate": "preflight_required",
+    "parameter_values_returned": false,
+    "azure_environment_forwarded_to_server": false,
+    "azure_queries_performed": false,
+    "azure_mutations_performed": false,
+    "deployment_authorized": false,
+    "cleanup_authorized": false,
+    "model_call_performed": false,
+    "chatgpt_connection_verified": false,
+    "azure_openai_MCP_invocation_verified": false
+  },
+  "evidence": {
+    "receipt": ".project/evidence/lab-factory-mcp-local-smoke-run1.json",
+    "manifest": ".project/evidence/lab-factory-mcp-local-smoke-run1.sha256",
+    "terminal_reconciliation": ".project/reconciliations/lab-factory-local-mcp-smoke-run1-terminal-20260729.json",
+    "receipt_source_head": "1aeead3a987dbe2af9af1c46c5ac1e85033991ce",
+    "receipt_sha256": "c7a3243108af9bca860c362c333171fce361baf7f23a56774cc83ae21a4d7fc3"
+  },
+  "azure_boundary": {
+    "fresh_azure_authentication": false,
+    "fresh_azure_query": false,
+    "ARM_What_If": false,
+    "azure_mutation": false,
+    "azure_deployment": false,
+    "service_validation": false,
+    "fresh_cost_observation": false,
+    "fresh_quota_observation": false,
+    "new_identity_or_RBAC": false,
+    "remote_MCP_endpoint_deployed": false
+  },
+  "claim_boundaries": [
+    "local_MCP_client_call_verified != ChatGPT_connected",
+    "local_MCP_client_call_verified != remote_MCP_hosted",
+    "prepared_request != ARM_What_If",
+    "prepared_request != deployment_authorized",
+    "repository_merge != Azure_deployment",
+    "workflow_success != Azure_service_validated",
+    "not_observed != false"
+  ]
+}
