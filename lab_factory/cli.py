@@ -30,6 +30,18 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("list", help="List bounded lab profiles.")
 
     prepare = subparsers.add_parser("prepare", help="Prepare a lab request without querying or mutating Azure.")
+    prepare.add_argument(
+        "--catalog",
+        dest="command_catalog",
+        type=Path,
+        help="Optional catalog path when supplied after the prepare command.",
+    )
+    prepare.add_argument(
+        "--repository-root",
+        dest="command_repository_root",
+        type=Path,
+        help="Repository root when supplied after the prepare command.",
+    )
     prepare.add_argument("--profile", required=True)
     prepare.add_argument("--version")
     prepare.add_argument("--environment", default="dev")
@@ -50,8 +62,12 @@ def _build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
+    command_catalog = getattr(args, "command_catalog", None)
+    command_repository_root = getattr(args, "command_repository_root", None)
+    catalog_path = command_catalog or args.catalog
+    repository_root = command_repository_root or args.repository_root
     try:
-        catalog = load_catalog(args.catalog, repository_root=args.repository_root)
+        catalog = load_catalog(catalog_path, repository_root=repository_root)
         if args.command == "list":
             result = {
                 "schema_version": "lab-factory.profile-list.v1",
@@ -76,7 +92,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 ttl_hours=args.ttl_hours,
                 parameters=supplied,
                 request_id=args.request_id,
-                repository_root=args.repository_root,
+                repository_root=repository_root,
             )
     except CatalogError as exc:
         print(
