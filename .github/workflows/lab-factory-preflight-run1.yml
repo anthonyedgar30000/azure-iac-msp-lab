@@ -39,6 +39,7 @@ jobs:
           test "$GITHUB_RUN_ATTEMPT" = "1"
           python -m unittest \
             infra.tests.test_lab_factory_lite \
+            infra.tests.test_lab_factory_cli_option_order \
             infra.tests.test_lab_factory_preflight_run1 \
             -v
           python -m py_compile \
