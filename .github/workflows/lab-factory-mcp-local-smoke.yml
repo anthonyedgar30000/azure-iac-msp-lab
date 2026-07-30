@@ -1,0 +1,104 @@
+name: Lab Factory local MCP smoke
+
+on:
+  pull_request:
+    paths:
+      - "azure_mcp_reality/**"
+      - "lab_factory/**"
+      - "requirements/azure-mcp-reality-tool.txt"
+      - "scripts/smoke_test_lab_factory_mcp_stdio.py"
+      - "docs/runbooks/lab-factory-local-mcp-smoke.md"
+      - ".project/reconciliations/lab-factory-local-mcp-smoke-v1-20260729.json"
+      - "infra/tests/test_lab_factory_local_mcp_smoke_contract.py"
+      - ".github/workflows/lab-factory-mcp-local-smoke.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "azure_mcp_reality/**"
+      - "lab_factory/**"
+      - "requirements/azure-mcp-reality-tool.txt"
+      - "scripts/smoke_test_lab_factory_mcp_stdio.py"
+      - "docs/runbooks/lab-factory-local-mcp-smoke.md"
+      - ".project/reconciliations/lab-factory-local-mcp-smoke-v1-20260729.json"
+      - "infra/tests/test_lab_factory_local_mcp_smoke_contract.py"
+      - ".github/workflows/lab-factory-mcp-local-smoke.yml"
+
+permissions:
+  contents: read
+  id-token: none
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      EXPECTED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out exact source head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned MCP SDK
+        run: python -m pip install -r requirements/azure-mcp-reality-tool.txt
+
+      - name: Confirm no Azure or model authority is present
+        shell: bash
+        run: |
+          test -z "${AZURE_CLIENT_ID:-}"
+          test -z "${AZURE_TENANT_ID:-}"
+          test -z "${AZURE_SUBSCRIPTION_ID:-}"
+          test -z "${AZURE_MCP_ALLOWED_SUBSCRIPTION_ID:-}"
+          test -z "${AZURE_MCP_ALLOWED_RESOURCE_GROUP:-}"
+          test -z "${OPENAI_API_KEY:-}"
+
+      - name: Run local stdio client smoke test
+        run: |
+          python scripts/smoke_test_lab_factory_mcp_stdio.py \
+            --output /tmp/lab-factory-mcp-local-smoke-receipt.json
+
+      - name: Validate smoke receipt boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          receipt = json.loads(
+              Path("/tmp/lab-factory-mcp-local-smoke-receipt.json").read_text(encoding="utf-8")
+          )
+          assert receipt["status"] == "passed"
+          assert receipt["source_sha"] == "${{ github.event.pull_request.head.sha || github.sha }}"
+          assert receipt["transport"] == "stdio"
+          assert receipt["client_and_server_colocated"] is True
+          assert receipt["remote_endpoint_used"] is False
+          assert receipt["model_call_performed"] is False
+          assert receipt["get_current_reality_called"] is False
+          assert receipt["azure_environment_forwarded_to_server"] is False
+          assert receipt["called_tools"] == [
+              "list_lab_profiles",
+              "prepare_lab_request",
+              "prepare_lab_request",
+          ]
+          assert receipt["profile"] == "servicetracer-demo-api@1.0.0"
+          assert receipt["profile_release_state"] == "candidate"
+          assert receipt["next_gate"] == "preflight_required"
+          assert receipt["parameter_values_returned"] is False
+          assert receipt["azure_queries_performed"] is False
+          assert receipt["azure_mutations_performed"] is False
+          assert receipt["deployment_authorized"] is False
+          assert receipt["cleanup_authorized"] is False
+          PY
+
+      - name: Upload bounded smoke receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: lab-factory-mcp-local-smoke-receipt
+          path: /tmp/lab-factory-mcp-local-smoke-receipt.json
+          if-no-files-found: error
+          retention-days: 30
