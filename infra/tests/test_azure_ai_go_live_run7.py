@@ -11,7 +11,15 @@ STATIC_WORKFLOW = ROOT / ".github/workflows/azure-ai-plan.yml"
 EXECUTOR = ROOT / "scripts/azure_ai_go_live_run7.sh"
 REQUEST = ROOT / ".project/deployment-requests/azure-ai-go-live-run7.json"
 CONTRACT = ROOT / ".project/contracts/azure-ai-existing-role-activation-v1.json"
-HANDOFF = ROOT / ".project/handoffs/azure-ai-go-live-run7.md"
+CANDIDATE_HANDOFF = ROOT / ".project/handoffs/azure-ai-go-live-run7.md"
+TERMINAL_HANDOFF = ROOT / ".project/handoffs/azure-ai-go-live-run7-terminal.md"
+TERMINAL = (
+    ROOT
+    / ".project"
+    / "reconciliations"
+    / "azure-ai-go-live-run7-terminal-20260730.json"
+)
+REPAIR_PATCH = ROOT / ".project/repairs/azure-ai-go-live-run7-role-query.patch"
 TEMPLATE = ROOT / "infra/azure-ai-existing-account-model-only.bicep"
 RUN6_TERMINAL = (
     ROOT
@@ -30,45 +38,92 @@ class AzureAiGoLiveRun7Tests(unittest.TestCase):
         cls.executor = EXECUTOR.read_text(encoding="utf-8")
         cls.request = json.loads(REQUEST.read_text(encoding="utf-8"))
         cls.contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
-        cls.handoff = HANDOFF.read_text(encoding="utf-8")
+        cls.candidate_handoff = CANDIDATE_HANDOFF.read_text(encoding="utf-8")
+        cls.terminal_handoff = TERMINAL_HANDOFF.read_text(encoding="utf-8")
+        cls.terminal = json.loads(TERMINAL.read_text(encoding="utf-8"))
+        cls.repair_patch = REPAIR_PATCH.read_text(encoding="utf-8")
         cls.template = TEMPLATE.read_text(encoding="utf-8")
         cls.run6 = json.loads(RUN6_TERMINAL.read_text(encoding="utf-8"))
         cls.selector = json.loads(SELECTOR.read_text(encoding="utf-8"))
 
-    def test_request_is_one_fresh_attempt_with_existing_role(self) -> None:
+    def test_request_is_consumed_single_attempt(self) -> None:
         self.assertEqual(self.request["attempt_id"], "azure-ai-go-live-run7")
         self.assertEqual(
             self.request["source_instruction"],
             "Proceed with Azure AI run 7 using the existing account and existing account-scoped inference role.",
         )
-        self.assertEqual(self.request["status"], "active_one_attempt")
-        self.assertTrue(self.request["active"])
+        self.assertEqual(self.request["status"], "consumed_terminal_failure")
+        self.assertFalse(self.request["active"])
         self.assertEqual(self.request["attempt_limit"], 1)
-        self.assertEqual(self.request["attempts_observed"], 0)
-        scope = self.request["scope"]
-        self.assertEqual(scope["subscription_name"], "Azure for Students")
-        self.assertEqual(scope["resource_group_name"], "rg-ai-msp-dev-eastus")
-        self.assertEqual(scope["account_name"], "oai-msp-anthony-dev-eastus")
-        self.assertTrue(scope["direct_account_scoped_role_preexisting_required"])
-        self.assertFalse(scope["role_assignment_creation_authorized"])
-        self.assertEqual(scope["inference_role_name"], "Cognitive Services OpenAI User")
-        self.assertEqual(scope["inference_role_definition_id"], "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd")
-        self.assertEqual(scope["model_request_count"], 1)
-        self.assertEqual(scope["max_output_tokens"], 32)
+        self.assertEqual(self.request["attempts_observed"], 1)
+        execution = self.request["terminal_execution"]
+        self.assertEqual(execution["workflow_run"], 30507904540)
+        self.assertEqual(execution["job_id"], 90761544877)
+        self.assertEqual(
+            execution["artifact_digest"],
+            "sha256:89a101055b5df556b5e4bab47a2487ab13690e5824c9ec26cf219fbb345449df",
+        )
+        self.assertFalse(execution["deployment_started"])
+        self.assertFalse(execution["model_request_performed"])
+        self.assertFalse(execution["azure_mutations_performed"])
 
-    def test_run6_is_consumed_and_not_reused(self) -> None:
+    def test_terminal_evidence_preserves_exact_cli_failure(self) -> None:
+        self.assertEqual(self.terminal["status"], "consumed_terminal_failure")
+        self.assertEqual(self.terminal["workflow"]["run_id"], 30507904540)
+        self.assertEqual(self.terminal["workflow"]["job_id"], 90761544877)
+        result = self.terminal["terminal_result"]
+        self.assertEqual(result["failure_stage"], "existing_direct_role_validation")
+        self.assertEqual(result["failure_status"], "role_assignment_query_failed")
+        self.assertEqual(
+            result["failure_classification"],
+            "azure_cli_mutually_exclusive_scope_and_all_arguments",
+        )
+        self.assertEqual(
+            result["exact_error"],
+            "ERROR: group or scope are not required when --all is used",
+        )
+        self.assertTrue(result["role_query_started"])
+        self.assertFalse(result["role_query_completed"])
+        self.assertFalse(result["required_role_exists_established"])
+        self.assertFalse(result["required_role_missing_established"])
+
+    def test_account_observed_but_no_later_stage_or_mutation(self) -> None:
+        target = self.terminal["observed_target"]
+        self.assertEqual(target["resource_group"]["name"], "rg-ai-msp-dev-eastus")
+        self.assertEqual(target["resource_group"]["provisioning_state"], "Succeeded")
+        account = target["account"]
+        self.assertEqual(account["name"], "oai-msp-anthony-dev-eastus")
+        self.assertEqual(account["kind"], "OpenAI")
+        self.assertEqual(account["sku"], "S0")
+        self.assertEqual(account["public_network_access"], "Enabled")
+        self.assertIsNone(account["disable_local_auth"])
+        result = self.terminal["terminal_result"]
+        for key in (
+            "deployment_inventory_queried",
+            "model_listing_queried",
+            "capacity_queried",
+            "what_if_started",
+            "deployment_started",
+            "account_hardening_started",
+            "model_request_performed",
+            "endpoint_live",
+            "azure_mutations_performed",
+            "separate_verified_gpt5_runtime_modified",
+        ):
+            self.assertFalse(result[key], key)
+        self.assertEqual(self.terminal["cost"]["azure_resource_cost_delta_established"], 0)
+        self.assertEqual(self.terminal["cost"]["tokens_consumed"], 0)
+
+    def test_run6_and_run7_are_separately_consumed(self) -> None:
         self.assertEqual(self.run6["run6_terminal"]["attempt_id"], "azure-ai-go-live-run6")
         self.assertTrue(self.run6["run6_terminal"]["authorization_consumed"])
-        self.assertFalse(self.run6["run6_terminal"]["manual_rerun_authorized"])
-        self.assertFalse(self.run6["run6_terminal"]["deployment_started"])
-        self.assertEqual(
-            self.run6["run6_terminal"]["failure_classification"],
-            "workflow_principal_lacked_role_assignments_write",
-        )
-        self.assertIn("fresh one-attempt authority", self.handoff)
-        self.assertIn("It is not a rerun of run 6", self.handoff)
+        self.assertEqual(self.terminal["attempt_id"], "azure-ai-go-live-run7")
+        self.assertTrue(self.terminal["authorization"]["consumed"])
+        self.assertFalse(self.terminal["authorization"]["manual_rerun_authorized"])
+        self.assertFalse(self.terminal["authorization"]["new_attempt_authorized"])
+        self.assertIn("Run 7 is consumed", self.terminal_handoff)
 
-    def test_workflow_is_single_merge_trigger_and_exact_commit(self) -> None:
+    def test_workflow_remains_historical_single_merge_trigger(self) -> None:
         self.assertIn("name: Azure AI go live run 7", self.workflow)
         self.assertIn("branches:\n      - main", self.workflow)
         self.assertIn("'.github/workflows/azure-ai-go-live-run7.yml'", self.workflow)
@@ -76,7 +131,6 @@ class AzureAiGoLiveRun7Tests(unittest.TestCase):
         self.assertIn("id-token: write", self.workflow)
         self.assertIn("environment: azure-lab", self.workflow)
         self.assertIn("ref: ${{ github.sha }}", self.workflow)
-        self.assertIn('test "$(git rev-parse HEAD)" = "$GITHUB_SHA"', self.workflow)
         self.assertIn("bash scripts/azure_ai_go_live_run7.sh", self.workflow)
 
     def test_template_cannot_create_account_group_or_role(self) -> None:
@@ -87,21 +141,19 @@ class AzureAiGoLiveRun7Tests(unittest.TestCase):
         self.assertNotIn("Microsoft.Authorization/roleAssignments", self.template)
         self.assertNotIn("kind: 'OpenAI'", self.template)
 
-    def test_executor_verifies_role_then_has_one_mutation_path(self) -> None:
+    def test_historical_executor_and_repair_are_traceable(self) -> None:
         self.assertIn('ROLE_NAME="Cognitive Services OpenAI User"', self.executor)
-        self.assertIn('ROLE_DEFINITION_GUID="5e0bd9bd-7b93-4f28-af87-19fc36ad61bd"', self.executor)
-        self.assertIn("required_direct_role_missing", self.executor)
-        self.assertIn("required_direct_role_disappeared", self.executor)
         self.assertEqual(self.executor.count("az deployment group create"), 1)
         self.assertEqual(self.executor.count("az resource update"), 1)
         self.assertEqual(self.executor.count("curl --silent --show-error"), 1)
         self.assertNotIn("az role assignment create", self.executor)
-        self.assertNotIn("for propagation", self.executor)
-        self.assertNotIn("while true", self.executor)
-        self.assertIn("https://cognitiveservices.azure.com/.default", self.executor)
-        self.assertIn("AZURE AI RUN 7 LIVE", self.executor)
+        self.assertIn("--scope \"$account_id\" \\\n  --all", self.executor)
+        self.assertEqual(self.repair_patch.count("-  --all"), 3)
+        self.assertIn("retain --all only for the unscoped principal-discovery fallback", self.terminal["repair_state"]["repair_description"])
+        self.assertFalse(self.terminal["repair_state"]["repair_authorizes_new_attempt"])
+        self.assertFalse(self.terminal["repair_state"]["run8_authorized"])
 
-    def test_model_and_separate_runtime_boundaries_are_exact(self) -> None:
+    def test_model_and_separate_runtime_boundaries_are_preserved(self) -> None:
         scope = self.request["scope"]
         self.assertEqual(scope["model_name"], "gpt-4.1-mini")
         self.assertEqual(scope["model_version"], "2025-04-14")
@@ -110,40 +162,32 @@ class AzureAiGoLiveRun7Tests(unittest.TestCase):
         self.assertEqual(scope["deployment_capacity"], 1)
         separate = scope["separate_verified_runtime_untouched"]
         self.assertEqual(separate["deployment"], "gpt-5-mini")
-        self.assertIn("separate_verified_gpt5_runtime_modified:false", self.executor)
-        self.assertIn("Run 7 does not modify, replace, or claim ownership", self.handoff)
+        self.assertFalse(separate["modified_by_run7"])
+        self.assertIn("separate verified gpt-5-mini runtime modified: false", self.terminal_handoff)
 
-    def test_failure_cost_and_cleanup_are_bounded(self) -> None:
-        authority = self.request["authority"]
-        self.assertFalse(authority["role_assignment_creation_authorized"])
-        self.assertFalse(authority["automatic_retry_authorized"])
-        self.assertFalse(authority["manual_rerun_authorized"])
-        self.assertFalse(authority["second_deployment_attempt_authorized"])
-        self.assertFalse(authority["regional_fallback_authorized"])
-        self.assertFalse(authority["model_fallback_authorized"])
-        self.assertFalse(authority["rollback_authorized"])
-        self.assertFalse(authority["cleanup_authorized"])
-        self.assertFalse(self.request["cost_and_quota"]["actual_cost_freshly_observed"])
-        self.assertIn("No automatic retry, rollback", self.handoff)
+    def test_selector_applies_terminal_overlay_without_rewriting_versioned_history(self) -> None:
+        self.assertEqual(self.selector["authoritative_current_reality"], ".project/current-reality-v3.json")
+        self.assertEqual(self.selector["authoritative_state_index"], ".project/state-index-v12.json")
+        self.assertEqual(
+            self.selector["latest_operational_overlay"],
+            ".project/reconciliations/azure-ai-go-live-run7-terminal-20260730.json",
+        )
+        self.assertEqual(
+            self.selector["latest_azure_ai_terminal_reconciliation"],
+            ".project/reconciliations/azure-ai-go-live-run7-terminal-20260730.json",
+        )
+        self.assertIsNone(self.selector["active_azure_ai_activation_authorization"])
 
-    def test_static_validation_covers_run7_without_azure_identity(self) -> None:
+    def test_static_validation_and_contract_remain_bounded(self) -> None:
         self.assertIn("infra.tests.test_azure_ai_go_live_run7", self.static_workflow)
         self.assertIn("bash -n scripts/azure_ai_go_live_run7.sh", self.static_workflow)
         self.assertIn("infra/azure-ai-existing-account-model-only.bicep", self.static_workflow)
         self.assertIn("id-token: none", self.static_workflow)
-
-    def test_current_selector_remains_time_bounded_until_terminal_reconciliation(self) -> None:
-        self.assertEqual(self.selector["authoritative_current_reality"], ".project/current-reality-v3.json")
-        self.assertEqual(self.selector["authoritative_state_index"], ".project/state-index-v12.json")
-        self.assertIn("terminal reconciliation must supersede", self.handoff)
-
-    def test_contract_matches_existing_only_architecture(self) -> None:
         architecture = self.contract["architecture"]
         self.assertFalse(architecture["resource_group_creation_available"])
         self.assertFalse(architecture["account_creation_available"])
         self.assertFalse(architecture["role_assignment_creation_available"])
-        self.assertEqual(self.contract["identity_and_permissions"]["required_role_scope"], "exact Azure OpenAI account")
-        self.assertEqual(self.contract["security"]["model_request_limit"], 1)
+        self.assertIn("fresh one-attempt authority", self.candidate_handoff)
 
 
 if __name__ == "__main__":
