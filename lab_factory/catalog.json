@@ -34,6 +34,13 @@
           "vm_size": "profile.parameters.defaults.vmSize",
           "maximum_monthly_cost_cad": "workflow_default:25.00",
           "confirmation": "derived_not_returned"
+        },
+        "derived_template_parameters": {
+          "backendTransactionUrl": "dependency_subscription_public_ip_observation",
+          "adminSshPublicKey": "workflow_fixed_validation_placeholder",
+          "sourceRepository": "github.repository",
+          "sourceRef": "github.sha",
+          "installerUri": "github.repository_and_sha_plus_installer_path"
         }
       },
       "environments": [
