@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 import unittest
@@ -12,6 +13,12 @@ RUNBOOK = ROOT / "docs/runbooks/lab-factory-local-mcp-smoke.md"
 RECONCILIATION = (
     ROOT / ".project/reconciliations/lab-factory-local-mcp-smoke-v1-20260729.json"
 )
+TERMINAL = (
+    ROOT
+    / ".project/reconciliations/lab-factory-local-mcp-smoke-run1-terminal-20260729.json"
+)
+EVIDENCE = ROOT / ".project/evidence/lab-factory-mcp-local-smoke-run1.json"
+EVIDENCE_DIGEST = ROOT / ".project/evidence/lab-factory-mcp-local-smoke-run1.sha256"
 
 
 class LabFactoryLocalMcpSmokeContractTests(unittest.TestCase):
@@ -21,6 +28,10 @@ class LabFactoryLocalMcpSmokeContractTests(unittest.TestCase):
         cls.workflow = WORKFLOW.read_text(encoding="utf-8")
         cls.runbook = RUNBOOK.read_text(encoding="utf-8")
         cls.reconciliation = json.loads(RECONCILIATION.read_text(encoding="utf-8"))
+        cls.terminal = json.loads(TERMINAL.read_text(encoding="utf-8"))
+        cls.evidence_bytes = EVIDENCE.read_bytes()
+        cls.evidence = json.loads(cls.evidence_bytes)
+        cls.expected_evidence_digest = EVIDENCE_DIGEST.read_text(encoding="utf-8").split()[0]
 
     def test_reconciliation_preserves_the_bounded_authority(self) -> None:
         document = self.reconciliation
@@ -52,6 +63,52 @@ class LabFactoryLocalMcpSmokeContractTests(unittest.TestCase):
         ):
             self.assertFalse(authority[denied], denied)
 
+    def test_terminal_reconciliation_records_the_observed_runs(self) -> None:
+        terminal = self.terminal
+        self.assertEqual(
+            terminal["schema_version"],
+            "project.reconciliation.lab-factory-local-mcp-smoke-run1-terminal.v1",
+        )
+        self.assertEqual(terminal["source_instruction"], "Proceed")
+        self.assertEqual(
+            terminal["status"],
+            "passed_evidence_promoted_pending_final_exact_head_CI",
+        )
+        smoke = terminal["observed_runs"]["local_MCP_smoke"]
+        self.assertEqual(smoke["workflow_run_id"], 30505376018)
+        self.assertEqual(smoke["conclusion"], "success")
+        self.assertEqual(smoke["artifact_id"], 8745096720)
+        self.assertEqual(
+            smoke["artifact_digest"],
+            "sha256:4f87360b534339e402f9d7fa3b9984cefe399194be2db3dcc8a2d85e78edc466",
+        )
+        ci = terminal["observed_runs"]["repository_CI"]
+        self.assertEqual(ci["workflow_run_id"], 30505375909)
+        self.assertEqual(ci["conclusion"], "success")
+
+    def test_promoted_receipt_matches_its_digest_and_terminal_record(self) -> None:
+        actual = hashlib.sha256(self.evidence_bytes).hexdigest()
+        self.assertEqual(actual, self.expected_evidence_digest)
+        self.assertEqual(
+            self.terminal["promoted_evidence"]["receipt_sha256"],
+            self.expected_evidence_digest,
+        )
+        self.assertEqual(self.evidence["status"], "passed")
+        self.assertEqual(
+            self.evidence["source_sha"],
+            "1aeead3a987dbe2af9af1c46c5ac1e85033991ce",
+        )
+        self.assertEqual(
+            self.evidence["called_tools"],
+            ["list_lab_profiles", "prepare_lab_request", "prepare_lab_request"],
+        )
+        self.assertFalse(self.evidence["get_current_reality_called"])
+        self.assertFalse(self.evidence["azure_environment_forwarded_to_server"])
+        self.assertFalse(self.evidence["azure_queries_performed"])
+        self.assertFalse(self.evidence["azure_mutations_performed"])
+        self.assertFalse(self.evidence["deployment_authorized"])
+        self.assertFalse(self.evidence["cleanup_authorized"])
+
     def test_script_calls_only_the_repository_tools(self) -> None:
         self.assertIn('session.call_tool("list_lab_profiles"', self.script)
         self.assertEqual(self.script.count('session.call_tool("prepare_lab_request"'), 2)
@@ -81,6 +138,7 @@ class LabFactoryLocalMcpSmokeContractTests(unittest.TestCase):
         self.assertNotIn("OPENAI_API_KEY: ${{", self.workflow)
         self.assertIn("Check out exact source head", self.workflow)
         self.assertIn("EXPECTED_SOURCE_SHA", self.workflow)
+        self.assertIn("Validate promoted run-1 evidence", self.workflow)
         self.assertIn("smoke_test_lab_factory_mcp_stdio.py", self.workflow)
         self.assertIn("lab-factory-mcp-local-smoke-receipt", self.workflow)
 
