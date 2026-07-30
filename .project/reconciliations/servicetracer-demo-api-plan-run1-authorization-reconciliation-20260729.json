@@ -1,0 +1,55 @@
+{
+  "schema_version": "project.authorization-reconciliation.v1",
+  "project": "Azure IaC MSP Lab",
+  "attempt_id": "servicetracer-demo-api-plan-run1",
+  "recorded_at": "2026-07-29T22:58:00-04:00",
+  "status": "one_canonical_authorization_pending_dispatch",
+  "source_instructions": [
+    "Proceed need to start deploying",
+    "Proceed auth granted"
+  ],
+  "repository": {
+    "main_before_reconciliation": "cb5385dc95e23d782ca564d87c5e9fd8f6357a62",
+    "canonical_authorization_pull_request": 231,
+    "duplicate_authorization_pull_request": 233,
+    "canonical_authorization": ".project/deployment-requests/servicetracer-demo-api-plan-run1.json",
+    "duplicate_removed": ".project/observation-requests/servicetracer-demo-api-plan-run1.json",
+    "workflow": ".github/workflows/servicetracer-demo-api-subproject-plan.yml"
+  },
+  "canonical_request": {
+    "environment": "dev",
+    "location": "westus2",
+    "prefix": "mst",
+    "dependency_resource_group": "rg-servicetracer-dev-westus2",
+    "dns_label": "st-demo-api-vm-aeg30000",
+    "allowed_origin": "https://anthonyedgar30000.github.io",
+    "vm_size": "Standard_F1als_v7",
+    "maximum_monthly_cost_cad": "25.00",
+    "confirmation": "PLAN-DEMO-API-SUBPROJECT:dev:st-demo-api-vm-aeg30000"
+  },
+  "authority": {
+    "dispatch_attempts_remaining": 1,
+    "workflow_dispatch_performed": false,
+    "azure_authentication_or_query_performed": false,
+    "arm_validation_performed": false,
+    "arm_what_if_performed": false,
+    "deployment_authorized": false,
+    "azure_mutation_authorized": false,
+    "rerun_authorized": false
+  },
+  "cost": {
+    "currency": "CAD",
+    "planning_ceiling": "25.00",
+    "planning_ceiling_is_spend_authority": false,
+    "repository_recurring_azure_cost_delta_cad": 0,
+    "actual_cost_freshly_observed": false,
+    "quota_freshly_observed": false
+  },
+  "canonical_distinctions": [
+    "two_repository_records != two_dispatch_attempts",
+    "authorization_pending_dispatch != workflow_dispatched",
+    "planning_succeeded != deployment_authorized",
+    "estimated_cost != actual_cost"
+  ],
+  "next_gate": "Dispatch the canonical workflow exactly once from main, inspect protected evidence, reconcile the terminal result, and stop before deployment."
+}
