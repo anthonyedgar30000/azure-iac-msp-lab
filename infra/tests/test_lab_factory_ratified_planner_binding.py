@@ -48,8 +48,8 @@ class LabFactoryRatifiedPlannerBindingTests(unittest.TestCase):
             repository_root=ROOT,
         )
 
-    def test_catalog_binds_profile_to_existing_dual_subscription_planner(self):
-        self.assertEqual(self.catalog["catalog_version"], "1.1.0")
+    def test_catalog_binds_profile_to_existing_single_subscription_planner(self):
+        self.assertEqual(self.catalog["catalog_version"], "1.2.0")
         summary = profile_planning_summary(
             self.catalog,
             profile_id=PROFILE_ID,
@@ -61,29 +61,35 @@ class LabFactoryRatifiedPlannerBindingTests(unittest.TestCase):
             summary["workflow_path"],
             ".github/workflows/servicetracer-demo-api-subproject-plan.yml",
         )
-        self.assertEqual(summary["github_environment"], "azure-api-payg")
+        self.assertEqual(summary["github_environment"], "azure-lab")
         self.assertEqual(summary["dispatch_mode"], "manual_only")
-        self.assertEqual(summary["subscription_boundary"], "dual_subscription")
+        self.assertEqual(summary["subscription_boundary"], "single_subscription")
         self.assertEqual(summary["provider_validation_level"], "ProviderNoRbac")
         self.assertTrue(summary["includes_arm_validation"])
         self.assertTrue(summary["includes_arm_what_if"])
         self.assertFalse(summary["deployment_command_present"])
 
-    def test_workflow_preserves_dependency_target_and_no_deploy_boundary(self):
+    def test_workflow_preserves_same_subscription_resource_boundaries(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         for marker in (
-            "environment: azure-api-payg",
-            "AZURE_DEPENDENCY_CLIENT_ID",
-            "AZURE_TARGET_CLIENT_ID",
-            "AZURE_DEPENDENCY_SUBSCRIPTION_ID",
-            "AZURE_TARGET_SUBSCRIPTION_ID",
+            "environment: azure-lab",
+            "AZURE_CLIENT_ID",
+            "AZURE_SUBSCRIPTION_ID",
+            'subscription_boundary:"single_subscription"',
             "ProviderNoRbac",
             "az deployment sub validate",
             "az deployment sub what-if",
             "workloads/servicetracer-demo-api/scripts/install.sh",
         ):
             self.assertIn(marker, workflow)
-        self.assertNotIn("az deployment sub create", workflow)
+        for marker in (
+            "AZURE_DEPENDENCY_CLIENT_ID",
+            "AZURE_TARGET_CLIENT_ID",
+            "AZURE_DEPENDENCY_SUBSCRIPTION_ID",
+            "AZURE_TARGET_SUBSCRIPTION_ID",
+            "az deployment sub create",
+        ):
+            self.assertNotIn(marker, workflow)
 
     def test_enriched_plan_is_deterministic_and_contains_no_parameter_values(self):
         first = enrich_plan_with_planning(
@@ -116,8 +122,19 @@ class LabFactoryRatifiedPlannerBindingTests(unittest.TestCase):
 
     def test_wrong_github_environment_is_rejected(self):
         changed = deepcopy(self.catalog)
-        changed["profiles"][0]["planning"]["github_environment"] = "azure-lab"
-        with self.assertRaisesRegex(CatalogError, "azure-api-payg"):
+        changed["profiles"][0]["planning"]["github_environment"] = "azure-api-payg"
+        with self.assertRaisesRegex(CatalogError, "azure-lab"):
+            profile_planning_summary(
+                changed,
+                profile_id=PROFILE_ID,
+                profile_version=PROFILE_VERSION,
+                repository_root=ROOT,
+            )
+
+    def test_dual_subscription_boundary_is_rejected(self):
+        changed = deepcopy(self.catalog)
+        changed["profiles"][0]["planning"]["subscription_boundary"] = "dual_subscription"
+        with self.assertRaisesRegex(CatalogError, "single-subscription"):
             profile_planning_summary(
                 changed,
                 profile_id=PROFILE_ID,
