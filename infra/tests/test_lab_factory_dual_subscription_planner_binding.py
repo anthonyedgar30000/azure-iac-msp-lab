@@ -112,8 +112,9 @@ class LabFactoryDualSubscriptionPlannerBindingTests(unittest.TestCase):
         )
         self.assertEqual(
             document["repository"]["base_main"],
-            "ced77a61d278f66f0f1be477164e5167b08fcc7b",
+            "b81bd342ca59d51ee155c0e69cce9dbe19d70a14",
         )
+        self.assertEqual(document["repository"]["latest_merged_pull_request"], 229)
         self.assertEqual(document["cost"]["currency"], "CAD")
         self.assertEqual(document["cost"]["repository_recurring_Azure_cost_delta"], 0)
         authority = document["authority"]
