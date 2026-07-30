@@ -1,10 +1,120 @@
 {
-  "schema_version": "project.current-reality.v6",
+  "schema_version": "project.current-reality.v7",
   "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-28T15:04:23-04:00",
+  "recorded_at": "2026-07-29T20:52:00-04:00",
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
-  "interpretation_boundary": "This is a time-bounded evidence reconciliation, not a continuously refreshed GitHub or Azure dashboard. Live repository state must be queried before every write, merge, dispatch, authentication, or cloud action.",
+  "interpretation_boundary": "This is a time-bounded evidence reconciliation, not a continuously refreshed GitHub or Azure dashboard. The current_repository_state and current_domain_state objects are the authoritative post-PR216 overlay. Legacy projection objects are preserved only for deterministic historical validators and must not be treated as live state. Live repository and Azure reality must be queried before every write, merge, dispatch, authentication, or cloud action.",
+  "authoritative_overlay": {
+    "repository_state_pointer": "current_repository_state",
+    "domain_state_pointer": "current_domain_state",
+    "legacy_projection_status": "historical_compatibility_only",
+    "state_index_status": "v11_post_pr214_lab_factory_overlay_with_historical_repository_selectors",
+    "canonical_handoff_status": "merged_by_pr214_with_post_pr212_observation_boundary"
+  },
+  "current_repository_state": {
+    "default_branch": "main",
+    "observed_main": "43586da96bb8edebe3abcea15eed93d5123d290b",
+    "latest_merged_pull_request": 216,
+    "latest_merge_commit": "43586da96bb8edebe3abcea15eed93d5123d290b",
+    "latest_merged_source_head": "4bdbb99c50f9535f92cba146a3e54e4a33b32f98",
+    "latest_exact_head_ci_runs": {
+      "ci": {
+        "run_id": 30503733179,
+        "conclusion": "success"
+      },
+      "azure_mcp_reality_bridge_contract": {
+        "run_id": 30503733185,
+        "conclusion": "success"
+      },
+      "azure_ai_activation_static_validation": {
+        "run_id": 30503733207,
+        "conclusion": "success"
+      }
+    },
+    "previous_repository_handoff_pull_request": 214,
+    "previous_repository_handoff_merge_commit": "4136a47d9aa80da99e3849fc721bab55a883b20e",
+    "previous_repository_handoff_source_head": "afdeaf6e4765ce4819ae3de5782cc5ca57cfcd12",
+    "lab_factory_implementation_pull_request": 212,
+    "lab_factory_implementation_merge_commit": "f8f29d8601666646d354ffc450a85348e891483f",
+    "lab_factory_implementation_source_head": "e22b1fdc45c4a9d9298416c84d179f596b38060e",
+    "open_pull_requests_observed": [
+      218
+    ],
+    "open_pull_request_218": {
+      "title": "Expose Lab Factory planning through local MCP",
+      "state": "open_draft",
+      "base_sha": "4136a47d9aa80da99e3849fc721bab55a883b20e",
+      "head": "agent/lab-factory-mcp-tools-v1",
+      "head_sha": "5685e579c03c18eb20a0480fece0615a1cc991b4",
+      "changed_paths_observed": 7,
+      "path_overlap_with_current_reconciliation": false,
+      "merged": false
+    },
+    "local_working_tree": "not_observed_connector_backed",
+    "state_index_reconciliation_pull_request": 216,
+    "state_index_reconciliation": ".project/reconciliations/post-pr214-state-index-20260729.json",
+    "state_index_schema_version": "project.state-index.v11"
+  },
+  "current_domain_state": {
+    "azure_lab_factory_lite": {
+      "repository_implementation_merged": true,
+      "implementation_pull_request": 212,
+      "profile": "servicetracer-demo-api@1.0.0",
+      "profile_state": "candidate",
+      "location": "westus2",
+      "indexed_by_pull_request": 216,
+      "azure_deployment_verified": false,
+      "arm_what_if_verified": false,
+      "cleanup_verified": false,
+      "current_cost_or_quota_verified": false
+    },
+    "azure_mcp_current_reality_run1": {
+      "observed_at": "2026-07-29T12:01:23.289717Z",
+      "subscription_name": "Azure for Students",
+      "subscription_state": "Enabled",
+      "resource_group": "rg-ai-msp-dev-eastus",
+      "resource_group_location": "eastus",
+      "resource_group_provisioning": "Succeeded",
+      "resource_count": 1,
+      "openai_account": "oai-msp-anthony-dev-eastus",
+      "openai_account_kind": "OpenAI",
+      "openai_account_sku": "S0",
+      "observed_deployment_count": 0,
+      "azure_mutations_performed": false,
+      "secrets_returned": false,
+      "authorization_consumed": true,
+      "rerun_authorized": false,
+      "remote_mcp_endpoint_deployed": false
+    },
+    "azure_ai_verified_runtime": {
+      "base_url": "https://anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/",
+      "deployment": "gpt-5-mini",
+      "authentication": "Microsoft Entra bearer token",
+      "model_response_verified": true,
+      "arm_resource_identity_reconciled": false,
+      "azure_openai_mcp_invocation_verified": false,
+      "chatgpt_mcp_connection_verified": false
+    },
+    "servicetracer": {
+      "classification": "preserved_historical_operational_evidence",
+      "fresh_azure_or_runtime_query_during_this_reconciliation": false,
+      "collector_health_previously_verified": true,
+      "twenty_transaction_scenario_previously_verified": true,
+      "exact_device_root_cause_claimed": false,
+      "monitoring_alert_delivery_freshly_verified": false,
+      "effective_least_privilege_freshly_verified": false,
+      "actual_cost_freshly_verified": false,
+      "backup_or_recovery_freshly_verified": false
+    }
+  },
+  "canonical_file_freshness": {
+    ".project/current-reality-v2.json": "authoritative_post_pr216_overlay_added_by_current_increment",
+    ".project/handoffs/current-state.md": "merged_by_pr214; content observation boundary is post_pr212",
+    ".project/state-index.json": "v11 merged_by_pr216; Lab Factory Lite indexed while historical repository selector fields remain preserved",
+    ".project/lab-v1-completion-gate-v2.json": "historical_completion_gate_not_refreshed_by_this_increment"
+  },
   "repository_state": {
+    "classification": "historical_pr185_compatibility_projection",
     "default_branch": "main",
     "observed_main": "ca994ce53642587bea370bee1c5a0633faaaece8",
     "latest_merged_pull_request": 185,
@@ -51,7 +161,7 @@
     "repair_ci_conclusion": "success",
     "current_main_contains_reviewed_source": true,
     "current_main_equals_deployed_source": false,
-    "main_delta_after_deployed_source": "governance containment, repository reconciliations, authorization-ledger design, frontend architecture explainer, and deterministic tests; the newer frontend implementation is not promoted as freshly published or browser-verified"
+    "main_delta_after_deployed_source": "governance containment, repository reconciliations, authorization control, Azure AI and MCP work, Lab Factory Lite, canonical handoff reconciliation, state-index v11 reconciliation, and deterministic tests; newer repository state is not collapsed into freshly observed Azure runtime truth"
   },
   "authorization_state": {
     "request": ".project/deployment-requests/correlation-identity-run1.json",
@@ -195,7 +305,7 @@
     "collector_deployment_workflow_available": false,
     "collector_deployment_workflow_state": "quarantined_on_main",
     "replacement_authorization_design": ".project/designs/durable-single-use-authorization-ledger-v1.md",
-    "replacement_authorization_design_status": "proposed_on_main_implementation_candidate_open_in_pr186",
+    "replacement_authorization_design_status": "implemented_on_main_inactive_not_operationally_verified",
     "monitoring_enabled": "not_freshly_observed",
     "alert_delivery_verified": false,
     "effective_least_privilege_verified": false,
@@ -203,11 +313,11 @@
     "recovery_tested": false,
     "authorization_ledger_candidate": {
       "pull_request": 186,
-      "state": "open_draft",
+      "state": "merged_historical_compatibility_projection",
       "head_sha": "138659609b15ef80f6cce12d916e26382ab71205",
       "exact_head_ci_run": 30389249099,
       "exact_head_ci_conclusion": "success",
-      "merged_to_main": false,
+      "merged_to_main": true,
       "ruleset_configured": false,
       "live_claim_performed": false,
       "concurrent_claim_verified": false,
@@ -217,7 +327,7 @@
   "authority": {
     "repository_reconciliation_authorized": true,
     "repository_watermark_reconciliation_authorized": true,
-    "repository_design_authorized": true,
+    "repository_design_authorized": false,
     "ordinary_pull_request_ci_authorized": true,
     "pull_request_creation_authorized": true,
     "pull_request_merge_authorized": false,
@@ -227,7 +337,10 @@
     "azure_mutation_authorized": false,
     "rollback_authorized": false,
     "cleanup_authorized": false,
-    "rbac_mutation_authorized": false
+    "rbac_mutation_authorized": false,
+    "arm_what_if_authorized": false,
+    "model_call_authorized": false,
+    "remote_mcp_deployment_authorized": false
   },
   "canonical_distinctions": [
     "declared_in_code != deployed_in_azure",
@@ -243,18 +356,27 @@
     "not_observed != false",
     "estimated_cost != actual_cost",
     "monitoring_enabled != alerts_verified",
-    "API_contract_verified != browser_DOM_render_verified"
+    "API_contract_verified != browser_DOM_render_verified",
+    "legacy_projection != current_repository_state",
+    "merged_repository_capability != Azure_deployment_verified",
+    "empty_observed_account_deployment_inventory != verified_runtime_absent_globally",
+    "verified_model_response != Azure_OpenAI_MCP_connection_verified",
+    "state_indexed != runtime_verified",
+    "open_PR_candidate != merged_repository_state"
   ],
   "next_gate": {
-    "operation": "review this repository-only reconciliation through ordinary pull-request CI while keeping all collector Azure operations quarantined",
+    "operation": "review the post-PR216 current-reality compatibility overlay through ordinary exact-head pull-request CI",
     "requirements": [
-      "preserve the exact PR 185 source and CI lineage",
-      "do not promote GitHub Pages publication or browser rendering without direct observation",
-      "review open draft PR 186 as an implementation candidate, not as an activated control",
-      "keep the collector workflow fail-closed until replay rejection is implemented and tested",
-      "obtain fresh explicit non-renewing authority before merge, implementation, workflow restoration, Azure query, deployment, rollback, or cleanup",
-      "complete browser DOM refresh observation",
-      "verify alert delivery, least privilege, and current actual cost"
+      "preserve the PR185-era projection only as historical compatibility data",
+      "treat current_repository_state and current_domain_state as authoritative",
+      "preserve state-index v11 and its Lab Factory Lite non-deployment boundary",
+      "treat PR 218 as an open non-overlapping candidate rather than merged truth",
+      "do not claim fresh Azure cost, quota, RBAC, diagnostics, monitoring, backup, recovery, or service validation",
+      "do not rerun Azure MCP current-reality run 1",
+      "do not authenticate to or mutate Azure",
+      "do not dispatch or rerun workflows",
+      "do not call a model or deploy a remote MCP endpoint",
+      "obtain a separate explicit decision before merge"
     ]
   }
 }
