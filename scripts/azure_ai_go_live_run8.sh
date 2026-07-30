@@ -29,6 +29,7 @@ text = text.replace("azure-ai-go-live-run7", "azure-ai-go-live-run8")
 text = text.replace("run7", "run8")
 text = text.replace("RUN 7", "RUN 8")
 text = text.replace("Run 7", "Run 8")
+text = text.replace("run 7", "run 8")
 text = text.replace(
     'Proceed with Azure AI run 8 using the existing account and existing account-scoped inference role.',
     'Fix and proceed',
