@@ -1,0 +1,130 @@
+{
+  "artifact": {
+    "artifact_id": 8805241142,
+    "created_at": "2026-07-31T20:01:30Z",
+    "expired_when_observed": false,
+    "expires_at": "2026-08-30T20:01:29Z",
+    "internal_manifest_entries": 45,
+    "internal_manifest_failures": 0,
+    "internal_manifest_sha256": "fdae09806271b7ecd50b629fe11f856094f009b2a57b58ea88a1db8fac03a912",
+    "internal_manifest_verified": true,
+    "name": "servicetracer-demo-api-subproject-deploy-30661015789-1",
+    "sha256": "80b0819552623c13cfa244ec2d480f7606c2f224516a5d6c9882233fdbe2b478"
+  },
+  "authorization": {
+    "additional_azure_mutation_authorized": false,
+    "attempt_consumed": true,
+    "authorized_attempts": 1,
+    "cleanup_authorized": false,
+    "deployment_authorized": true,
+    "rerun_authorized": false,
+    "rollback_authorized": false
+  },
+  "claim_boundary": "Deployment and bounded runtime health are established. Full service validation, external browser reachability, POST/CORS behavior, downstream transaction success, actual cost, alert delivery, backup, recovery, and cleanup remain separate gates.",
+  "cost_and_resilience": {
+    "actual_cost_freshly_observed": false,
+    "backup_configured_freshly_observed": false,
+    "monitoring_alert_delivery_verified": false,
+    "planning_ceiling_cad": 25.0,
+    "planning_ceiling_is_not_spend_authority": true,
+    "recovery_tested": false,
+    "student_credit_freshly_observed": false
+  },
+  "deployment": {
+    "created_workload_resources": [
+      "Microsoft.Compute/virtualMachines/vm-st-demo-api-mst-dev",
+      "Microsoft.Compute/virtualMachines/vm-st-demo-api-mst-dev/extensions/servicetracer-demo-api",
+      "Microsoft.Network/networkInterfaces/nic-st-demo-api-mst-dev",
+      "Microsoft.Network/publicIPAddresses/pip-st-demo-api-vm-mst-dev"
+    ],
+    "duration": "PT1M52.2674082S",
+    "error": null,
+    "location": "westus2",
+    "mode": "Incremental",
+    "name": "servicetracer-demo-api-deploy-30661015789-1",
+    "provisioning_state": "Succeeded",
+    "target_resource_group": "rg-st-demo-api-dev-westus2"
+  },
+  "post_deployment_inventory": {
+    "deployed_source_ref": "ae08e7a72c14ec6deaddd3fa0f8c84b8342e0be3",
+    "fqdn": "st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com",
+    "os": "Canonical Ubuntu Server 24.04 LTS",
+    "public_ip_allocation": "Static",
+    "public_ip_name": "pip-st-demo-api-vm-mst-dev",
+    "public_ip_sku": "Standard",
+    "resource_group_provisioning_state": "Succeeded",
+    "vm_extension_name": "servicetracer-demo-api",
+    "vm_extension_provisioning_state": "Succeeded",
+    "vm_identity_type": "SystemAssigned",
+    "vm_location": "westus2",
+    "vm_name": "vm-st-demo-api-mst-dev",
+    "vm_power_state": "VM running",
+    "vm_provisioning_state": "Succeeded",
+    "vm_size": "Standard_F1als_v7"
+  },
+  "predeployment": {
+    "base_infrastructure_modifications": [],
+    "dependency_modifications": [],
+    "dependency_resource_group": "rg-servicetracer-dev-westus2",
+    "subscription_identifiers_promoted": false,
+    "subscription_name": "Azure for Students",
+    "subscription_state": "Enabled",
+    "target_readiness_status": "ready_for_arm_what_if",
+    "validation_level": "ProviderNoRbac",
+    "what_if_status": "accepted_independent_workload_create_plan"
+  },
+  "recorded_at": "2026-07-31T16:39:00-04:00",
+  "runtime_evidence": {
+    "azure_resource_mutation_observed": false,
+    "binary_evidence_promoted": false,
+    "claim_boundary": "The screenshots prove local process health and an HTTPS health response through the configured public FQDN from an Azure VM guest command. They do not prove an external client or browser path, GitHub Pages publication, CORS, POST transaction behavior, downstream transaction success, monitoring, backup, or recovery.",
+    "cors_verified": false,
+    "downstream_transaction_success_verified": false,
+    "evidence_source": "operator_supplied_Azure_Run_Command_screenshots",
+    "external_browser_path_verified": false,
+    "github_pages_publication_verified": false,
+    "guest_command_observed": true,
+    "guest_command_read_only": true,
+    "local_process_health": {
+      "azure_runtime_identity_verified_in_this_capture": false,
+      "backend_target_configured": true,
+      "command": "curl http://localhost:8090/api/health",
+      "hosting_model": "dedicated_vm_subproject",
+      "schema_version": "servicetracer.demo-api-health.v1",
+      "status": "healthy"
+    },
+    "observed_local_time": "2026-07-31T16:38:00-04:00",
+    "public_fqdn_health_from_vm_guest": {
+      "azure_host": {
+        "location": "westus2",
+        "reason": "instance_metadata_verified",
+        "resource_group": "rg-st-demo-api-dev-westus2",
+        "source_ref": "ae08e7a72c14ec6deaddd3fa0f8c84b8342e0be3",
+        "verification_source": "azure_instance_metadata_service",
+        "verified": true,
+        "vm_name": "vm-st-demo-api-mst-dev"
+      },
+      "backend_target_configured": true,
+      "certificate_details_captured": false,
+      "command": "curl -sS https://st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com/api/health",
+      "hosting_model": "dedicated_vm_subproject",
+      "https_request_succeeded_without_insecure_flag": true,
+      "schema_version": "servicetracer.demo-api-health.v1",
+      "status": "healthy",
+      "tls_chain_accepted_by_curl": true
+    },
+    "transaction_post_verified": false
+  },
+  "schema_version": "servicetracer.demo-api-deployment-evidence.v1",
+  "source": {
+    "accepted_plan_commit": "ae08e7a72c14ec6deaddd3fa0f8c84b8342e0be3",
+    "accepted_plan_run_id": 30660575435,
+    "conclusion": "success",
+    "head_branch": "main",
+    "head_sha": "ae08e7a72c14ec6deaddd3fa0f8c84b8342e0be3",
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "workflow": ".github/workflows/servicetracer-demo-api-subproject-deploy.yml",
+    "workflow_run_attempt": 1,
+    "workflow_run_id": 30661015789
+  }
+}

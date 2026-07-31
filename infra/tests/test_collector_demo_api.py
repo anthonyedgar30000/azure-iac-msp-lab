@@ -119,20 +119,29 @@ class CollectorDemoApiTests(unittest.TestCase):
         self.assertNotIn("az functionapp", workflow)
         self.assertNotIn("Microsoft.Web/serverfarms", workflow)
 
-    def test_source_configuration_activates_exact_verified_collector_endpoint(self):
+    def test_source_configuration_activates_exact_independent_endpoint(self):
         config = json.loads(SOURCE_CONFIG.read_text(encoding="utf-8"))
-        expected = "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run"
+        expected = "https://st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com/api/demo/run"
         self.assertEqual(config["live_report_url"], "")
         self.assertEqual(config["live_demo_api_url"], expected)
         self.assertEqual(config["candidate_demo_api_url"], expected)
         self.assertEqual(config["fallback_report_url"], "technician-handoff-report.json")
         self.assertEqual(
             config["activation_status"],
-            "collector_live_default_pending_github_pages_verification",
+            "independent_demo_api_live_default_pending_github_pages_verification",
         )
         self.assertEqual(
             config["evidence_anchor"],
-            ".project/reconciliations/collector-demo-api-deployment-run18-20260726.json",
+            ".project/evidence/servicetracer-demo-api-deployment-run-30661015789.json",
+        )
+        self.assertEqual(
+            config["expected_azure_host"],
+            {
+                "resource_group": "rg-st-demo-api-dev-westus2",
+                "vm_name": "vm-st-demo-api-mst-dev",
+                "location": "westus2",
+                "hosting_model": "dedicated_vm_subproject",
+            },
         )
         self.assertIn("does not by itself prove", config["claim_boundary"])
 

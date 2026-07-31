@@ -9,8 +9,8 @@ MONITOR = ROOT / "docs" / "live-monitor.js"
 MONITOR_STYLES = ROOT / "docs" / "live-monitor.css"
 SOURCE_CONFIG = ROOT / "docs" / "report-source.json"
 SERVER = ROOT / "demo_api" / "standalone_server.py"
-INSTALLER = ROOT / "infra" / "scripts" / "install_collector_demo_api.sh"
-COLLECTOR_API = "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run"
+INSTALLER = ROOT / "workloads" / "servicetracer-demo-api" / "scripts" / "install.sh"
+INDEPENDENT_API = "https://st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com/api/demo/run"
 
 
 class FrontendAzureProvenanceMonitorTests(unittest.TestCase):
@@ -30,49 +30,49 @@ class FrontendAzureProvenanceMonitorTests(unittest.TestCase):
             index,
         )
 
-    def test_source_configuration_binds_exact_collector_golden_path(self) -> None:
+    def test_source_configuration_binds_exact_independent_deployment(self) -> None:
         config = json.loads(SOURCE_CONFIG.read_text(encoding="utf-8"))
 
-        self.assertEqual(config["live_demo_api_url"], COLLECTOR_API)
-        self.assertEqual(config["candidate_demo_api_url"], COLLECTOR_API)
+        self.assertEqual(config["live_demo_api_url"], INDEPENDENT_API)
+        self.assertEqual(config["candidate_demo_api_url"], INDEPENDENT_API)
         self.assertEqual(
             config["activation_status"],
-            "collector_live_default_pending_github_pages_verification",
+            "independent_demo_api_live_default_pending_github_pages_verification",
         )
         self.assertEqual(
             config["expected_azure_host"],
             {
-                "resource_group": "rg-servicetracer-dev-westus2",
-                "vm_name": "vm-stcollector-mst-dev",
+                "resource_group": "rg-st-demo-api-dev-westus2",
+                "vm_name": "vm-st-demo-api-mst-dev",
                 "location": "westus2",
-                "hosting_model": "collector_vm_systemd",
+                "hosting_model": "dedicated_vm_subproject",
             },
         )
-        self.assertNotIn("st-demo-api-vm-aeg30000", config["live_demo_api_url"])
+        self.assertEqual(
+            config["evidence_anchor"],
+            ".project/evidence/servicetracer-demo-api-deployment-run-30661015789.json",
+        )
 
-    def test_frontend_separates_request_and_collector_identity_proofs(self) -> None:
+    def test_frontend_accepts_api_assigned_request_id_and_verifies_runtime_identity(self) -> None:
         source = MONITOR.read_text(encoding="utf-8")
 
-        self.assertIn("const REQUEST_HEADER = 'X-ServiceTracer-Request-ID';", source)
         self.assertIn("window.fetch = async", source)
-        self.assertIn("headers.set(REQUEST_HEADER, requestId);", source)
         self.assertIn("response.clone().json()", source)
-        self.assertIn("response.headers.get(REQUEST_HEADER)", source)
-        self.assertIn("responseRequestId === requestId", source)
-        self.assertIn("responseBodyRequestId === requestId", source)
-        self.assertIn("identityFromPayload(payload)", source)
-        self.assertIn("Request header identity mismatch · evidence rejected", source)
-        self.assertIn("Request body identity mismatch · evidence rejected", source)
-        self.assertIn("Collector identity mismatch · evidence rejected", source)
-        self.assertIn("request and collector identity verified", source)
-        self.assertNotIn("Request or collector identity mismatch", source)
+        self.assertIn("const requestId = payload?.request_id || null;", source)
+        self.assertIn("Awaiting API-assigned request ID", source)
+        self.assertIn("verifiedRuntimeIdentity(payload)", source)
+        self.assertIn("Live API response rejected", source)
+        self.assertIn("Live API transaction and Azure runtime identity verified", source)
+        self.assertIn("Live API transaction verified · Azure runtime identity remains unverified", source)
         self.assertIn("setInterval(pollHealth, HEALTH_INTERVAL_MS)", source)
         self.assertIn("identity.verified !== true", source)
         self.assertIn("identity.resource_group !== expected.resource_group", source)
         self.assertIn("identity.vm_name !== expected.vm_name", source)
         self.assertIn("identity.location !== expected.location", source)
         self.assertIn("payload.hosting_model !== expected.hosting_model", source)
-        self.assertIn("Collector health and Azure identity verified", source)
+        self.assertIn("API healthy · Azure runtime identity verified", source)
+        self.assertNotIn("const REQUEST_HEADER = 'X-ServiceTracer-Request-ID';", source)
+        self.assertNotIn("headers.set(REQUEST_HEADER", source)
 
     def test_api_uses_azure_instance_metadata_without_exposing_subscription_identity(self) -> None:
         source = SERVER.read_text(encoding="utf-8")
@@ -90,13 +90,12 @@ class FrontendAzureProvenanceMonitorTests(unittest.TestCase):
         self.assertNotIn('compute.get("subscriptionId")', source)
         self.assertNotIn('compute.get("tenantId")', source)
 
-    def test_installer_binds_runtime_identity_to_exact_reviewed_source(self) -> None:
+    def test_installer_binds_runtime_identity_to_exact_deployed_source(self) -> None:
         source = INSTALLER.read_text(encoding="utf-8")
 
         self.assertIn("SERVICETRACER_DEPLOYED_SOURCE_REF=${SOURCE_REF}", source)
-        self.assertIn("identity.get('verified') is not True", source)
-        self.assertIn("identity.get('source_ref') != expected_source_ref", source)
-        self.assertIn("('resource_group', 'vm_name', 'location')", source)
+        self.assertIn("SERVICETRACER_HOSTING_MODEL=dedicated_vm_subproject", source)
+        self.assertIn("SERVICETRACER_SOURCE_ID=${PUBLIC_FQDN}", source)
 
     def test_monitor_styles_remain_responsive(self) -> None:
         styles = MONITOR_STYLES.read_text(encoding="utf-8")
