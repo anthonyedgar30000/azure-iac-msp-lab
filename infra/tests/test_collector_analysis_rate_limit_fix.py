@@ -47,7 +47,7 @@ class CollectorAnalysisRateLimitFixTests(unittest.TestCase):
         )
         self.assertNotIn("Controlled demo fixture — API unavailable", app)
         self.assertIn("Health endpoint reachable", monitor)
-        self.assertIn("Collector health and Azure identity verified", monitor)
+        self.assertIn("API healthy · Azure runtime identity verified", monitor)
         self.assertNotIn("Frontend ↔ governed collector API live", monitor)
 
 
