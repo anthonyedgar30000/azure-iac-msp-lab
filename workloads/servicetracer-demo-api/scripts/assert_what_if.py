@@ -48,9 +48,9 @@ def classify(
         raise SystemExit("ARM What-If changes must be an array")
 
     target_marker = f"/resourceGroups/{target_resource_group}/".lower()
+    target_rg_ending = f"/resourceGroups/{target_resource_group}".lower()
     dependency_marker = f"/resourceGroups/{dependency_resource_group}/".lower()
-    required_endings = {
-        f"/resourceGroups/{target_resource_group}".lower(),
+    required_workload_endings = {
         f"/publicIPAddresses/pip-st-demo-api-vm-{suffix}".lower(),
         f"/virtualMachines/vm-st-demo-api-{suffix}".lower(),
     }
@@ -58,6 +58,7 @@ def classify(
     active: list[dict[str, str]] = []
     passive: list[str] = []
     seen: set[str] = set()
+    target_resource_group_state = "omitted_existing"
 
     for item in changes:
         if not isinstance(item, dict):
@@ -74,33 +75,48 @@ def classify(
         if dependency_marker in normalized and change_type not in PASSIVE_CHANGE_TYPES:
             raise SystemExit(f"Dependency resource would be mutated: {resource_id}")
 
+        is_target_rg = normalized.endswith(target_rg_ending)
+        if is_target_rg:
+            resource_type = _resource_type(item)
+            if resource_type and resource_type != "Microsoft.Resources/resourceGroups":
+                raise SystemExit(f"Unexpected target resource-group type {resource_type}: {resource_id}")
+            if change_type in PASSIVE_CHANGE_TYPES:
+                passive.append(resource_id)
+                target_resource_group_state = "existing_no_change"
+                continue
+            if change_type != "Create":
+                raise SystemExit(f"Unapproved change type {change_type}: {resource_id}")
+            active.append({"resource_id": resource_id, "change_type": change_type, "resource_type": resource_type})
+            target_resource_group_state = "create"
+            continue
+
         if change_type in PASSIVE_CHANGE_TYPES:
             passive.append(resource_id)
             continue
         if change_type not in ALLOWED_ACTIVE_CHANGE_TYPES:
             raise SystemExit(f"Unapproved change type {change_type}: {resource_id}")
 
-        is_target_rg = normalized.endswith(f"/resourcegroups/{target_resource_group}".lower())
-        if not is_target_rg and target_marker not in normalized:
+        if target_marker not in normalized:
             raise SystemExit(f"Active change leaves the dedicated resource group: {resource_id}")
 
         resource_type = _resource_type(item)
         if resource_type not in ALLOWED_TYPES:
             raise SystemExit(f"Unapproved resource type {resource_type}: {resource_id}")
 
-        for ending in required_endings:
+        for ending in required_workload_endings:
             if normalized.endswith(ending):
                 observed_required.add(ending)
         active.append({"resource_id": resource_id, "change_type": change_type, "resource_type": resource_type})
 
-    missing = sorted(required_endings - observed_required)
+    missing = sorted(required_workload_endings - observed_required)
     if missing:
         raise SystemExit("What-If omitted required workload resources: " + ", ".join(missing))
 
     return {
-        "schema_version": "servicetracer.demo-api-subproject-what-if.v1",
+        "schema_version": "servicetracer.demo-api-subproject-what-if.v2",
         "status": "accepted_independent_workload_create_plan",
         "target_resource_group": target_resource_group,
+        "target_resource_group_state": target_resource_group_state,
         "dependency_resource_group": dependency_resource_group,
         "active_changes": active,
         "passive_changes": passive,
