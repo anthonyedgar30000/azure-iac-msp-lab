@@ -9,11 +9,13 @@ WORKFLOW = ROOT / ".github" / "workflows" / "servicetracer-demo-api-subproject-p
 README = ROOT / "workloads" / "servicetracer-demo-api" / "README.md"
 RUNBOOK = ROOT / "docs" / "runbooks" / "servicetracer-demo-api-student-subscription-boundary.md"
 ASSESSOR = ROOT / "workloads" / "servicetracer-demo-api" / "scripts" / "assess_target_readiness.py"
+CAPTURE_SCRIPT = ROOT / "workloads" / "servicetracer-demo-api" / "scripts" / "capture_target_readiness.sh"
 
 
 class ServiceTracerDemoApiSingleSubscriptionBoundaryTests(unittest.TestCase):
     def setUp(self) -> None:
         self.workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.capture_script = CAPTURE_SCRIPT.read_text(encoding="utf-8")
 
     def test_planner_uses_existing_azure_lab_environment(self) -> None:
         self.assertIn("environment: azure-lab", self.workflow)
@@ -52,24 +54,42 @@ class ServiceTracerDemoApiSingleSubscriptionBoundaryTests(unittest.TestCase):
 
     def test_typed_readiness_fails_closed_after_complete_inventory(self) -> None:
         self.assertTrue(ASSESSOR.is_file())
-        self.assertIn("target-readiness-assessment.json", self.workflow)
+        self.assertTrue(CAPTURE_SCRIPT.is_file())
+        self.assertIn("capture_target_readiness.sh", self.workflow)
+        self.assertIn("target-readiness-assessment.json", self.capture_script)
         self.assertIn("blocked_target_readiness", ASSESSOR.read_text(encoding="utf-8"))
-        target_inventory = self.workflow.index('az group show --name "$target_resource_group"')
-        readiness_assessment = self.workflow.index("assess_target_readiness.py")
-        what_if = self.workflow.index("Validate and capture Azure for Students What-If")
+        target_inventory = self.capture_script.index('az group show --name "$target_resource_group"')
+        readiness_assessment = self.capture_script.index("assess_target_readiness.py")
         self.assertLess(target_inventory, readiness_assessment)
-        self.assertLess(readiness_assessment, what_if)
-        self.assertIn('.status=="ready_for_arm_what_if"', self.workflow)
-        self.assertIn("Target readiness rejected", self.workflow)
+        capture_step = self.workflow.index("capture_target_readiness.sh")
+        what_if = self.workflow.index("Validate and capture Azure for Students What-If")
+        self.assertLess(capture_step, what_if)
+        self.assertIn('.status=="ready_for_arm_what_if"', self.capture_script)
+        self.assertIn("Target readiness rejected", self.capture_script)
 
     def test_resource_group_absence_is_not_inferred_from_generic_failure(self) -> None:
-        self.assertIn("existing-target-resource-group.error.txt", self.workflow)
-        self.assertIn("group_show_exit_status", self.workflow)
-        self.assertIn("ResourceGroupNotFound", self.workflow)
-        self.assertIn("observation_failed", self.workflow)
-        self.assertIn("resource_list_exit_status", self.workflow)
-        self.assertIn("target_resource_group_observation_failed", ASSESSOR.read_text(encoding="utf-8"))
-        self.assertIn("target_resource_inventory_not_authoritative", ASSESSOR.read_text(encoding="utf-8"))
+        self.assertIn("existing-target-resource-group.error.txt", self.capture_script)
+        self.assertIn("group_show_exit_status", self.capture_script)
+        self.assertIn("ResourceGroupNotFound", self.capture_script)
+        self.assertIn("observation_failed", self.capture_script)
+        self.assertIn("resource_list_exit_status", self.capture_script)
+        assessor = ASSESSOR.read_text(encoding="utf-8")
+        self.assertIn("target_resource_group_observation_failed", assessor)
+        self.assertIn("target_resource_inventory_not_authoritative", assessor)
+
+    def test_diagnostic_capture_preserves_command_failures(self) -> None:
+        for marker in (
+            "azure-inspection-diagnostics.json",
+            "provider-compute.error.txt",
+            "provider-network.error.txt",
+            "target-policy-assignments.error.txt",
+            "compute-usage.error.txt",
+            "network-usage.error.txt",
+            "vm-size-availability.error.txt",
+            "exit_status",
+            "succeeded",
+        ):
+            self.assertIn(marker, self.capture_script)
 
     def test_documentation_preserves_manual_setup_boundary(self) -> None:
         readme = README.read_text(encoding="utf-8")
