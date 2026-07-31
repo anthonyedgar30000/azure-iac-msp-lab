@@ -1,0 +1,74 @@
+{
+  "artifact": {
+    "artifact_id": 8805026018,
+    "created_at": "2026-07-31T19:52:06Z",
+    "expired_when_observed": false,
+    "expires_at": "2026-08-30T19:52:06Z",
+    "name": "servicetracer-demo-api-subproject-plan-30660575435-1",
+    "sha256": "76911fb3b626786593df022bdfb654c01efde11cd0b3dc1809679c431f11d1f2"
+  },
+  "authority": {
+    "azure_authentication_performed": true,
+    "azure_mutations_authorized": false,
+    "azure_mutations_performed": false,
+    "deployment_authorized_by_plan": false,
+    "planning_attempt_consumed": true,
+    "rerun_authorized": false
+  },
+  "claim_boundary": "This proves a successful, exact-commit-bound read-only plan and accepted create-only What-If at the recorded time. It does not by itself prove deployment, service health, current quota, current cost, or current student credit.",
+  "readiness": {
+    "compute_provider_registered": true,
+    "network_provider_registered": true,
+    "requested_vcpus": 1,
+    "requested_vm_size_unrestricted": true,
+    "standard_ipv4_public_ips_current": 2,
+    "standard_ipv4_public_ips_limit": 20,
+    "status": "ready_for_arm_what_if",
+    "target_existing_resource_count": 2,
+    "target_resource_group_state": "observed_existing",
+    "total_regional_vcpus_current": 6,
+    "total_regional_vcpus_limit": 10,
+    "vm_family_vcpus_current": 0,
+    "vm_family_vcpus_limit": 10
+  },
+  "recorded_at": "2026-07-31T16:39:00-04:00",
+  "schema_version": "servicetracer.demo-api-plan-evidence.v1",
+  "scope": {
+    "dependency_resource_group": "rg-servicetracer-dev-westus2",
+    "dns_label": "st-demo-api-vm-aeg30001",
+    "environment": "dev",
+    "location": "westus2",
+    "maximum_monthly_cost_ceiling_cad": 25.0,
+    "subscription_identifiers_promoted": false,
+    "subscription_name": "Azure for Students",
+    "subscription_state": "Enabled",
+    "target_resource_group": "rg-st-demo-api-dev-westus2",
+    "vm_size": "Standard_F1als_v7"
+  },
+  "source": {
+    "conclusion": "success",
+    "head_branch": "main",
+    "head_sha": "ae08e7a72c14ec6deaddd3fa0f8c84b8342e0be3",
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "workflow": ".github/workflows/servicetracer-demo-api-subproject-plan.yml",
+    "workflow_run_attempt": 1,
+    "workflow_run_id": 30660575435
+  },
+  "what_if": {
+    "base_infrastructure_modifications": [],
+    "creates": [
+      "Microsoft.Compute/virtualMachines/vm-st-demo-api-mst-dev",
+      "Microsoft.Compute/virtualMachines/vm-st-demo-api-mst-dev/extensions/servicetracer-demo-api",
+      "Microsoft.Network/networkInterfaces/nic-st-demo-api-mst-dev",
+      "Microsoft.Network/publicIPAddresses/pip-st-demo-api-vm-mst-dev"
+    ],
+    "dependency_modifications": [],
+    "passive_existing_resources": [
+      "Microsoft.Resources/resourceGroups/rg-st-demo-api-dev-westus2",
+      "Microsoft.Network/networkSecurityGroups/nsg-st-demo-api-mst-dev",
+      "Microsoft.Network/virtualNetworks/vnet-st-demo-api-mst-dev"
+    ],
+    "status": "accepted_independent_workload_create_plan",
+    "target_resource_group_state": "existing_no_change"
+  }
+}
