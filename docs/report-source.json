@@ -1,16 +1,16 @@
 {
   "schema_version": "servicetracer.report-source.v1",
   "live_report_url": "",
-  "live_demo_api_url": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
-  "candidate_demo_api_url": "https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run",
+  "live_demo_api_url": "https://st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com/api/demo/run",
+  "candidate_demo_api_url": "https://st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com/api/demo/run",
   "expected_azure_host": {
-    "resource_group": "rg-servicetracer-dev-westus2",
-    "vm_name": "vm-stcollector-mst-dev",
+    "resource_group": "rg-st-demo-api-dev-westus2",
+    "vm_name": "vm-st-demo-api-mst-dev",
     "location": "westus2",
-    "hosting_model": "collector_vm_systemd"
+    "hosting_model": "dedicated_vm_subproject"
   },
   "fallback_report_url": "technician-handoff-report.json",
-  "activation_status": "collector_live_default_pending_github_pages_verification",
-  "evidence_anchor": ".project/reconciliations/collector-demo-api-deployment-run18-20260726.json",
-  "claim_boundary": "The normal frontend is bound to the collector-hosted API deployed by run 30196388398 and accepts the live monitor as governed only when the API reports the exact expected Azure resource group, collector VM, region, hosting model, and a valid deployed source commit. The controlled fixture remains the fail-closed fallback when health, CORS, provenance identity, or the live transaction request fails. Repository binding does not by itself prove GitHub Pages publication, exact-source runtime deployment, browser-path completion, or downstream service success. A rendered monitor also does not by itself prove those outcomes, and the independent VM API is not permitted to satisfy the collector golden-path gate."
+  "activation_status": "independent_demo_api_live_default_pending_github_pages_verification",
+  "evidence_anchor": ".project/evidence/servicetracer-demo-api-deployment-run-30661015789.json",
+  "claim_boundary": "The normal frontend is bound to the independently deployed ServiceTracer demo API created by deployment run 30661015789 from accepted plan run 30660575435. The controlled fixture remains the fail-closed fallback when health, CORS, provenance identity, or the live transaction request fails. Repository binding does not by itself prove GitHub Pages publication, browser-path completion, Azure instance-metadata verification, or downstream transaction success."
 }
