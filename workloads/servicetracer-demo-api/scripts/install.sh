@@ -119,7 +119,18 @@ server {
     listen [::]:80;
     server_name ${PUBLIC_FQDN};
 
-    location /api/ {
+    location = /api/health {
+        proxy_pass http://127.0.0.1:${LOCAL_PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout ${PROXY_READ_TIMEOUT_SECONDS}s;
+        client_max_body_size 4k;
+    }
+
+    location = /api/demo/run {
         limit_req zone=servicetracer_demo_api burst=2 nodelay;
         proxy_pass http://127.0.0.1:${LOCAL_PORT};
         proxy_http_version 1.1;
@@ -129,6 +140,10 @@ server {
         proxy_connect_timeout 5s;
         proxy_read_timeout ${PROXY_READ_TIMEOUT_SECONDS}s;
         client_max_body_size 4k;
+    }
+
+    location /api/ {
+        return 404;
     }
 
     location / {
