@@ -104,7 +104,10 @@ jobs:
           [[ "$DEPENDENCY_RESOURCE_GROUP" =~ ^rg-servicetracer-(dev|test)(-[a-z0-9-]+)?$ ]]
           [[ "$DNS_LABEL" =~ ^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$ ]]
           [[ "$ALLOWED_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]
-          [[ "$ADMIN_SSH_PUBLIC_KEY" =~ ^ssh-(ed25519|rsa)[[:space:]][A-Za-z0-9+/=]+([[:space:]].*)?$ ]]
+          [[ "$ADMIN_SSH_PUBLIC_KEY" =~ ^ssh-(ed25519|rsa)[[:space:]][A-Za-z0-9+/=]+([[:space:]].*)?$ ]] || {
+            echo "SERVICETRACER_DEMO_API_ADMIN_SSH_PUBLIC_KEY must contain one valid ssh-ed25519 or ssh-rsa public key" >&2
+            exit 1
+          }
           expected="DEPLOY-DEMO-API-SUBPROJECT:${LAB_ENVIRONMENT}:${DNS_LABEL}:${APPROVED_PLAN_RUN_ID}"
           [[ "$CONFIRMATION" == "$expected" ]] || {
             echo "Confirmation must exactly equal: $expected" >&2
@@ -148,7 +151,7 @@ jobs:
           test -s "$PLAN_ARTIFACT_DIR/request.json"
           test -s "$PLAN_ARTIFACT_DIR/what-if-assessment.json"
           test -s "$PLAN_ARTIFACT_DIR/artifact-manifest.sha256"
-          (cd "$PLAN_ARTIFACT_DIR" && sha256sum --check artifact-manifest.sha256)
+          bash workloads/servicetracer-demo-api/scripts/verify_downloaded_plan_manifest.sh "$PLAN_ARTIFACT_DIR"
           jq -e \
             --arg sha "$APPROVED_PLAN_COMMIT" \
             --arg environment "$LAB_ENVIRONMENT" \
