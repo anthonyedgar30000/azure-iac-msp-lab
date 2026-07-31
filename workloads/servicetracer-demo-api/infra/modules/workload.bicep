@@ -66,6 +66,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         '10.30.0.0/24'
       ]
     }
+    privateEndpointVNetPolicies: 'Disabled'
     subnets: [
       {
         name: subnetName
