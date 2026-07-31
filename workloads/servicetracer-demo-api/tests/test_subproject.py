@@ -58,6 +58,12 @@ class ServiceTracerDemoApiSubprojectTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, source)
 
+    def test_existing_resource_group_is_not_tag_mutated(self):
+        source = MAIN.read_text(encoding="utf-8")
+        resource_group_block = source.split("resource workloadResourceGroup", 1)[1].split("module workload", 1)[0]
+        self.assertNotIn("tags:", resource_group_block)
+        self.assertIn("tags: commonTags", source.split("module workload", 1)[1])
+
     def test_workflow_binds_to_dispatch_sha_and_is_read_only(self):
         source = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("ref: ${{ github.sha }}", source)
