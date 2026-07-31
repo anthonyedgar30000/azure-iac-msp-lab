@@ -6,7 +6,6 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 
-
 class PostDeploymentRuntimeSyncTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -36,6 +35,9 @@ class PostDeploymentRuntimeSyncTests(unittest.TestCase):
         self.assertTrue(self.deploy['artifact']['internal_manifest_verified'])
         self.assertEqual(self.deploy['artifact']['internal_manifest_entries'], 45)
         self.assertEqual(self.deploy['deployment']['provisioning_state'], 'Succeeded')
+        service = self.reality['domain_state']['servicetracer_demo_api']
+        self.assertFalse(service['repository_head_matches_deployed_source_ref'])
+        self.assertEqual(service['undeployed_repository_commits'], ['b5bfd616d2f3faab5f692301c4b71c46a6f9557f', '2ad9557e21cddeed6fc9437c8f20c32b387bf2a2'])
 
     def test_runtime_health_and_identity_are_bounded(self) -> None:
         runtime = self.deploy['runtime_evidence']
@@ -70,7 +72,6 @@ class PostDeploymentRuntimeSyncTests(unittest.TestCase):
         self.assertIn('GitHub Pages publication', self.handoff)
         self.assertIn('POST /api/demo/run', self.handoff)
         self.assertIn('actual month-to-date cost', self.handoff)
-
 
 if __name__ == '__main__':
     unittest.main()
