@@ -55,7 +55,6 @@ var commonTags = {
 resource workloadResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   name: resourceGroupName
   location: location
-  tags: commonTags
 }
 
 module workload './modules/workload.bicep' = {
