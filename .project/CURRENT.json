@@ -59,8 +59,12 @@
   "latest_repository_sync_reconciliation": ".project/reconciliations/servicetracer-plan-deploy-runtime-sync-20260731.json",
   "latest_servicetracer_deployment_evidence": ".project/evidence/servicetracer-demo-api-deployment-run-30661015789.json",
   "latest_servicetracer_plan_evidence": ".project/evidence/servicetracer-demo-api-plan-run-30660575435.json",
+  "latest_servicetracer_terminal_reconciliation": ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json",
+  "pending_azure_ai_terminal_reconciliation": null,
+  "prior_azure_ai_trigger_sync": ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json",
   "project": "Azure IaC MSP Lab",
   "recorded_at": "2026-07-31T16:39:00-04:00",
   "schema_version": "project.current-selector.v2",
-  "selection_rule": "Resolve the selected versioned reality, state index, and handoff before current operations. Re-query live GitHub and Azure before writes, workflow dispatch, merge, repair, or cleanup. Historical selectors and evidence remain immutable compatibility records. No operational authorization is active unless a later selector explicitly names one."
+  "selection_rule": "Resolve the selected versioned reality, state index, and handoff before current operations. Re-query live GitHub and Azure before writes, workflow dispatch, merge, repair, or cleanup. Current main may differ from the deployed source ref; never infer runtime updates from repository commits. No operational authorization is active unless a later selector explicitly names one.",
+  "servicetracer_connector_blocker": ".project/reconciliations/servicetracer-demo-api-plan-run1-connector-event-blocked-20260729.json"
 }
