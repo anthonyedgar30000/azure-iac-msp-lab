@@ -24,6 +24,7 @@
   },
   "canonical_distinctions": [
     "declared_in_code != deployed_in_azure",
+    "current_main != deployed_source_ref",
     "deployment_succeeded != service_validated",
     "health_endpoint_verified != transaction_path_verified",
     "public_FQDN_from_VM_guest != external_browser_path",
@@ -100,7 +101,9 @@
       "planning_run_conclusion": "success",
       "planning_run_id": 30660575435,
       "public_fqdn_https_health_verified_from_vm_guest": true,
+      "repository_head_matches_deployed_source_ref": false,
       "resource_group": "rg-st-demo-api-dev-westus2",
+      "runtime_drift_status": "running_vm_bound_to_ae08e7a_while_main_contains_two_later_installer_fixes",
       "runtime_identity_location_matches": true,
       "runtime_identity_resource_group_matches": true,
       "runtime_identity_source_ref_matches": true,
@@ -110,6 +113,10 @@
       "subscription_name": "Azure for Students",
       "subscription_state_at_deployment": "Enabled",
       "transaction_post_verified": false,
+      "undeployed_repository_commits": [
+        "b5bfd616d2f3faab5f692301c4b71c46a6f9557f",
+        "2ad9557e21cddeed6fc9437c8f20c32b387bf2a2"
+      ],
       "vm_extension_succeeded": true,
       "vm_name": "vm-st-demo-api-mst-dev",
       "vm_running": true,
@@ -124,6 +131,7 @@
     "external_browser_path_freshly_verified": false,
     "monitoring_alert_delivery_freshly_verified": false,
     "policy_effects_freshly_observed_after_deployment": false,
+    "post_deployment_installer_fixes_applied_to_runtime": false,
     "recovery_freshly_tested": false,
     "student_credit_freshly_observed": false,
     "transaction_post_freshly_verified": false
@@ -132,6 +140,7 @@
   "next_gate": {
     "operation": "read_only_external_service_validation_and_cost_resilience_observation",
     "requirements": [
+      "decide whether the two post-deployment installer fixes require a separately planned and authorized runtime update",
       "verify GitHub Pages publication and browser-to-API health path from an external client",
       "verify exact CORS behavior and one bounded POST /api/demo/run transaction",
       "capture downstream transaction outcome without claiming unsupported root cause",
@@ -145,13 +154,13 @@
   "repository": "anthonyedgar30000/azure-iac-msp-lab",
   "repository_state": {
     "default_branch": "main",
-    "direct_commits_after_latest_merged_pr_observed": 9,
+    "direct_commits_after_latest_merged_pr_observed": 11,
     "exact_head_ci_observed": false,
     "latest_merged_pull_request": 260,
     "latest_merged_pull_request_merge_commit": "5576f36ee67dc81f7943ddab9d1ab04333142b75",
     "latest_merged_pull_request_source_head": "1e3d4cb6e475af19e84cda3fbc61533da7590adb",
     "local_working_tree": "not_observed_connector_backed",
-    "observed_main": "e25125865bc25a5095a0ebf24c886594a2a63927",
+    "observed_main": "2ad9557e21cddeed6fc9437c8f20c32b387bf2a2",
     "open_pull_requests_observed": []
   },
   "schema_version": "project.current-reality.v11",
