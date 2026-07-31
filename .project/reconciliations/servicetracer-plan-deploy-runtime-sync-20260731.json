@@ -30,7 +30,7 @@
     "selector": ".project/CURRENT.json",
     "state_index": ".project/state-index-v15.json"
   },
-  "claim_boundary": "This reconciliation promotes repository, workflow artifact, deployment inventory, and operator visual runtime evidence. It does not perform or authorize a new Azure operation and does not convert unverified browser, transaction, cost, monitoring, backup, recovery, or cleanup claims into facts.",
+  "claim_boundary": "This reconciliation promotes repository, workflow artifact, deployment inventory, and operator visual runtime evidence. It does not perform or authorize a new Azure operation and does not convert unverified browser, transaction, cost, monitoring, backup, recovery, or cleanup claims into facts. Current main contains two post-deployment installer fixes that are not proven applied to the running VM.",
   "cost": {
     "actual_cost_freshly_observed": false,
     "expected_monthly_cost_freshly_repriced": false,
@@ -68,15 +68,26 @@
   "recorded_at": "2026-07-31T16:39:00-04:00",
   "repository": {
     "default_branch": "main",
-    "direct_commits_after_pr260_observed": 9,
+    "direct_commits_after_pr260_observed": 11,
     "exact_head_ci_observed_for_main": false,
     "latest_merged_pull_request": 260,
     "latest_merged_pull_request_merge_commit": "5576f36ee67dc81f7943ddab9d1ab04333142b75",
     "latest_merged_pull_request_source_head": "1e3d4cb6e475af19e84cda3fbc61533da7590adb",
     "local_working_tree": "not_observed_connector_backed",
-    "observed_main": "e25125865bc25a5095a0ebf24c886594a2a63927",
+    "observed_main": "2ad9557e21cddeed6fc9437c8f20c32b387bf2a2",
     "open_pull_requests_observed_before_sync": [],
-    "repository": "anthonyedgar30000/azure-iac-msp-lab"
+    "post_deployment_repository_commits_not_applied_to_runtime": [
+      {
+        "message": "Fix demo API health rate limiting",
+        "sha": "b5bfd616d2f3faab5f692301c4b71c46a6f9557f"
+      },
+      {
+        "message": "Fix Azure runtime source provenance",
+        "sha": "2ad9557e21cddeed6fc9437c8f20c32b387bf2a2"
+      }
+    ],
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "repository_head_matches_deployed_source_ref": false
   },
   "schema_version": "project.reconciliation.v1",
   "source_instruction": "Proceed"
