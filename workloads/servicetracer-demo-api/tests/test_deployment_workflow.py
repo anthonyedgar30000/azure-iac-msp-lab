@@ -20,7 +20,7 @@ class ServiceTracerDeploymentWorkflowTests(unittest.TestCase):
         self.assertIn('ref: ${{ inputs.approved_plan_commit }}', self.source)
         self.assertIn('run-id: ${{ inputs.approved_plan_run_id }}', self.source)
         self.assertIn("artifact-manifest.sha256", self.source)
-        self.assertIn("sha256sum --check", self.source)
+        self.assertIn("verify_downloaded_plan_manifest.sh", self.source)
         self.assertIn("DEPLOY-DEMO-API-SUBPROJECT", self.source)
 
     def test_real_ssh_public_key_is_required_before_login(self) -> None:
