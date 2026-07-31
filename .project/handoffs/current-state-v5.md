@@ -6,6 +6,7 @@ This is the authoritative repository and evidence handoff selected by `.project/
 
 ```text
 declared_in_code != deployed_in_azure
+current_main != deployed_source_ref
 deployment_succeeded != service_validated
 health_endpoint_verified != transaction_path_verified
 public_FQDN_from_VM_guest != external_browser_path
@@ -31,11 +32,11 @@ deployment evidence: .project/evidence/servicetracer-demo-api-deployment-run-306
 
 ```text
 repository: anthonyedgar30000/azure-iac-msp-lab
-observed main: e25125865bc25a5095a0ebf24c886594a2a63927
+observed main: 2ad9557e21cddeed6fc9437c8f20c32b387bf2a2
 latest merged PR: #260
 PR #260 merge commit: 5576f36ee67dc81f7943ddab9d1ab04333142b75
 PR #260 source head: 1e3d4cb6e475af19e84cda3fbc61533da7590adb
-direct commits after PR #260 observed: 9
+direct commits after PR #260 observed: 11
 open pull requests observed before this sync: none
 exact-head CI for current main: not observed
 local working tree: not observed through connector
@@ -129,6 +130,17 @@ source ref: ae08e7a72c14ec6deaddd3fa0f8c84b8342e0be3
 
 The HTTPS command succeeded without an insecure curl flag, supporting certificate-chain acceptance by that guest. Certificate metadata was not captured. Because the command ran from the VM guest, it does not prove the external browser path.
 
+## Repository-to-runtime drift
+
+The running VM reports deployed source `ae08e7a72c14ec6deaddd3fa0f8c84b8342e0be3`, while current `main` is `2ad9557e21cddeed6fc9437c8f20c32b387bf2a2`. Two later repository commits are not proven applied to the VM:
+
+```text
+b5bfd616d2f3faab5f692301c4b71c46a6f9557f  Fix demo API health rate limiting
+2ad9557e21cddeed6fc9437c8f20c32b387bf2a2  Fix Azure runtime source provenance
+```
+
+This is declared-versus-deployed drift, not a failed deployment claim. Applying either fix to the guest requires a separately planned and authorized runtime update; this sync performs no repair or redeployment.
+
 ## Service-validation boundary
 
 Established:
@@ -177,4 +189,4 @@ The deployed VM, disk, public IP, and related resources are cost-bearing while p
 
 ## Next gate
 
-Perform a separately bounded read-only external validation: confirm GitHub Pages publication and browser health, verify exact CORS behavior, execute one bounded POST transaction, capture the downstream result without claiming an unsupported root cause, and query cost, credit, monitoring, diagnostics, backup, and recovery status. Any repair, rerun, cleanup, or additional Azure mutation requires separate explicit authority.
+First decide whether the two post-deployment installer fixes need a separately planned runtime update. Then perform a separately bounded read-only external validation: confirm GitHub Pages publication and browser health, verify exact CORS behavior, execute one bounded POST transaction, capture the downstream result without claiming an unsupported root cause, and query cost, credit, monitoring, diagnostics, backup, and recovery status. Any repair, rerun, cleanup, or additional Azure mutation requires separate explicit authority.
