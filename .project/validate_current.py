@@ -11,15 +11,12 @@ TEST_LOG = Path('/tmp/tests.log')
 SHA = re.compile(r'^[0-9a-f]{40}$')
 SHA256 = re.compile(r'^[0-9a-f]{64}$')
 
-
 class ValidationError(RuntimeError):
     pass
-
 
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise ValidationError(message)
-
 
 def load_json(path: Path) -> dict:
     try:
@@ -31,21 +28,17 @@ def load_json(path: Path) -> dict:
     require(isinstance(value, dict), f'{path} must contain a JSON object')
     return value
 
-
 def require_sha(value, field: str) -> None:
     require(isinstance(value, str) and SHA.fullmatch(value) is not None, f'{field} must be a lowercase 40-character SHA')
 
-
 def require_digest(value, field: str) -> None:
     require(isinstance(value, str) and SHA256.fullmatch(value.removeprefix('sha256:')) is not None, f'{field} must be a SHA-256 digest')
-
 
 def write_log(message: str) -> None:
     try:
         TEST_LOG.write_text(message.rstrip() + '\n', encoding='utf-8')
     except OSError:
         pass
-
 
 def validate_selector() -> tuple[dict, dict, dict, str]:
     selector = load_json(ROOT / 'CURRENT.json')
@@ -59,7 +52,6 @@ def validate_selector() -> tuple[dict, dict, dict, str]:
     handoff = (REPOSITORY_ROOT / selector['authoritative_handoff']).read_text(encoding='utf-8')
     return selector, reality, index, handoff
 
-
 def validate_current_state(selector: dict, reality: dict, index: dict, handoff: str) -> None:
     require(reality.get('schema_version') == 'project.current-reality.v11', 'current reality schema mismatch')
     require(index.get('schema_version') == 'project.state-index.v15', 'state index schema mismatch')
@@ -68,6 +60,7 @@ def validate_current_state(selector: dict, reality: dict, index: dict, handoff: 
     repo = reality.get('repository_state', {})
     require_sha(repo.get('observed_main'), 'repository_state.observed_main')
     require(repo.get('latest_merged_pull_request') == 260, 'latest merged PR must be 260')
+    require(repo.get('observed_main') == '2ad9557e21cddeed6fc9437c8f20c32b387bf2a2', 'repository watermark mismatch')
     require(repo.get('open_pull_requests_observed') == [], 'sync must begin with no observed open PRs')
     service = reality.get('domain_state', {}).get('servicetracer_demo_api', {})
     expected_true = (
@@ -85,10 +78,11 @@ def validate_current_state(selector: dict, reality: dict, index: dict, handoff: 
     require(service.get('planning_run_id') == 30660575435, 'planning run mismatch')
     require(service.get('deployment_run_id') == 30661015789, 'deployment run mismatch')
     require_sha(service.get('deployed_source_ref'), 'servicetracer_demo_api.deployed_source_ref')
+    require(service.get('repository_head_matches_deployed_source_ref') is False, 'repository/runtime drift must be explicit')
+    require(service.get('undeployed_repository_commits') == ['b5bfd616d2f3faab5f692301c4b71c46a6f9557f', '2ad9557e21cddeed6fc9437c8f20c32b387bf2a2'], 'undeployed commit set mismatch')
     require(all(value is None for value in index.get('active_authorizations', {}).values()), 'no operational authority may remain active')
     for marker in ('deployment_succeeded != service_validated', 'public_FQDN_from_VM_guest != external_browser_path', 'active cleanup authority: none', 'actual month-to-date cost'):
         require(marker in handoff, f'handoff is missing marker: {marker}')
-
 
 def validate_evidence() -> None:
     plan = load_json(ROOT / 'evidence' / 'servicetracer-demo-api-plan-run-30660575435.json')
@@ -116,7 +110,6 @@ def validate_evidence() -> None:
     for field in ('workflow_dispatch_or_rerun_by_this_sync', 'azure_authentication_or_query_by_this_sync', 'guest_command_by_this_sync', 'arm_what_if_by_this_sync', 'azure_mutation_by_this_sync', 'deployment', 'cleanup', 'rollback'):
         require(authority.get(field) is False, f'reconciliation authority field {field} must be false')
 
-
 def validate_workflows_and_frontend() -> None:
     planner = (REPOSITORY_ROOT / '.github/workflows/servicetracer-demo-api-subproject-plan.yml').read_text(encoding='utf-8')
     deployer = (REPOSITORY_ROOT / '.github/workflows/servicetracer-demo-api-subproject-deploy.yml').read_text(encoding='utf-8')
@@ -132,7 +125,6 @@ def validate_workflows_and_frontend() -> None:
     require(source.get('candidate_demo_api_url') == expected, 'frontend candidate API URL mismatch')
     require(source.get('activation_status') == 'independent_demo_api_live_default_pending_github_pages_verification', 'frontend activation status mismatch')
     require(source.get('evidence_anchor') == '.project/evidence/servicetracer-demo-api-deployment-run-30661015789.json', 'frontend evidence anchor mismatch')
-
 
 def main() -> int:
     stage = 'startup'
@@ -154,7 +146,6 @@ def main() -> int:
     print(message)
     write_log(message)
     return 0
-
 
 if __name__ == '__main__':
     raise SystemExit(main())
