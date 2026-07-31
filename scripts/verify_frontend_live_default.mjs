@@ -20,16 +20,16 @@ const outputDirectory = process.env.VERIFICATION_OUTPUT_DIR
   || path.join(repositoryRoot, 'browser-evidence');
 const chromePath = process.env.CHROME_PATH;
 const expectedOrigin = 'https://anthonyedgar30000.github.io';
-const expectedApi = 'https://st-demo-api-aeg30000.westus2.cloudapp.azure.com/api/demo/run';
+const expectedApi = 'https://st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com/api/demo/run';
 const sourceConfig = JSON.parse(
   fs.readFileSync(path.join(repositoryRoot, 'docs', 'report-source.json'), 'utf8'),
 );
 const liveUrl = sourceConfig.live_demo_api_url;
 
 requireCondition(chromePath, 'CHROME_PATH is required');
-requireCondition(liveUrl === expectedApi, 'live_demo_api_url is not the deployed collector API');
+requireCondition(liveUrl === expectedApi, 'live_demo_api_url is not the deployed independent API');
 requireCondition(
-  sourceConfig.activation_status === 'collector_live_default_pending_github_pages_verification',
+  sourceConfig.activation_status === 'independent_demo_api_live_default_pending_github_pages_verification',
   'activation status is not the expected pre-verification state',
 );
 requireCondition(sourceConfig.fallback_report_url === 'technician-handoff-report.json', 'fixture fallback changed');
