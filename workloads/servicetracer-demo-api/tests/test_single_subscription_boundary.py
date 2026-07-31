@@ -65,7 +65,8 @@ class ServiceTracerDemoApiSingleSubscriptionBoundaryTests(unittest.TestCase):
         what_if = self.workflow.index("Validate and capture Azure for Students What-If")
         self.assertLess(capture_step, what_if)
         self.assertIn('.status=="ready_for_arm_what_if"', self.capture_script)
-        self.assertIn("Target readiness rejected", self.capture_script)
+        self.assertIn(".blocking_reasons", self.capture_script)
+        self.assertIn("exit 1", self.capture_script)
 
     def test_resource_group_absence_is_not_inferred_from_generic_failure(self) -> None:
         self.assertIn("existing-target-resource-group.error.txt", self.capture_script)
