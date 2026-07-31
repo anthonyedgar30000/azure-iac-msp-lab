@@ -156,7 +156,7 @@ class AzureAiGoLiveRun8Tests(unittest.TestCase):
         self.assertEqual(self.sync["cost"]["azure_resource_cost_delta"], "not_established")
         self.assertIn("push run not retrieved != push run did not occur", self.sync_handoff)
 
-    def test_selector_applies_terminal_supersession(self) -> None:
+    def test_selector_preserves_terminal_lineage_after_servicetracer_deployment(self) -> None:
         sync_path = ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json"
         self.assertIsNone(self.selector["active_azure_ai_activation_authorization"])
         self.assertEqual(self.selector["prior_azure_ai_trigger_sync"], sync_path)
@@ -166,8 +166,12 @@ class AzureAiGoLiveRun8Tests(unittest.TestCase):
             ".project/reconciliations/azure-ai-go-live-run8-terminal-20260730.json",
         )
         self.assertEqual(
-            self.selector["latest_operational_overlay"],
+            self.selector["latest_servicetracer_terminal_reconciliation"],
             ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json",
+        )
+        self.assertEqual(
+            self.selector["latest_operational_overlay"],
+            ".project/evidence/servicetracer-demo-api-deployment-run-30661015789.json",
         )
         self.assertIsNone(self.selector["active_servicetracer_planning_authorization"])
 

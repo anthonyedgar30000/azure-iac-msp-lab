@@ -1,0 +1,94 @@
+{
+  "active_authorizations_after_sync": {
+    "azure_ai_activation": null,
+    "servicetracer_cleanup": null,
+    "servicetracer_deployment": null,
+    "servicetracer_planning": null
+  },
+  "authority": {
+    "arm_what_if_by_this_sync": false,
+    "azure_authentication_or_query_by_this_sync": false,
+    "azure_mutation_by_this_sync": false,
+    "cleanup": false,
+    "deployment": false,
+    "entra_identity_mutation": false,
+    "github_environment_or_secret_mutation": false,
+    "guest_command_by_this_sync": false,
+    "merge_after_green_and_freshness_recheck": true,
+    "ordinary_exact_head_ci": true,
+    "pull_request_creation": true,
+    "rbac_mutation": false,
+    "repository_branch_and_declared_writes": true,
+    "rollback": false,
+    "workflow_dispatch_or_rerun_by_this_sync": false
+  },
+  "canonical_promotion": {
+    "current_reality": ".project/current-reality-v6.json",
+    "current_validator": ".project/validate_current.py",
+    "handoff": ".project/handoffs/current-state-v5.md",
+    "regression_test": "infra/tests/test_post_deployment_runtime_sync.py",
+    "selector": ".project/CURRENT.json",
+    "state_index": ".project/state-index-v15.json"
+  },
+  "claim_boundary": "This reconciliation promotes repository, workflow artifact, deployment inventory, and operator visual runtime evidence. It does not perform or authorize a new Azure operation and does not convert unverified browser, transaction, cost, monitoring, backup, recovery, or cleanup claims into facts. Current main contains two post-deployment installer fixes that are not proven applied to the running VM.",
+  "cost": {
+    "actual_cost_freshly_observed": false,
+    "expected_monthly_cost_freshly_repriced": false,
+    "planning_ceiling_cad": 25.0,
+    "running_cost_bearing_resources_observed": true,
+    "student_credit_freshly_observed": false
+  },
+  "next_gate": {
+    "operation": "read_only_external_service_validation_and_cost_resilience_observation",
+    "requirements": [
+      "verify GitHub Pages publication and browser-to-API health path from an external client",
+      "verify exact CORS behavior and one bounded POST /api/demo/run transaction",
+      "capture downstream transaction outcome without claiming unsupported root cause",
+      "query actual month-to-date cost and remaining student credit read-only",
+      "observe monitoring, diagnostics, backup configuration, and recovery-test status",
+      "keep cleanup and additional Azure mutation separately authorized"
+    ]
+  },
+  "prior_canonical_state": {
+    "authoritative_current_reality": ".project/current-reality-v5.json",
+    "authoritative_handoff": ".project/handoffs/current-state-v4.md",
+    "authoritative_state_index": ".project/state-index-v14.json",
+    "recorded_main": "af4b050ab18110882e3551f66c69eb2b73a73f7b",
+    "selector_recorded_at": "2026-07-30T08:02:00-04:00",
+    "staleness_classification": "superseded_by_successful_plan_deployment_and_runtime_health_evidence"
+  },
+  "project": "Azure IaC MSP Lab",
+  "promoted_evidence": {
+    "deployed_source_ref": "ae08e7a72c14ec6deaddd3fa0f8c84b8342e0be3",
+    "deployment": ".project/evidence/servicetracer-demo-api-deployment-run-30661015789.json",
+    "deployment_run_id": 30661015789,
+    "plan": ".project/evidence/servicetracer-demo-api-plan-run-30660575435.json",
+    "plan_run_id": 30660575435
+  },
+  "recorded_at": "2026-07-31T16:39:00-04:00",
+  "repository": {
+    "default_branch": "main",
+    "direct_commits_after_pr260_observed": 11,
+    "exact_head_ci_observed_for_main": false,
+    "latest_merged_pull_request": 260,
+    "latest_merged_pull_request_merge_commit": "5576f36ee67dc81f7943ddab9d1ab04333142b75",
+    "latest_merged_pull_request_source_head": "1e3d4cb6e475af19e84cda3fbc61533da7590adb",
+    "local_working_tree": "not_observed_connector_backed",
+    "observed_main": "2ad9557e21cddeed6fc9437c8f20c32b387bf2a2",
+    "open_pull_requests_observed_before_sync": [],
+    "post_deployment_repository_commits_not_applied_to_runtime": [
+      {
+        "message": "Fix demo API health rate limiting",
+        "sha": "b5bfd616d2f3faab5f692301c4b71c46a6f9557f"
+      },
+      {
+        "message": "Fix Azure runtime source provenance",
+        "sha": "2ad9557e21cddeed6fc9437c8f20c32b387bf2a2"
+      }
+    ],
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "repository_head_matches_deployed_source_ref": false
+  },
+  "schema_version": "project.reconciliation.v1",
+  "source_instruction": "Proceed"
+}

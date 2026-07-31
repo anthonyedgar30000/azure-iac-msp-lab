@@ -1,0 +1,168 @@
+{
+  "active_authorizations": {
+    "azure_ai_activation": null,
+    "servicetracer_cleanup": null,
+    "servicetracer_deployment": null,
+    "servicetracer_planning": null
+  },
+  "authority": {
+    "arm_what_if_by_this_sync": false,
+    "azure_authentication_or_query_by_this_sync": false,
+    "azure_mutation_by_this_sync": false,
+    "cleanup": false,
+    "deployment": false,
+    "entra_identity_mutation": false,
+    "github_environment_or_secret_mutation": false,
+    "guest_command_by_this_sync": false,
+    "merge_after_green_and_freshness_recheck": true,
+    "ordinary_exact_head_ci": true,
+    "pull_request_creation": true,
+    "rbac_mutation": false,
+    "repository_branch_and_declared_writes": true,
+    "rollback": false,
+    "workflow_dispatch_or_rerun_by_this_sync": false
+  },
+  "canonical_distinctions": [
+    "declared_in_code != deployed_in_azure",
+    "current_main != deployed_source_ref",
+    "deployment_succeeded != service_validated",
+    "health_endpoint_verified != transaction_path_verified",
+    "public_FQDN_from_VM_guest != external_browser_path",
+    "resource_exists != securely_configured",
+    "monitoring_enabled != alerts_verified",
+    "backup_configured != recovery_tested",
+    "planning_ceiling != actual_cost",
+    "not_observed != false"
+  ],
+  "canonical_state": {
+    "authoritative_current_reality": ".project/current-reality-v6.json",
+    "authoritative_handoff": ".project/handoffs/current-state-v5.md",
+    "authoritative_state_index": ".project/state-index-v15.json",
+    "latest_repository_sync_reconciliation": ".project/reconciliations/servicetracer-plan-deploy-runtime-sync-20260731.json",
+    "latest_servicetracer_deployment_evidence": ".project/evidence/servicetracer-demo-api-deployment-run-30661015789.json",
+    "latest_servicetracer_plan_evidence": ".project/evidence/servicetracer-demo-api-plan-run-30660575435.json"
+  },
+  "consumed_authorities": {
+    "cleanup_authorized": false,
+    "deployment_rerun_authorized": false,
+    "servicetracer_deployment_run_30661015789": true,
+    "servicetracer_plan_run_30660575435": true
+  },
+  "cost": {
+    "actual_cost_freshly_observed": false,
+    "expected_monthly_cost_freshly_repriced": false,
+    "planning_ceiling_cad": 25.0,
+    "running_cost_bearing_resources_observed": true,
+    "student_credit_freshly_observed": false
+  },
+  "domain_state": {
+    "azure_ai_verified_runtime": {
+      "authentication": "Microsoft Entra bearer token",
+      "base_url": "https://anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/",
+      "deployment": "gpt-5-mini",
+      "model_response_verified": true,
+      "modified_by_this_sync": false
+    },
+    "azure_mcp_server": {
+      "chatgpt_connection_verified": false,
+      "local_client_call_verified_on_main_historically": true,
+      "remote_endpoint_deployed": false,
+      "server_version": "azure-mcp-reality/0.1.0"
+    },
+    "frontend": {
+      "activation_status": "independent_demo_api_live_default_pending_github_pages_verification",
+      "browser_verification_pending": true,
+      "configured_expected_location": "westus2",
+      "configured_expected_resource_group": "rg-st-demo-api-dev-westus2",
+      "configured_expected_vm": "vm-st-demo-api-mst-dev",
+      "configured_hosting_model": "dedicated_vm_subproject",
+      "configured_live_demo_api_url": "https://st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com/api/demo/run",
+      "evidence_anchor": ".project/evidence/servicetracer-demo-api-deployment-run-30661015789.json"
+    },
+    "servicetracer_demo_api": {
+      "architecture": "independent_dedicated_vm_subproject",
+      "azure_runtime_identity_verified": true,
+      "cleanup_verified": false,
+      "cors_verified": false,
+      "deployed_source_ref": "ae08e7a72c14ec6deaddd3fa0f8c84b8342e0be3",
+      "deployment_run_conclusion": "success",
+      "deployment_run_id": 30661015789,
+      "deployment_succeeded": true,
+      "deployment_workflow_present": true,
+      "downstream_transaction_success_verified": false,
+      "external_browser_path_verified": false,
+      "fqdn": "st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com",
+      "github_environment": "azure-lab",
+      "github_pages_publication_verified": false,
+      "local_process_health_verified": true,
+      "location": "westus2",
+      "plan_accepted": true,
+      "planner_workflow_present": true,
+      "planning_run_conclusion": "success",
+      "planning_run_id": 30660575435,
+      "public_fqdn_https_health_verified_from_vm_guest": true,
+      "repository_head_matches_deployed_source_ref": false,
+      "resource_group": "rg-st-demo-api-dev-westus2",
+      "runtime_drift_status": "running_vm_bound_to_ae08e7a_while_main_contains_two_later_installer_fixes",
+      "runtime_identity_location_matches": true,
+      "runtime_identity_resource_group_matches": true,
+      "runtime_identity_source_ref_matches": true,
+      "runtime_identity_vm_matches": true,
+      "service_validation_status": "health_and_runtime_identity_verified_transaction_and_browser_path_pending",
+      "subscription_boundary": "single_subscription",
+      "subscription_name": "Azure for Students",
+      "subscription_state_at_deployment": "Enabled",
+      "transaction_post_verified": false,
+      "undeployed_repository_commits": [
+        "b5bfd616d2f3faab5f692301c4b71c46a6f9557f",
+        "2ad9557e21cddeed6fc9437c8f20c32b387bf2a2"
+      ],
+      "vm_extension_succeeded": true,
+      "vm_name": "vm-st-demo-api-mst-dev",
+      "vm_running": true,
+      "vm_size": "Standard_F1als_v7"
+    }
+  },
+  "freshness_and_unknowns": {
+    "actual_azure_cost_freshly_observed": false,
+    "backup_configuration_freshly_observed": false,
+    "cors_freshly_verified": false,
+    "current_quota_freshly_observed_after_deployment": false,
+    "external_browser_path_freshly_verified": false,
+    "monitoring_alert_delivery_freshly_verified": false,
+    "policy_effects_freshly_observed_after_deployment": false,
+    "post_deployment_installer_fixes_applied_to_runtime": false,
+    "recovery_freshly_tested": false,
+    "student_credit_freshly_observed": false,
+    "transaction_post_freshly_verified": false
+  },
+  "interpretation_boundary": "Time-bounded reconciliation of live GitHub metadata, exact GitHub Actions artifacts, Azure deployment inventory, and operator-provided runtime health screenshots. This is not a continuously refreshed Azure cost, monitoring, backup, recovery, or browser-validation dashboard.",
+  "next_gate": {
+    "operation": "read_only_external_service_validation_and_cost_resilience_observation",
+    "requirements": [
+      "decide whether the two post-deployment installer fixes require a separately planned and authorized runtime update",
+      "verify GitHub Pages publication and browser-to-API health path from an external client",
+      "verify exact CORS behavior and one bounded POST /api/demo/run transaction",
+      "capture downstream transaction outcome without claiming unsupported root cause",
+      "query actual month-to-date cost and remaining student credit read-only",
+      "observe monitoring, diagnostics, backup configuration, and recovery-test status",
+      "keep cleanup and additional Azure mutation separately authorized"
+    ]
+  },
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-07-31T16:39:00-04:00",
+  "repository": "anthonyedgar30000/azure-iac-msp-lab",
+  "repository_state": {
+    "default_branch": "main",
+    "direct_commits_after_latest_merged_pr_observed": 11,
+    "exact_head_ci_observed": false,
+    "latest_merged_pull_request": 260,
+    "latest_merged_pull_request_merge_commit": "5576f36ee67dc81f7943ddab9d1ab04333142b75",
+    "latest_merged_pull_request_source_head": "1e3d4cb6e475af19e84cda3fbc61533da7590adb",
+    "local_working_tree": "not_observed_connector_backed",
+    "observed_main": "2ad9557e21cddeed6fc9437c8f20c32b387bf2a2",
+    "open_pull_requests_observed": []
+  },
+  "schema_version": "project.current-reality.v11",
+  "selector": ".project/CURRENT.json"
+}
