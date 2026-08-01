@@ -1,0 +1,73 @@
+{
+  "schema_version": "project.authorization-request.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-08-01T05:08:00-04:00",
+  "source_instruction": "Proceed",
+  "operation": "read_only_external_service_validation",
+  "authorization": {
+    "active_for_one_attempt": true,
+    "identity_bound_to_requesting_user": true,
+    "scope_bound": true,
+    "non_renewing": true,
+    "consumed_when_attempt_starts": true,
+    "retry_authorized": false,
+    "workflow_trigger": "pull_request",
+    "reviewed_commit_binding": "exact_pull_request_head_at_execution"
+  },
+  "permitted_actions": {
+    "repository_branch_writes": true,
+    "pull_request_creation": true,
+    "ordinary_ci": true,
+    "automatic_pull_request_workflow_attempt": true,
+    "public_github_pages_get": true,
+    "public_api_health_get": true,
+    "allowed_origin_cors_preflight": true,
+    "disallowed_origin_cors_preflight": true,
+    "bounded_api_post": true,
+    "bounded_api_post_count": 1,
+    "bounded_transaction_attempts": 20,
+    "browser_screenshot_capture": true,
+    "workflow_artifact_capture": true
+  },
+  "prohibited_actions": {
+    "manual_workflow_dispatch": true,
+    "azure_login": true,
+    "azure_control_plane_query": true,
+    "azure_mutation": true,
+    "arm_what_if": true,
+    "deployment": true,
+    "guest_command": true,
+    "rbac_change": true,
+    "repair": true,
+    "redeployment": true,
+    "rollback": true,
+    "cleanup": true
+  },
+  "targets": {
+    "frontend_url": "https://anthonyedgar30000.github.io/azure-iac-msp-lab/",
+    "api_run_url": "https://st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com/api/demo/run",
+    "allowed_origin": "https://anthonyedgar30000.github.io",
+    "expected_resource_group": "rg-st-demo-api-dev-westus2",
+    "expected_vm_name": "vm-st-demo-api-mst-dev",
+    "expected_location": "westus2",
+    "expected_deployed_source_ref": "ae08e7a72c14ec6deaddd3fa0f8c84b8342e0be3",
+    "expected_hosting_model": "dedicated_vm_subproject"
+  },
+  "success_criteria": [
+    "GitHub Pages frontend loads in hosted Chrome without fixture fallback",
+    "browser health GET succeeds over trusted TLS",
+    "allowed-origin CORS preflight succeeds",
+    "one browser POST returns the bounded 20-attempt response contract",
+    "response header and body request identifiers match",
+    "Azure runtime identity matches the exact resource group, VM, region, and deployed source ref",
+    "disallowed origin fails closed",
+    "downstream outcomes are captured without claiming an exact root cause"
+  ],
+  "failure_behavior": {
+    "azure_change_on_failure": false,
+    "automatic_retry_authorized": false,
+    "preserve_partial_evidence": true,
+    "require_new_authority_for_retry": true
+  },
+  "claim_boundary": "This authority permits one externally initiated browser validation attempt and one bounded POST containing 20 synthetic transactions. It does not authorize Azure authentication, control-plane observation, repair, redeployment, rollback, cleanup, or any claim about cost, alerts, backup, or recovery."
+}
