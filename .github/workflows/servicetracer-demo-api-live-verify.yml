@@ -4,17 +4,18 @@ on:
   pull_request:
     paths:
       - ".github/workflows/servicetracer-demo-api-live-verify.yml"
+      - ".project/authorizations/servicetracer-external-validation-20260801.json"
       - "scripts/verify_servicetracer_external_path.mjs"
-  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: servicetracer-external-path-${{ github.event.pull_request.number || github.ref }}
+  group: servicetracer-external-path-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 env:
+  AUTHORIZATION_FILE: .project/authorizations/servicetracer-external-validation-20260801.json
   FRONTEND_URL: https://anthonyedgar30000.github.io/azure-iac-msp-lab/
   FRONTEND_CONFIG_URL: https://anthonyedgar30000.github.io/azure-iac-msp-lab/report-source.json
   API_RUN_URL: https://st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com/api/demo/run
@@ -29,38 +30,103 @@ env:
 
 jobs:
   verify:
-    name: Verify GitHub Pages, browser CORS, provenance, and bounded transaction
+    name: Verify or safely skip the one-shot external path attempt
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Check out exact repository state
+      - name: Check out exact pull-request head
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Record bounded verification request
+      - name: Evaluate one-shot authority
+        id: authority
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           mkdir -p "$EVIDENCE_DIR"
           date -u +'%Y-%m-%dT%H:%M:%SZ' > "$EVIDENCE_DIR/observed-at.txt"
-          printf '%s\n' "$GITHUB_SHA" > "$EVIDENCE_DIR/repository-sha.txt"
+          git rev-parse HEAD > "$EVIDENCE_DIR/repository-sha.txt"
           printf '%s\n' "$FRONTEND_URL" > "$EVIDENCE_DIR/frontend-url.txt"
           printf '%s\n' "$API_RUN_URL" > "$EVIDENCE_DIR/api-run-url.txt"
-          cat > "$EVIDENCE_DIR/authority.json" <<'JSON'
-          {
-            "operation": "read_only_external_service_validation",
-            "azure_login_performed": false,
-            "azure_query_performed": false,
-            "azure_mutation_performed": false,
-            "workflow_dispatch_performed": false,
-            "guest_command_performed": false,
-            "deployment_performed": false,
-            "repair_performed": false,
-            "cleanup_performed": false,
-            "bounded_live_post_requests": 1,
-            "bounded_live_post_attempts": 20
+
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+
+          authorization_path = Path(os.environ["AUTHORIZATION_FILE"])
+          evidence_dir = Path(os.environ["EVIDENCE_DIR"])
+          record = json.loads(authorization_path.read_text(encoding="utf-8"))
+          head = subprocess.check_output(
+              ["git", "rev-parse", "HEAD"], text=True
+          ).strip()
+          expected_head = os.environ["PR_HEAD_SHA"]
+          if head != expected_head:
+              raise SystemExit(
+                  f"checkout is not the exact pull-request head: {head} != {expected_head}"
+              )
+
+          authority = record.get("authorization", {})
+          active = authority.get("active_for_one_attempt") is True
+          consumed = authority.get("attempt_consumed") is True
+          retry_authorized = authority.get("retry_authorized") is True
+          authorized = active and not consumed and not retry_authorized
+
+          evaluation = {
+              "schema_version": "project.authorization-evaluation.v1",
+              "authorization_file": str(authorization_path),
+              "repository_sha": head,
+              "pull_request_head_sha": expected_head,
+              "exact_head_checkout": True,
+              "authorization_status": authority.get("status", "active" if active else "inactive"),
+              "active_for_one_attempt": active,
+              "attempt_consumed": consumed,
+              "retry_authorized": retry_authorized,
+              "live_network_attempt_authorized": authorized,
           }
-          JSON
+          (evidence_dir / "authorization-evaluation.json").write_text(
+              json.dumps(evaluation, indent=2) + "\n",
+              encoding="utf-8",
+          )
+
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
+              output.write(f"authorized={'true' if authorized else 'false'}\n")
+
+          if authorized:
+              request = {
+                  "operation": "read_only_external_service_validation",
+                  "azure_login_performed": False,
+                  "azure_query_performed": False,
+                  "azure_mutation_performed": False,
+                  "workflow_dispatch_performed": False,
+                  "guest_command_performed": False,
+                  "deployment_performed": False,
+                  "repair_performed": False,
+                  "cleanup_performed": False,
+                  "bounded_live_post_requests": 1,
+                  "bounded_live_post_attempts": 20,
+              }
+              (evidence_dir / "authority.json").write_text(
+                  json.dumps(request, indent=2) + "\n",
+                  encoding="utf-8",
+              )
+          else:
+              skipped = {
+                  "status": "skipped_no_active_authority",
+                  "live_network_attempt_executed": False,
+                  "reason": "one-shot authority is inactive or consumed; a new explicit authorization is required",
+              }
+              (evidence_dir / "skipped-summary.json").write_text(
+                  json.dumps(skipped, indent=2) + "\n",
+                  encoding="utf-8",
+              )
+          PY
 
       - name: Verify published frontend configuration
+        if: steps.authority.outputs.authorized == 'true'
         run: |
           set -euo pipefail
           curl --fail --silent --show-error --location \
@@ -90,14 +156,17 @@ jobs:
           PY
 
       - name: Set up Node.js
+        if: steps.authority.outputs.authorized == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
       - name: Install bounded browser dependency
+        if: steps.authority.outputs.authorized == 'true'
         run: npm install --no-save --no-package-lock puppeteer-core@24.16.0
 
       - name: Resolve hosted Chrome
+        if: steps.authority.outputs.authorized == 'true'
         run: |
           set -euo pipefail
           chrome_path="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
@@ -109,11 +178,13 @@ jobs:
           "$chrome_path" --version | tee "$EVIDENCE_DIR/chrome-version.txt"
 
       - name: Verify the real GitHub Pages browser path
+        if: steps.authority.outputs.authorized == 'true'
         env:
           VERIFICATION_OUTPUT_DIR: ${{ env.EVIDENCE_DIR }}
         run: node scripts/verify_servicetracer_external_path.mjs
 
       - name: Verify disallowed browser origin fails closed
+        if: steps.authority.outputs.authorized == 'true'
         run: |
           set -euo pipefail
           denied_status="$(
@@ -176,6 +247,13 @@ jobs:
               echo
               echo '```json'
               cat "$EVIDENCE_DIR/verification-summary.json"
+              echo '```'
+            elif [[ -f "$EVIDENCE_DIR/skipped-summary.json" ]]; then
+              echo '- No live network attempt ran because the one-shot authority is inactive or consumed.'
+              echo '- A new explicit authorization is required before another POST.'
+              echo
+              echo '```json'
+              cat "$EVIDENCE_DIR/skipped-summary.json"
               echo '```'
             else
               echo '- Verification did not complete. Inspect the uploaded evidence without inferring service state from workflow failure alone.'
