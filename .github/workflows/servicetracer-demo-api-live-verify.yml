@@ -1,129 +1,270 @@
-name: ServiceTracer demo API live verification
+name: ServiceTracer external path verification
 
 on:
   pull_request:
     paths:
       - ".github/workflows/servicetracer-demo-api-live-verify.yml"
-  workflow_dispatch:
+      - ".project/authorizations/servicetracer-external-validation-20260801.json"
+      - "scripts/verify_servicetracer_external_path.mjs"
 
 permissions:
   contents: read
 
 concurrency:
-  group: servicetracer-demo-api-live-verification
+  group: servicetracer-external-path-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 env:
-  BASE_URL: https://st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com
+  AUTHORIZATION_FILE: .project/authorizations/servicetracer-external-validation-20260801.json
+  FRONTEND_URL: https://anthonyedgar30000.github.io/azure-iac-msp-lab/
+  FRONTEND_CONFIG_URL: https://anthonyedgar30000.github.io/azure-iac-msp-lab/report-source.json
+  API_RUN_URL: https://st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com/api/demo/run
   ALLOWED_ORIGIN: https://anthonyedgar30000.github.io
-  EVIDENCE_DIR: servicetracer-demo-api-live-verification-evidence
+  EXPECTED_RESOURCE_GROUP: rg-st-demo-api-dev-westus2
+  EXPECTED_VM_NAME: vm-st-demo-api-mst-dev
+  EXPECTED_LOCATION: westus2
+  EXPECTED_SOURCE_REF: ae08e7a72c14ec6deaddd3fa0f8c84b8342e0be3
+  EXPECTED_HOSTING_MODEL: dedicated_vm_subproject
+  EXPECTED_SOURCE_ID: st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com
+  EVIDENCE_DIR: servicetracer-external-path-evidence
 
 jobs:
   verify:
-    name: Verify public TLS, CORS, and transaction flow
+    name: Verify or safely skip the one-shot external path attempt
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - name: Check out exact repository state
+      - name: Check out exact pull-request head
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Verify health, CORS, and two backend transactions
+      - name: Evaluate one-shot authority
+        id: authority
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           mkdir -p "$EVIDENCE_DIR"
-
-          printf '%s\n' "$GITHUB_SHA" > "$EVIDENCE_DIR/repository-sha.txt"
-          printf '%s\n' "$BASE_URL" > "$EVIDENCE_DIR/base-url.txt"
           date -u +'%Y-%m-%dT%H:%M:%SZ' > "$EVIDENCE_DIR/observed-at.txt"
-
-          curl --fail --silent --show-error \
-            --retry 6 --retry-delay 5 --retry-all-errors \
-            --connect-timeout 10 --max-time 45 \
-            -D "$EVIDENCE_DIR/health-headers.txt" \
-            "$BASE_URL/api/health" \
-            > "$EVIDENCE_DIR/health.json"
-
-          curl --fail --silent --show-error \
-            --retry 3 --retry-delay 3 --retry-all-errors \
-            --connect-timeout 10 --max-time 30 \
-            -X OPTIONS \
-            -D "$EVIDENCE_DIR/cors-headers.txt" \
-            -o /dev/null \
-            -H "Origin: $ALLOWED_ORIGIN" \
-            -H 'Access-Control-Request-Method: POST' \
-            "$BASE_URL/api/demo/run"
-
-          grep -Eqi "^access-control-allow-origin:[[:space:]]*${ALLOWED_ORIGIN//./\\.}[[:space:]]*$" \
-            "$EVIDENCE_DIR/cors-headers.txt"
-          grep -Eqi '^access-control-allow-methods:.*POST' \
-            "$EVIDENCE_DIR/cors-headers.txt"
-
-          curl --fail --silent --show-error \
-            --retry 3 --retry-delay 3 --retry-all-errors \
-            --connect-timeout 10 --max-time 60 \
-            -X POST \
-            -D "$EVIDENCE_DIR/transaction-headers.txt" \
-            -H "Origin: $ALLOWED_ORIGIN" \
-            -H 'Content-Type: application/json' \
-            --data '{"attempts":2}' \
-            "$BASE_URL/api/demo/run" \
-            > "$EVIDENCE_DIR/transaction.json"
+          git rev-parse HEAD > "$EVIDENCE_DIR/repository-sha.txt"
+          printf '%s\n' "$FRONTEND_URL" > "$EVIDENCE_DIR/frontend-url.txt"
+          printf '%s\n' "$API_RUN_URL" > "$EVIDENCE_DIR/api-run-url.txt"
 
           python - <<'PY'
           import json
+          import os
+          import subprocess
           from pathlib import Path
 
-          root = Path("servicetracer-demo-api-live-verification-evidence")
-          health = json.loads((root / "health.json").read_text(encoding="utf-8"))
-          response = json.loads((root / "transaction.json").read_text(encoding="utf-8"))
+          authorization_path = Path(os.environ["AUTHORIZATION_FILE"])
+          evidence_dir = Path(os.environ["EVIDENCE_DIR"])
+          record = json.loads(authorization_path.read_text(encoding="utf-8"))
+          head = subprocess.check_output(
+              ["git", "rev-parse", "HEAD"], text=True
+          ).strip()
+          expected_head = os.environ["PR_HEAD_SHA"]
+          if head != expected_head:
+              raise SystemExit(
+                  f"checkout is not the exact pull-request head: {head} != {expected_head}"
+              )
 
-          assert health == {
-              "status": "healthy",
-              "schema_version": "servicetracer.demo-api-health.v1",
-              "backend_target_configured": True,
-              "hosting_model": "dedicated_vm_subproject",
-          }, health
+          authority = record.get("authorization", {})
+          active = authority.get("active_for_one_attempt") is True
+          consumed = authority.get("attempt_consumed") is True
+          retry_authorized = authority.get("retry_authorized") is True
+          authorized = active and not consumed and not retry_authorized
 
-          assert response["schema_version"] == "servicetracer.demo-api-response.v1"
-          assert response["source"]["id"] == "st-demo-api-vm-aeg30000.westus2.cloudapp.azure.com"
-          assert response["source"]["transport"] == "azure-load-balancer-correlated-transactions"
-          assert response["report"]["incident"]["attempts"] == 2
+          evaluation = {
+              "schema_version": "project.authorization-evaluation.v1",
+              "authorization_file": str(authorization_path),
+              "repository_sha": head,
+              "pull_request_head_sha": expected_head,
+              "exact_head_checkout": True,
+              "authorization_status": authority.get("status", "active" if active else "inactive"),
+              "active_for_one_attempt": active,
+              "attempt_consumed": consumed,
+              "retry_authorized": retry_authorized,
+              "live_network_attempt_authorized": authorized,
+          }
+          (evidence_dir / "authorization-evaluation.json").write_text(
+              json.dumps(evaluation, indent=2) + "\n",
+              encoding="utf-8",
+          )
 
-          transactions = response["transactions"]
-          assert len(transactions) == 2
-          for transaction in transactions:
-              assert transaction["backend"] in {"VPN-01", "VPN-02"}, transaction
-              assert isinstance(transaction["http_status"], int) and transaction["http_status"] > 0, transaction
-              assert transaction["transaction_status"] in {"successful", "failed"}, transaction
-              assert "transport_error" not in transaction, transaction
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
+              output.write(f"authorized={'true' if authorized else 'false'}\n")
 
+          if authorized:
+              request = {
+                  "operation": "read_only_external_service_validation",
+                  "azure_login_performed": False,
+                  "azure_query_performed": False,
+                  "azure_mutation_performed": False,
+                  "workflow_dispatch_performed": False,
+                  "guest_command_performed": False,
+                  "deployment_performed": False,
+                  "repair_performed": False,
+                  "cleanup_performed": False,
+                  "bounded_live_post_requests": 1,
+                  "bounded_live_post_attempts": 20,
+              }
+              (evidence_dir / "authority.json").write_text(
+                  json.dumps(request, indent=2) + "\n",
+                  encoding="utf-8",
+              )
+          else:
+              skipped = {
+                  "status": "skipped_no_active_authority",
+                  "live_network_attempt_executed": False,
+                  "reason": "one-shot authority is inactive or consumed; a new explicit authorization is required",
+              }
+              (evidence_dir / "skipped-summary.json").write_text(
+                  json.dumps(skipped, indent=2) + "\n",
+                  encoding="utf-8",
+              )
+          PY
+
+      - name: Verify published frontend configuration
+        if: steps.authority.outputs.authorized == 'true'
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            --connect-timeout 10 --max-time 45 \
+            -D "$EVIDENCE_DIR/frontend-config-headers.txt" \
+            "$FRONTEND_CONFIG_URL" \
+            > "$EVIDENCE_DIR/frontend-report-source.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["EVIDENCE_DIR"])
+          config = json.loads((root / "frontend-report-source.json").read_text(encoding="utf-8"))
+          assert config["schema_version"] == "servicetracer.report-source.v1", config
+          assert config["live_demo_api_url"] == os.environ["API_RUN_URL"], config
+          assert config["candidate_demo_api_url"] == os.environ["API_RUN_URL"], config
+          assert config["activation_status"] == "independent_demo_api_live_default_pending_github_pages_verification", config
+          expected = config["expected_azure_host"]
+          assert expected == {
+              "resource_group": os.environ["EXPECTED_RESOURCE_GROUP"],
+              "vm_name": os.environ["EXPECTED_VM_NAME"],
+              "location": os.environ["EXPECTED_LOCATION"],
+              "hosting_model": os.environ["EXPECTED_HOSTING_MODEL"],
+          }, expected
+          PY
+
+      - name: Set up Node.js
+        if: steps.authority.outputs.authorized == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install bounded browser dependency
+        if: steps.authority.outputs.authorized == 'true'
+        run: npm install --no-save --no-package-lock puppeteer-core@24.16.0
+
+      - name: Resolve hosted Chrome
+        if: steps.authority.outputs.authorized == 'true'
+        run: |
+          set -euo pipefail
+          chrome_path="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          [[ -n "$chrome_path" ]] || {
+            echo 'No supported Chrome or Chromium executable found on the hosted runner.' >&2
+            exit 1
+          }
+          printf 'CHROME_PATH=%s\n' "$chrome_path" >> "$GITHUB_ENV"
+          "$chrome_path" --version | tee "$EVIDENCE_DIR/chrome-version.txt"
+
+      - name: Verify the real GitHub Pages browser path
+        if: steps.authority.outputs.authorized == 'true'
+        env:
+          VERIFICATION_OUTPUT_DIR: ${{ env.EVIDENCE_DIR }}
+        run: node scripts/verify_servicetracer_external_path.mjs
+
+      - name: Verify disallowed browser origin fails closed
+        if: steps.authority.outputs.authorized == 'true'
+        run: |
+          set -euo pipefail
+          denied_status="$(
+            curl --silent --show-error \
+              --connect-timeout 10 --max-time 30 \
+              -X OPTIONS \
+              -D "$EVIDENCE_DIR/denied-origin-headers.txt" \
+              -o "$EVIDENCE_DIR/denied-origin.json" \
+              -w '%{http_code}' \
+              -H 'Origin: https://example.invalid' \
+              -H 'Access-Control-Request-Method: POST' \
+              -H 'Access-Control-Request-Headers: content-type,x-servicetracer-request-id' \
+              "$API_RUN_URL"
+          )"
+          printf '%s\n' "$denied_status" > "$EVIDENCE_DIR/denied-origin-status.txt"
+          [[ "$denied_status" == '403' ]]
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["EVIDENCE_DIR"])
+          payload = json.loads((root / "denied-origin.json").read_text(encoding="utf-8"))
+          assert payload == {"error": "origin_not_allowed"}, payload
           summary = {
               "status": "verified",
-              "health_verified": True,
-              "tls_verified": True,
-              "cors_verified": True,
-              "transaction_flow_verified": True,
-              "attempts": len(transactions),
-              "observed_backends": sorted({item["backend"] for item in transactions}),
-              "deployment_mutation_performed": False,
+              "tested_origin": "https://example.invalid",
+              "http_status": 403,
+              "error": "origin_not_allowed",
+              "azure_mutation_performed": False,
           }
-          (root / "verification-summary.json").write_text(
-              json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+          (root / "negative-cors-summary.json").write_text(
+              json.dumps(summary, indent=2) + "\n",
+              encoding="utf-8",
           )
           PY
 
-          find "$EVIDENCE_DIR" -type f ! -name artifact-manifest.sha256 -print0 \
+      - name: Write portable evidence manifest
+        if: always()
+        run: |
+          set -euo pipefail
+          find "$EVIDENCE_DIR" -type f ! -name artifact-manifest.sha256 -printf '%P\0' \
             | sort -z \
-            | xargs -0 sha256sum \
-            > "$EVIDENCE_DIR/artifact-manifest.sha256"
+            | while IFS= read -r -d '' relative; do
+                sha256sum "$EVIDENCE_DIR/$relative" | sed "s#  $EVIDENCE_DIR/#  #"
+              done > "$EVIDENCE_DIR/artifact-manifest.sha256"
 
-          cat "$EVIDENCE_DIR/verification-summary.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish verification summary
+        if: always()
+        run: |
+          {
+            echo '## ServiceTracer external path verification'
+            echo
+            if [[ -f "$EVIDENCE_DIR/verification-summary.json" ]]; then
+              echo '- GitHub Pages rendered the live console in hosted Chrome.'
+              echo '- Browser health, CORS preflight, one 20-attempt POST, request correlation, and exact Azure runtime provenance passed.'
+              echo '- Downstream transaction outcomes are evidence, not an exact root-cause claim.'
+              echo '- No Azure login, Azure mutation, deployment, repair, rollback, or cleanup occurred.'
+              echo
+              echo '```json'
+              cat "$EVIDENCE_DIR/verification-summary.json"
+              echo '```'
+            elif [[ -f "$EVIDENCE_DIR/skipped-summary.json" ]]; then
+              echo '- No live network attempt ran because the one-shot authority is inactive or consumed.'
+              echo '- A new explicit authorization is required before another POST.'
+              echo
+              echo '```json'
+              cat "$EVIDENCE_DIR/skipped-summary.json"
+              echo '```'
+            else
+              echo '- Verification did not complete. Inspect the uploaded evidence without inferring service state from workflow failure alone.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload verification evidence
+      - name: Upload external-path evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: servicetracer-demo-api-live-verification-${{ github.run_id }}-${{ github.run_attempt }}
+          name: servicetracer-external-path-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.EVIDENCE_DIR }}
           if-no-files-found: error
           retention-days: 30
