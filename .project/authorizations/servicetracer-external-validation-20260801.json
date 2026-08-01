@@ -1,35 +1,49 @@
 {
-  "schema_version": "project.authorization-request.v1",
+  "schema_version": "project.authorization-record.v1",
   "project": "Azure IaC MSP Lab",
   "recorded_at": "2026-08-01T05:08:00-04:00",
+  "terminalized_at": "2026-08-01T05:19:34-04:00",
   "source_instruction": "Proceed",
   "operation": "read_only_external_service_validation",
   "authorization": {
-    "active_for_one_attempt": true,
+    "status": "consumed_success",
+    "active_for_one_attempt": false,
+    "attempt_consumed": true,
     "identity_bound_to_requesting_user": true,
     "scope_bound": true,
     "non_renewing": true,
-    "consumed_when_attempt_starts": true,
+    "consumed_when_attempt_started": true,
     "retry_authorized": false,
-    "workflow_trigger": "pull_request",
-    "reviewed_commit_binding": "exact_pull_request_head_at_execution"
+    "manual_dispatch_authorized": false,
+    "workflow_trigger": "pull_request"
   },
-  "permitted_actions": {
-    "repository_branch_writes": true,
-    "pull_request_creation": true,
-    "ordinary_ci": true,
-    "automatic_pull_request_workflow_attempt": true,
+  "execution": {
+    "pull_request": 263,
+    "workflow_run_id": 30693434244,
+    "workflow_run_attempt": 1,
+    "workflow_conclusion": "success",
+    "pull_request_head_sha": "0ca222703585f6e0403957f096f424d0d2a22b91",
+    "pull_request_merge_checkout_sha": "150a4b5d895b2be426180540316e8588520545c3",
+    "checkout_was_exact_pull_request_head": false,
+    "checkout_boundary": "The successful pull_request run used GitHub's synthetic merge checkout rather than the literal PR head. The run and artifact metadata bind the attempt to PR head 0ca222703585f6e0403957f096f424d0d2a22b91, and main remained at 3d085c085a74855839aac51706b1df77ce1c8fbc. No retry is authorized or required to establish the observed external service behavior; the workflow is corrected before merge so future attempts check out the exact PR head.",
+    "base_main_sha": "3d085c085a74855839aac51706b1df77ce1c8fbc",
+    "artifact_id": 8816461373,
+    "artifact_name": "servicetracer-external-path-30693434244-1",
+    "artifact_digest": "sha256:f162c7a266c35146d827e05cb8b70db6d0438599149e99affe5cbfb5f18d4b6a",
+    "artifact_manifest_verified": true,
+    "observed_at": "2026-08-01T09:17:23.919Z"
+  },
+  "permitted_actions_executed": {
     "public_github_pages_get": true,
     "public_api_health_get": true,
     "allowed_origin_cors_preflight": true,
     "disallowed_origin_cors_preflight": true,
-    "bounded_api_post": true,
     "bounded_api_post_count": 1,
     "bounded_transaction_attempts": 20,
     "browser_screenshot_capture": true,
     "workflow_artifact_capture": true
   },
-  "prohibited_actions": {
+  "prohibited_actions_not_executed": {
     "manual_workflow_dispatch": true,
     "azure_login": true,
     "azure_control_plane_query": true,
@@ -53,21 +67,33 @@
     "expected_deployed_source_ref": "ae08e7a72c14ec6deaddd3fa0f8c84b8342e0be3",
     "expected_hosting_model": "dedicated_vm_subproject"
   },
-  "success_criteria": [
-    "GitHub Pages frontend loads in hosted Chrome without fixture fallback",
-    "browser health GET succeeds over trusted TLS",
-    "allowed-origin CORS preflight succeeds",
-    "one browser POST returns the bounded 20-attempt response contract",
-    "response header and body request identifiers match",
-    "Azure runtime identity matches the exact resource group, VM, region, and deployed source ref",
-    "disallowed origin fails closed",
-    "downstream outcomes are captured without claiming an exact root cause"
-  ],
-  "failure_behavior": {
+  "observed_outcome": {
+    "github_pages_published_and_rendered": true,
+    "fixture_fallback_used": false,
+    "browser_tls_verified": true,
+    "health_http_status": 200,
+    "allowed_origin_preflight_http_status": 204,
+    "transaction_http_status": 200,
+    "request_header_and_body_ids_matched": true,
+    "azure_runtime_identity_matched": true,
+    "disallowed_origin_http_status": 403,
+    "disallowed_origin_error": "origin_not_allowed",
+    "sample_attempts": 20,
+    "successful_downstream_transactions": 0,
+    "failed_downstream_transactions": 20,
+    "transport_errors": 0,
+    "backend_counts": {
+      "VPN-02": 20
+    },
+    "stable_backend_localization": false,
+    "exact_root_cause_claimed": false,
+    "frontend_finding": "Repeat the bounded sample before localizing"
+  },
+  "failure_and_retry_behavior": {
     "azure_change_on_failure": false,
     "automatic_retry_authorized": false,
-    "preserve_partial_evidence": true,
-    "require_new_authority_for_retry": true
+    "partial_evidence_preserved": true,
+    "new_explicit_authority_required_for_another_live_post": true
   },
-  "claim_boundary": "This authority permits one externally initiated browser validation attempt and one bounded POST containing 20 synthetic transactions. It does not authorize Azure authentication, control-plane observation, repair, redeployment, rollback, cleanup, or any claim about cost, alerts, backup, or recovery."
+  "claim_boundary": "The external browser path, CORS contract, request correlation, one bounded API response, and exact Azure runtime identity were verified. The sample observed 20 application-level downstream failures routed to VPN-02, with no transport errors and no comparison traffic to VPN-01; therefore no stable backend localization or exact root cause is established. Cost, credit, monitoring-alert delivery, backup, recovery, repair, redeployment, and cleanup remain unobserved and unauthorized."
 }
