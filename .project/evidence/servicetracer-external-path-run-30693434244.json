@@ -1,0 +1,209 @@
+{
+  "schema_version": "project.servicetracer-external-path-evidence.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-08-01T05:26:00-04:00",
+  "observed_at": "2026-08-01T09:17:23.919Z",
+  "source": {
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "pull_request": 263,
+    "authorized_pr_head_sha": "0ca222703585f6e0403957f096f424d0d2a22b91",
+    "successful_workflow_checkout_sha": "150a4b5d895b2be426180540316e8588520545c3",
+    "final_pr_head_sha": "83b68d4836b36ffd0db3254121eb4fe3b8ce3e80",
+    "merged_main_sha": "e67869e98d8c26c6525fa25e08cae1af6f5be73d",
+    "workflow_name": "ServiceTracer external path verification",
+    "workflow_run_id": 30693434244,
+    "workflow_run_attempt": 1,
+    "workflow_conclusion": "success"
+  },
+  "checkout_boundary": {
+    "exact_pr_head_checkout_used_by_successful_live_attempt": false,
+    "synthetic_merge_checkout_used": true,
+    "base_main_sha_during_attempt": "3d085c085a74855839aac51706b1df77ce1c8fbc",
+    "run_and_artifact_bound_to_pr_head": "0ca222703585f6e0403957f096f424d0d2a22b91",
+    "later_workflow_hardened_for_exact_head_checkout": true,
+    "later_consumed_authority_check_run_id": 30693611965,
+    "later_network_steps_skipped": true,
+    "interpretation": "The successful live attempt ran GitHub's synthetic merge checkout. The run and artifact metadata bind it to the PR head, and main was unchanged. This variance is preserved rather than represented as exact-head execution."
+  },
+  "artifact": {
+    "artifact_id": 8816461373,
+    "name": "servicetracer-external-path-30693434244-1",
+    "digest": "sha256:f162c7a266c35146d827e05cb8b70db6d0438599149e99affe5cbfb5f18d4b6a",
+    "expired_when_promoted": false,
+    "internal_manifest_verified": true,
+    "internal_manifest_entries": 17,
+    "selected_file_sha256": {
+      "verification-summary.json": "aab50eb054954fc8c5ddfd02534e21a161db9be2b2436c220adf6dbfc1478b9e",
+      "health-response.json": "39560205f876fbccb1586cace606567c6ddcf1bac13b4e59aa4ae20f1af5a372",
+      "transaction-response.json": "20bde3e7bfe5d7b21afd5eebf2ba7b439348c2a06b714f0eeee8cff86c5efb63",
+      "negative-cors-summary.json": "a6c1e28a3b6edbc6464fbba64790da71a6cf42bb63beb22bdf0eabc4d7915e19",
+      "browser-console.json": "b64d25bf4d00caa6e58c4e7174398f374793563b5ae24e4a02031a478c1fc8c1",
+      "frontend-external-path.png": "056a8a9f56692d5f55d56311dd6d78f2a6a9a4da775168ed71aab2951ff3c6af",
+      "frontend-report-source.json": "064618c0feac4bb38e055f9a0246c7f6932d9510a79020abf8491ac07f53e4d4"
+    }
+  },
+  "authorization": {
+    "record": ".project/authorizations/servicetracer-external-validation-20260801.json",
+    "status": "consumed_success",
+    "active": false,
+    "retry_authorized": false,
+    "manual_dispatch_authorized": false,
+    "another_live_post_requires_new_explicit_authority": true
+  },
+  "targets": {
+    "frontend_url": "https://anthonyedgar30000.github.io/azure-iac-msp-lab/",
+    "api_run_url": "https://st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com/api/demo/run",
+    "api_health_url": "https://st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com/api/health",
+    "allowed_origin": "https://anthonyedgar30000.github.io",
+    "expected_resource_group": "rg-st-demo-api-dev-westus2",
+    "expected_vm_name": "vm-st-demo-api-mst-dev",
+    "expected_location": "westus2",
+    "expected_hosting_model": "dedicated_vm_subproject",
+    "expected_deployed_source_ref": "ae08e7a72c14ec6deaddd3fa0f8c84b8342e0be3"
+  },
+  "frontend_observation": {
+    "github_pages_publication_verified": true,
+    "hosted_chrome_render_verified": true,
+    "document_title": "ServiceTracer — Remote Access Incident",
+    "readiness_source_name": "Azure demo API — ready",
+    "live_source_name": "Azure demo API — live transactions",
+    "fixture_fallback_used": false,
+    "analysis_completed": true,
+    "rendered_evidence_summary": "20 correlated transactions: 0 successful, 20 failed.",
+    "rendered_finding": "Repeat the bounded sample before localizing",
+    "rendered_suspect": "Not established",
+    "rendered_comparison": "Not established",
+    "rendered_boundary": "Not established",
+    "technician_workflow_hidden": true,
+    "unidentified_console_404_observed": true,
+    "console_error_count": 1,
+    "console_error_text": "Failed to load resource: the server responded with a status of 404 ()",
+    "console_error_resource_identified": false
+  },
+  "api_contract_observation": {
+    "browser_tls_verified": true,
+    "health_http_status": 200,
+    "health_status": "healthy",
+    "backend_target_configured": true,
+    "allowed_origin_preflight_http_status": 204,
+    "transaction_http_status": 200,
+    "request_id": "9a205247-5dc0-4505-a774-bc697694bd9d",
+    "request_header_and_body_ids_matched": true,
+    "response_schema_version": "servicetracer.demo-api-response.v1",
+    "source_id": "st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com",
+    "transport": "azure-load-balancer-correlated-transactions",
+    "hosting_model": "dedicated_vm_subproject",
+    "azure_host": {
+      "verified": true,
+      "verification_source": "azure_instance_metadata_service",
+      "resource_group": "rg-st-demo-api-dev-westus2",
+      "vm_name": "vm-st-demo-api-mst-dev",
+      "location": "westus2",
+      "source_ref": "ae08e7a72c14ec6deaddd3fa0f8c84b8342e0be3"
+    },
+    "disallowed_origin": {
+      "tested_origin": "https://example.invalid",
+      "http_status": 403,
+      "error": "origin_not_allowed",
+      "fail_closed_verified": true
+    }
+  },
+  "bounded_transaction_sample": {
+    "attempts": 20,
+    "successful_transactions": 0,
+    "failed_transactions": 20,
+    "transport_errors": 0,
+    "http_status_counts": {
+      "503": 20
+    },
+    "backend_counts": {
+      "VPN-01": 0,
+      "VPN-02": 20
+    },
+    "failure_boundary_counts": {
+      "radius_response": 20
+    },
+    "common_stage_sequence": [
+      {
+        "event": "tcp_established",
+        "elapsed_ms": 90
+      },
+      {
+        "event": "tls_completed",
+        "elapsed_ms": 318
+      },
+      {
+        "event": "radius_request_sent",
+        "elapsed_ms": 20
+      },
+      {
+        "event": "radius_response_timeout",
+        "elapsed_ms": 15000,
+        "retries": 3,
+        "timeout_ms": 15000
+      }
+    ],
+    "api_localization": {
+      "suspect_backend": "VPN-02",
+      "healthy_comparison_backend": "VPN-02",
+      "backend_failure_rates": {
+        "VPN-01": null,
+        "VPN-02": 1.0
+      },
+      "backend_attempt_counts": {
+        "VPN-01": 0,
+        "VPN-02": 20
+      }
+    },
+    "stable_backend_localization": false,
+    "comparison_backend_observed": false,
+    "exact_root_cause_claimed": false,
+    "downstream_transaction_success_verified": false
+  },
+  "evidence_boundary_assessment": {
+    "status": "potential_api_evidence_boundary_defect_unresolved",
+    "raw_api_investigation_boundary": "VPN-02",
+    "raw_api_service_tracer_stops_at": "VPN-02",
+    "raw_api_stable_localization": false,
+    "raw_api_comparison_backend_equals_suspect": true,
+    "frontend_guard_prevented_unsupported_localization": true,
+    "unsupported_root_cause_presented_to_operator": false,
+    "required_follow_up": "Change the API report builder so an inconclusive sample with no comparison traffic reports an unresolved investigation boundary, then validate statically before any separately authorized runtime update."
+  },
+  "authority_and_mutation_boundary": {
+    "azure_login_performed": false,
+    "azure_control_plane_query_performed": false,
+    "azure_mutation_performed": false,
+    "arm_what_if_performed": false,
+    "deployment_performed": false,
+    "guest_command_performed": false,
+    "rbac_change_performed": false,
+    "repair_performed": false,
+    "redeployment_performed": false,
+    "rollback_performed": false,
+    "cleanup_performed": false
+  },
+  "not_observed": {
+    "actual_month_to_date_cost": true,
+    "remaining_student_credit": true,
+    "current_quota_after_external_validation": true,
+    "monitoring_alert_delivery": true,
+    "diagnostic_settings_effectiveness": true,
+    "backup_configuration": true,
+    "restore_test": true,
+    "disaster_recovery_test": true,
+    "post_deployment_installer_fixes_applied_to_runtime": true
+  },
+  "claim_boundaries": [
+    "external_browser_path_verified != permanent_service_availability",
+    "HTTP_200_API_response != downstream_transaction_success",
+    "twenty_attempt_sample != permanent_backend_truth",
+    "all_observed_transactions_on_VPN-02 != load_balancer_permanently_routes_only_to_VPN-02",
+    "radius_response_boundary != exact_root_cause",
+    "stable_localization_false != failure_absent",
+    "frontend_guarded_output != raw_API_boundary_consistency",
+    "service_validated != monitoring_alerts_verified",
+    "service_validated != backup_or_recovery_tested",
+    "artifact_verified != continuously_current_state"
+  ]
+}

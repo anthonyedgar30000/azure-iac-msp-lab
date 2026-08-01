@@ -1,0 +1,61 @@
+{
+  "schema_version": "project.reconciliation.v1",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-08-01T05:26:00-04:00",
+  "source_instruction": "Proceed",
+  "operation": "promote_consumed_external_validation_evidence",
+  "repository": {
+    "repository": "anthonyedgar30000/azure-iac-msp-lab",
+    "observed_main": "e67869e98d8c26c6525fa25e08cae1af6f5be73d",
+    "latest_merged_pull_request": 263,
+    "latest_merged_pull_request_merge_commit": "e67869e98d8c26c6525fa25e08cae1af6f5be73d",
+    "latest_merged_pull_request_source_head": "83b68d4836b36ffd0db3254121eb4fe3b8ce3e80",
+    "open_pull_requests_observed_before_sync": [],
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "promoted_evidence": {
+    "external_path": ".project/evidence/servicetracer-external-path-run-30693434244.json",
+    "workflow_run_id": 30693434244,
+    "artifact_id": 8816461373,
+    "artifact_digest": "sha256:f162c7a266c35146d827e05cb8b70db6d0438599149e99affe5cbfb5f18d4b6a",
+    "authorization_record": ".project/authorizations/servicetracer-external-validation-20260801.json",
+    "authorization_status": "consumed_success"
+  },
+  "canonical_promotion": {
+    "selector": ".project/CURRENT.json",
+    "current_reality": ".project/current-reality-v7.json",
+    "state_index": ".project/state-index-v16.json",
+    "handoff": ".project/handoffs/current-state-v6.md",
+    "current_validator": ".project/validate_current.py",
+    "regression_test": "infra/tests/test_external_validation_evidence_sync.py"
+  },
+  "authority": {
+    "repository_branch_and_declared_writes": true,
+    "pull_request_creation": true,
+    "ordinary_exact_head_ci": true,
+    "merge_after_green_and_freshness_recheck": true,
+    "workflow_dispatch_or_rerun_by_this_sync": false,
+    "external_live_post_by_this_sync": false,
+    "azure_authentication_or_query_by_this_sync": false,
+    "arm_what_if_by_this_sync": false,
+    "guest_command_by_this_sync": false,
+    "azure_mutation_by_this_sync": false,
+    "rbac_mutation": false,
+    "deployment": false,
+    "repair": false,
+    "redeployment": false,
+    "rollback": false,
+    "cleanup": false
+  },
+  "claim_boundary": "This reconciliation promotes a completed, consumed external-browser validation artifact into canonical repository state. It does not repeat the live transaction, modify the frontend publication, query Azure control-plane state, repair the API boundary defect, apply undeployed installer fixes, or establish cost, monitoring, backup, recovery, or cleanup facts.",
+  "next_gate": {
+    "operation": "repository_only_api_evidence_boundary_correction_planning",
+    "requirements": [
+      "change the API report builder so inconclusive samples return an unresolved investigation boundary",
+      "add regression coverage for no-comparison traffic and same-suspect/comparison outcomes",
+      "do not redeploy or run another live POST without separate explicit authority",
+      "separately obtain read-only Azure cost, credit, quota, monitoring, diagnostics, backup, and recovery evidence when an Azure connector is available",
+      "separately decide whether the two post-deployment installer fixes require a planned runtime update"
+    ]
+  }
+}

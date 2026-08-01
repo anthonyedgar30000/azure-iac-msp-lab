@@ -156,8 +156,10 @@ class AzureAiGoLiveRun8Tests(unittest.TestCase):
         self.assertEqual(self.sync["cost"]["azure_resource_cost_delta"], "not_established")
         self.assertIn("push run not retrieved != push run did not occur", self.sync_handoff)
 
-    def test_selector_preserves_terminal_lineage_after_servicetracer_deployment(self) -> None:
+    def test_selector_preserves_terminal_lineage_after_external_validation(self) -> None:
         sync_path = ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json"
+        deployment_path = ".project/evidence/servicetracer-demo-api-deployment-run-30661015789.json"
+        external_path = ".project/evidence/servicetracer-external-path-run-30693434244.json"
         self.assertIsNone(self.selector["active_azure_ai_activation_authorization"])
         self.assertEqual(self.selector["prior_azure_ai_trigger_sync"], sync_path)
         self.assertIsNone(self.selector["pending_azure_ai_terminal_reconciliation"])
@@ -169,11 +171,19 @@ class AzureAiGoLiveRun8Tests(unittest.TestCase):
             self.selector["latest_servicetracer_terminal_reconciliation"],
             ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json",
         )
+        self.assertEqual(self.selector["latest_operational_overlay"], external_path)
         self.assertEqual(
-            self.selector["latest_operational_overlay"],
-            ".project/evidence/servicetracer-demo-api-deployment-run-30661015789.json",
+            self.selector["latest_servicetracer_deployment_evidence"],
+            deployment_path,
+        )
+        self.assertEqual(
+            self.selector["latest_servicetracer_external_validation_evidence"],
+            external_path,
         )
         self.assertIsNone(self.selector["active_servicetracer_planning_authorization"])
+        self.assertIsNone(
+            self.selector["active_servicetracer_external_validation_authorization"]
+        )
 
     def test_static_validation_still_covers_run8(self) -> None:
         self.assertIn("infra.tests.test_azure_ai_go_live_run8", self.static_workflow)

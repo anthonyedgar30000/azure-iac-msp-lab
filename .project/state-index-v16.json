@@ -1,0 +1,180 @@
+{
+  "schema_version": "project.state-index.v16",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-08-01T05:26:00-04:00",
+  "selector": ".project/CURRENT.json",
+  "selection_rule": "Read .project/CURRENT.json first. Resolve v7 current reality, v16 state index, and v6 handoff. Re-query live GitHub and Azure before future operations. The external validation authority is consumed; no retry, repair, redeployment, or cleanup authority is active.",
+  "authoritative_current_reality": ".project/current-reality-v7.json",
+  "authoritative_handoff": ".project/handoffs/current-state-v6.md",
+  "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
+  "active_authorizations": {
+    "azure_ai_activation": null,
+    "servicetracer_planning": null,
+    "servicetracer_deployment": null,
+    "servicetracer_external_validation": null,
+    "servicetracer_cleanup": null
+  },
+  "consumed_authorities": {
+    "servicetracer_plan_run_30660575435": true,
+    "servicetracer_deployment_run_30661015789": true,
+    "servicetracer_external_validation_run_30693434244": true,
+    "deployment_rerun_authorized": false,
+    "external_validation_retry_authorized": false,
+    "cleanup_authorized": false
+  },
+  "claim_boundaries": [
+    "declared_in_code != deployed_in_azure",
+    "current_main != deployed_source_ref",
+    "deployment_succeeded != service_validated",
+    "external_browser_path_verified != permanent_service_availability",
+    "HTTP_200_API_response != downstream_transaction_success",
+    "all_observed_transactions_on_VPN-02 != stable_backend_localization",
+    "radius_response_boundary != exact_root_cause",
+    "frontend_guarded_output != raw_API_boundary_consistency",
+    "resource_exists != securely_configured",
+    "monitoring_enabled != alerts_verified",
+    "backup_configured != recovery_tested",
+    "planning_ceiling != actual_cost",
+    "not_observed != false"
+  ],
+  "domain_state": {
+    "azure_ai_verified_runtime": {
+      "base_url": "https://anthonyedgar30000-5982-resource.openai.azure.com/openai/v1/",
+      "deployment": "gpt-5-mini",
+      "authentication": "Microsoft Entra bearer token",
+      "model_response_verified": true,
+      "modified_by_this_sync": false
+    },
+    "azure_mcp_server": {
+      "server_version": "azure-mcp-reality/0.1.0",
+      "local_client_call_verified_on_main_historically": true,
+      "remote_endpoint_deployed": false,
+      "chatgpt_connection_verified": false
+    },
+    "frontend": {
+      "configured_live_demo_api_url": "https://st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com/api/demo/run",
+      "configured_expected_resource_group": "rg-st-demo-api-dev-westus2",
+      "configured_expected_vm": "vm-st-demo-api-mst-dev",
+      "configured_expected_location": "westus2",
+      "configured_hosting_model": "dedicated_vm_subproject",
+      "repository_activation_status": "independent_demo_api_live_default_pending_github_pages_verification",
+      "repository_activation_label_now_stale": true,
+      "github_pages_publication_verified": true,
+      "hosted_chrome_render_verified": true,
+      "fixture_fallback_used": false,
+      "live_transaction_render_verified": true,
+      "guarded_inconclusive_render_verified": true,
+      "unidentified_console_404_observed": true,
+      "evidence_anchor": ".project/evidence/servicetracer-external-path-run-30693434244.json"
+    },
+    "servicetracer_demo_api": {
+      "architecture": "independent_dedicated_vm_subproject",
+      "subscription_boundary": "single_subscription",
+      "subscription_name": "Azure for Students",
+      "subscription_state_at_deployment": "Enabled",
+      "resource_group": "rg-st-demo-api-dev-westus2",
+      "location": "westus2",
+      "vm_name": "vm-st-demo-api-mst-dev",
+      "vm_size": "Standard_F1als_v7",
+      "fqdn": "st-demo-api-vm-aeg30001.westus2.cloudapp.azure.com",
+      "github_environment": "azure-lab",
+      "planner_workflow_present": true,
+      "deployment_workflow_present": true,
+      "planning_run_id": 30660575435,
+      "planning_run_conclusion": "success",
+      "plan_accepted": true,
+      "deployment_run_id": 30661015789,
+      "deployment_run_conclusion": "success",
+      "deployment_succeeded": true,
+      "vm_running": true,
+      "vm_extension_succeeded": true,
+      "deployed_source_ref": "ae08e7a72c14ec6deaddd3fa0f8c84b8342e0be3",
+      "repository_head_matches_deployed_source_ref": false,
+      "undeployed_repository_commits": [
+        "b5bfd616d2f3faab5f692301c4b71c46a6f9557f",
+        "2ad9557e21cddeed6fc9437c8f20c32b387bf2a2"
+      ],
+      "runtime_drift_status": "running_vm_bound_to_ae08e7a_while_main_contains_two_later_installer_fixes",
+      "local_process_health_verified": true,
+      "public_fqdn_https_health_verified_from_vm_guest": true,
+      "azure_runtime_identity_verified": true,
+      "runtime_identity_resource_group_matches": true,
+      "runtime_identity_vm_matches": true,
+      "runtime_identity_location_matches": true,
+      "runtime_identity_source_ref_matches": true,
+      "github_pages_publication_verified": true,
+      "external_browser_path_verified": true,
+      "browser_tls_verified": true,
+      "cors_verified": true,
+      "cors_allowed_origin_verified": true,
+      "cors_disallowed_origin_fail_closed_verified": true,
+      "transaction_post_verified": true,
+      "transaction_request_correlation_verified": true,
+      "external_validation_run_id": 30693434244,
+      "external_validation_artifact_id": 8816461373,
+      "external_validation_authority_consumed": true,
+      "external_validation_retry_authorized": false,
+      "bounded_sample_attempts": 20,
+      "bounded_sample_successes": 0,
+      "bounded_sample_failures": 20,
+      "bounded_sample_transport_errors": 0,
+      "bounded_sample_backend_counts": {
+        "VPN-01": 0,
+        "VPN-02": 20
+      },
+      "bounded_sample_failure_boundary_counts": {
+        "radius_response": 20
+      },
+      "downstream_transaction_success_verified": false,
+      "stable_backend_localization_verified": false,
+      "exact_root_cause_claimed": false,
+      "frontend_guarded_inconclusive_output_verified": true,
+      "potential_api_evidence_boundary_defect": true,
+      "potential_api_evidence_boundary_defect_status": "unresolved",
+      "raw_api_inconclusive_boundary": "VPN-02",
+      "unidentified_browser_console_404_observed": true,
+      "cleanup_verified": false,
+      "service_validation_status": "external_browser_contract_verified_downstream_failures_observed_without_stable_localization"
+    }
+  },
+  "repository_state": {
+    "default_branch": "main",
+    "observed_main": "e67869e98d8c26c6525fa25e08cae1af6f5be73d",
+    "latest_merged_pull_request": 263,
+    "latest_merged_pull_request_merge_commit": "e67869e98d8c26c6525fa25e08cae1af6f5be73d",
+    "latest_merged_pull_request_source_head": "83b68d4836b36ffd0db3254121eb4fe3b8ce3e80",
+    "open_pull_requests_observed": [],
+    "source_pr_head_ci_observed": true,
+    "source_pr_head_ci_conclusion": "success",
+    "merge_commit_ci_observed": false,
+    "local_working_tree": "not_observed_connector_backed"
+  },
+  "latest_operational_overlay": ".project/evidence/servicetracer-external-path-run-30693434244.json",
+  "latest_repository_sync_reconciliation": ".project/reconciliations/servicetracer-external-evidence-sync-20260801.json",
+  "latest_servicetracer_plan_evidence": ".project/evidence/servicetracer-demo-api-plan-run-30660575435.json",
+  "latest_servicetracer_deployment_evidence": ".project/evidence/servicetracer-demo-api-deployment-run-30661015789.json",
+  "latest_servicetracer_external_validation_evidence": ".project/evidence/servicetracer-external-path-run-30693434244.json",
+  "latest_servicetracer_external_validation_authority": ".project/authorizations/servicetracer-external-validation-20260801.json",
+  "compatibility_lineage": [
+    {
+      "path": ".project/current-reality-v6.json",
+      "classification": "historical_post_deployment_pre_external_validation_reality",
+      "authoritative_for_current_operations": false
+    },
+    {
+      "path": ".project/state-index-v15.json",
+      "classification": "historical_post_deployment_pre_external_validation_index",
+      "authoritative_for_current_operations": false
+    },
+    {
+      "path": ".project/handoffs/current-state-v5.md",
+      "classification": "historical_post_deployment_pre_external_validation_handoff",
+      "authoritative_for_current_operations": false
+    },
+    {
+      "path": ".project/current-reality-v5.json",
+      "classification": "historical_post_pr253_predeployment_reality",
+      "authoritative_for_current_operations": false
+    }
+  ]
+}

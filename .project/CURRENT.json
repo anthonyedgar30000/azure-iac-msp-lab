@@ -1,70 +1,68 @@
 {
-  "active_azure_ai_activation_authorization": null,
-  "active_cleanup_authorization": null,
-  "active_deployment_authorization": null,
-  "active_servicetracer_planning_authorization": null,
-  "authoritative_current_reality": ".project/current-reality-v6.json",
-  "authoritative_handoff": ".project/handoffs/current-state-v5.md",
-  "authoritative_state_index": ".project/state-index-v15.json",
+  "schema_version": "project.current-selector.v2",
+  "project": "Azure IaC MSP Lab",
+  "recorded_at": "2026-08-01T05:26:00-04:00",
+  "selection_rule": "Resolve the selected versioned reality, state index, and handoff before current operations. Re-query live GitHub and Azure before writes, workflow dispatch, live validation, repair, redeployment, merge, or cleanup. The latest external validation authority is consumed and non-renewing; never infer retry authority from a successful prior run.",
+  "authoritative_current_reality": ".project/current-reality-v7.json",
+  "authoritative_state_index": ".project/state-index-v16.json",
+  "authoritative_handoff": ".project/handoffs/current-state-v6.md",
   "canonical_completion_gate": ".project/lab-v1-completion-gate-v2.json",
+  "latest_repository_sync_reconciliation": ".project/reconciliations/servicetracer-external-evidence-sync-20260801.json",
+  "latest_operational_overlay": ".project/evidence/servicetracer-external-path-run-30693434244.json",
+  "latest_servicetracer_plan_evidence": ".project/evidence/servicetracer-demo-api-plan-run-30660575435.json",
+  "latest_servicetracer_deployment_evidence": ".project/evidence/servicetracer-demo-api-deployment-run-30661015789.json",
+  "latest_servicetracer_external_validation_evidence": ".project/evidence/servicetracer-external-path-run-30693434244.json",
+  "latest_servicetracer_external_validation_authority": ".project/authorizations/servicetracer-external-validation-20260801.json",
+  "latest_servicetracer_terminal_reconciliation": ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json",
+  "latest_azure_ai_terminal_reconciliation": ".project/reconciliations/azure-ai-go-live-run8-terminal-20260730.json",
+  "prior_azure_ai_trigger_sync": ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json",
+  "servicetracer_connector_blocker": ".project/reconciliations/servicetracer-demo-api-plan-run1-connector-event-blocked-20260729.json",
+  "pending_azure_ai_terminal_reconciliation": null,
+  "active_azure_ai_activation_authorization": null,
+  "active_servicetracer_planning_authorization": null,
+  "active_deployment_authorization": null,
+  "active_servicetracer_external_validation_authorization": null,
+  "active_cleanup_authorization": null,
   "compatibility_records": [
     {
-      "boundary": "records the corrected single-subscription planner before successful plan and deployment runs",
+      "path": ".project/current-reality-v6.json",
+      "status": "historical_post_deployment_pre_external_validation_reality",
+      "boundary": "records deployment and guest-origin health before the external browser path was verified"
+    },
+    {
+      "path": ".project/state-index-v15.json",
+      "status": "historical_post_deployment_pre_external_validation_index",
+      "boundary": "indexes the pre-external-validation canonical state"
+    },
+    {
+      "path": ".project/handoffs/current-state-v5.md",
+      "status": "historical_post_deployment_pre_external_validation_handoff",
+      "boundary": "lists browser, CORS, and POST validation as pending before run 30693434244"
+    },
+    {
       "path": ".project/current-reality-v5.json",
-      "status": "historical_post_pr253_predeployment_reality"
+      "status": "historical_post_pr253_predeployment_reality",
+      "boundary": "records the corrected single-subscription planner before successful plan and deployment runs"
     },
     {
-      "boundary": "indexes the predeployment canonical state",
       "path": ".project/state-index-v14.json",
-      "status": "historical_post_pr253_predeployment_index"
+      "status": "historical_post_pr253_predeployment_index",
+      "boundary": "indexes the predeployment canonical state"
     },
     {
-      "boundary": "states that planning had not yet occurred and is superseded by v5",
       "path": ".project/handoffs/current-state-v4.md",
-      "status": "historical_post_pr253_predeployment_handoff"
+      "status": "historical_post_pr253_predeployment_handoff",
+      "boundary": "states that planning had not yet occurred and is superseded"
     },
     {
-      "boundary": "selected current-reality-v4, state-index-v13, and current-state-v3 before PR 253",
       "path": ".project/selectors/post-pr251-current.json",
-      "status": "historical_post_pr251_selector"
+      "status": "historical_post_pr251_selector",
+      "boundary": "selected current-reality-v4, state-index-v13, and current-state-v3 before PR 253"
     },
     {
-      "boundary": "preserves run-8 trigger history",
       "path": ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json",
-      "status": "historical_trigger_sync_superseded_by_terminal_artifact"
-    },
-    {
-      "boundary": "precedes later successful single-subscription planning",
-      "path": ".project/reconciliations/servicetracer-demo-api-plan-run1-connector-event-blocked-20260729.json",
-      "status": "historical_connector_blocker"
-    },
-    {
-      "boundary": "records state before PR 253",
-      "path": ".project/current-reality-v4.json",
-      "status": "historical_post_pr251_current_reality"
-    },
-    {
-      "boundary": "records the prior dual-subscription planner declaration",
-      "path": ".project/state-index-v13.json",
-      "status": "historical_post_pr251_state_index"
-    },
-    {
-      "boundary": "records terminal failures before the student-subscription correction",
-      "path": ".project/handoffs/current-state-v3.md",
-      "status": "historical_post_pr251_handoff"
+      "status": "historical_trigger_sync_superseded_by_terminal_artifact",
+      "boundary": "preserves run-8 trigger history"
     }
-  ],
-  "latest_azure_ai_terminal_reconciliation": ".project/reconciliations/azure-ai-go-live-run8-terminal-20260730.json",
-  "latest_operational_overlay": ".project/evidence/servicetracer-demo-api-deployment-run-30661015789.json",
-  "latest_repository_sync_reconciliation": ".project/reconciliations/servicetracer-plan-deploy-runtime-sync-20260731.json",
-  "latest_servicetracer_deployment_evidence": ".project/evidence/servicetracer-demo-api-deployment-run-30661015789.json",
-  "latest_servicetracer_plan_evidence": ".project/evidence/servicetracer-demo-api-plan-run-30660575435.json",
-  "latest_servicetracer_terminal_reconciliation": ".project/reconciliations/servicetracer-demo-api-plan-run1-terminal-20260730.json",
-  "pending_azure_ai_terminal_reconciliation": null,
-  "prior_azure_ai_trigger_sync": ".project/reconciliations/azure-ai-go-live-run8-trigger-sync-20260730.json",
-  "project": "Azure IaC MSP Lab",
-  "recorded_at": "2026-07-31T16:39:00-04:00",
-  "schema_version": "project.current-selector.v2",
-  "selection_rule": "Resolve the selected versioned reality, state index, and handoff before current operations. Re-query live GitHub and Azure before writes, workflow dispatch, merge, repair, or cleanup. Current main may differ from the deployed source ref; never infer runtime updates from repository commits. No operational authorization is active unless a later selector explicitly names one.",
-  "servicetracer_connector_blocker": ".project/reconciliations/servicetracer-demo-api-plan-run1-connector-event-blocked-20260729.json"
+  ]
 }
