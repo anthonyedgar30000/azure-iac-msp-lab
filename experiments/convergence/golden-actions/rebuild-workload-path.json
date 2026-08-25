@@ -1,0 +1,12 @@
+{
+  "schema": "convergence.golden-action.v1",
+  "id": "rebuild-workload-path",
+  "mode": "shadow-only",
+  "trigger_edge": "network-workload",
+  "intended_scope": [
+    "workload",
+    "service"
+  ],
+  "execution_implemented": false,
+  "purpose": "Pre-reviewed candidate for reconstructing the poisoned dependent path after the network-workload attestation fails."
+}

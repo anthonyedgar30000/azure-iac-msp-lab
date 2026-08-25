@@ -1,0 +1,37 @@
+{
+  "schema": "convergence.topology.v1",
+  "nodes": [
+    "root",
+    "network",
+    "logging",
+    "workload",
+    "service"
+  ],
+  "edges": [
+    {
+      "id": "root-network",
+      "from": "root",
+      "to": "network",
+      "attestor": "root"
+    },
+    {
+      "id": "root-logging",
+      "from": "root",
+      "to": "logging",
+      "attestor": "root"
+    },
+    {
+      "id": "network-workload",
+      "from": "network",
+      "to": "workload",
+      "attestor": "network",
+      "golden_action": "golden-actions/rebuild-workload-path.json"
+    },
+    {
+      "id": "workload-service",
+      "from": "workload",
+      "to": "service",
+      "attestor": "workload"
+    }
+  ]
+}
