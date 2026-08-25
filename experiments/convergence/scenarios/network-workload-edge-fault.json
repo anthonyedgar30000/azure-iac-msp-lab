@@ -1,0 +1,20 @@
+{
+  "schema": "convergence.scenario.v1",
+  "name": "network-workload edge fault",
+  "edge_observations": {
+    "root-network": "VALID",
+    "root-logging": "VALID",
+    "network-workload": "FAULTED",
+    "workload-service": "VALID"
+  },
+  "expected": {
+    "node_states": {
+      "root": "VALID",
+      "network": "VALID",
+      "logging": "VALID",
+      "workload": "POISONED",
+      "service": "POISONED"
+    },
+    "candidate_action": "golden-actions/rebuild-workload-path.json"
+  }
+}
