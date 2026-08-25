@@ -14,6 +14,7 @@ POISONED = "POISONED"
 UNKNOWN = "UNKNOWN"
 
 EDGE_STATES = {VALID, FAULTED, UNKNOWN}
+NODE_OBSERVATION_STATES = {VALID, FAULTED, UNKNOWN}
 
 
 def load_json_compatible_yaml(path: str | Path) -> dict[str, Any]:
@@ -33,11 +34,32 @@ def _descendants(start: str, adjacency: dict[str, list[str]]) -> set[str]:
     return seen
 
 
-def evaluate(topology: dict[str, Any], edge_observations: dict[str, str]) -> dict[str, Any]:
-    """Evaluate local edge attestations and poison only dependent paths.
+def _poison(
+    affected: set[str],
+    node_states: dict[str, str],
+) -> None:
+    """Mark only still-trusted dependent nodes as POISONED.
 
-    Missing observations are UNKNOWN by design: no evidence means no trust
-    propagation. This function is shadow-only and performs no remediation.
+    A direct FAULTED or UNKNOWN local observation is more specific than
+    downstream poison and is therefore preserved.
+    """
+    for node in affected:
+        if node_states[node] == VALID:
+            node_states[node] = POISONED
+
+
+def evaluate(
+    topology: dict[str, Any],
+    edge_observations: dict[str, str],
+    node_observations: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """Evaluate local/node attestations and poison only dependent paths.
+
+    Missing edge observations are UNKNOWN by design: no evidence means no
+    trust propagation. Node observations are optional; when supplied, a
+    direct node FAULTED or UNKNOWN result poisons only its descendants.
+
+    This function is shadow-only and performs no remediation.
     """
     nodes = topology["nodes"]
     edges = topology["edges"]
@@ -50,7 +72,30 @@ def evaluate(topology: dict[str, Any], edge_observations: dict[str, str]) -> dic
 
     failures: list[dict[str, Any]] = []
     unknowns: list[dict[str, Any]] = []
+    node_failures: list[dict[str, Any]] = []
+    node_unknowns: list[dict[str, Any]] = []
     actions: list[dict[str, str]] = []
+
+    for node, observed in (node_observations or {}).items():
+        if node not in node_states:
+            raise ValueError(f"unknown node observation target: {node}")
+        if observed not in NODE_OBSERVATION_STATES:
+            raise ValueError(f"invalid node state for {node}: {observed}")
+
+        if observed == VALID:
+            continue
+
+        node_states[node] = observed
+        affected = _descendants(node, adjacency) - {node}
+        _poison(affected, node_states)
+        record = {
+            "node": node,
+            "poisoned_path": sorted(affected),
+        }
+        if observed == FAULTED:
+            node_failures.append(record)
+        else:
+            node_unknowns.append(record)
 
     for edge in edges:
         edge_id = edge["id"]
@@ -64,8 +109,7 @@ def evaluate(topology: dict[str, Any], edge_observations: dict[str, str]) -> dic
             continue
 
         affected = _descendants(edge["to"], adjacency)
-        for node in affected:
-            node_states[node] = POISONED
+        _poison(affected, node_states)
 
         record = {
             "edge": edge_id,
@@ -88,6 +132,8 @@ def evaluate(topology: dict[str, Any], edge_observations: dict[str, str]) -> dic
         "node_states": node_states,
         "failures": failures,
         "unknowns": unknowns,
+        "node_failures": node_failures,
+        "node_unknowns": node_unknowns,
         "candidate_actions": actions,
     }
 
@@ -102,7 +148,11 @@ def main() -> None:
 
     topology = load_json_compatible_yaml(args.topology)
     scenario = load_json_compatible_yaml(args.scenario)
-    result = evaluate(topology, scenario["edge_observations"])
+    result = evaluate(
+        topology,
+        scenario["edge_observations"],
+        scenario.get("node_observations", {}),
+    )
     print(json.dumps(result, indent=2, sort_keys=True))
 
 
