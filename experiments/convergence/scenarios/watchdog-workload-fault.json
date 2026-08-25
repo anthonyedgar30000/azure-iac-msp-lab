@@ -1,0 +1,36 @@
+{
+  "schema": "convergence.watchdog-composition-scenario.v1",
+  "name": "watchdog workload fault poisons only dependent service",
+  "watchdog_record": {
+    "schema": "convergence.watchdog-input.v1",
+    "source": "service-watchdog",
+    "host_id": "linux-01",
+    "config_identity": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "target_id": "demo.service",
+    "observed_at": 100.0,
+    "outcome": "UNSATISFIED",
+    "reason": "systemd_failed",
+    "evidence_record_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "binding": {
+    "node_id": "workload",
+    "evaluation_time": 120.0,
+    "max_age_seconds": 60.0
+  },
+  "edge_observations": {
+    "root-network": "VALID",
+    "root-logging": "VALID",
+    "network-workload": "VALID",
+    "workload-service": "VALID"
+  },
+  "expected": {
+    "attestation_status": "FAULTED",
+    "node_states": {
+      "root": "VALID",
+      "network": "VALID",
+      "logging": "VALID",
+      "workload": "FAULTED",
+      "service": "POISONED"
+    }
+  }
+}
